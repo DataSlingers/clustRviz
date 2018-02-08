@@ -228,3 +228,44 @@ CARP <- function(X,
   class(carp.fit) <- 'CARP'
   return(carp.fit)
 }
+
+#' Print CARP Summary
+#'
+#' Prints a brief descripton of a fitted carp object.
+#'
+#' Reports number of observations and variables of dataset, any preprocessing
+#' done by the \code{CARP} function, regularization weight information,
+#' the type of CARP algorithm performed, and the visualizations returned.
+#' @param carp.fit a CARP object returned by \code{CARP}
+#' @examples
+#' library(clustRviz)
+#' data("presidential_speech")
+#' Xdat <- presidential_speech$X
+#' carp.fit <- CARP(
+#'     X=presidential_speech$X,
+#'     obs.labels=presidential_speech$labels)
+#' print(carp.fit)
+print.CARP <- function(carp.fit){
+  preprocess.string <- c('center','scale')
+
+  switch(
+    carp.fit$alg.type,
+    carpviz={
+      alg.string = 'CARP VIZ'
+    },
+    carp={
+      alg.string = 'CARP'
+    })
+  viz.string <- c('Static Dend', 'Static Path','Interactive Dend/Path')
+  cat('CARP Fit Summary\n')
+  cat('Number of Observations:', carp.fit$n.obs,'\n')
+  cat('Number of Variables:', carp.fit$p.vars,'\n')
+  cat('Pre-processing:',preprocess.string[c(carp.fit$X.center,carp.fit$X.scale)],'\n')
+  cat('Weights: RBF Kernel, phi =',carp.fit$phi, 'k =',carp.fit$k,'\n')
+  cat('Algorithm:',alg.string,'\n')
+  cat('Visualizations:',viz.string[c(carp.fit$static,carp.fit$static,carp.fit$interactive)],'\n')
+
+  cat('Raw Data:\n')
+  carp.fit$X[1:min(5,carp.fit$n.obs),1:min(5,carp.fit$p.vars)]
+
+}
