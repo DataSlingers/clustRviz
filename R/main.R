@@ -69,8 +69,6 @@ CARP <- function(X,
                  interactive=TRUE,
                  static=TRUE,
                  npcs=4){
-  require(tidyverse)
-  require(cvxclustr)
   if(is.logical(verbose)){
     verbose.basic = TRUE
     verbose.deep=FALSE
@@ -151,7 +149,23 @@ CARP <- function(X,
             keep=1) -> carp.sol.path
     },
     carp={
-      cat('carp\n')
+      CARPL2_NF_FRAC(x=X[TRUE],
+                     n=as.integer(n.obs),
+                     p = as.integer(p.vars),
+                     lambda_init = 1e-8,
+                     t = t,
+                     weights = weights[weights!=0],
+                     uinit = as.matrix(PreCompList$uinit),
+                     vinit = as.matrix(PreCompList$vinit),
+                     premat = PreCompList$PreMat,
+                     IndMat = PreCompList$ind.mat,
+                     EOneIndMat = PreCompList$E1.ind.mat,
+                     ETwoIndMat = PreCompList$E2.ind.mat,
+                     rho = rho,
+                     max_iter = as.integer(max.iter),
+                     burn_in = as.integer(burn.in),
+                     verbose=verbose.deep,
+                     keep=1) -> carp.sol.path
     }
   )
 
@@ -267,5 +281,364 @@ print.CARP <- function(carp.fit){
 
   cat('Raw Data:\n')
   carp.fit$X[1:min(5,carp.fit$n.obs),1:min(5,carp.fit$p.vars)]
+
+}
+
+#' Plot function for CARP objects
+#'
+#' \code{plot.CARP} displays both static and interactive visualizations of
+#' the CARP clustering solution path, including dendrograms and clustering
+#' paths
+#'
+#' Possible visualizations of the CARP solution path are: (i) a static
+#' dendrogram representing the clustering solution path at various
+#' levels of regularization; (ii) a static clustering path representing
+#' the coalescence of observations projected via PCA; and (iii) a
+#' interactive dendorgram and clustering path visualization, showing
+#' how the clustering solutions change with increased reguarliazation.
+#' The first interactive tab shows a movie of real-time cluster solutions
+#' while the second tabs shows the cluster solution for various numbers
+#' of clusters
+#' @param  carp.fit a CARP object returned by \code{CARP}
+#' @param type a string specifying the type of plot to produce. 'dendrogram'
+#' produces the static cluster dendrogram; 'path' produces the static
+#' cluster path; and 'interactive' produces an interactive visualization of
+#' both the cluster path and dendrogram
+#' @param axis a character vector of length two with elements as 'PC1','PC2',..
+#' etc. Specifics which principal component axis to display for the 'path'
+#' visualization
+#' @param percent a number between 0 and 1. Specifies how far along the
+#' CARP path the 'path' visualization should display.
+#' @param max.nclust a positive integer. The maximum number of clusters
+#' to display in the interactive plot.
+#' @param min.nclust a positive value. The minimum number of clusters to
+#' display in the interactive plot.
+#' @param blwd a positive number. Line width on dendrograms.
+#' @param lcex a positive number. Label size on dendrograms.
+#' @examples
+#' library(clustRviz)
+#' data("presidential_speech")
+#' Xdat <- presidential_speech$X
+#' carp.fit <- CARP(
+#'     X=presidential_speech$X,
+#'     obs.labels=presidential_speech$labels)
+#' plot(carp.fit,type='interactive')
+plot.CARP <- function(
+  carp.fit,
+  type='dendrogram',
+  axis = c('PC1','PC2'),
+  blwd=2,
+  lcex=.6,
+  percent=1,
+  max.nclust=9,
+  min.nclust=1){
+
+  switch(
+    type,
+    dendrogram={
+      carp.fit$carp.dend %>%
+        as.dendrogram() %>%
+        set("branches_lwd",blwd) %>%
+        set("labels_cex",lcex) %>%
+        plot(ylab='Amount of Regularization')
+    },
+    path={
+      plot.cols <- c(
+        axis,
+        'Iter',
+        'Obs',
+        'Cluster',
+        'Lambda',
+        'ObsLabel',
+        'NCluster',
+        'LambdaPercent'
+      )
+      plot.frame <- carp.fit$carp.cluster.path.vis[,plot.cols]
+      names(plot.frame)[1:2] <- c('V1','V2')
+      plot.frame %>%
+        filter(LambdaPercent <= percent) %>%
+        filter(Iter > carp.fit$burn.in) %>%
+        ggplot(aes(x=V1,y=V2,group=Obs)) +
+        geom_path(
+          aes(x=V1,y=V2),
+          linejoin = 'round',
+          color='red',
+          size=1
+        )  +
+        geom_point(
+          aes(x=V1,y=V2),
+          data=plot.frame %>% filter(Iter==1),
+          color='black',
+          size=I(2)
+        ) +
+        geom_text_repel(
+          aes(x=V1,y=V2,label=ObsLabel),
+          size=I(3),
+          data=plot.frame %>% filter(Iter == 1)
+        ) +
+        guides(color=FALSE,size=FALSE) +
+        theme(axis.title = element_text(size=15)) +
+        theme(axis.text = element_text(size=10)) +
+        xlab(axis[1]) +
+        ylab(axis[2])
+
+    },
+    interactive={
+      shinyApp(
+        ui=fluidPage(
+          tags$style(type="text/css",
+                     ".recalculating { opacity: 1.0; }"
+          ),
+          titlePanel("Clustering Example"),
+          tabsetPanel(
+            tabPanel("Movie",
+                     fluidRow(
+                       column(2,
+                              sliderInput(
+                                "regcent_movie",
+                                "Amount of Regularization",
+                                min = 0,
+                                max = 1,
+                                value = 0,
+                                # step=.07,animate = animationOptions(interval=700,loop=T)
+                                step=.03,animate = animationOptions(interval=1000,loop=T)
+                              ),
+                              uiOutput("choose_columns")
+                       ),
+                       column(5,
+                              plotOutput("pcapathplot_movie",height = "700px")#,width = '900px')
+                       ),
+                       column(5,
+                              plotOutput("dendplot_movie",height='700px')
+                       )
+                     )
+            ),
+            tabPanel("Static",
+                     fluidRow(
+                       column(2,
+                              sliderInput("regcent_static",
+                                          "Number of Clusters",
+                                          min = min.nclust,
+                                          max = max.nclust,
+                                          value = max.nclust,
+                                          step=1),
+                              uiOutput("choose_columns_static")
+
+                       ),
+                       column(5,
+                              plotOutput("pcapathplot_static",height = "700px")#,width = '900px')
+                       ),
+                       column(5,
+                              plotOutput("dendplot_static",height='700px')
+                       )
+                     )
+            )
+          )
+        ),
+        server=function(input,output){
+
+          # Drop-down selection box for which data set
+          # Check boxes
+          output$choose_columns <- renderUI({
+
+            # Get the data set with the appropriate name
+            colnames <- paste('PC',1:4,sep='')
+
+            # Create the checkboxes and select them all by default
+            checkboxGroupInput("columns", "Choose columns",
+                               choices  = colnames,
+                               selected = colnames[1:2])
+          })
+          # Check boxes
+          output$choose_columns_static <- renderUI({
+            # Get the data set with the appropriate name
+            colnames <- paste('PC',1:4,sep='')
+
+            # Create the checkboxes and select them all by default
+            checkboxGroupInput("columns_static", "Choose columns",
+                               choices  = colnames,
+                               selected = colnames[1:2])
+          })
+
+
+          output$dendplot_movie <- renderPlot({
+            carp.fit$carp.cluster.path.vis %>%
+              filter(LambdaPercent <= input$regcent_movie)  %>%
+              select(NCluster) %>%
+              unlist() %>%
+              unname() %>%
+              min -> ncl
+            carp.fit$carp.dend %>%
+              as.dendrogram() %>%
+              set("branches_lwd",2) %>%
+              set("labels_cex",.6) %>%
+              plot(ylab='Amount of Regularization',cex.lab=1.5)
+            my.cols <- adjustcolor(c('grey','black'),alpha.f = .2)
+            my.rect.hclust(carp.fit$carp.dend,k=ncl,border=2,my.col.vec=my.cols,lwd=3)
+
+
+          })
+
+          output$pcapathplot_movie <- renderPlot({
+            min.iter=5
+            rename.list <- list(Obs = 'Obs',
+                                Cluster = 'Cluster',
+                                Iter = 'Iter',
+                                ObsLabel = 'ObsLabel',
+                                NCluster = 'NCluster',
+                                Var1 = input$columns[1],
+                                Var2 = input$columns[2])
+            if(input$regcent_movie == 0){
+              cl.iter = min.iter
+            } else{
+              carp.fit$carp.cluster.path.vis %>%
+                filter(LambdaPercent <= input$regcent_movie) %>%
+                select(Iter) %>%
+                unlist() %>%
+                unname()  %>%
+                max() -> cl.iter
+            }
+            rename.list <- list(Obs = 'Obs',
+                                Cluster = 'Cluster',
+                                Iter = 'Iter',
+                                ObsLabel = 'ObsLabel',
+                                NCluster = 'NCluster',
+                                Var1 = input$columns[1],
+                                Var2 = input$columns[2])
+            carp.fit$carp.cluster.path.vis %>%
+              dplyr::select_(.dots=rename.list) -> carp.fit$carp.cluster.path.vis.rename
+
+            carp.fit$carp.cluster.path.vis.rename %>%
+              filter(Iter == cl.iter) %>%
+              select(Obs,Cluster,Var1,Var2) %>%
+              rename(
+                MaxVar1 = Var1,
+                MaxVar2 = Var2
+              ) -> cl.assgn
+            carp.fit$carp.cluster.path.vis.rename %>%
+              filter(Iter <= cl.iter) %>%
+              left_join(
+                cl.assgn,
+                by=c('Obs')
+              ) -> tmp
+            tmp %>%
+              filter(Iter > min.iter ) %>%
+              ggplot(aes(x=Var1,y=Var2,group=Obs)) +
+              geom_path(
+                aes(x=Var1,y=Var2),
+                linejoin = 'round',
+                color='red'
+              ) +
+              geom_point(
+                aes(x=MaxVar1,y=MaxVar2),
+                data = tmp %>% filter(Iter==1),
+                color='red',
+                size=I(4)
+              ) +
+              geom_point(
+                aes(x=Var1,y=Var2),
+                data=tmp %>% filter(Iter==1),
+                color='black',
+                size=I(4)
+              ) +
+              geom_text(
+                aes(x=Var1,y=Var2,label=ObsLabel),
+                size=I(6),
+                data=tmp %>% filter(Iter == 1)
+              ) +
+              guides(color=FALSE,size=FALSE) +
+              theme(axis.title = element_text(size=25)) +
+              theme(axis.text = element_text(size=20)) +
+              xlab(input$columns[1]) +
+              ylab(input$columns[2])
+
+          })
+          output$dendplot_static <- renderPlot({
+            carp.fit$carp.dend %>%
+              as.dendrogram() %>%
+              set("branches_lwd",2) %>%
+              set("labels_cex",.6) %>%
+              plot(ylab='Amount of Regularization',cex.lab=1.5)
+            my.cols <- adjustcolor(brewer.pal(n=input$regcent_static,'Set1'),alpha.f=.2)
+            my.rect.hclust(carp.fit$carp.dend,k=input$regcent_static,border=2,my.col.vec=my.cols,lwd=3)
+          })
+          output$pcapathplot_static <- renderPlot({
+            ncl <- input$regcent_static
+            my.cols <- adjustcolor(brewer.pal(n=ncl,'Set1'))[order(unique(cutree(carp.fit$carp.dend,k=ncl)[carp.fit$carp.dend$order]))]
+            carp.fit$carp.cluster.path.vis %>%
+              distinct(Iter,NCluster) %>%
+              filter(NCluster == ncl) %>%
+              select(Iter) %>%
+              unlist() %>%
+              unname() %>%
+              median() -> cl.iter
+            cl.iter <- floor(cl.iter)
+            rename.list <- list(Obs = 'Obs',
+                                Cluster = 'Cluster',
+                                Iter = 'Iter',
+                                ObsLabel = 'ObsLabel',
+                                NCluster = 'NCluster',
+                                Var1 = input$columns_static[1],
+                                Var2 = input$columns_static[2])
+            carp.fit$carp.cluster.path.vis %>%
+              select_(.dots=rename.list) -> carp.cluster.path.vis.rename
+
+            carp.cluster.path.vis.rename %>%
+              filter(Iter == cl.iter) %>%
+              select(Obs,Cluster,Var1,Var2) %>%
+              rename(
+                MaxVar1 = Var1,
+                MaxVar2 = Var2,
+                PlotCluster=Cluster
+              ) %>%
+              mutate(
+                PlotCluster = as.factor(PlotCluster)
+              ) -> cl.assgn
+
+            carp.cluster.path.vis.rename %>%
+              filter(Iter <= cl.iter) %>%
+              left_join(
+                cl.assgn,
+                by=c('Obs')
+              ) -> tmp
+            tmp %>%
+              filter(Iter > 50 ) %>%
+              ggplot(aes(x=Var1,y=Var2,group=Obs)) +
+              geom_path(
+                aes(x=Var1,y=Var2,color=PlotCluster),
+                linejoin = 'round'
+              ) +
+              geom_point(
+                aes(x=MaxVar1,y=MaxVar2,color=PlotCluster),
+                data = tmp %>% filter(Iter==1),
+                size=I(4)
+              ) +
+              geom_point(
+                aes(x=Var1,y=Var2),
+                data=tmp %>% filter(Iter==1),
+                color='black',
+                size=I(4)
+              ) +
+              geom_text(
+                aes(x=Var1,y=Var2,label=ObsLabel),
+                size=I(6),
+                data=tmp %>% filter(Iter == 1)
+              ) +
+              scale_color_manual(values=my.cols)+
+              guides(color=FALSE,size=FALSE) +
+              theme(axis.title = element_text(size=25)) +
+              theme(axis.text = element_text(size=20)) +
+              xlab(input$columns_static[1]) +
+              ylab(input$columns_static[2])
+          })
+
+
+
+        }
+        # End Shiny App
+      )
+
+    }
+  )
 
 }
