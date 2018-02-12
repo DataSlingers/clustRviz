@@ -1,5 +1,5 @@
 CreateAdjacency <- function(E,sp.pattern,n){
-  adjmat <- spMatrix(nrow=n,ncol = n)
+  adjmat <- Matrix::spMatrix(nrow=n,ncol = n)
   connected.pairs <- matrix(E[which(sp.pattern!=0),],ncol=2)
   adjmat@i <- as.integer(as.vector(connected.pairs[,1])-1)
   adjmat@j <- as.integer(as.vector(connected.pairs[,2])-1)
@@ -30,7 +30,7 @@ ConvexClusteringPreCompute <- function(X,weights,rho,ncores=2,verbose=FALSE){
   n <- ncol(X)
   p <- nrow(X)
   # Calcuate edge set
-  weight.adj <- weights_graph(weights,n)
+  weight.adj <- cvxclustr::weights_graph(weights,n)
   cardE <- sum(weight.adj)
   E <- Matrix::which(weight.adj!=0,arr.ind = TRUE)
   E <- E[order(E[,1],E[,2]),]
@@ -52,18 +52,18 @@ ConvexClusteringPreCompute <- function(X,weights,rho,ncores=2,verbose=FALSE){
   })) - 1
   if(verbose) print("PreMat")
   # precompute matrix in u-update
-  PreMat <- Reduce('+',mclapply(1:cardE,function(l){
+  PreMat <- Reduce('+',parallel::mclapply(1:cardE,function(l){
     pos.ind <- E[l,1]
     neg.ind <- E[l,2]
 
-    d <- Matrix(0,nrow=n,ncol=1,sparse = TRUE)
+    d <- Matrix::Matrix(0,nrow=n,ncol=1,sparse = TRUE)
     d[pos.ind,1] <- 1
     d[neg.ind,1] <- -1
-    kronecker(d%*%t(d),Matrix::Diagonal(p))
-  },mc.cores = ncores)) + (1/rho)*Diagonal(n*p)
-  uinit = Matrix(X[TRUE],nrow=p,ncol=n)
+    kronecker(d%*%Matrix::t(d),Matrix::Diagonal(p))
+  },mc.cores = ncores)) + (1/rho)*Matrix::Diagonal(n*p)
+  uinit = Matrix::Matrix(X[TRUE],nrow=p,ncol=n)
   if(verbose) print("Vinit")
-  Vmat <- Matrix(0,nrow=p,ncol=cardE)
+  Vmat <- Matrix::Matrix(0,nrow=p,ncol=cardE)
   for(ind in 1:nrow(E)){
     Vmat[,ind] <- uinit[,E[ind,1]] - uinit[,E[ind,2]]
   }

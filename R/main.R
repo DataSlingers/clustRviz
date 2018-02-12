@@ -45,6 +45,7 @@
 #' and 'carp;
 #' @return X.center A logical. Should X be centered?
 #' @return X.scale A logical. Should X be scaled?
+#' @export
 #' @examples
 #' library(clustRviz)
 #' data("presidential_speech")
@@ -166,7 +167,48 @@ CARP <- function(X,
                      burn_in = as.integer(burn.in),
                      verbose=verbose.deep,
                      keep=1) -> carp.sol.path
+    },
+    carpl1={
+      CARPL1_NF_FRAC(x=X[TRUE],
+                     n=as.integer(n.obs),
+                     p = as.integer(p.vars),
+                     lambda_init = 1e-8,
+                     t = t,
+                     weights = weights[weights!=0],
+                     uinit = as.matrix(PreCompList$uinit),
+                     vinit = as.matrix(PreCompList$vinit),
+                     premat = PreCompList$PreMat,
+                     IndMat = PreCompList$ind.mat,
+                     EOneIndMat = PreCompList$E1.ind.mat,
+                     ETwoIndMat = PreCompList$E2.ind.mat,
+                     rho = rho,
+                     max_iter = as.integer(max.iter),
+                     burn_in = as.integer(burn.in),
+                     verbose=verbose.deep,
+                     keep=1) -> carp.sol.path
+    },
+    carpvizl1={
+      CARPL2_VIS_FRAC(x=X[TRUE],
+            n= as.integer(n.obs),
+            p = as.integer(p.vars),
+            lambda_init = 1e-8,
+            weights = weights[weights!=0],
+            uinit = as.matrix(PreCompList$uinit),
+            vinit = as.matrix(PreCompList$vinit),
+            premat = PreCompList$PreMat,
+            IndMat = PreCompList$ind.mat,
+            EOneIndMat = PreCompList$E1.ind.mat,
+            ETwoIndMat = PreCompList$E2.ind.mat,
+            rho = rho,
+            max_iter = as.integer(max.iter),
+            burn_in = as.integer(burn.in),
+            verbose = verbose.deep,
+            try_tol=1e-5,
+            ti=10,
+            t_switch=1.01,
+            keep=1) -> carp.sol.path
     }
+
   )
 
   if(verbose.basic) cat('Post-processing\n')
@@ -228,6 +270,8 @@ CARP <- function(X,
     X = X.orig,
     carp.dend = carp.dend,
     carp.cluster.path.vis = carp.cluster.path.vis,
+    carp.sol.path = carp.sol.path,
+    cardE = cardE,
     n.obs = n.obs,
     p.vars = p.vars,
     phi = phi,
@@ -251,6 +295,7 @@ CARP <- function(X,
 #' done by the \code{CARP} function, regularization weight information,
 #' the type of CARP algorithm performed, and the visualizations returned.
 #' @param carp.fit a CARP object returned by \code{CARP}
+#' @export
 #' @examples
 #' library(clustRviz)
 #' data("presidential_speech")
@@ -265,11 +310,18 @@ print.CARP <- function(carp.fit){
   switch(
     carp.fit$alg.type,
     carpviz={
-      alg.string = 'CARP VIZ'
+      alg.string = 'CARP-VIZ'
     },
     carp={
       alg.string = 'CARP'
-    })
+    },
+    carpl1={
+      alg.string = 'CARP L1'
+    },
+    carpvizl1={
+      alg.string = 'CARP-VIZ L1'
+    }
+  )
   viz.string <- c('Static Dend', 'Static Path','Interactive Dend/Path')
   cat('CARP Fit Summary\n')
   cat('Number of Observations:', carp.fit$n.obs,'\n')
@@ -315,6 +367,8 @@ print.CARP <- function(carp.fit){
 #' display in the interactive plot.
 #' @param blwd a positive number. Line width on dendrograms.
 #' @param lcex a positive number. Label size on dendrograms.
+#' @export
+#' @import shiny
 #' @examples
 #' library(clustRviz)
 #' data("presidential_speech")
@@ -338,8 +392,8 @@ plot.CARP <- function(
     dendrogram={
       carp.fit$carp.dend %>%
         as.dendrogram() %>%
-        set("branches_lwd",blwd) %>%
-        set("labels_cex",lcex) %>%
+        dendextend::set("branches_lwd",blwd) %>%
+        dendextend::set("labels_cex",lcex) %>%
         plot(ylab='Amount of Regularization')
     },
     path={
@@ -371,7 +425,7 @@ plot.CARP <- function(
           color='black',
           size=I(2)
         ) +
-        geom_text_repel(
+        ggrepel::geom_text_repel(
           aes(x=V1,y=V2,label=ObsLabel),
           size=I(3),
           data=plot.frame %>% filter(Iter == 1)
@@ -384,7 +438,7 @@ plot.CARP <- function(
 
     },
     interactive={
-      shinyApp(
+      shiny::shinyApp(
         ui=fluidPage(
           tags$style(type="text/css",
                      ".recalculating { opacity: 1.0; }"
@@ -470,8 +524,8 @@ plot.CARP <- function(
               min -> ncl
             carp.fit$carp.dend %>%
               as.dendrogram() %>%
-              set("branches_lwd",2) %>%
-              set("labels_cex",.6) %>%
+              dendextend::set("branches_lwd",2) %>%
+              dendextend::set("labels_cex",.6) %>%
               plot(ylab='Amount of Regularization',cex.lab=1.5)
             my.cols <- adjustcolor(c('grey','black'),alpha.f = .2)
             my.rect.hclust(carp.fit$carp.dend,k=ncl,border=2,my.col.vec=my.cols,lwd=3)
@@ -556,15 +610,15 @@ plot.CARP <- function(
           output$dendplot_static <- renderPlot({
             carp.fit$carp.dend %>%
               as.dendrogram() %>%
-              set("branches_lwd",2) %>%
-              set("labels_cex",.6) %>%
+              dendextend::set("branches_lwd",2) %>%
+              dendextend::set("labels_cex",.6) %>%
               plot(ylab='Amount of Regularization',cex.lab=1.5)
-            my.cols <- adjustcolor(brewer.pal(n=input$regcent_static,'Set1'),alpha.f=.2)
+            my.cols <- adjustcolor(RColorBrewer::brewer.pal(n=input$regcent_static,'Set1'),alpha.f=.2)
             my.rect.hclust(carp.fit$carp.dend,k=input$regcent_static,border=2,my.col.vec=my.cols,lwd=3)
           })
           output$pcapathplot_static <- renderPlot({
             ncl <- input$regcent_static
-            my.cols <- adjustcolor(brewer.pal(n=ncl,'Set1'))[order(unique(cutree(carp.fit$carp.dend,k=ncl)[carp.fit$carp.dend$order]))]
+            my.cols <- adjustcolor(RColorBrewer::brewer.pal(n=ncl,'Set1'))[order(unique(cutree(carp.fit$carp.dend,k=ncl)[carp.fit$carp.dend$order]))]
             carp.fit$carp.cluster.path.vis %>%
               distinct(Iter,NCluster) %>%
               filter(NCluster == ncl) %>%
