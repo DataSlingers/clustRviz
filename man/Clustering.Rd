@@ -9,7 +9,8 @@ Clustering(x, ...)
 \arguments{
 \item{x}{a CARP or CBASS object}
 
-\item{...}{additional arguements to Clustering.CARP or Clustering.CBASS}
+\item{...}{additional arguements passed to \code{Clustering.CARP} or
+\code{Clustering.CBASS}}
 }
 \value{
 CARP clustering solutions or CBASS biclustering solutions

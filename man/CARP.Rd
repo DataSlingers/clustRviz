@@ -4,15 +4,18 @@
 \alias{CARP}
 \title{Compute CARP solution path}
 \usage{
-CARP(X, obs.labels = NULL, X.center = TRUE, X.scale = FALSE, rho = 1,
-  phi = 0.001, weights = NULL, k = NULL, ncores = 1, max.iter = 1e+06,
-  burn.in = 50, verbose = 1, alg.type = "carpviz", t = 1.05,
-  interactive = TRUE, static = TRUE, npcs = 4)
+CARP(X, obs.labels = NULL, var.labels = NULL, X.center = TRUE,
+  X.scale = FALSE, rho = 1, phi = 0.001, weights = NULL, k = NULL,
+  ncores = 1, max.iter = 1e+06, burn.in = 50, verbose = 1,
+  alg.type = "carpviz", t = 1.05, interactive = TRUE, static = TRUE,
+  npcs = 4)
 }
 \arguments{
 \item{X}{A n by p matrix with rows the observations and columns the variables}
 
 \item{obs.labels}{a vector of length n containing observations (row) labels}
+
+\item{var.labels}{a vector of length p containing variable (column) labels}
 
 \item{X.center}{A logical. Should X be centered?}
 
@@ -50,8 +53,6 @@ returned?}
 
 \item{npcs}{A integer >= 2. The number of principal components to compute
 for path visualization.}
-
-\item{var.labels}{a vector of length p containing variable (column) labels}
 }
 \value{
 X the original data matrix

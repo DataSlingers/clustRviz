@@ -4,10 +4,12 @@
 \alias{print.CARP}
 \title{Print CARP Summary}
 \usage{
-\method{print}{CARP}(carp.fit)
+\method{print}{CARP}(x, ...)
 }
 \arguments{
-\item{carp.fit}{a CARP object returned by \code{CARP}}
+\item{x}{a CARP object returned by \code{CARP}}
+
+\item{...}{Unused additional generic arguements}
 }
 \description{
 Prints a brief descripton of a fitted carp object.

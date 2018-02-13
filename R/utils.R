@@ -11,6 +11,23 @@ NULL
 
 if(getRversion() >= "2.15.1")  utils::globalVariables(c("."))
 
+#' Log transformed word count of presidential speeches
+#'
+#' A dataset of the top 75 most variable log-transformed word counts for
+#' each US president aggregated over several speeches
+#' (Inaugural, State of the Union, etc.).
+#' Stop words have been removed and words have been stemmed.
+#'
+#' @format A list with elements
+#' \describe{
+#'   \item{labels}{a vector of row labels, one for each presidents}
+#'   \item{X}{a 44 by 75 data matrix of log transformed word counts with
+#'   the stemmed words the column names}
+#'   ...
+#' }
+#' @source \url{http://www.presidency.ucsb.edu}
+"presidential_speech"
+
 CreateAdjacency <- function(E,sp.pattern,n){
   adjmat <- Matrix::spMatrix(nrow=n,ncol = n)
   connected.pairs <- matrix(E[which(sp.pattern!=0),],ncol=2)

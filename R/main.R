@@ -55,6 +55,7 @@
 #'     obs.labels=presidential_speech$labels[1:10])
 CARP <- function(X,
                  obs.labels=NULL,
+                 var.labels=NULL,
                  X.center=TRUE,
                  X.scale=FALSE,
                  rho=1,
@@ -94,6 +95,14 @@ CARP <- function(X,
   } else{
     n.labels <- obs.labels
   }
+
+  if(is.null(var.labels)){
+    p.labels <- colnames(X)
+  } else{
+    p.labels <- var.labels
+  }
+  colnames(X) <- p.labels
+  rownames(X) <- n.labels
 
   # center and scale
   X.orig <- X
@@ -295,7 +304,8 @@ CARP <- function(X,
 #' Reports number of observations and variables of dataset, any preprocessing
 #' done by the \code{CARP} function, regularization weight information,
 #' the type of CARP algorithm performed, and the visualizations returned.
-#' @param carp.fit a CARP object returned by \code{CARP}
+#' @param x a CARP object returned by \code{CARP}
+#' @param ... Unused additional generic arguements
 #' @export
 #' @examples
 #' library(clustRviz)
@@ -305,11 +315,11 @@ CARP <- function(X,
 #'     X=Xdat,
 #'     obs.labels=presidential_speech$labels[1:10])
 #' print(carp.fit)
-print.CARP <- function(carp.fit){
+print.CARP <- function(x,...){
   preprocess.string <- c('center','scale')
 
   switch(
-    carp.fit$alg.type,
+    x$alg.type,
     carpviz={
       alg.string = 'CARP-VIZ'
     },
@@ -325,15 +335,15 @@ print.CARP <- function(carp.fit){
   )
   viz.string <- c('Static Dend', 'Static Path','Interactive Dend/Path')
   cat('CARP Fit Summary\n')
-  cat('Number of Observations:', carp.fit$n.obs,'\n')
-  cat('Number of Variables:', carp.fit$p.vars,'\n')
-  cat('Pre-processing:',preprocess.string[c(carp.fit$X.center,carp.fit$X.scale)],'\n')
-  cat('Weights: RBF Kernel, phi =',carp.fit$phi, 'k =',carp.fit$k,'\n')
+  cat('Number of Observations:', x$n.obs,'\n')
+  cat('Number of Variables:', x$p.vars,'\n')
+  cat('Pre-processing:',preprocess.string[c(x$X.center,x$X.scale)],'\n')
+  cat('Weights: RBF Kernel, phi =',x$phi, 'k =',x$k,'\n')
   cat('Algorithm:',alg.string,'\n')
-  cat('Visualizations:',viz.string[c(carp.fit$static,carp.fit$static,carp.fit$interactive)],'\n')
+  cat('Visualizations:',viz.string[c(x$static,x$static,x$interactive)],'\n')
 
   cat('Raw Data:\n')
-  carp.fit$X[1:min(5,carp.fit$n.obs),1:min(5,carp.fit$p.vars)]
+  x$X[1:min(5,x$n.obs),1:min(5,x$p.vars)]
 
 }
 
@@ -352,7 +362,7 @@ print.CARP <- function(carp.fit){
 #' The first interactive tab shows a movie of real-time cluster solutions
 #' while the second tabs shows the cluster solution for various numbers
 #' of clusters
-#' @param  carp.fit a CARP object returned by \code{CARP}
+#' @param x a CARP object returned by \code{CARP}
 #' @param type a string specifying the type of plot to produce. 'dendrogram'
 #' produces the static cluster dendrogram; 'path' produces the static
 #' cluster path; and 'interactive' produces an interactive visualization of
@@ -366,6 +376,7 @@ print.CARP <- function(carp.fit){
 #' to display in the interactive plot.
 #' @param min.nclust a positive value. The minimum number of clusters to
 #' display in the interactive plot.
+#' @param ... Unused additional generic arguements
 #' @param blwd a positive number. Line width on dendrograms.
 #' @param lcex a positive number. Label size on dendrograms.
 #' @export
@@ -383,19 +394,20 @@ print.CARP <- function(carp.fit){
 #' plot(carp.fit,type='interactive')
 #' }
 plot.CARP <- function(
-  carp.fit,
+  x,
   type='dendrogram',
   axis = c('PC1','PC2'),
   blwd=2,
   lcex=.6,
   percent=1,
   max.nclust=9,
-  min.nclust=1){
+  min.nclust=1,
+  ...){
 
   switch(
     type,
     dendrogram={
-      carp.fit$carp.dend %>%
+      x$carp.dend %>%
         as.dendrogram() %>%
         dendextend::set("branches_lwd",blwd) %>%
         dendextend::set("labels_cex",lcex) %>%
@@ -412,11 +424,11 @@ plot.CARP <- function(
         'NCluster',
         'LambdaPercent'
       )
-      plot.frame <- carp.fit$carp.cluster.path.vis[,plot.cols]
+      plot.frame <- x$carp.cluster.path.vis[,plot.cols]
       names(plot.frame)[1:2] <- c('V1','V2')
       plot.frame %>%
         dplyr::filter(LambdaPercent <= percent) %>%
-        dplyr::filter(Iter > carp.fit$burn.in) %>%
+        dplyr::filter(Iter > x$burn.in) %>%
         ggplot2::ggplot(ggplot2::aes(x=V1,y=V2,group=Obs)) +
         ggplot2::geom_path(
           ggplot2::aes(x=V1,y=V2),
@@ -521,19 +533,19 @@ plot.CARP <- function(
 
 
           output$dendplot_movie <- renderPlot({
-            carp.fit$carp.cluster.path.vis %>%
+            x$carp.cluster.path.vis %>%
               filter(LambdaPercent <= input$regcent_movie)  %>%
               select(NCluster) %>%
               unlist() %>%
               unname() %>%
               min -> ncl
-            carp.fit$carp.dend %>%
+            x$carp.dend %>%
               as.dendrogram() %>%
               dendextend::set("branches_lwd",2) %>%
               dendextend::set("labels_cex",.6) %>%
               plot(ylab='Amount of Regularization',cex.lab=1.5)
             my.cols <- adjustcolor(c('grey','black'),alpha.f = .2)
-            my.rect.hclust(carp.fit$carp.dend,k=ncl,border=2,my.col.vec=my.cols,lwd=3)
+            my.rect.hclust(x$carp.dend,k=ncl,border=2,my.col.vec=my.cols,lwd=3)
 
 
           })
@@ -550,7 +562,7 @@ plot.CARP <- function(
             if(input$regcent_movie == 0){
               cl.iter = min.iter
             } else{
-              carp.fit$carp.cluster.path.vis %>%
+              x$carp.cluster.path.vis %>%
                 filter(LambdaPercent <= input$regcent_movie) %>%
                 select(Iter) %>%
                 unlist() %>%
@@ -564,17 +576,17 @@ plot.CARP <- function(
                                 NCluster = 'NCluster',
                                 Var1 = input$columns[1],
                                 Var2 = input$columns[2])
-            carp.fit$carp.cluster.path.vis %>%
-              dplyr::select_(.dots=rename.list) -> carp.fit$carp.cluster.path.vis.rename
+            x$carp.cluster.path.vis %>%
+              dplyr::select_(.dots=rename.list) -> x$carp.cluster.path.vis.rename
 
-            carp.fit$carp.cluster.path.vis.rename %>%
+            x$carp.cluster.path.vis.rename %>%
               filter(Iter == cl.iter) %>%
               select(Obs,Cluster,Var1,Var2) %>%
               rename(
                 MaxVar1 = Var1,
                 MaxVar2 = Var2
               ) -> cl.assgn
-            carp.fit$carp.cluster.path.vis.rename %>%
+            x$carp.cluster.path.vis.rename %>%
               filter(Iter <= cl.iter) %>%
               left_join(
                 cl.assgn,
@@ -613,18 +625,18 @@ plot.CARP <- function(
 
           })
           output$dendplot_static <- renderPlot({
-            carp.fit$carp.dend %>%
+            x$carp.dend %>%
               as.dendrogram() %>%
               dendextend::set("branches_lwd",2) %>%
               dendextend::set("labels_cex",.6) %>%
               plot(ylab='Amount of Regularization',cex.lab=1.5)
             my.cols <- adjustcolor(RColorBrewer::brewer.pal(n=input$regcent_static,'Set1'),alpha.f=.2)
-            my.rect.hclust(carp.fit$carp.dend,k=input$regcent_static,border=2,my.col.vec=my.cols,lwd=3)
+            my.rect.hclust(x$carp.dend,k=input$regcent_static,border=2,my.col.vec=my.cols,lwd=3)
           })
           output$pcapathplot_static <- renderPlot({
             ncl <- input$regcent_static
-            my.cols <- adjustcolor(RColorBrewer::brewer.pal(n=ncl,'Set1'))[order(unique(cutree(carp.fit$carp.dend,k=ncl)[carp.fit$carp.dend$order]))]
-            carp.fit$carp.cluster.path.vis %>%
+            my.cols <- adjustcolor(RColorBrewer::brewer.pal(n=ncl,'Set1'))[order(unique(cutree(x$carp.dend,k=ncl)[x$carp.dend$order]))]
+            x$carp.cluster.path.vis %>%
               distinct(Iter,NCluster) %>%
               filter(NCluster == ncl) %>%
               select(Iter) %>%
@@ -639,7 +651,7 @@ plot.CARP <- function(
                                 NCluster = 'NCluster',
                                 Var1 = input$columns_static[1],
                                 Var2 = input$columns_static[2])
-            carp.fit$carp.cluster.path.vis %>%
+            x$carp.cluster.path.vis %>%
               select_(.dots=rename.list) -> carp.cluster.path.vis.rename
 
             carp.cluster.path.vis.rename %>%
@@ -707,7 +719,8 @@ plot.CARP <- function(
 #' See \code{Clustering.CARP} and \code{Clustering.CBASS} for details
 #'
 #' @param x a CARP or CBASS object
-#' @param ... additional arguements to Clustering.CARP or Clustering.CBASS
+#' @param ... additional arguements passed to \code{Clustering.CARP} or
+#' \code{Clustering.CBASS}
 #' @return CARP clustering solutions or CBASS biclustering solutions
 #' @export
 Clustering <- function(x,...) {
@@ -725,11 +738,12 @@ Clustering <- function(x,...) {
 #' \code{k} nor \code{percent} are specified, all clusteirng assignments and
 #' mean matricies are returned.
 #'
-#' @param carp.fit A CARP object returned by \code{CARP}
+#' @param x A CARP object returned by \code{CARP}
 #' @param k An interger between 1 and \code{n.obs}. The number of unique
 #' clusters
 #' @param percent A number between 0 and 1. The percent of regularization at
 #' which to cut the path.
+#' @param ... Unused additional generic arguements
 #' @return A list with elements
 #' \describe{
 #' \item{\code{clustering.assignment}}{
@@ -768,12 +782,12 @@ Clustering <- function(x,...) {
 #' carp.clustering.full$clustering.assignment[5,]
 #' # Examine the k=5 means again
 #' head(carp.clustering.full$cluster.means[[5]])
-Clustering.CARP <- function(carp.fit,k=NULL,percent=NULL){
+Clustering.CARP <- function(x,k=NULL,percent=NULL,...){
   if(!is.null(k)){
-      clust.assign <- cutree(carp.fit$carp.dend,k=k)
+      clust.assign <- cutree(x$carp.dend,k=k)
       lapply(unique(clust.assign),function(cl.lab){
         apply(
-          matrix(t(carp.fit$X)[,clust.assign==cl.lab],nrow=carp.fit$p.vars),
+          matrix(t(x$X)[,clust.assign==cl.lab],nrow=x$p.vars),
           1,
           mean
         )
@@ -783,10 +797,10 @@ Clustering.CARP <- function(carp.fit,k=NULL,percent=NULL){
       colnames(clust.means) <- unique(clust.assign)
 
   } else if(!is.null(percent)){
-      clust.assign <- stats::cutree(carp.fit$carp.dend,h=percent)
+      clust.assign <- stats::cutree(x$carp.dend,h=percent)
       lapply(unique(clust.assign),function(cl.lab){
         apply(
-          matrix(t(carp.fit$X)[,clust.assign==cl.lab],nrow=carp.fit$p.vars),
+          matrix(t(x$X)[,clust.assign==cl.lab],nrow=x$p.vars),
           1,
           mean
         )
@@ -796,14 +810,14 @@ Clustering.CARP <- function(carp.fit,k=NULL,percent=NULL){
       colnames(clust.means) <- unique(clust.assign)
 
   } else{
-    lapply(1:carp.fit$n.obs,function(k){
-      stats::cutree(carp.fit$carp.dend,k)
+    lapply(1:x$n.obs,function(k){
+      stats::cutree(x$carp.dend,k)
     }) %>%
       do.call(rbind,.) -> clust.assign
     apply(clust.assign,1,function(cl.ass){
       lapply(unique(cl.ass),function(cl.lab){
         apply(
-          matrix(t(carp.fit$X)[,cl.ass==cl.lab],nrow=carp.fit$p.vars),
+          matrix(t(x$X)[,cl.ass==cl.lab],nrow=x$p.vars),
           1,
           mean
         )
@@ -812,7 +826,7 @@ Clustering.CARP <- function(carp.fit,k=NULL,percent=NULL){
       colnames(tmp.means) <- paste('cl',1:length(unique(cl.ass)),sep='')
       tmp.means
     }) -> clust.means
-    clust.assign <- matrix(paste('cl',clust.assign,sep=''),nrow=carp.fit$n.obs)
+    clust.assign <- matrix(paste('cl',clust.assign,sep=''),nrow=x$n.obs)
 
   }
   list(

@@ -107,8 +107,7 @@ arma::colvec ProxL1(arma::colvec delta, int p, double lambda, arma::colvec weigh
   }
   return(ret);
 }
-//' Compute CARP solution path using L2 penalization via CARP-VIZ algorithm.
-//'
+
 // [[Rcpp::export]]
 Rcpp::List CARPL2_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights,arma::colvec uinit, arma::colvec vinit,arma::sp_mat premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,double back = 0.5, double try_tol = 1e-3,int ti = 15, double t_switch = 1.01,int keep=10){
 
@@ -457,8 +456,6 @@ Rcpp::List CARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,doubl
   return(ret);
 }
 
-//' Compute CARP solution path using L1 penalization via CARP-VIZ algorithm.
-//'
 // [[Rcpp::export]]
 Rcpp::List CARPL1_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights,arma::colvec uinit, arma::colvec vinit,arma::sp_mat premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,double back = 0.5, double try_tol = 1e-3,int ti = 15, double t_switch = 1.01,int keep=10){
 

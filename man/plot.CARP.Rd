@@ -4,11 +4,12 @@
 \alias{plot.CARP}
 \title{Plot function for CARP objects}
 \usage{
-\method{plot}{CARP}(carp.fit, type = "dendrogram", axis = c("PC1", "PC2"),
-  blwd = 2, lcex = 0.6, percent = 1, max.nclust = 9, min.nclust = 1)
+\method{plot}{CARP}(x, type = "dendrogram", axis = c("PC1", "PC2"),
+  blwd = 2, lcex = 0.6, percent = 1, max.nclust = 9, min.nclust = 1,
+  ...)
 }
 \arguments{
-\item{carp.fit}{a CARP object returned by \code{CARP}}
+\item{x}{a CARP object returned by \code{CARP}}
 
 \item{type}{a string specifying the type of plot to produce. 'dendrogram'
 produces the static cluster dendrogram; 'path' produces the static
@@ -31,6 +32,8 @@ to display in the interactive plot.}
 
 \item{min.nclust}{a positive value. The minimum number of clusters to
 display in the interactive plot.}
+
+\item{...}{Unused additional generic arguements}
 }
 \description{
 \code{plot.CARP} displays both static and interactive visualizations of

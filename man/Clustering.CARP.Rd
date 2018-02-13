@@ -4,16 +4,18 @@
 \alias{Clustering.CARP}
 \title{Get clustering solution from a CARP object}
 \usage{
-\method{Clustering}{CARP}(carp.fit, k = NULL, percent = NULL)
+\method{Clustering}{CARP}(x, k = NULL, percent = NULL, ...)
 }
 \arguments{
-\item{carp.fit}{A CARP object returned by \code{CARP}}
+\item{x}{A CARP object returned by \code{CARP}}
 
 \item{k}{An interger between 1 and \code{n.obs}. The number of unique
 clusters}
 
 \item{percent}{A number between 0 and 1. The percent of regularization at
 which to cut the path.}
+
+\item{...}{Unused additional generic arguements}
 }
 \value{
 A list with elements
