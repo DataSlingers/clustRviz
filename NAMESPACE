@@ -2,9 +2,12 @@
 
 S3method(Clustering,CARP)
 S3method(plot,CARP)
+S3method(plot,CBASS)
 S3method(print,CARP)
+S3method(print,CBASS)
 export("%>%")
 export(CARP)
+export(CBASS)
 export(Clustering)
 import(dplyr)
 import(ggplot2)

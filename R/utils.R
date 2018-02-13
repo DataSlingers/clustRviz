@@ -740,7 +740,7 @@ my.heatmap.2 <- function (x, Rowv = TRUE,
     retval$colDendrogram <- ddc
   retval$breaks <- breaks
   retval$col <- col
-  if (!invalid(na.color) & any(is.na(x))) {
+  if (!gtools::invalid(na.color) & any(is.na(x))) {
     mmat <- ifelse(is.na(x), 1, NA)
     image(1:nc, 1:nr, mmat, axes = FALSE, xlab = "", ylab = "",
           col = na.color, add = TRUE)
