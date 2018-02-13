@@ -1,3 +1,16 @@
+#' Pipe operator
+#'
+#' @name %>%
+#' @rdname pipe
+#' @keywords internal
+#' @export
+#' @importFrom magrittr %>%
+#' @usage lhs \%>\% rhs
+NULL
+
+
+if(getRversion() >= "2.15.1")  utils::globalVariables(c("."))
+
 CreateAdjacency <- function(E,sp.pattern,n){
   adjmat <- Matrix::spMatrix(nrow=n,ncol = n)
   connected.pairs <- matrix(E[which(sp.pattern!=0),],ncol=2)
@@ -80,54 +93,54 @@ ConvexClusteringPreCompute <- function(X,weights,rho,ncores=2,verbose=FALSE){
 
 ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
   sp.path%>%
-    tbl_df() %>%
-    mutate(Iter = 1:n()) %>%
-    gather(ColLab,SpValue,-Iter) %>%
-    mutate(
+    dplyr::tbl_df() %>%
+    dplyr::mutate(Iter = 1:n()) %>%
+    tidyr::gather(ColLab,SpValue,-Iter) %>%
+    dplyr::mutate(
       ColLab = factor(ColLab,levels=paste('V',1:cardE,sep=''),ordered=TRUE)
     ) %>%
-    arrange(Iter,ColLab) %>%
-    group_by(ColLab) %>%
-    mutate(
+    dplyr::arrange(Iter,ColLab) %>%
+    dplyr::group_by(ColLab) %>%
+    dplyr::mutate(
       SpValueLag = lag(SpValue)
     ) %>%
-    ungroup() %>%
-    filter(Iter != 1) %>%
+    dplyr::ungroup() %>%
+    dplyr::filter(Iter != 1) %>%
     # does the sparsity pattern change this iteration?
-    mutate(
+    dplyr::mutate(
       HasChange = SpValue - SpValueLag
     ) %>%
     # get iterations where sparsity has changed
-    filter(HasChange > 0) %>%
-    mutate(
-      ColIndNum = as.numeric(str_replace(as.character(ColLab),'V',''))
+    dplyr::filter(HasChange > 0) %>%
+    dplyr::mutate(
+      ColIndNum = as.numeric(stringr::str_replace(as.character(ColLab),'V',''))
     ) %>%
-    select(Iter,ColIndNum) %>%
-    arrange(Iter,ColIndNum) %>%
-    group_by(Iter) %>%
+    dplyr::select(Iter,ColIndNum) %>%
+    dplyr::arrange(Iter,ColIndNum) %>%
+    dplyr::group_by(Iter) %>%
     # How many changes in this iteration?
-    mutate(
+    dplyr::mutate(
       NChanges = n()
     ) -> change.frame
 
   sp.path %>%
-    tbl_df() %>%
-    mutate(
+    dplyr::tbl_df() %>%
+    dplyr::mutate(
       Iter = 1:n()
     ) %>%
-    filter(Iter > 1) %>%
+    dplyr::filter(Iter > 1) %>%
     plyr::ddply(.variables = 'Iter',.fun=function(df){
       # browser()
       current.iter <- unique(df$Iter)
-      change.df <- change.frame %>% filter(Iter == current.iter)
+      change.df <- change.frame %>% dplyr::filter(Iter == current.iter)
       if(nrow(change.df) == 0){
-        ret <- df %>% select(-Iter) %>% as.matrix %>% unname()
+        ret <- df %>% dplyr::select(-Iter) %>% as.matrix %>% unname()
       }
       else if(nrow(change.df)==1){
-        ret <- df %>% select(-Iter) %>% as.matrix %>% unname()
+        ret <- df %>% dplyr::select(-Iter) %>% as.matrix %>% unname()
       } else{
         df %>%
-          select(-Iter) %>%
+          dplyr::select(-Iter) %>%
           unlist() %>%
           as.vector -> cur.sp
         change.inds <- change.df$ColIndNum
@@ -144,7 +157,7 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
       }
       ret
     }) %>%
-    select(-Iter) %>%
+    dplyr::select(-Iter) %>%
     as.matrix -> sp.path.inter
   rbind(
     sp.path[1,],
@@ -154,11 +167,11 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
   data.frame(
     Iter = 1:length(lambda.path)
   ) %>%
-    tbl_df() %>%
+    dplyr::tbl_df() %>%
     plyr::dlply(.variables = 'Iter',.fun=function(df){
       # browser()
       current.iter <- unique(df$Iter)
-      change.df <- change.frame %>% filter(Iter == current.iter)
+      change.df <- change.frame %>% dplyr::filter(Iter == current.iter)
       if(nrow(change.df)==0){
         ret <- lambda.path[current.iter]
       }else if(nrow(change.df) == 1){
@@ -171,7 +184,7 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
           IterAfter <- (current.iter+1):(length(lambda.path))
           lam.path.before <- lambda.path[IterBefore]
           lam.path.after <- lambda.path[IterAfter]
-          approx(x=IterAfter,
+          stats::approx(x=IterAfter,
                  y=lam.path.after,
                  xout = seq(current.iter,current.iter+1,length.out = 2+n.changes)) -> lam.approx
         } else if( (current.iter + 1) > length(lambda.path) ){
@@ -180,7 +193,7 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
           IterAfter = current.iter
           lam.path.before <- lambda.path[IterBefore]
           lam.path.after <- lambda.path[IterAfter]
-          approx(x=c(IterBefore,IterAfter),
+          stats::approx(x=c(IterBefore,IterAfter),
                  y=c(lam.path.before,lam.path.after),
                  xout = seq(current.iter-1,current.iter,length.out = 2+n.changes)) -> lam.approx
 
@@ -189,7 +202,7 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
           IterAfter <- (current.iter):(length(lambda.path))
           lam.path.before <- lambda.path[IterBefore]
           lam.path.after <- lambda.path[IterAfter]
-          approx(x=c(IterBefore,IterAfter),
+          stats::approx(x=c(IterBefore,IterAfter),
                  y=c(lam.path.before,lam.path.after),
                  xout = seq(current.iter-1,current.iter+1,length.out = 2+n.changes)) -> lam.approx
         }
@@ -203,11 +216,11 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
   data.frame(
     Iter = 1:length(lambda.path)
   ) %>%
-    tbl_df() %>%
+    dplyr::tbl_df() %>%
     plyr::dlply(.variables = 'Iter',.fun=function(df){
       # browser()
       current.iter <- unique(df$Iter)
-      change.df <- change.frame %>% filter(Iter == current.iter)
+      change.df <- change.frame %>% dplyr::filter(Iter == current.iter)
       if(nrow(change.df)==0){
         ret <- matrix(u.path[,current.iter],ncol=1)
       }else if(nrow(change.df) == 1){
@@ -234,7 +247,7 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
           u.path.before <- matrix(u.path[,IterBefore],nrow=nrow(u.path))
           u.path.after <- matrix(u.path[,IterAfter],nrow=nrow(u.path))
           lapply(1:nrow(u.path),function(ind){
-            approx(x=c(IterBefore,IterAfter),
+            stats::approx(x=c(IterBefore,IterAfter),
                    y=c(u.path.before[ind,],u.path.after[ind,]),
                    xout = seq(current.iter-1,current.iter,length.out = 2+n.changes)) -> u.ind.approx
             u.ind.approx$y[c(-1,-length(u.ind.approx$y))]
@@ -247,7 +260,7 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
           u.path.before <- matrix(u.path[,IterBefore],nrow=nrow(u.path))
           u.path.after <- matrix(u.path[,IterAfter],nrow=nrow(u.path))
           lapply(1:nrow(u.path),function(ind){
-            approx(x=c(IterBefore,IterAfter),
+            stats::approx(x=c(IterBefore,IterAfter),
                    y=c(u.path.before[ind,],u.path.after[ind,]),
                    xout = seq(current.iter-1,current.iter+1,length.out = 2+n.changes)) -> u.ind.approx
             u.ind.approx$y[c(-1,-length(u.ind.approx$y))]
@@ -342,7 +355,7 @@ rect.dendrogram <- function (tree, k = NULL, which = NULL, x = NULL, h = NULL, b
     }
   }
   if (is.null(cluster))
-    cluster <- cutree(tree, k = k)
+    cluster <- stats::cutree(tree, k = k)
   clustab <- table(cluster)[unique(cluster[tree_order])]
   m <- c(0, cumsum(clustab))
   if (!is.null(x)) {
@@ -427,7 +440,7 @@ my.rect.hclust <- function (tree, k = NULL, which = NULL, x = NULL, h = NULL, bo
          lwd=lwd)
   }else{
     if (is.null(cluster))
-      cluster <- cutree(tree, k = k)
+      cluster <- stats::cutree(tree, k = k)
     clustab <- table(cluster)[unique(cluster[tree$order])]
     m <- c(0, cumsum(clustab))
     if (!is.null(x)) {
@@ -771,7 +784,7 @@ my.heatmap.2 <- function (x, Rowv = TRUE,
   if (dendrogram %in% c("both", "row")) {
     plot(ddr, horiz = TRUE, axes = FALSE, yaxs = "i", leaflab = "none")
     tree = Row.hclust
-    cluster <- cutree(tree, k = k.row)
+    cluster <- stats::cutree(tree, k = k.row)
     cluster
     clustab <- table(cluster)[unique(cluster[tree$order])]
     clustab
@@ -809,7 +822,7 @@ my.heatmap.2 <- function (x, Rowv = TRUE,
   if (dendrogram %in% c("both", "column")) {
     plot(ddc, axes = FALSE, xaxs = "i", leaflab = "none")
     tree = Col.hclust
-    cluster <- cutree(tree, k = k.col)
+    cluster <- stats::cutree(tree, k = k.col)
     cluster
     clustab <- table(cluster)[unique(cluster[tree$order])]
     clustab

@@ -49,10 +49,10 @@
 #' @examples
 #' library(clustRviz)
 #' data("presidential_speech")
-#' Xdat <- presidential_speech$X
+#' Xdat <- presidential_speech$X[1:10,1:4]
 #' carp.fit <- CARP(
-#'     X=presidential_speech$X,
-#'     obs.labels=presidential_speech$labels)
+#'     X=Xdat,
+#'     obs.labels=presidential_speech$labels[1:10])
 CARP <- function(X,
                  obs.labels=NULL,
                  X.center=TRUE,
@@ -70,6 +70,7 @@ CARP <- function(X,
                  interactive=TRUE,
                  static=TRUE,
                  npcs=4){
+  Iter <- Cluster <- Lambda <- NULL
   if(is.logical(verbose)){
     verbose.basic = TRUE
     verbose.deep=FALSE
@@ -237,15 +238,15 @@ CARP <- function(X,
     carp.dend <- NULL
   }
   if(interactive){
-    X.pca <- prcomp(t(X),scale. = FALSE,center = FALSE)
+    X.pca <- stats::prcomp(t(X),scale. = FALSE,center = FALSE)
     X.pca.rot <- X.pca$rotation[,1:npcs]
     lapply(1:length(carp.cluster.path$clust.path),function(iter){
       U <- t(matrix(carp.cluster.path$u.path.inter[,iter],ncol=n.obs))%*%X.pca.rot
       names(U) <- paste('PC',1:npcs)
       U %>%
         as.data.frame() %>%
-        tbl_df() %>%
-        mutate(
+        dplyr::tbl_df() %>%
+        dplyr::mutate(
           Iter = iter,
           Obs = 1:n(),
           Cluster = carp.cluster.path$clust.path[[iter]]$membership,
@@ -254,13 +255,13 @@ CARP <- function(X,
         )
     }) %>%
       do.call(rbind.data.frame,.) %>%
-      tbl_df() %>%
-      group_by(Iter) %>%
-      mutate(
+      dplyr::tbl_df() %>%
+      dplyr::group_by(Iter) %>%
+      dplyr::mutate(
         NCluster = length(unique(Cluster))
       ) %>%
-      ungroup() %>%
-      mutate(
+      dplyr::ungroup() %>%
+      dplyr::mutate(
         LambdaPercent = Lambda / max(Lambda)
       ) -> carp.cluster.path.vis
   } else{
@@ -299,10 +300,10 @@ CARP <- function(X,
 #' @examples
 #' library(clustRviz)
 #' data("presidential_speech")
-#' Xdat <- presidential_speech$X
+#' Xdat <- presidential_speech$X[1:10,1:4]
 #' carp.fit <- CARP(
-#'     X=presidential_speech$X,
-#'     obs.labels=presidential_speech$labels)
+#'     X=Xdat,
+#'     obs.labels=presidential_speech$labels[1:10])
 #' print(carp.fit)
 print.CARP <- function(carp.fit){
   preprocess.string <- c('center','scale')
@@ -369,14 +370,18 @@ print.CARP <- function(carp.fit){
 #' @param lcex a positive number. Label size on dendrograms.
 #' @export
 #' @import shiny
+#' @import ggplot2
+#' @import dplyr
 #' @examples
+#' \dontrun{
 #' library(clustRviz)
 #' data("presidential_speech")
-#' Xdat <- presidential_speech$X
+#' Xdat <- presidential_speech$X[1:10,1:4]
 #' carp.fit <- CARP(
-#'     X=presidential_speech$X,
-#'     obs.labels=presidential_speech$labels)
+#'     X=Xdat,
+#'     obs.labels=presidential_speech$labels[1:10])
 #' plot(carp.fit,type='interactive')
+#' }
 plot.CARP <- function(
   carp.fit,
   type='dendrogram',
@@ -410,31 +415,31 @@ plot.CARP <- function(
       plot.frame <- carp.fit$carp.cluster.path.vis[,plot.cols]
       names(plot.frame)[1:2] <- c('V1','V2')
       plot.frame %>%
-        filter(LambdaPercent <= percent) %>%
-        filter(Iter > carp.fit$burn.in) %>%
-        ggplot(aes(x=V1,y=V2,group=Obs)) +
-        geom_path(
-          aes(x=V1,y=V2),
+        dplyr::filter(LambdaPercent <= percent) %>%
+        dplyr::filter(Iter > carp.fit$burn.in) %>%
+        ggplot2::ggplot(ggplot2::aes(x=V1,y=V2,group=Obs)) +
+        ggplot2::geom_path(
+          ggplot2::aes(x=V1,y=V2),
           linejoin = 'round',
           color='red',
           size=1
         )  +
-        geom_point(
-          aes(x=V1,y=V2),
-          data=plot.frame %>% filter(Iter==1),
+        ggplot2::geom_point(
+          ggplot2::aes(x=V1,y=V2),
+          data=plot.frame %>% dplyr::filter(Iter==1),
           color='black',
           size=I(2)
         ) +
         ggrepel::geom_text_repel(
-          aes(x=V1,y=V2,label=ObsLabel),
+          ggplot2::aes(x=V1,y=V2,label=ObsLabel),
           size=I(3),
-          data=plot.frame %>% filter(Iter == 1)
+          data=plot.frame %>% dplyr::filter(Iter == 1)
         ) +
-        guides(color=FALSE,size=FALSE) +
-        theme(axis.title = element_text(size=15)) +
-        theme(axis.text = element_text(size=10)) +
-        xlab(axis[1]) +
-        ylab(axis[2])
+        ggplot2::guides(color=FALSE,size=FALSE) +
+        ggplot2::theme(axis.title = ggplot2::element_text(size=15)) +
+        ggplot2::theme(axis.text = ggplot2::element_text(size=10)) +
+        ggplot2::xlab(axis[1]) +
+        ggplot2::ylab(axis[2])
 
     },
     interactive={
@@ -695,4 +700,123 @@ plot.CARP <- function(
     }
   )
 
+}
+
+#' Method for returning CARP and CBASS clustering solutions
+#'
+#' See \code{Clustering.CARP} and \code{Clustering.CBASS} for details
+#'
+#' @param x a CARP or CBASS object
+#' @param ... additional arguements to Clustering.CARP or Clustering.CBASS
+#' @return CARP clustering solutions or CBASS biclustering solutions
+#' @export
+Clustering <- function(x,...) {
+  UseMethod("Clustering", x)
+}
+
+#' Get clustering solution from a CARP object
+#'
+#' Returns cluster labels and cluster means at a point along the CARP path,
+#' or the entire cluster sequence of cluster labels and means
+#'
+#' Passing either the desired number of clusters (\code{k}) or the percent
+#' regularization (\code{percent}) returns the clustering assignment
+#' and cluster means at the specific point along the CARP path. If neither
+#' \code{k} nor \code{percent} are specified, all clusteirng assignments and
+#' mean matricies are returned.
+#'
+#' @param carp.fit A CARP object returned by \code{CARP}
+#' @param k An interger between 1 and \code{n.obs}. The number of unique
+#' clusters
+#' @param percent A number between 0 and 1. The percent of regularization at
+#' which to cut the path.
+#' @return A list with elements
+#' \describe{
+#' \item{\code{clustering.assignment}}{
+#' In the case where either \code{k} or \code{percent} is specified, a vector
+#' of cluster labels of length \code{n.obs}.
+#' In the case where neither \code{k} nor \code{percent} is specified, a
+#' matrix of size \code{n.obs} by \code{n.obs}, each row specifying a unique
+#' cluster assignment along the CARP path.
+#' }
+#' \item{\code{cluster.means}}{
+#' In the case where either \code{k} or \code{percent} is specified, a matrix
+#' of dimension \code{p.vars} by \code{length(unique(clustering.assignment))}
+#' with each column a cluster mean.
+#' In the case where neither \code{k} nor \code{percent} is specificed, a
+#' list of matricies of length \code{n.obs}, representing the cluster means
+#' for each cluster assignment along the CARP path.
+#' }
+#' }
+#' @export
+#' @examples
+#' library(clustRviz)
+#' data("presidential_speech")
+#' Xdat <- presidential_speech$X[1:10,1:4]
+#' carp.fit <- CARP(
+#'     X=Xdat,
+#'     obs.labels=presidential_speech$labels[1:10])
+#' # Return the CARP iterate with k=5 clusters
+#' carp.clustering <- Clustering(carp.fit,k=5)
+#' # Examine the cluster labels
+#' carp.clustering$clustering.assignment
+#' # Examine the cluster means
+#' head(carp.clustering$cluster.means)
+#' # Return the whole sequence of solutions
+#' carp.clustering.full <- Clustering(carp.fit)
+#' # Examine the k=5 solution again
+#' carp.clustering.full$clustering.assignment[5,]
+#' # Examine the k=5 means again
+#' head(carp.clustering.full$cluster.means[[5]])
+Clustering.CARP <- function(carp.fit,k=NULL,percent=NULL){
+  if(!is.null(k)){
+      clust.assign <- cutree(carp.fit$carp.dend,k=k)
+      lapply(unique(clust.assign),function(cl.lab){
+        apply(
+          matrix(t(carp.fit$X)[,clust.assign==cl.lab],nrow=carp.fit$p.vars),
+          1,
+          mean
+        )
+      }) %>%
+        do.call(cbind,.) -> clust.means
+      clust.assign <- paste('cl',clust.assign,sep='')
+      colnames(clust.means) <- unique(clust.assign)
+
+  } else if(!is.null(percent)){
+      clust.assign <- stats::cutree(carp.fit$carp.dend,h=percent)
+      lapply(unique(clust.assign),function(cl.lab){
+        apply(
+          matrix(t(carp.fit$X)[,clust.assign==cl.lab],nrow=carp.fit$p.vars),
+          1,
+          mean
+        )
+      }) %>%
+        do.call(cbind,.) -> clust.means
+      clust.assign <- paste('cl',clust.assign,sep='')
+      colnames(clust.means) <- unique(clust.assign)
+
+  } else{
+    lapply(1:carp.fit$n.obs,function(k){
+      stats::cutree(carp.fit$carp.dend,k)
+    }) %>%
+      do.call(rbind,.) -> clust.assign
+    apply(clust.assign,1,function(cl.ass){
+      lapply(unique(cl.ass),function(cl.lab){
+        apply(
+          matrix(t(carp.fit$X)[,cl.ass==cl.lab],nrow=carp.fit$p.vars),
+          1,
+          mean
+        )
+      }) %>%
+      do.call(cbind,.) -> tmp.means
+      colnames(tmp.means) <- paste('cl',1:length(unique(cl.ass)),sep='')
+      tmp.means
+    }) -> clust.means
+    clust.assign <- matrix(paste('cl',clust.assign,sep=''),nrow=carp.fit$n.obs)
+
+  }
+  list(
+    clustering.assignment = clust.assign,
+    cluster.means = clust.means
+  )
 }

@@ -20,9 +20,9 @@ the type of CARP algorithm performed, and the visualizations returned.
 \examples{
 library(clustRviz)
 data("presidential_speech")
-Xdat <- presidential_speech$X
+Xdat <- presidential_speech$X[1:10,1:4]
 carp.fit <- CARP(
-    X=presidential_speech$X,
-    obs.labels=presidential_speech$labels)
+    X=Xdat,
+    obs.labels=presidential_speech$labels[1:10])
 print(carp.fit)
 }
