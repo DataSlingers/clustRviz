@@ -242,12 +242,6 @@ Rcpp::List CARPL2_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arm
 
 
 
-    if(verbose){
-      std::cout << 'i' << iter << std::endl;
-      std::cout << 'i' << path_iter << std::endl;
-      std::cout << 'n' << nzeros_new << std::endl;
-      std::cout << 'l' << lambda << std::endl;
-    }
 
 
 
@@ -337,12 +331,6 @@ Rcpp::List CARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,doubl
     }
 
 
-    if(verbose){
-      std::cout << 'i' << iter << std::endl;
-      std::cout << 'i' << path_iter << std::endl;
-      std::cout << 'n' << nzeros_new << std::endl;
-      std::cout << 'l' << lambda << std::endl;
-    }
 
 
     if(iter >= burn_in){
@@ -435,12 +423,6 @@ Rcpp::List CARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,doubl
     }
 
 
-    if(verbose){
-      std::cout << 'i' << iter << std::endl;
-      std::cout << 'i' << path_iter << std::endl;
-      std::cout << 'n' << nzeros_new << std::endl;
-      std::cout << 'l' << lambda << std::endl;
-    }
 
 
     if(iter >= burn_in){
@@ -590,12 +572,6 @@ Rcpp::List CARPL1_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arm
 
 
 
-    if(verbose){
-      std::cout << 'i' << iter << std::endl;
-      std::cout << 'i' << path_iter << std::endl;
-      std::cout << 'n' << nzeros_new << std::endl;
-      std::cout << 'l' << lambda << std::endl;
-    }
 
 
 
