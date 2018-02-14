@@ -1,0 +1,211 @@
+---
+title: "Getting Started"
+author: "John Nagorski"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    css: style.css
+vignette: >
+  %\VignetteIndexEntry{Getting Started}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = TRUE
+)
+```
+
+\renewcommand{\vec}[1]{\boldsymbol{#1}}
+## Introduction
+
+Clustering is important.
+
+Convex clustering and biclustering offer an alternative to traditional 
+clustering algorthims.
+Let $\vec X \equiv \left[\vec{x}_1,\dots, \vec{x}_n \right] \in \mathbb{R}^{p\times n}$ denote our data matrix consisting of $n$ observations in $p$ dimensions. We seek an estimate $\vec U \equiv \left[\vec{u}_1,\dots, \vec{u}_n \right] \in \mathbb{R}^{p\times n}$ which solves the following optimization problem:
+$$
+\underset{\vec U}{\textrm{minimize}} \;\;
+\frac{1}{2} \| \vec X - \vec U \|_F^2 + 
+\lambda \sum_{ l < m} 
+w_{l,m} \| \vec u_l - \vec u_m \|_2
+$$
+
+where $\lambda > 0$ is a regularization parameter, and $w_{l,m} > 0$ denote pairwise weights.
+
+Convex clustering has many advanatges.
+
+- Novel visuals
+- mathematical
+
+However, it can be slow.
+
+In this vignette we introduce the `clustRviz` package which delivers fast
+approixmations to the convex clustering solution path as well as easy 
+visualizations, both static and interactive.
+
+In what follows we will give a quick introduction to the package and 
+its capabilities; a more detailed treatment can be found in the Details 
+vignette.
+
+Throughout both vignettes we will utilize the presidential speech dataset 
+included in the `clustRviz` package.
+
+```{r, loadpackage}
+library(clustRviz)
+data("presidential_speech")
+```
+
+The presidential speech data set contains the top 75 most variable 
+log-transformed word counts of each US president, aggregated over several 
+speeches. Additional text processing such as removing stop words and 
+stemming have been done via the `tm` package.  
+We quickly examine the speech data:
+```{r, headdat}
+Xdat <- presidential_speech$X
+dim(Xdat)
+Xdat[1:5,1:5]
+```
+Here we see the columns correspond to stemmed words.
+
+In addition, `presidential_speech` also contains observation labels:
+```{r, headlab}
+head(presidential_speech$labels)
+```
+
+## CARP - The Basics
+
+We begin by clustering. As discussed in Details, many user-specified options 
+can be passed to CARP, including weights, algorithm type, and various 
+pre-processing options.
+These can be seen via
+```{r CARPhelp, eval=FALSE}
+?CARP
+```
+By default, however, CARP makes reasonable default choices and be run out of the
+box.
+
+We begin by fitting the CARP solution path to the presidents data.
+
+```{r CARPfit}
+carp.fit <- CARP(Xdat,
+                 obs.labels = presidential_speech$labels)
+```
+
+We can examine our CARP fit via
+
+```{r CARPprint}
+print(carp.fit)
+```
+
+this displays things like the algorithm used, weight calculations, pre-processing,
+as well as a brief data description.
+
+Once fitted, a natural first step is to obtain clustering solutions.
+This is done via `Clustering` function.
+similar to `cutree`, `Clustering` can take the arguement `k` specifying 
+the number of clusters desired.
+
+```{r CARPclust1}
+carp.cluster.ksol <- Clustering(carp.fit,k=5)
+```
+
+We can examine the cluster assignments
+
+```{r CARPclust1ass}
+head(carp.cluster.ksol$clustering.assignment)
+```
+and the cluster means
+```{r CARPclust1mean}
+head(carp.cluster.ksol$cluster.means)
+```
+
+Besides specifying the number of clusters, CARP can also return clustering 
+assignment based on the amount of regularization. Using the `percent` arguement
+we can specify the percent of regularization along the path at which to examine.
+
+
+```{r CARPclust2}
+carp.cluster.regsol <- Clustering(carp.fit,percent=.3)
+```
+
+Cluster assignments and cluster means are returned as before
+```{r CARPclust2ass}
+head(carp.cluster.regsol$clustering.assignment)
+head(carp.cluster.regsol$cluster.means)
+```
+
+## CARP - Visualizations
+
+Along with fast computation, `clustRviz` also provides a variety of clustering 
+and biclustring visualizations, both static and dynmaic.
+In the case of clustering, one of the basic visualizations we may obtain from 
+our CARP solution path is the dendrogram.
+While a dendrogram representation is not guarenteed for Convex Clustering 
+generally, `CARP`'s default algorithm (appropriately titled CARP-VIZ), 
+algorithmically ensures that such a representation exists.
+In order visualize the dendrogram associated with the CARP solution path 
+we simply plot the object:
+
+```{r carpdend,fig.height=6,fig.width=7,fig.align='center'}
+plot(carp.fit)
+```
+
+The dendrogram is the default visualization when calling the `plot` function 
+on a CARP object.
+Additional visualizations may be displayed by specifying the `type` arguement.
+In particular the the clustering path visualization, a clustering visualization 
+unique to fusion clustering algorithms, may be obtained by specifying `type=path`:
+
+```{r, fig.height=6,fig.width=7,fig.align='center'}
+plot(carp.fit,type='path')
+```
+
+The clustering path above shows our original data points (black) projected onto 
+the first two principal components.
+As the amount of regularization increases observations begin to fuse together
+forming clusters.
+The red curves indicate the paths the observations take as they fuse together.
+
+By default the entire the CARP path is plotted.
+We can examine portions of the path by specifying the percent of 
+regularization via the `percent` arguement; other axis can also 
+be specified.
+
+```{r, fig.height=6,fig.width=7,fig.align='center'}
+plot(carp.fit,type='path',percent=.05,axis = c('PC1','PC4'))
+```
+
+
+
+Finally an interactive visualization of both CARP solutions paths and their associated 
+dendrograms can displayed via the `type='interactive'` option.
+In this case `plot` lauches a shiny application which allows users to watch 
+their data form clusters.
+The app consists of both Movie and Static tabs.
+In the Movie tab we can watch clusters form in real time as the CARP iterations 
+(and hence regularization) increases.
+In the Static tab users can choose discrete numbers of clusters and view the 
+path and dendrogram to which it corresponds.
+An example of the interactive CARP plot is given below.
+```{r carpshinycode, echo=TRUE,include=FALSE,eval=FALSE}
+plot(carp.fit,type='interactive')
+```
+
+```{r,echo=FALSE,eval=TRUE}
+# library(sys)
+# pid <- exec_background(cmd = "R",
+#                 args = paste0("-e shiny::runApp('./Test/app.R',launch.browser=FALSE,port=7702)")
+# )
+# pid <- exec_background(cmd = "Rscript",
+#                 args = paste0("./Test/app.R")
+# )
+# pid
+# tools::pskill(pid)
+# knitr::include_url(url="http://127.0.0.1:7702",height='850px')
+knitr::include_url(url="https://clustrviz.shinyapps.io/PathShiny/",height='850px')
+```
+
