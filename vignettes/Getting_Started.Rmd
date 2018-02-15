@@ -91,6 +91,8 @@ box.
 We begin by fitting the CARP solution path to the presidents data.
 
 ```{r CARPfit}
+# carp.fit <- CARP(Xdat[1:10,1:5],
+#                  obs.labels = presidential_speech$labels[1:10])
 carp.fit <- CARP(Xdat,
                  obs.labels = presidential_speech$labels)
 ```
@@ -160,8 +162,16 @@ Additional visualizations may be displayed by specifying the `type` arguement.
 In particular the the clustering path visualization, a clustering visualization 
 unique to fusion clustering algorithms, may be obtained by specifying `type=path`:
 
-```{r, fig.height=6,fig.width=7,fig.align='center'}
+```{r,eval=FALSE}
 plot(carp.fit,type='path')
+plot(carp.fit,type='path',percent=.05,axis = c('PC1','PC4'))
+```
+```{r, fig.height=5,fig.width=10,fig.align='center',echo=FALSE}
+gridExtra::grid.arrange(
+  plot(carp.fit,type='path'),
+  plot(carp.fit,type='path',percent=.05,axis = c('PC1','PC4')),
+  ncol=2
+)
 ```
 
 The clustering path above shows our original data points (black) projected onto 
@@ -174,10 +184,6 @@ By default the entire the CARP path is plotted.
 We can examine portions of the path by specifying the percent of 
 regularization via the `percent` arguement; other axis can also 
 be specified.
-
-```{r, fig.height=6,fig.width=7,fig.align='center'}
-plot(carp.fit,type='path',percent=.05,axis = c('PC1','PC4'))
-```
 
 
 
@@ -195,7 +201,7 @@ An example of the interactive CARP plot is given below.
 plot(carp.fit,type='interactive')
 ```
 
-```{r,echo=FALSE,eval=TRUE}
+```{r,echo=FALSE,eval=TRUE,out.width='100%'}
 # library(sys)
 # pid <- exec_background(cmd = "R",
 #                 args = paste0("-e shiny::runApp('./Test/app.R',launch.browser=FALSE,port=7702)")
@@ -209,3 +215,4 @@ plot(carp.fit,type='interactive')
 knitr::include_url(url="https://clustrviz.shinyapps.io/PathShiny/",height='850px')
 ```
 
+## CBASS
