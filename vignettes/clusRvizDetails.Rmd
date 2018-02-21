@@ -1,0 +1,169 @@
+---
+title: "clustRviz Details"
+author: "John Nagorski"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    css: style.css
+vignette: >
+  %\VignetteIndexEntry{clustRviz Details}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval=FALSE
+)
+```
+
+\renewcommand{\vec}[1]{\boldsymbol{#1}}
+## Introduction
+
+The `clustRviz` package intends to make fitting and visualizing CARP and CBASS 
+solution paths an easy process. In the [Getting Started](Getting_Started.html) 
+vignettee we provide a quick start guide for basic usage, fitting, 
+and plotting. In this vignette, we build on the basics and provide a more 
+detailed explanation for the variety of options available in `clustRviz`.
+
+
+
+## Background
+
+The starting point for CARP the Convex Clustering problem. 
+
+
+$$
+\underset{\vec U}{\textrm{minimize}} \;\;
+\frac{1}{2} \| \vec X - \vec U \|_F^2 + 
+\lambda \sum_{ l < m} 
+w_{l,m} \| \vec u_l - \vec u_m \|_2
+$$
+
+The above can be solved via ADMM
+
+$$
+\underset{\vec U, \vec V}{\text{minimize}}\;\;
+\frac{1}{2} \| \vec X - \vec U \|_2^2  +  \lambda \sum_{l<m} w_{l,m} \|  \vec v_{l,m} \|_2 \\
+\text{subject to}\;\;\;\;\;
+\vec u_{l} - \vec u_{m} = \vec v_{l,m}, \;\; \forall l,m
+$$
+
+Convex clustering is traditionally solved by iteratively applying ADMM updates until convergence.
+
+This must be done for each $\lambda_k$ which is costly
+
+CARP augments the ADMM as follows:
+
+
+## Preprocessing and Inputs
+
+While the `CARP` and `CBASS` functions provides several reasonable default choices for weights, algorithms, etc, it
+is important to know their details if one wishes to compute more customized clustering choices.
+Here we examine several of the inputs to `CARP` and `CBASS`, as well as their preprocessing technqiues 
+
+While we will still use the `CARP` and `CBASS` functions, we will also encounter serveral other
+package functions along the way.
+
+As before, we will use the presidential speech dataset to illustrate 
+the variety of options available. Let's begin by loading our
+package and the dataset.
+
+```{r}
+library(clustRviz)
+data("presidential_speech")
+Xdat <- presidential_speech$X
+Xdat[1:5,1:5]
+```
+
+Again our speech data consists of log-transformed word counts from speech found at url.
+
+### Preprocessing 
+
+##### Normalization
+An important first choice before clustering is whether to center and scale our observations.
+
+Centering should always be done.
+
+The choice of scaling is left to the user discression, but should typically be applied 
+if measurements are a vastly different scales.
+
+In the case of the presidental speech dataset, all variables are of the same type and 
+so we do not scale our data matrix
+
+```{r}
+# Centering data before computing the CARP solution path
+Xdat.preprocessed <- scale(Xdat,center=TRUE,scale=FALSE)
+```
+
+In the `CARP` function this preprocessing is done via the `X.center` and `X.scale`
+arguements.
+If the data is pre-processed outside of `CARP`, as is the case here, these options
+may be set to `FALSE`
+
+Similarly, the `CBASS` function also requires that data preprocessed prior usage.
+Because `CBASS` clusters both observations and variables, here centering is done 
+by subtracting away the global mean our data matrix.
+
+```{r}
+# Subtracting global mean before computing the CBASS solution path
+Xdat.bi <- Xdat
+Xdat.bi.preprocessed <- Xdat -  mean(Xdat)
+```
+
+##### Dimension Reduction
+
+While not directly addressed by `CARP` or `CBASS`, high dimensional 
+measurements can present a challenge for clustering methods.
+
+Owing to the "curse of dimensionality", high dimensional measurements 
+may deliver sub-optimal performance for distance-based methods generally.
+
+As such, performing dimensionality reduction before applying `CARP`  
+may result in more interpretable clusters.
+
+We leave the choice of dimensionality reduction to the end-user, 
+but still recommend the reduced feature set be pre-processed 
+as described above.
+
+For the purpose of visualuization, `CARP` addressed the problem 
+of high dimenstionality by visualizing the principal components 
+of the data by default.
+
+
+### Weights
+
+Weights are arguably one of the most important inputs to both `CARP` and `CBASS`.
+
+As we can see from the optimization probelms above, weights important apriori 
+preference concerning which observations (and variables in the case of `CBASS`)
+should be fused together.
+
+This important feature allows us to incorportate domain knowledge, if available.
+
+Less obvious is that weight choices can greatly affect the computation time 
+of both `CARP` and `CBASS`
+
+In the `CARP` problem above for example, we note the regularization term 
+contains $\binom{n}{2}$ summands, making computations slow.
+
+Computations can be reduced by making the majority of weights zero, and hence 
+reducing the number of model parameters.
+
+Here we discuss what might be reasonable choices for initial weights and 
+how one might the sparsity of the weight vector.
+
+By default `CARP` and `CBASS` used distance-based weights via a gaussian kernel:
+
+$$
+d_{l,m}  = \exp\{ -\phi \|\vec x_l - \vec x_m \|^2_2 \}
+$$
+
+
+
+
+
+
+
