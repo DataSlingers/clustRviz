@@ -2,7 +2,10 @@ Package: clustRviz
 Type: Package
 Title: Convex (Bi)Clustering via Algorithmic Regularization Paths
 Version: 0.1.0
-Authors@R: person("John", "Nagorski", role = c("aut", "cre"), email = "jn13@rice.edu")
+Authors@R: c(
+  person("John", "Nagorski", role = c("aut", "cre"), email = "jn13@rice.edu"),
+  person("Michael", "Weylandt", role=c("ctb"),email="Michael.Weylandt@rice.edu"),
+  person("Genevera","Allen",role=c("ths"),email="gallen@rice.edu"))
 Maintainer: John Nagorski <jn13@rice.edu>
 Description: Provides interactive graphics and fast computation for the Convex Clustering problem.
 License: GPL-3
