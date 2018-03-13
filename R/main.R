@@ -100,13 +100,21 @@ CARP <- function(X,
 
   # get labels
   if(is.null(obs.labels)){
-    n.labels <- rownames(X)
+    if(!is.null(rownames(X))){
+      n.labels <- rownames(X)
+    } else {
+      n.labels <- 1:nrow(X)
+    }
   } else{
     n.labels <- obs.labels
   }
 
   if(is.null(var.labels)){
-    p.labels <- colnames(X)
+    if(!is.null(colnames(X))){
+      p.labels <- colnames(X)
+    } else{
+      p.labels <- 1:ncol(X)
+    }
   } else{
     p.labels <- var.labels
   }
@@ -977,12 +985,20 @@ CBASS <- function(X,
   }
   # get labels
   if(is.null(obs.labels)){
-    n.labels <- rownames(X)
+    if(!is.null(rownames(X))){
+      n.labels <- rownames(X)
+    } else {
+      n.labels <- 1:nrow(X)
+    }
   } else{
     n.labels <- obs.labels
   }
   if(is.null(var.labels)){
-    p.labels <- colnames(X)
+    if(!is.null(colnames(X))){
+      p.labels <- colnames(X)
+    } else{
+      p.labels <- 1:ncol(X)
+    }
   } else{
     p.labels <- var.labels
   }
