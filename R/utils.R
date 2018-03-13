@@ -1,12 +1,3 @@
-#' Pipe operator
-#'
-#' @name %>%
-#' @rdname pipe
-#' @keywords internal
-#' @export
-#' @importFrom magrittr %>%
-#' @usage lhs \%>\% rhs
-NULL
 
 
 if(getRversion() >= "2.15.1")  utils::globalVariables(c("."))
@@ -28,6 +19,7 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("."))
 #' @source \url{http://www.presidency.ucsb.edu}
 "presidential_speech"
 
+#' @importFrom Matrix spMatrix
 CreateAdjacency <- function(E,sp.pattern,n){
   adjmat <- Matrix::spMatrix(nrow=n,ncol = n)
   connected.pairs <- matrix(E[which(sp.pattern!=0),],ncol=2)
@@ -49,6 +41,8 @@ CreateClusterGraphPath <- function(AdjMatrixList){
     CreateClusterGraph(x)
   })
 }
+
+#' @importFrom igraph components
 GetClusters <- function(ClusterGraph){
   igraph::components(ClusterGraph)
 }
@@ -56,6 +50,12 @@ GetClustersPath <- function(ClusterGraphList){
   lapply(ClusterGraphList,GetClusters)
 }
 
+#' @importFrom cvxclustr weights_graph
+#' @importFrom Matrix which
+#' @importFrom Matrix Matrix
+#' @importFrom Matrix t
+#' @importFrom Matrix Diagonal
+#' @importFrom parallel mclapply
 ConvexClusteringPreCompute <- function(X,weights,rho,ncores=2,verbose=FALSE){
   n <- ncol(X)
   p <- nrow(X)
@@ -108,6 +108,19 @@ ConvexClusteringPreCompute <- function(X,weights,rho,ncores=2,verbose=FALSE){
   return(ret)
 }
 
+#' @importFrom dplyr tbl_df
+#' @importFrom dplyr mutate
+#' @importFrom dplyr select
+#' @importFrom dplyr filter
+#' @importFrom dplyr arrange
+#' @importFrom dplyr group_by
+#' @importFrom dplyr ungroup
+#' @importFrom dplyr lag
+#' @importFrom dplyr n
+#' @importFrom plyr dlply
+#' @importFrom tidyr gather
+#' @importFrom stringr str_replace
+#' @importFrom stats approx
 ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
   sp.path%>%
     dplyr::tbl_df() %>%
@@ -119,7 +132,7 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
     dplyr::arrange(Iter,ColLab) %>%
     dplyr::group_by(ColLab) %>%
     dplyr::mutate(
-      SpValueLag = lag(SpValue)
+      SpValueLag = dplyr::lag(SpValue)
     ) %>%
     dplyr::ungroup() %>%
     dplyr::filter(Iter != 1) %>%
@@ -251,7 +264,7 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
           u.path.before <- matrix(u.path[,IterBefore],nrow=nrow(u.path))
           u.path.after <- matrix(u.path[,IterAfter],nrow=nrow(u.path))
           lapply(1:nrow(u.path),function(ind){
-            approx(x=c(IterBefore,IterAfter),
+            stats::approx(x=c(IterBefore,IterAfter),
                    y=c(u.path.before[ind,],u.path.after[ind,]),
                    xout = seq(current.iter,current.iter+1,length.out = 2+n.changes)) -> u.ind.approx
             u.ind.approx$y[c(-1,-length(u.ind.approx$y))]
@@ -293,7 +306,9 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
 }
 
 
-
+#' @importFrom cvxclustr weights_graph
+#' @importFrom cvxclustr knn_weights
+#' @importFrom Matrix which
 MinKNN <- function(w,n){
   weight.adj <- cvxclustr::weights_graph(w,n)
   cardE <- sum(weight.adj)
@@ -340,18 +355,26 @@ iorder = function(m){
   -iorder
 }
 
+#' @importFrom dendextend is.dendrogram
+#' @importFrom dendextend heights_per_k.dendrogram
+#' @importFrom stats order.dendrogram
+#' @importFrom stats cutree
+#' @importFrom graphics par
+#' @importFrom graphics grconvertX
+#' @importFrom graphics grconvertY
+#' @importFrom graphics rect
 rect.dendrogram <- function (tree, k = NULL, which = NULL, x = NULL, h = NULL, border = 2,
                              cluster = NULL, horiz = FALSE, density = NULL, angle = 45,
                              text = NULL, text_cex = 1, text_col = 1, xpd = TRUE, lower_rect,
                              upper_rect = 0, prop_k_height = 0.5, stop_if_out = FALSE,
                              my.col.vec = NULL,
                              ...){
-  if (!is.dendrogram(tree))
+  if (!dendextend::is.dendrogram(tree))
     stop("x is not a dendrogram object.")
   if (length(h) > 1L | length(k) > 1L)
     stop("'k' and 'h' must be a scalar(i.e.: of length 1)")
-  tree_heights <- heights_per_k.dendrogram(tree)[-1]
-  tree_order <- order.dendrogram(tree)
+  tree_heights <- dendextend::heights_per_k.dendrogram(tree)[-1]
+  tree_order <- stats::order.dendrogram(tree)
   if (!is.null(h)) {
     if (!is.null(k))
       stop("specify exactly one of 'k' and 'h'")
@@ -388,8 +411,8 @@ rect.dendrogram <- function (tree, k = NULL, which = NULL, x = NULL, h = NULL, b
                   k), domain = NA)
   border <- rep_len(border, length(which))
   retval <- list()
-  old_xpd <- par()["xpd"]
-  par(xpd = xpd)
+  old_xpd <- graphics::par()["xpd"]
+  graphics::par(xpd = xpd)
   my.col.vec <- rep(my.col.vec,length.out=length(which))
   for (n in seq_along(which)) {
     next_k_height <- tree_heights[names(tree_heights) ==
@@ -401,7 +424,7 @@ rect.dendrogram <- function (tree, k = NULL, which = NULL, x = NULL, h = NULL, b
     if (!horiz) {
       xleft = m[which[n]] + 0.66
       if (missing(lower_rect))
-        lower_rect <- par("usr")[3L] - strheight("W") *
+        lower_rect <- graphics::par("usr")[3L] - strheight("W") *
           (max(nchar(labels(tree))) + 1)
       ybottom = lower_rect
       xright = m[which[n] + 1] + 0.33
@@ -412,7 +435,7 @@ rect.dendrogram <- function (tree, k = NULL, which = NULL, x = NULL, h = NULL, b
     else {
       ybottom = m[which[n]] + 0.66
       if (missing(lower_rect))
-        lower_rect <- par("usr")[2L] + strwidth("X") *
+        lower_rect <- graphics::par("usr")[2L] + strwidth("X") *
           (max(nchar(labels(tree))) + 1)
       xright = lower_rect
       ytop = m[which[n] + 1] + 0.33
@@ -420,21 +443,23 @@ rect.dendrogram <- function (tree, k = NULL, which = NULL, x = NULL, h = NULL, b
         prop_k_height + next_k_height * (1 - prop_k_height) +
         upper_rect
     }
-    rect(xleft, ybottom, xright, ytop, border = border[n],
+    graphics::rect(xleft, ybottom, xright, ytop, border = border[n],
 
          density = density, angle = angle, my.col.vec[n],...)
     if (!is.null(text))
-      text((m[which[n]] + m[which[n] + 1] + 1)/2, grconvertY(grconvertY(par("usr")[3L],
+      text((m[which[n]] + m[which[n] + 1] + 1)/2, graphics::grconvertY(graphics::grconvertY(graphics::par("usr")[3L],
                                                                         "user", "ndc") + 0.02, "ndc", "user"), text[n],
            cex = text_cex, col = text_col)
     retval[[n]] <- which(cluster == as.integer(names(clustab)[which[n]]))
   }
-  par(xpd = old_xpd)
+  graphics::par(xpd = old_xpd)
   invisible(retval)
 }
 
 
-
+#' @importFrom graphics rect
+#' @importFrom graphics par
+#' @importFrom stats cutree
 my.rect.hclust <- function (tree, k = NULL, which = NULL, x = NULL, h = NULL, border = 2,
                             cluster = NULL,my.col.vec = NULL,lwd=NULL){
   if (length(h) > 1L | length(k) > 1L)
@@ -448,10 +473,10 @@ my.rect.hclust <- function (tree, k = NULL, which = NULL, x = NULL, h = NULL, bo
   else if (is.null(k))
     stop("specify exactly one of 'k' and 'h'")
   if (k < 2 | k > length(tree$height)){
-    rect(xleft=par("usr")[1L],
-         xright = par("usr")[2L],
-         ybottom = par("usr")[3L],
-         ytop=par("usr")[4L],
+    graphics::rect(xleft=graphics::par("usr")[1L],
+         xright = graphics::par("usr")[2L],
+         ybottom = graphics::par("usr")[3L],
+         ytop=graphics::par("usr")[4L],
          border='red',
          col = my.col.vec[1],
          lwd=lwd)
@@ -477,7 +502,7 @@ my.rect.hclust <- function (tree, k = NULL, which = NULL, x = NULL, h = NULL, bo
     ####
     retval <- list()
     for (n in seq_along(which)) {
-      rect(m[which[n]] + 0.66, par("usr")[3L], m[which[n] +
+      graphics::rect(m[which[n]] + 0.66, par("usr")[3L], m[which[n] +
                                                    1] + 0.33,
            mean(rev(tree$height)[(k - 1):k]),
            border = border[n],
@@ -489,10 +514,17 @@ my.rect.hclust <- function (tree, k = NULL, which = NULL, x = NULL, h = NULL, bo
   #invisible(retval)
 }
 
+#' @importFrom stats dist
+#' @importFrom stats hclust
+#' @importFrom stats median
+#' @importFrom stats reorder
+#' @importFrom stats density
+#' @importFrom stats sd
+#' @importFrom stats as.dendrogram
 my.heatmap.2 <- function (x, Rowv = TRUE,
                           Colv = if (symm) "Rowv" else TRUE,
-                          distfun = dist,
-                          hclustfun = hclust,
+                          distfun = stats::dist,
+                          hclustfun = stats::hclust,
                           dendrogram = c("both", "row", "column", "none"),
                           symm = FALSE, scale = c("none", "row", "column"),
                           na.rm = TRUE, revC = identical(Colv, "Rowv"),
@@ -501,8 +533,8 @@ my.heatmap.2 <- function (x, Rowv = TRUE,
                           sepcolor = "white", sepwidth = c(0.05, 0.05), cellnote,
                           notecex = 1, notecol = "cyan", na.color = par("bg"),
                           trace = c("column", "row", "both", "none"),
-                          tracecol = "cyan", hline = median(breaks),
-                          vline = median(breaks), linecol = tracecol,
+                          tracecol = "cyan", hline = stats::median(breaks),
+                          vline = stats::median(breaks), linecol = tracecol,
                           margins = c(5, 5),
                           ColSideColors, RowSideColors, cexRow = 0.2 + 1/log10(nr),
                           cexCol = 0.2 + 1/log10(nc), labRow = NULL, labCol = NULL,
@@ -574,7 +606,7 @@ my.heatmap.2 <- function (x, Rowv = TRUE,
   }
   else if (is.integer(Rowv)) {
     hcr <- hclustfun(distfun(x))
-    ddr <- as.dendrogram(hcr)
+    ddr <- stats::as.dendrogram(hcr)
     ddr <- reorder(ddr, Rowv)
     rowInd <- order.dendrogram(ddr)
     if (nr != length(rowInd))
@@ -583,7 +615,7 @@ my.heatmap.2 <- function (x, Rowv = TRUE,
   else if (isTRUE(Rowv)) {
     Rowv <- rowMeans(x, na.rm = na.rm)
     hcr <- hclustfun(distfun(x))
-    ddr <- as.dendrogram(hcr)
+    ddr <- stats::as.dendrogram(hcr)
     ddr <- reorder(ddr, Rowv)
     rowInd <- order.dendrogram(ddr)
     if (nr != length(rowInd))
@@ -609,7 +641,7 @@ my.heatmap.2 <- function (x, Rowv = TRUE,
     hcc <- hclustfun(distfun(if (symm)
       x
       else t(x)))
-    ddc <- as.dendrogram(hcc)
+    ddc <- stats::as.dendrogram(hcc)
     ddc <- reorder(ddc, Colv)
     colInd <- order.dendrogram(ddc)
     if (nc != length(colInd))
@@ -620,7 +652,7 @@ my.heatmap.2 <- function (x, Rowv = TRUE,
     hcc <- hclustfun(distfun(if (symm)
       x
       else t(x)))
-    ddc <- as.dendrogram(hcc)
+    ddc <- stats::as.dendrogram(hcc)
     ddc <- reorder(ddc, Colv)
     colInd <- order.dendrogram(ddc)
     if (nc != length(colInd))
@@ -648,13 +680,13 @@ my.heatmap.2 <- function (x, Rowv = TRUE,
   if (scale == "row") {
     retval$rowMeans <- rm <- rowMeans(x, na.rm = na.rm)
     x <- sweep(x, 1, rm)
-    retval$rowSDs <- sx <- apply(x, 1, sd, na.rm = na.rm)
+    retval$rowSDs <- sx <- apply(x, 1, stats::sd, na.rm = na.rm)
     x <- sweep(x, 1, sx, "/")
   }
   else if (scale == "column") {
     retval$colMeans <- rm <- colMeans(x, na.rm = na.rm)
     x <- sweep(x, 2, rm)
-    retval$colSDs <- sx <- apply(x, 2, sd, na.rm = na.rm)
+    retval$colSDs <- sx <- apply(x, 2, stats::sd, na.rm = na.rm)
     x <- sweep(x, 2, sx, "/")
   }
   if (missing(breaks) || is.null(breaks) || length(breaks) <
@@ -894,7 +926,7 @@ my.heatmap.2 <- function (x, Rowv = TRUE,
       mtext(side = 1, "Column Z-Score", line = 2)
     else mtext(side = 1, "Value", line = 2)
     if (density.info == "density") {
-      dens <- density(x, adjust = densadj, na.rm = TRUE)
+      dens <- stats::density(x, adjust = densadj, na.rm = TRUE)
       omit <- dens$x < min(breaks) | dens$x > max(breaks)
       dens$x <- dens$x[-omit]
       dens$y <- dens$y[-omit]

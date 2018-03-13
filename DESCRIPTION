@@ -12,6 +12,8 @@ Depends: R (>= 2.10)
 Imports:
     RcppArmadillo, 
     Rcpp, 
+    stats,
+    graphics,
     dplyr,
     ggplot2,
     tidyr,
@@ -21,8 +23,6 @@ Imports:
     igraph,
     magrittr,
     cvxclustr,
-    mlbench,
-    testthat,
     stringr,
     dendextend,
     gridExtra,

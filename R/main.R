@@ -45,6 +45,14 @@
 #' and 'carp;
 #' @return X.center A logical. Should X be centered?
 #' @return X.scale A logical. Should X be scaled?
+#' @importFrom dplyr %>%
+#' @importFrom cvxclustr kernel_weights
+#' @importFrom cvxclustr knn_weights
+#' @importFrom dplyr n
+#' @importFrom dplyr tbl_df
+#' @importFrom dplyr mutate
+#' @importFrom dplyr group_by
+#' @importFrom dplyr ungroup
 #' @export
 #' @examples
 #' library(clustRviz)
@@ -395,6 +403,7 @@ print.CARP <- function(x,...){
 #' @importFrom shiny checkboxGroupInput
 #' @importFrom shiny renderPlot
 #' @importFrom stats as.dendrogram
+#' @importFrom stats median
 #' @importFrom ggplot2 ggplot
 #' @importFrom ggplot2 aes
 #' @importFrom ggplot2 geom_path
@@ -669,14 +678,14 @@ plot.CARP <- function(
           })
           output$pcapathplot_static <- shiny::renderPlot({
             ncl <- input$regcent_static
-            my.cols <- grDevices::adjustcolor(RColorBrewer::brewer.pal(n=ncl,'Set1'))[order(unique(cutree(x$carp.dend,k=ncl)[x$carp.dend$order]))]
+            my.cols <- grDevices::adjustcolor(RColorBrewer::brewer.pal(n=ncl,'Set1'))[order(unique(stats::cutree(x$carp.dend,k=ncl)[x$carp.dend$order]))]
             x$carp.cluster.path.vis %>%
               dplyr::distinct(Iter,NCluster) %>%
               dplyr::filter(NCluster == ncl) %>%
               dplyr::select(Iter) %>%
               unlist() %>%
               unname() %>%
-              median() -> cl.iter
+              stats::median() -> cl.iter
             cl.iter <- floor(cl.iter)
             rename.list <- list(Obs = 'Obs',
                                 Cluster = 'Cluster',
@@ -796,6 +805,7 @@ Clustering <- function(x,...) {
 #' for each cluster assignment along the CARP path.
 #' }
 #' }
+#' @importFrom stats cutree
 #' @export
 #' @examples
 #' library(clustRviz)
@@ -818,7 +828,7 @@ Clustering <- function(x,...) {
 #' head(carp.clustering.full$cluster.means[[5]])
 Clustering.CARP <- function(x,k=NULL,percent=NULL,...){
   if(!is.null(k)){
-      clust.assign <- cutree(x$carp.dend,k=k)
+      clust.assign <- stats::cutree(x$carp.dend,k=k)
       lapply(unique(clust.assign),function(cl.lab){
         apply(
           matrix(t(x$X)[,clust.assign==cl.lab],nrow=x$p.vars),
@@ -929,6 +939,8 @@ Clustering.CARP <- function(x,k=NULL,percent=NULL,...){
 #' @return obs.labels a vector of length n.obs containing observations (row) labels
 #' @return var.labels a vector of length p.vars containing variable (column) labels
 #' @return X.center.global a logical. If TRUE, the global mean of X is removed.
+#' @importFrom cvxclustr knn_weights
+#' @importFrom cvxclustr kernel_weights
 #' @export
 CBASS <- function(X,
                  obs.labels=NULL,
@@ -1202,6 +1214,8 @@ print.CBASS <- function(x,...){
 #' @importFrom shiny renderPlot
 #' @importFrom shiny sliderInput
 #' @importFrom stats as.dendrogram
+#' @importFrom stats as.hclust
+#' @importFrom stats quantile
 #' @importFrom grDevices colorRampPalette
 #' @importFrom grDevices adjustcolor
 #' @import ggplot2
@@ -1252,7 +1266,7 @@ plot.CBASS <- function(
       colnames(X) <- x$obs.labels
       nbreaks <- 50
       quant.probs <- seq(0,1,length.out = nbreaks)
-      breaks <- unique(quantile(X[TRUE],probs = quant.probs))
+      breaks <- unique(stats::quantile(X[TRUE],probs = quant.probs))
       nbreaks <- length(breaks)
       heatcols <- grDevices::colorRampPalette(c("blue","yellow"))(nbreaks - 1)
 
@@ -1267,8 +1281,8 @@ plot.CBASS <- function(
                    breaks = breaks,
                    col=heatcols,
                    symkey = F,
-                   Row.hclust = x$cbass.dend.var %>% as.hclust(),
-                   Col.hclust = x$cbass.dend.obs %>% as.hclust(),
+                   Row.hclust = x$cbass.dend.var %>% stats::as.hclust(),
+                   Col.hclust = x$cbass.dend.obs %>% stats::as.hclust(),
                    k.col=x$n.obs,
                    k.row=x$p.vars,
                    my.col.vec = my.cols,
@@ -1323,7 +1337,7 @@ plot.CBASS <- function(
           lam.prop.seq <- lam.seq / max(lam.seq)
           nbreaks <- 50
           quant.probs <- seq(0,1,length.out = nbreaks)
-          breaks <- unique(quantile(X[TRUE],probs = quant.probs))
+          breaks <- unique(stats::quantile(X[TRUE],probs = quant.probs))
           nbreaks <- length(breaks)
           heatcols <- grDevices::colorRampPalette(c("blue","yellow"))(nbreaks - 1)
           my.cols <- grDevices::adjustcolor(c('black','grey'),alpha.f = .3)
@@ -1364,8 +1378,8 @@ plot.CBASS <- function(
                          breaks = breaks,
                          col=heatcols,
                          symkey = F,
-                         Row.hclust = x$cbass.dend.var %>% as.hclust(),
-                         Col.hclust = x$cbass.dend.obs %>% as.hclust(),
+                         Row.hclust = x$cbass.dend.var %>% stats::as.hclust(),
+                         Col.hclust = x$cbass.dend.obs %>% stats::as.hclust(),
                          k.col=cur.col.nclust,
                          k.row=cur.row.nclust,
                          my.col.vec = my.cols,
