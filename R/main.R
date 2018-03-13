@@ -143,7 +143,7 @@ CARP <- function(X,
   }
 
 
-  if(verbose.basic) cat("Pre-computing weight-based edge sets\n")
+  if(verbose.basic) message("Pre-computing weight-based edge sets\n")
   PreCompList <- suppressMessages(ConvexClusteringPreCompute(
     X=X,
     weights = weights,
@@ -152,7 +152,7 @@ CARP <- function(X,
   ))
   cardE <- nrow(PreCompList$E)
 
-  if(verbose.basic) cat('Computing CARP Path\n')
+  if(verbose.basic) message('Computing CARP Path\n')
   switch(
     alg.type,
     carpviz={
@@ -238,7 +238,7 @@ CARP <- function(X,
 
   )
 
-  if(verbose.basic) cat('Post-processing\n')
+  if(verbose.basic) message('Post-processing\n')
   ISP(
     sp.path = carp.sol.path$v.zero.inds %>% t(),
     v.path = carp.sol.path$v.path,
@@ -351,15 +351,15 @@ print.CARP <- function(x,...){
     }
   )
   viz.string <- c('Static Dend', 'Static Path','Interactive Dend/Path')
-  cat('CARP Fit Summary\n')
-  cat('Number of Observations:', x$n.obs,'\n')
-  cat('Number of Variables:', x$p.vars,'\n')
-  cat('Pre-processing:',preprocess.string[c(x$X.center,x$X.scale)],'\n')
-  cat('Weights: RBF Kernel, phi =',x$phi, 'k =',x$k,'\n')
-  cat('Algorithm:',alg.string,'\n')
-  cat('Visualizations:',viz.string[c(x$static,x$static,x$interactive)],'\n')
+  message('CARP Fit Summary\n')
+  message('Number of Observations: ', x$n.obs,'\n')
+  message('Number of Variables: ', x$p.vars,'\n')
+  message('Pre-processing: ',preprocess.string[c(x$X.center,x$X.scale)],'\n')
+  message('Weights: RBF Kernel, phi = ',x$phi, ', k = ',x$k,'\n')
+  message('Algorithm: ',alg.string,'\n')
+  message('Visualizations: ',viz.string[c(x$static,x$static,x$interactive)],'\n')
 
-  cat('Raw Data:\n')
+  message('Raw Data:\n')
   x$X[1:min(5,x$n.obs),1:min(5,x$p.vars)]
 
 }
@@ -1046,7 +1046,7 @@ CBASS <- function(X,
 
 
 
-  if(verbose.basic) cat('Computing CBASS Path\n')
+  if(verbose.basic) message('Computing CBASS Path\n')
   switch(
     alg.type,
     cbassviz={
@@ -1078,11 +1078,11 @@ CBASS <- function(X,
                    t_switch = 1.01) -> bicarp.sol.path
     },
     cbass={
-      cat('carp\n')
+      message('carp\n')
     }
   )
 
-  if(verbose.basic) cat('Post-processing\n')
+  if(verbose.basic) message('Post-processing\n')
   ISP(
     sp.path = bicarp.sol.path$v.row.zero.inds %>% t(),
     v.path = bicarp.sol.path$v.row.path,
@@ -1181,16 +1181,16 @@ print.CBASS <- function(x,...){
       alg.string = 'CBASS'
     })
   viz.string <- c('Static Dend', 'Static Heatmap','Interactive Heatmap')
-  cat('CBASS Fit Summary\n')
-  cat('Number of Observations:', x$n.obs,'\n')
-  cat('Number of Variables:', x$p.vars,'\n')
-  cat('Pre-processing:',preprocess.string[c(x$X.center.global)],'\n')
-  cat('Obs. Weights: RBF Kernel, phi =',x$phi.obs, 'k =',x$k.obs,'\n')
-  cat('Var. Weights: RBF Kernel, phi =',x$phi.var, 'k =',x$k.var,'\n')
-  cat('Algorithm:',alg.string,'\n')
-  cat('Visualizations:',viz.string[c(x$static,x$static,x$interactive)],'\n')
+  message('CBASS Fit Summary\n')
+  message('Number of Observations: ', x$n.obs,'\n')
+  message('Number of Variables: ', x$p.vars,'\n')
+  message('Pre-processing: ',preprocess.string[c(x$X.center.global)],'\n')
+  message('Obs. Weights: RBF Kernel, phi = ',x$phi.obs, ', k = ',x$k.obs,'\n')
+  message('Var. Weights: RBF Kernel, phi = ',x$phi.var, ', k = ',x$k.var,'\n')
+  message('Algorithm: ',alg.string,'\n')
+  message('Visualizations: ',viz.string[c(x$static,x$static,x$interactive)],'\n')
 
-  cat('Raw Data:\n')
+  message('Raw Data:\n')
   x$X[1:min(5,x$n.obs),1:min(5,x$p.vars)]
 
 }
