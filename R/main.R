@@ -386,8 +386,8 @@ print.CARP <- function(x,...){
 #' @param min.nclust a positive value. The minimum number of clusters to
 #' display in the interactive plot.
 #' @param ... Unused additional generic arguements
-#' @param blwd a positive number. Line width on dendrograms.
-#' @param lcex a positive number. Label size on dendrograms.
+#' @param dend.branch.width a positive number. Line width on dendrograms.
+#' @param dend.labels.cex a positive number. Label size on dendrograms.
 #' @export
 #' @importFrom shiny shinyApp
 #' @importFrom shiny fluidPage
@@ -441,8 +441,8 @@ plot.CARP <- function(
   x,
   type=c('dendrogram','path','interactive'),
   axis = c('PC1','PC2'),
-  blwd=2,
-  lcex=.6,
+  dend.branch.width=2,
+  dend.labels.cex=.6,
   percent=1,
   max.nclust=9,
   min.nclust=1,
@@ -454,8 +454,8 @@ plot.CARP <- function(
     dendrogram={
       x$carp.dend %>%
         stats::as.dendrogram() %>%
-        dendextend::set("branches_lwd",blwd) %>%
-        dendextend::set("labels_cex",lcex) %>%
+        dendextend::set("branches_lwd",dend.branch.width) %>%
+        dendextend::set("labels_cex",dend.labels.cex) %>%
         plot(ylab='Amount of Regularization')
     },
     path={
@@ -1199,10 +1199,10 @@ print.CBASS <- function(x,...){
 #' and 'interactive' produces an interactive visualization of cluster
 #' heatmap and its associated dendrograms.
 #' @param ... Unused additional generic arguements
-#' @param blwd a positive number. Line width on dendrograms.
-#' @param lcex a positive number. Label size on dendrograms.
-#' @param cexRow row label size
-#' @param cexCol column label size
+#' @param dend.branch.width a positive number. Line width on dendrograms.
+#' @param dend.labels.cex a positive number. Label size on dendrograms.
+#' @param heatrow.label.cex heatmap row label size
+#' @param heatcol.label.cex heatmap column label size
 #' @export
 #' @importFrom shiny shinyApp
 #' @importFrom shiny fluidPage
@@ -1233,10 +1233,10 @@ print.CBASS <- function(x,...){
 plot.CBASS <- function(
   x,
   type=c('obs.dendrogram','var.dendrogram','heatmap','interactive'),
-  blwd=2,
-  lcex=.6,
-  cexRow=1,
-  cexCol=1,
+  dend.branch.width=2,
+  dend.labels.cex=.6,
+  heatrow.label.cex=1.5,
+  heatcol.label.cex=1.5,
   ...){
   type = match.arg(type)
   switch(
@@ -1244,15 +1244,15 @@ plot.CBASS <- function(
     obs.dendrogram={
       x$cbass.dend.obs %>%
         stats::as.dendrogram() %>%
-        dendextend::set("branches_lwd",blwd) %>%
-        dendextend::set("labels_cex",lcex) %>%
+        dendextend::set("branches_lwd",dend.branch.width) %>%
+        dendextend::set("labels_cex",dend.labels.cex) %>%
         plot(ylab='Amount of Regularization')
     },
     var.dendrogram={
       x$cbass.dend.var %>%
         stats::as.dendrogram() %>%
-        dendextend::set("branches_lwd",blwd) %>%
-        dendextend::set("labels_cex",lcex) %>%
+        dendextend::set("branches_lwd",dend.branch.width) %>%
+        dendextend::set("labels_cex",dend.labels.cex) %>%
         plot(ylab='Amount of Regularization')
     },
     heatmap={
@@ -1287,8 +1287,8 @@ plot.CBASS <- function(
                    k.col=x$n.obs,
                    k.row=x$p.vars,
                    my.col.vec = my.cols,
-                   cexRow = 1.5,
-                   cexCol = 1.5,
+                   cexRow = heatrow.label.cex,
+                   cexCol = heatcol.label.cex,
                    margins = c(14,8))
     },
     interactive={
@@ -1384,8 +1384,8 @@ plot.CBASS <- function(
                          k.col=cur.col.nclust,
                          k.row=cur.row.nclust,
                          my.col.vec = my.cols,
-                         cexRow = 1,
-                         cexCol = 1,
+                         cexRow = heatrow.label.cex,
+                         cexCol = heatcol.label.cex,
                          margins = c(10,10))
 
           })

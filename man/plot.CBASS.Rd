@@ -5,8 +5,8 @@
 \title{Plot function for CBASS objects}
 \usage{
 \method{plot}{CBASS}(x, type = c("obs.dendrogram", "var.dendrogram",
-  "heatmap", "interactive"), blwd = 2, lcex = 0.6, cexRow = 1,
-  cexCol = 1, ...)
+  "heatmap", "interactive"), dend.branch.width = 2, dend.labels.cex = 0.6,
+  heatrow.label.cex = 1.5, heatcol.label.cex = 1.5, ...)
 }
 \arguments{
 \item{x}{a CBASS object returned by \code{CARP}}
@@ -19,13 +19,13 @@ and variable dendrograms;
 and 'interactive' produces an interactive visualization of cluster
 heatmap and its associated dendrograms.}
 
-\item{blwd}{a positive number. Line width on dendrograms.}
+\item{dend.branch.width}{a positive number. Line width on dendrograms.}
 
-\item{lcex}{a positive number. Label size on dendrograms.}
+\item{dend.labels.cex}{a positive number. Label size on dendrograms.}
 
-\item{cexRow}{row label size}
+\item{heatrow.label.cex}{heatmap row label size}
 
-\item{cexCol}{column label size}
+\item{heatcol.label.cex}{heatmap column label size}
 
 \item{...}{Unused additional generic arguements}
 }
