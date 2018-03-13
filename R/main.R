@@ -1218,8 +1218,6 @@ print.CBASS <- function(x,...){
 #' @importFrom stats quantile
 #' @importFrom grDevices colorRampPalette
 #' @importFrom grDevices adjustcolor
-#' @import ggplot2
-#' @import dplyr
 #' @examples
 #' \dontrun{
 #' library(clustRviz)

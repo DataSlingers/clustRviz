@@ -21,11 +21,9 @@ Imports:
     Matrix,
     parallel,
     igraph,
-    magrittr,
     cvxclustr,
     stringr,
     dendextend,
-    gridExtra,
     gtools,
     ggrepel,
     RColorBrewer,
@@ -34,5 +32,6 @@ RoxygenNote: 6.0.1
 LinkingTo: Rcpp,RcppArmadillo
 Suggests: testthat,
     knitr,
-    rmarkdown
+    rmarkdown,
+    gridExtra
 VignetteBuilder: knitr
