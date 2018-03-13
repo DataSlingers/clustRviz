@@ -4,8 +4,9 @@
 \alias{plot.CBASS}
 \title{Plot function for CBASS objects}
 \usage{
-\method{plot}{CBASS}(x, type = "obs.dendrogram", blwd = 2, lcex = 0.6,
-  cexRow = 1, cexCol = 1, ...)
+\method{plot}{CBASS}(x, type = c("obs.dendrogram", "var.dendrogram",
+  "heatmap", "interactive"), blwd = 2, lcex = 0.6, cexRow = 1,
+  cexCol = 1, ...)
 }
 \arguments{
 \item{x}{a CBASS object returned by \code{CARP}}

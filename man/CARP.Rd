@@ -7,8 +7,8 @@
 CARP(X, obs.labels = NULL, var.labels = NULL, X.center = TRUE,
   X.scale = FALSE, rho = 1, phi = 0.001, weights = NULL, k = NULL,
   ncores = 1, max.iter = 1e+06, burn.in = 50, verbose = 1,
-  alg.type = "carpviz", t = 1.05, interactive = TRUE, static = TRUE,
-  npcs = 4)
+  alg.type = c("carpviz", "carp", "carpl1", "carpvizl1"), t = 1.05,
+  interactive = TRUE, static = TRUE, npcs = 4)
 }
 \arguments{
 \item{X}{A n by p matrix with rows the observations and columns the variables}

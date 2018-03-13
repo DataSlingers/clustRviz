@@ -74,11 +74,12 @@ CARP <- function(X,
                  max.iter=1e6,
                  burn.in=50,
                  verbose=1,
-                 alg.type='carpviz',
+                 alg.type=c('carpviz','carp','carpl1','carpvizl1'),
                  t = 1.05,
                  interactive=TRUE,
                  static=TRUE,
                  npcs=4){
+  alg.type <- match.arg(alg.type)
   Iter <- Cluster <- Lambda <- NULL
   if(is.logical(verbose)){
     verbose.basic = TRUE
@@ -438,7 +439,7 @@ print.CARP <- function(x,...){
 #' }
 plot.CARP <- function(
   x,
-  type='dendrogram',
+  type=c('dendrogram','path','interactive'),
   axis = c('PC1','PC2'),
   blwd=2,
   lcex=.6,
@@ -447,6 +448,7 @@ plot.CARP <- function(
   min.nclust=1,
   ...){
 
+  type = match.arg(type)
   switch(
     type,
     dendrogram={
@@ -1230,12 +1232,13 @@ print.CBASS <- function(x,...){
 #' }
 plot.CBASS <- function(
   x,
-  type='obs.dendrogram',
+  type=c('obs.dendrogram','var.dendrogram','heatmap','interactive'),
   blwd=2,
   lcex=.6,
   cexRow=1,
   cexCol=1,
   ...){
+  type = match.arg(type)
   switch(
     type,
     obs.dendrogram={

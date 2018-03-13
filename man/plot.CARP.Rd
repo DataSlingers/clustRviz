@@ -4,9 +4,9 @@
 \alias{plot.CARP}
 \title{Plot function for CARP objects}
 \usage{
-\method{plot}{CARP}(x, type = "dendrogram", axis = c("PC1", "PC2"),
-  blwd = 2, lcex = 0.6, percent = 1, max.nclust = 9, min.nclust = 1,
-  ...)
+\method{plot}{CARP}(x, type = c("dendrogram", "path", "interactive"),
+  axis = c("PC1", "PC2"), blwd = 2, lcex = 0.6, percent = 1,
+  max.nclust = 9, min.nclust = 1, ...)
 }
 \arguments{
 \item{x}{a CARP object returned by \code{CARP}}
