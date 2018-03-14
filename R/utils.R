@@ -1090,3 +1090,18 @@ SparseWeights <- function(X,dense.weights, k){
   }) -> sp.mask
   dense.weights*sp.mask
 }
+
+#' Construct adjacency matrix induced by weights
+#'
+#' @param weights a vector of weights such as returned by \code{SparseWeights}
+#' @param nobs the number of observations being clustered
+#' @return adj a sparse adjacency matrix
+#' @importFrom Matrix Matrix
+#' @importFrom Matrix t
+#' @export
+WeightAdjacency <- function(weights,nobs){
+  adj <- Matrix::Matrix(data=0,nrow=nobs,ncol=nobs,sparse = TRUE)
+  adj[lower.tri(adj,diag=FALSE)] <- as.numeric(weights!=0)
+  adj <- Matrix::t(adj)
+  adj
+}
