@@ -15,7 +15,8 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval=FALSE
+  eval=TRUE,
+  message = FALSE
 )
 ```
 
@@ -105,7 +106,7 @@ may be set to `FALSE`
 
 Similarly, the `CBASS` function also requires that data preprocessed prior usage.
 Because `CBASS` clusters both observations and variables, here centering is done 
-by subtracting away the global mean our data matrix.
+by subtracting away the global mean of our data matrix.
 
 ```{r}
 # Subtracting global mean before computing the CBASS solution path
@@ -128,7 +129,7 @@ We leave the choice of dimensionality reduction to the end-user,
 but still recommend the reduced feature set be pre-processed 
 as described above.
 
-For the purpose of visualuization, `CARP` addressed the problem 
+For the purpose of visualuization, `CARP` addresses the problem 
 of high dimenstionality by visualizing the principal components 
 of the data by default.
 
@@ -137,32 +138,98 @@ of the data by default.
 
 Weights are arguably one of the most important inputs to both `CARP` and `CBASS`.
 
-As we can see from the optimization probelms above, weights important apriori 
+As we can see from the optimization probelms above, weights impart apriori 
 preference concerning which observations (and variables in the case of `CBASS`)
 should be fused together.
 
 This important feature allows us to incorportate domain knowledge, if available.
 
-Less obvious is that weight choices can greatly affect the computation time 
-of both `CARP` and `CBASS`
+In the absense of domain knowledge, however, weights can easily be 
+constructed via the data itself.
 
-In the `CARP` problem above for example, we note the regularization term 
+While perhaps not appearent at first, weight choices can also greatly 
+affect the computation time of both `CARP` and `CBASS`.
+
+In the `CARP` problem above, for example, we note the regularization term 
 contains $\binom{n}{2}$ summands, making computations slow.
 
-Computations can be reduced by making the majority of weights zero, and hence 
-reducing the number of model parameters.
+Computations can be reduced by making the majority of weights zero and 
+greatly reducing compuatation time.
 
-Here we discuss what might be reasonable choices for initial weights and 
-how one might the sparsity of the weight vector.
+Here we discuss `clustRviz`'s default weight choices, as well as how 
+weights can be constructed manually.
 
-By default `CARP` and `CBASS` used distance-based weights via a gaussian kernel:
+By default `CARP` and `CBASS` assume no prior domain knowledge 
+and construct distance-based weights via a gaussian kernel:
 
 $$
-d_{l,m}  = \exp\{ -\phi \|\vec x_l - \vec x_m \|^2_2 \}
+w_{l,m}  = \exp\{ -\phi \|\vec x_l - \vec x_m \|^2_2 \}
 $$
+Given a choice of $\phi$ (discussed in more detail below), an initial set of 
+weights can be constructed via `DenseWeights` function. In the case of presidential
+speech data for example,
+
+```{r}
+dense.weights <- DenseWeights(X = Xdat.preprocessed,phi=1e-3)
+head(dense.weights)
+```
+
+As the name suggests `DenseWeights` computes $w_{l,m}$ for all pairs of observations.
+
+For the presidents data, with $n=44$ observations, this results in a vector of length 
+$\binom{44}{2} = 956$.
+
+```{r}
+length(dense.weights)
+```
+
+The weights are returned in lexicographical order, namely 
+$\vec w = (w_{1,2},w_{1,3},\dots,w_{l,m},\dots,w_{n-1,n} )$
+
+The value of $\phi$ can have a marked effect on the weights.
+
+```{r, fig.height=5,fig.width=10,fig.align='center',echo=FALSE,fig.cap="Dense weights for different choices of phi"}
+library(tidyverse)
+gridExtra::grid.arrange(
+DenseWeights(X = Xdat.preprocessed,phi=1e-3) %>%
+  qplot(bins=35)+
+  xlab('Weight Value')+
+  ylab('Count'),
+DenseWeights(X = Xdat.preprocessed,phi=1e-1) %>%
+  qplot(bins=35) +
+  xlab('Weight Value')+
+  ylab('Count'),
+ncol=2
+)
+```
+
+The choice of $\phi$ determines variance of the weights.
+
+Generally, choices of $\phi$ which result in higher variance weights tend to be more 
+informative. For example
+```{r}
+phi.vec <- 10^(-4:4)
+sapply(phi.vec,function(phi){
+  var(DenseWeights(X=Xdat.preprocessed,phi = phi))
+}) %>%
+  which.max() %>%
+  phi.vec[.]
+```
+
+Additionally, `DenseWeights` allows for the specification of alternative distance measures
+
+```{r}
+dense.weights.can <- DenseWeights(X = Xdat.preprocessed,phi=1e-5,method = 'canberra')
+```
+
+```{r, fig.height=5,fig.width=10,fig.align='center',echo=FALSE,fig.cap="Dense weights with Canberra distance"}
+qplot(dense.weights.can,bins=35) 
+```
+## Fitting
 
 
 
+## Visualizations
 
 
 
