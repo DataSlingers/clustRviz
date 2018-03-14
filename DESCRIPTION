@@ -23,6 +23,7 @@ Imports:
     tidyr,
     shiny,
     Matrix,
+    FNN,
     parallel,
     igraph,
     cvxclustr,

@@ -1046,3 +1046,47 @@ CreateDendrogram <- function(carp_cluster_path,n_labels,scale){
   cvx.hclust$height <- cvx.hclust$height*(1/max.dend.height)
   cvx.hclust
 }
+
+
+#' Compute dense distanced-based gaussian kernel weights for use in CARP or CBASS
+#'
+#' @param X an n by p matrix with rows the observations and columns the variables.
+#' @param phi a number. Scaling parameter used in the gaussian kernel.
+#' @param method a string. Passed to the \code{dist} function. See \code{?dist}
+#' @return dense.weights a numeric vector of weights
+#' @importFrom stats dist
+#' @export
+DenseWeights <- function(X,phi=1,method='euclidean'){
+  exp( (-1)*phi*( stats::dist(Xdat,method=method)[TRUE] )^2)
+}
+
+#' Compute sparse kNN weight vector from dense weights
+#'
+#' @param X an n by p matrix with rows the observations and columns the variables.
+#' @param dense.weights a vector dense weights, such as those returned
+#' by \code{DenseWeights}
+#' @param k a positive integer less than nobs. The number of nearest neighbors.
+#' @return sparse.weights a numeric vector of sparse weights
+#' @importFrom FNN get.knn
+#' @importFrom utils combn
+#' @importFrom dplyr %>%
+#' @export
+SparseWeights <- function(X,dense.weights, k){
+  nobs <- nrow(X)
+  tmp <- FNN::get.knn(X,k=k,algorithm = 'brute')
+  lapply(1:nobs,function(ind){
+    vec = rep(0,times=nobs)
+    vec[tmp$nn.index[ind,]] = 1
+    vec[ind] = 1
+    vec
+  }) %>%
+    do.call(rbind,.) -> mat.pat
+
+  apply(utils::combn(nobs,2),2,function(pair.ind){
+    vec1 <- mat.pat[pair.ind[1],]
+    vec2 <- mat.pat[pair.ind[2],]
+    andvec <- vec1*vec2
+    sum(as.logical(andvec[pair.ind[1]]) | as.logical(andvec[pair.ind[2]]))
+  }) -> sp.mask
+  dense.weights*sp.mask
+}
