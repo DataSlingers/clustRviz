@@ -147,7 +147,7 @@ CARP <- function(X,
   }
 
 
-  if(verbose.basic) message("Pre-computing weight-based edge sets\n")
+  if(verbose.basic) message("Pre-computing weight-based edge sets")
   PreCompList <- suppressMessages(ConvexClusteringPreCompute(
     X=X,
     weights = weights,
@@ -156,7 +156,7 @@ CARP <- function(X,
   ))
   cardE <- nrow(PreCompList$E)
 
-  if(verbose.basic) message('Computing CARP Path\n')
+  if(verbose.basic) message('Computing CARP Path')
   switch(
     alg.type,
     carpviz={
@@ -242,7 +242,7 @@ CARP <- function(X,
 
   )
 
-  if(verbose.basic) message('Post-processing\n')
+  if(verbose.basic) message('Post-processing')
   ISP(
     sp.path = carp.sol.path$v.zero.inds %>% t(),
     v.path = carp.sol.path$v.path,
@@ -355,7 +355,7 @@ print.CARP <- function(x,...){
     }
   )
   viz.string <- c('Static Dend', 'Static Path','Interactive Dend/Path')
-  message('CARP Fit Summary\n')
+  message('CARP Fit Summary')
   message('Number of Observations: ', x$n.obs,'\n')
   message('Number of Variables: ', x$p.vars,'\n')
   message('Pre-processing: ',preprocess.string[c(x$X.center,x$X.scale)],'\n')
@@ -1033,13 +1033,21 @@ CBASS <- function(X,
   n.obs <- ncol(X)
   p.vars <- nrow(X)
 
-
-  phi.row=phi/n.obs
-  weights.row <- DenseWeights(X = X,phi = phi.row,method = vars.weight.dist,p = vars.weight.dist.p)
-  k.row <- MinKNN(X = X,dense.weights = weights.row)
-  weights.row <- SparseWeights(X = X,dense.weights = weights.row,k = k.row)
+  if(!is.null(weights.vars)){
+    weights.row <- weights.vars
+  } else{
+    phi.row=phi/n.obs
+    weights.row <- DenseWeights(X = X,phi = phi.row,method = vars.weight.dist,p = vars.weight.dist.p)
+    if(is.null(k.var)){
+      k.row <- MinKNN(X = X,dense.weights = weights.row)
+    } else{
+      k.row <- k.var
+    }
+    weights.row <- SparseWeights(X = X,dense.weights = weights.row,k = k.row)
+  }
   weights.row <- weights.row/sum(weights.row)
   weights.row <- weights.row/sqrt(n.obs)
+
   PreCompList.row <- suppressMessages(
     ConvexClusteringPreCompute(X=t(X),
                                weights = weights.row,
@@ -1047,12 +1055,21 @@ CBASS <- function(X,
   )
   cardE.row <- nrow(PreCompList.row$E)
 
-  phi.col=phi/p.vars
-  weights.col <- DenseWeights(X = t(X),phi = phi.col,method = obs.weight.dist,p = obs.weight.dist.p)
-  k.col <- MinKNN(X = t(X),dense.weights = weights.col)
-  weights.col <- SparseWeights(X=t(X),dense.weights = weights.col,k = k.col)
+  if(!is.null(weights.obs)){
+    weights.cols <- weights.obs
+  } else{
+    phi.col=phi/p.vars
+    weights.col <- DenseWeights(X = t(X),phi = phi.col,method = obs.weight.dist,p = obs.weight.dist.p)
+    if(is.null(k.obs)){
+      k.col <- MinKNN(X = t(X),dense.weights = weights.col)
+    } else{
+      k.col <- k.obs
+    }
+    weights.col <- SparseWeights(X=t(X),dense.weights = weights.col,k = k.col)
+  }
   weights.col <- weights.col/sum(weights.col)
   weights.col <- weights.col/sqrt(p.vars)
+
   PreCompList.col <- suppressMessages(
     ConvexClusteringPreCompute(X=X,
                                weights = weights.col,
