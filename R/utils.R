@@ -50,7 +50,6 @@ GetClustersPath <- function(ClusterGraphList){
   lapply(ClusterGraphList,GetClusters)
 }
 
-#' @importFrom cvxclustr weights_graph
 #' @importFrom Matrix which
 #' @importFrom Matrix Matrix
 #' @importFrom Matrix t
@@ -60,7 +59,7 @@ ConvexClusteringPreCompute <- function(X,weights,rho,ncores=2,verbose=FALSE){
   n <- ncol(X)
   p <- nrow(X)
   # Calcuate edge set
-  weight.adj <- cvxclustr::weights_graph(weights,n)
+  weight.adj <- WeightAdjacency(weights,n)
   cardE <- sum(weight.adj)
   E <- Matrix::which(weight.adj!=0,arr.ind = TRUE)
   E <- E[order(E[,1],E[,2]),]
@@ -306,11 +305,19 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
 }
 
 
-#' @importFrom cvxclustr weights_graph
-#' @importFrom cvxclustr knn_weights
+#' Compute the minimum number of nearest neighbors required to fully
+#' cluster all observations
+#'
 #' @importFrom Matrix which
-MinKNN <- function(w,n){
-  weight.adj <- cvxclustr::weights_graph(w,n)
+#' @param X an n.obs x p.vars matrix
+#' @param dense.weights a vector vector of dense weights such as returned by
+#' \code{DenseWeights}
+#' @return k an integer. The smallest number of nearest neighbors required to
+#' fully cluster all observations.
+#' @export
+MinKNN <- function(X,dense.weights){
+  n <- nrow(X)
+  weight.adj <- WeightAdjacency(dense.weights,n)
   cardE <- sum(weight.adj)
   E <- Matrix::which(weight.adj!=0,arr.ind = TRUE)
   E <- E[order(E[,1],E[,2]),]
@@ -318,7 +325,7 @@ MinKNN <- function(w,n){
   n.comp = 2
   while(n.comp != 1){
     k=k+1
-    w.sp <- cvxclustr::knn_weights(w,k,n)
+    w.sp <- SparseWeights(X = X,dense.weights = dense.weights,k = k)
     CreateAdjacency(E,sp.pattern = as.numeric(w.sp!=0),n=n) -> adj.full
     CreateClusterGraph(adj.full) -> cluster.full
     n.comp = GetClusters(cluster.full)$no
@@ -1053,11 +1060,16 @@ CreateDendrogram <- function(carp_cluster_path,n_labels,scale){
 #' @param X an n by p matrix with rows the observations and columns the variables.
 #' @param phi a number. Scaling parameter used in the gaussian kernel.
 #' @param method a string. Passed to the \code{dist} function. See \code{?dist}
+#' @param p The power of Minkowski distance. Passed to the \code{dist} function. See \code{?dist}
 #' @return dense.weights a numeric vector of weights
 #' @importFrom stats dist
 #' @export
-DenseWeights <- function(X,phi=1,method='euclidean'){
-  exp( (-1)*phi*( stats::dist(Xdat,method=method)[TRUE] )^2)
+DenseWeights <- function(X,
+                         phi=1,
+                         method=c('euclidean','maximum','manhattan','canberra','binary','minkowski'),
+                         p=2){
+  method = match.arg(method)
+  exp( (-1)*phi*( stats::dist(X,method=method,p=p)[TRUE] )^2)
 }
 
 #' Compute sparse kNN weight vector from dense weights

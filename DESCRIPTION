@@ -26,7 +26,6 @@ Imports:
     FNN,
     parallel,
     igraph,
-    cvxclustr,
     stringr,
     dendextend,
     gtools,

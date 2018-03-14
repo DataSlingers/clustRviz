@@ -6,9 +6,12 @@
 \usage{
 CBASS(X, obs.labels = NULL, var.labels = NULL, X.center.global = TRUE,
   rho = 1, phi = 0.1, weights.obs = NULL, weights.vars = NULL,
-  k.obs = NULL, k.var = NULL, t = NULL, ncores = 1, max.iter = 1e+06,
-  burn.in = 50, verbose = 1, alg.type = "cbassviz", interactive = TRUE,
-  static = TRUE)
+  obs.weight.dist = c("euclidean", "maximum", "manhattan", "canberra",
+  "binary", "minkowski"), obs.weight.dist.p = 2,
+  vars.weight.dist = c("euclidean", "maximum", "manhattan", "canberra",
+  "binary", "minkowski"), vars.weight.dist.p = 2, k.obs = NULL,
+  k.var = NULL, t = NULL, ncores = 1, max.iter = 1e+06, burn.in = 50,
+  verbose = 1, alg.type = "cbassviz", interactive = TRUE, static = TRUE)
 }
 \arguments{
 \item{X}{A n.obs by p.vars matrix with rows the observations and columns the variables}
@@ -28,6 +31,18 @@ Determines observation pair fusions weight.}
 
 \item{weights.vars}{A vector of positive number of length choose(p.vars,2).
 Determines variable pair fusions weight.}
+
+\item{obs.weight.dist}{a string indicating the distance metric used to calculate
+observation weights}
+
+\item{obs.weight.dist.p}{The power of the Minkowski distance, if used for
+observation weights.}
+
+\item{vars.weight.dist}{a string indicating the distance metric used to calculate
+variable weights}
+
+\item{vars.weight.dist.p}{The power of the Minkowski distance, if used for
+variable weights.}
 
 \item{k.obs}{an integer >= 1. The number of neighbors used to create sparse
 observation weights}

@@ -4,7 +4,8 @@
 \alias{DenseWeights}
 \title{Compute dense distanced-based gaussian kernel weights for use in CARP or CBASS}
 \usage{
-DenseWeights(X, phi = 1, method = "euclidean")
+DenseWeights(X, phi = 1, method = c("euclidean", "maximum", "manhattan",
+  "canberra", "binary", "minkowski"), p = 2)
 }
 \arguments{
 \item{X}{an n by p matrix with rows the observations and columns the variables.}
@@ -12,6 +13,8 @@ DenseWeights(X, phi = 1, method = "euclidean")
 \item{phi}{a number. Scaling parameter used in the gaussian kernel.}
 
 \item{method}{a string. Passed to the \code{dist} function. See \code{?dist}}
+
+\item{p}{The power of Minkowski distance. Passed to the \code{dist} function. See \code{?dist}}
 }
 \value{
 dense.weights a numeric vector of weights

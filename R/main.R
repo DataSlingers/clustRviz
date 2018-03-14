@@ -14,8 +14,11 @@
 #' @param X.scale A logical. Should X be scaled?
 #' @param rho A positive number for augmented lagrangian. Not advisable to change.
 #' @param phi A positive numner used for scaling in RBF kernel
+#' @param weight.dist a string indicating the distance metric used to calculate
+#' weights
+#' @param weight.dist.p The power of the Minkowski distance, if used.
 #' @param weights A vector of positive number of length choose(n,2).
-#' Determines observation pairs fusions weight.
+#' Determines observation pairs' fusion amount.
 #' @param k an integer >= 1. The number of neighbors used to create sparse weights
 #' @param ncores an integer >= 1. The number of cores to use.
 #' @param max.iter an integer. The maximum number of CARP iterations.
@@ -46,8 +49,6 @@
 #' @return X.center A logical. Should X be centered?
 #' @return X.scale A logical. Should X be scaled?
 #' @importFrom dplyr %>%
-#' @importFrom cvxclustr kernel_weights
-#' @importFrom cvxclustr knn_weights
 #' @importFrom dplyr n
 #' @importFrom dplyr tbl_df
 #' @importFrom dplyr mutate
@@ -68,6 +69,8 @@ CARP <- function(X,
                  X.scale=FALSE,
                  rho=1,
                  phi=1e-3,
+                 weight.dist=c('euclidean','maximum','manhattan','canberra','binary','minkowski'),
+                 weight.dist.p = 2,
                  weights=NULL,
                  k=NULL,
                  ncores=1,
@@ -80,6 +83,7 @@ CARP <- function(X,
                  static=TRUE,
                  npcs=4){
   alg.type <- match.arg(alg.type)
+  weight.dist = match.arg(weight.dist)
   Iter <- Cluster <- Lambda <- NULL
   if(is.logical(verbose)){
     verbose.basic = TRUE
@@ -135,11 +139,11 @@ CARP <- function(X,
 
   # get weights
   if(is.null(weights)){
-    weights <- cvxclustr::kernel_weights(X,phi)
+    weights <- DenseWeights(t(X),phi=phi,method=weight.dist,p=weight.dist.p)
     if(is.null(k)){
-       k <- MinKNN(weights,n.obs)
+       k <- MinKNN(t(X),weights)
     }
-    weights <- cvxclustr::knn_weights(weights,k,n.obs)
+    weights <- SparseWeights(X=t(X),dense.weights = weights,k = k)
   }
 
 
@@ -908,6 +912,14 @@ Clustering.CARP <- function(x,k=NULL,percent=NULL,...){
 #' Determines observation pair fusions weight.
 #' @param weights.vars A vector of positive number of length choose(p.vars,2).
 #' Determines variable pair fusions weight.
+#' @param obs.weight.dist a string indicating the distance metric used to calculate
+#' observation weights
+#' @param obs.weight.dist.p The power of the Minkowski distance, if used for
+#' observation weights.
+#' @param vars.weight.dist a string indicating the distance metric used to calculate
+#' variable weights
+#' @param vars.weight.dist.p The power of the Minkowski distance, if used for
+#' variable weights.
 #' @param k.obs an integer >= 1. The number of neighbors used to create sparse
 #' observation weights
 #' @param k.var an integer >= 1. The number of neighbors used to create sparse
@@ -949,8 +961,6 @@ Clustering.CARP <- function(x,k=NULL,percent=NULL,...){
 #' @return obs.labels a vector of length n.obs containing observations (row) labels
 #' @return var.labels a vector of length p.vars containing variable (column) labels
 #' @return X.center.global a logical. If TRUE, the global mean of X is removed.
-#' @importFrom cvxclustr knn_weights
-#' @importFrom cvxclustr kernel_weights
 #' @export
 CBASS <- function(X,
                  obs.labels=NULL,
@@ -960,6 +970,10 @@ CBASS <- function(X,
                  phi=1e-1,
                  weights.obs=NULL,
                  weights.vars=NULL,
+                 obs.weight.dist=c('euclidean','maximum','manhattan','canberra','binary','minkowski'),
+                 obs.weight.dist.p = 2,
+                 vars.weight.dist=c('euclidean','maximum','manhattan','canberra','binary','minkowski'),
+                 vars.weight.dist.p = 2,
                  k.obs=NULL,
                  k.var=NULL,
                  t=NULL,
@@ -970,6 +984,8 @@ CBASS <- function(X,
                  alg.type='cbassviz',
                  interactive=TRUE,
                  static=TRUE){
+  obs.weight.dist = match.arg(obs.weight.dist)
+  vars.weight.dist = match.arg(vars.weight.dist)
   if(is.logical(verbose)){
     verbose.basic = TRUE
     verbose.deep=FALSE
@@ -1019,9 +1035,9 @@ CBASS <- function(X,
 
 
   phi.row=phi/n.obs
-  weights.row <- cvxclustr::kernel_weights(t(X),phi.row)
-  k.row <- MinKNN(weights.row,p.vars)
-  weights.row <- cvxclustr::knn_weights(weights.row,k.row,p.vars)
+  weights.row <- DenseWeights(X = X,phi = phi.row,method = vars.weight.dist,p = vars.weight.dist.p)
+  k.row <- MinKNN(X = X,dense.weights = weights.row)
+  weights.row <- SparseWeights(X = X,dense.weights = weights.row,k = k.row)
   weights.row <- weights.row/sum(weights.row)
   weights.row <- weights.row/sqrt(n.obs)
   PreCompList.row <- suppressMessages(
@@ -1032,9 +1048,9 @@ CBASS <- function(X,
   cardE.row <- nrow(PreCompList.row$E)
 
   phi.col=phi/p.vars
-  weights.col <- cvxclustr::kernel_weights(X,phi.col)
-  k.col <- MinKNN(weights.col,n.obs)
-  weights.col <- cvxclustr::knn_weights(weights.col,k.col,n.obs)
+  weights.col <- DenseWeights(X = t(X),phi = phi.col,method = obs.weight.dist,p = obs.weight.dist.p)
+  k.col <- MinKNN(X = t(X),dense.weights = weights.col)
+  weights.col <- SparseWeights(X=t(X),dense.weights = weights.col,k = k.col)
   weights.col <- weights.col/sum(weights.col)
   weights.col <- weights.col/sqrt(p.vars)
   PreCompList.col <- suppressMessages(
