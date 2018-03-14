@@ -14,8 +14,11 @@
 #' @param X.scale A logical. Should X be scaled?
 #' @param rho A positive number for augmented lagrangian. Not advisable to change.
 #' @param phi A positive numner used for scaling in RBF kernel
+#' @param weight.dist a string indicating the distance metric used to calculate
+#' weights
+#' @param weight.dist.p The power of the Minkowski distance, if used.
 #' @param weights A vector of positive number of length choose(n,2).
-#' Determines observation pairs fusions weight.
+#' Determines observation pairs' fusion amount.
 #' @param k an integer >= 1. The number of neighbors used to create sparse weights
 #' @param ncores an integer >= 1. The number of cores to use.
 #' @param max.iter an integer. The maximum number of CARP iterations.
@@ -45,6 +48,12 @@
 #' and 'carp;
 #' @return X.center A logical. Should X be centered?
 #' @return X.scale A logical. Should X be scaled?
+#' @importFrom dplyr %>%
+#' @importFrom dplyr n
+#' @importFrom dplyr tbl_df
+#' @importFrom dplyr mutate
+#' @importFrom dplyr group_by
+#' @importFrom dplyr ungroup
 #' @export
 #' @examples
 #' library(clustRviz)
@@ -60,17 +69,21 @@ CARP <- function(X,
                  X.scale=FALSE,
                  rho=1,
                  phi=1e-3,
+                 weight.dist=c('euclidean','maximum','manhattan','canberra','binary','minkowski'),
+                 weight.dist.p = 2,
                  weights=NULL,
                  k=NULL,
                  ncores=1,
                  max.iter=1e6,
                  burn.in=50,
                  verbose=1,
-                 alg.type='carpviz',
+                 alg.type=c('carpviz','carp','carpl1','carpvizl1'),
                  t = 1.05,
                  interactive=TRUE,
                  static=TRUE,
                  npcs=4){
+  alg.type <- match.arg(alg.type)
+  weight.dist = match.arg(weight.dist)
   Iter <- Cluster <- Lambda <- NULL
   if(is.logical(verbose)){
     verbose.basic = TRUE
@@ -91,13 +104,21 @@ CARP <- function(X,
 
   # get labels
   if(is.null(obs.labels)){
-    n.labels <- rownames(X)
+    if(!is.null(rownames(X))){
+      n.labels <- rownames(X)
+    } else {
+      n.labels <- 1:nrow(X)
+    }
   } else{
     n.labels <- obs.labels
   }
 
   if(is.null(var.labels)){
-    p.labels <- colnames(X)
+    if(!is.null(colnames(X))){
+      p.labels <- colnames(X)
+    } else{
+      p.labels <- 1:ncol(X)
+    }
   } else{
     p.labels <- var.labels
   }
@@ -118,15 +139,15 @@ CARP <- function(X,
 
   # get weights
   if(is.null(weights)){
-    weights <- cvxclustr::kernel_weights(X,phi)
+    weights <- DenseWeights(t(X),phi=phi,method=weight.dist,p=weight.dist.p)
     if(is.null(k)){
-       k <- MinKNN(weights,n.obs)
+       k <- MinKNN(t(X),weights)
     }
-    weights <- cvxclustr::knn_weights(weights,k,n.obs)
+    weights <- SparseWeights(X=t(X),dense.weights = weights,k = k)
   }
 
 
-  if(verbose.basic) cat("Pre-computing weight-based edge sets\n")
+  if(verbose.basic) message("Pre-computing weight-based edge sets")
   PreCompList <- suppressMessages(ConvexClusteringPreCompute(
     X=X,
     weights = weights,
@@ -135,7 +156,7 @@ CARP <- function(X,
   ))
   cardE <- nrow(PreCompList$E)
 
-  if(verbose.basic) cat('Computing CARP Path\n')
+  if(verbose.basic) message('Computing CARP Path')
   switch(
     alg.type,
     carpviz={
@@ -221,7 +242,7 @@ CARP <- function(X,
 
   )
 
-  if(verbose.basic) cat('Post-processing\n')
+  if(verbose.basic) message('Post-processing')
   ISP(
     sp.path = carp.sol.path$v.zero.inds %>% t(),
     v.path = carp.sol.path$v.path,
@@ -334,15 +355,15 @@ print.CARP <- function(x,...){
     }
   )
   viz.string <- c('Static Dend', 'Static Path','Interactive Dend/Path')
-  cat('CARP Fit Summary\n')
-  cat('Number of Observations:', x$n.obs,'\n')
-  cat('Number of Variables:', x$p.vars,'\n')
-  cat('Pre-processing:',preprocess.string[c(x$X.center,x$X.scale)],'\n')
-  cat('Weights: RBF Kernel, phi =',x$phi, 'k =',x$k,'\n')
-  cat('Algorithm:',alg.string,'\n')
-  cat('Visualizations:',viz.string[c(x$static,x$static,x$interactive)],'\n')
+  message('CARP Fit Summary')
+  message('Number of Observations: ', x$n.obs,'\n')
+  message('Number of Variables: ', x$p.vars,'\n')
+  message('Pre-processing: ',preprocess.string[c(x$X.center,x$X.scale)],'\n')
+  message('Weights: RBF Kernel, phi = ',x$phi, ', k = ',x$k,'\n')
+  message('Algorithm: ',alg.string,'\n')
+  message('Visualizations: ',viz.string[c(x$static,x$static,x$interactive)],'\n')
 
-  cat('Raw Data:\n')
+  message('Raw Data:\n')
   x$X[1:min(5,x$n.obs),1:min(5,x$p.vars)]
 
 }
@@ -377,12 +398,47 @@ print.CARP <- function(x,...){
 #' @param min.nclust a positive value. The minimum number of clusters to
 #' display in the interactive plot.
 #' @param ... Unused additional generic arguements
-#' @param blwd a positive number. Line width on dendrograms.
-#' @param lcex a positive number. Label size on dendrograms.
+#' @param dend.branch.width a positive number. Line width on dendrograms.
+#' @param dend.labels.cex a positive number. Label size on dendrograms.
 #' @export
-#' @import shiny
-#' @import ggplot2
-#' @import dplyr
+#' @importFrom shiny shinyApp
+#' @importFrom shiny fluidPage
+#' @importFrom shiny titlePanel
+#' @importFrom shiny tabsetPanel
+#' @importFrom shiny fluidRow
+#' @importFrom shiny animationOptions
+#' @importFrom shiny column
+#' @importFrom shiny plotOutput
+#' @importFrom shiny sliderInput
+#' @importFrom shiny uiOutput
+#' @importFrom shiny renderUI
+#' @importFrom shiny tags
+#' @importFrom shiny checkboxGroupInput
+#' @importFrom shiny renderPlot
+#' @importFrom stats as.dendrogram
+#' @importFrom stats median
+#' @importFrom ggplot2 ggplot
+#' @importFrom ggplot2 aes
+#' @importFrom ggplot2 geom_path
+#' @importFrom ggplot2 geom_point
+#' @importFrom ggplot2 geom_text
+#' @importFrom ggplot2 guides
+#' @importFrom ggplot2 theme
+#' @importFrom ggplot2 element_text
+#' @importFrom ggplot2 xlab
+#' @importFrom ggplot2 ylab
+#' @importFrom ggplot2 scale_color_manual
+#' @importFrom ggrepel geom_text_repel
+#' @importFrom dplyr filter
+#' @importFrom dplyr select
+#' @importFrom dplyr distinct
+#' @importFrom dplyr rename
+#' @importFrom dplyr mutate
+#' @importFrom dplyr left_join
+#' @importFrom dplyr select_
+#' @importFrom dplyr %>%
+#' @importFrom grDevices adjustcolor
+#' @importFrom RColorBrewer brewer.pal
 #' @examples
 #' \dontrun{
 #' library(clustRviz)
@@ -395,22 +451,23 @@ print.CARP <- function(x,...){
 #' }
 plot.CARP <- function(
   x,
-  type='dendrogram',
+  type=c('dendrogram','path','interactive'),
   axis = c('PC1','PC2'),
-  blwd=2,
-  lcex=.6,
+  dend.branch.width=2,
+  dend.labels.cex=.6,
   percent=1,
   max.nclust=9,
   min.nclust=1,
   ...){
 
+  type = match.arg(type)
   switch(
     type,
     dendrogram={
       x$carp.dend %>%
-        as.dendrogram() %>%
-        dendextend::set("branches_lwd",blwd) %>%
-        dendextend::set("labels_cex",lcex) %>%
+        stats::as.dendrogram() %>%
+        dendextend::set("branches_lwd",dend.branch.width) %>%
+        dendextend::set("labels_cex",dend.labels.cex) %>%
         plot(ylab='Amount of Regularization')
     },
     path={
@@ -456,51 +513,51 @@ plot.CARP <- function(
     },
     interactive={
       shiny::shinyApp(
-        ui=fluidPage(
-          tags$style(type="text/css",
+        ui=shiny::fluidPage(
+          shiny::tags$style(type="text/css",
                      ".recalculating { opacity: 1.0; }"
           ),
-          titlePanel("Clustering Example"),
-          tabsetPanel(
-            tabPanel("Movie",
-                     fluidRow(
-                       column(2,
-                              sliderInput(
+          shiny::titlePanel("Clustering Example"),
+          shiny::tabsetPanel(
+            shiny::tabPanel("Movie",
+                     shiny::fluidRow(
+                       shiny::column(2,
+                              shiny::sliderInput(
                                 "regcent_movie",
                                 "Amount of Regularization",
                                 min = 0,
                                 max = 1,
                                 value = 0,
                                 # step=.07,animate = animationOptions(interval=700,loop=T)
-                                step=.03,animate = animationOptions(interval=1000,loop=T)
+                                step=.03,animate = shiny::animationOptions(interval=1000,loop=T)
                               ),
-                              uiOutput("choose_columns")
+                              shiny::uiOutput("choose_columns")
                        ),
-                       column(5,
-                              plotOutput("pcapathplot_movie",height = "700px")#,width = '900px')
+                       shiny::column(5,
+                              shiny::plotOutput("pcapathplot_movie",height = "700px")#,width = '900px')
                        ),
-                       column(5,
-                              plotOutput("dendplot_movie",height='700px')
+                       shiny::column(5,
+                              shiny::plotOutput("dendplot_movie",height='700px')
                        )
                      )
             ),
-            tabPanel("Static",
-                     fluidRow(
-                       column(2,
-                              sliderInput("regcent_static",
+            shiny::tabPanel("Static",
+                     shiny::fluidRow(
+                       shiny::column(2,
+                              shiny::sliderInput("regcent_static",
                                           "Number of Clusters",
                                           min = min.nclust,
                                           max = max.nclust,
                                           value = max.nclust,
                                           step=1),
-                              uiOutput("choose_columns_static")
+                              shiny::uiOutput("choose_columns_static")
 
                        ),
-                       column(5,
-                              plotOutput("pcapathplot_static",height = "700px")#,width = '900px')
+                       shiny::column(5,
+                              shiny::plotOutput("pcapathplot_static",height = "700px")#,width = '900px')
                        ),
-                       column(5,
-                              plotOutput("dendplot_static",height='700px')
+                       shiny::column(5,
+                              shiny::plotOutput("dendplot_static",height='700px')
                        )
                      )
             )
@@ -510,47 +567,47 @@ plot.CARP <- function(
 
           # Drop-down selection box for which data set
           # Check boxes
-          output$choose_columns <- renderUI({
+          output$choose_columns <- shiny::renderUI({
 
             # Get the data set with the appropriate name
             colnames <- paste('PC',1:4,sep='')
 
             # Create the checkboxes and select them all by default
-            checkboxGroupInput("columns", "Choose columns",
+            shiny::checkboxGroupInput("columns", "Choose columns",
                                choices  = colnames,
                                selected = colnames[1:2])
           })
           # Check boxes
-          output$choose_columns_static <- renderUI({
+          output$choose_columns_static <- shiny::renderUI({
             # Get the data set with the appropriate name
             colnames <- paste('PC',1:4,sep='')
 
             # Create the checkboxes and select them all by default
-            checkboxGroupInput("columns_static", "Choose columns",
+            shiny::checkboxGroupInput("columns_static", "Choose columns",
                                choices  = colnames,
                                selected = colnames[1:2])
           })
 
 
-          output$dendplot_movie <- renderPlot({
+          output$dendplot_movie <- shiny::renderPlot({
             x$carp.cluster.path.vis %>%
-              filter(LambdaPercent <= input$regcent_movie)  %>%
-              select(NCluster) %>%
+              dplyr::filter(LambdaPercent <= input$regcent_movie)  %>%
+              dplyr::select(NCluster) %>%
               unlist() %>%
               unname() %>%
               min -> ncl
             x$carp.dend %>%
-              as.dendrogram() %>%
+              stats::as.dendrogram() %>%
               dendextend::set("branches_lwd",2) %>%
               dendextend::set("labels_cex",.6) %>%
               plot(ylab='Amount of Regularization',cex.lab=1.5)
-            my.cols <- adjustcolor(c('grey','black'),alpha.f = .2)
+            my.cols <- grDevices::adjustcolor(c('grey','black'),alpha.f = .2)
             my.rect.hclust(x$carp.dend,k=ncl,border=2,my.col.vec=my.cols,lwd=3)
 
 
           })
 
-          output$pcapathplot_movie <- renderPlot({
+          output$pcapathplot_movie <- shiny::renderPlot({
             min.iter=5
             rename.list <- list(Obs = 'Obs',
                                 Cluster = 'Cluster',
@@ -563,8 +620,8 @@ plot.CARP <- function(
               cl.iter = min.iter
             } else{
               x$carp.cluster.path.vis %>%
-                filter(LambdaPercent <= input$regcent_movie) %>%
-                select(Iter) %>%
+                dplyr::filter(LambdaPercent <= input$regcent_movie) %>%
+                dplyr::select(Iter) %>%
                 unlist() %>%
                 unname()  %>%
                 max() -> cl.iter
@@ -580,69 +637,69 @@ plot.CARP <- function(
               dplyr::select_(.dots=rename.list) -> x$carp.cluster.path.vis.rename
 
             x$carp.cluster.path.vis.rename %>%
-              filter(Iter == cl.iter) %>%
-              select(Obs,Cluster,Var1,Var2) %>%
-              rename(
+              dplyr::filter(Iter == cl.iter) %>%
+              dplyr::select(Obs,Cluster,Var1,Var2) %>%
+              dplyr::rename(
                 MaxVar1 = Var1,
                 MaxVar2 = Var2
               ) -> cl.assgn
             x$carp.cluster.path.vis.rename %>%
-              filter(Iter <= cl.iter) %>%
-              left_join(
+              dplyr::filter(Iter <= cl.iter) %>%
+              dplyr::left_join(
                 cl.assgn,
                 by=c('Obs')
               ) -> tmp
             tmp %>%
-              filter(Iter > min.iter ) %>%
-              ggplot(aes(x=Var1,y=Var2,group=Obs)) +
-              geom_path(
-                aes(x=Var1,y=Var2),
+              dplyr::filter(Iter > min.iter ) %>%
+              ggplot2::ggplot(aes(x=Var1,y=Var2,group=Obs)) +
+              ggplot2::geom_path(
+                ggplot2::aes(x=Var1,y=Var2),
                 linejoin = 'round',
                 color='red'
               ) +
-              geom_point(
-                aes(x=MaxVar1,y=MaxVar2),
-                data = tmp %>% filter(Iter==1),
+              ggplot2::geom_point(
+                ggplot2::aes(x=MaxVar1,y=MaxVar2),
+                data = tmp %>% dplyr::filter(Iter==1),
                 color='red',
                 size=I(4)
               ) +
-              geom_point(
+              ggplot2::geom_point(
                 aes(x=Var1,y=Var2),
-                data=tmp %>% filter(Iter==1),
+                data=tmp %>% dplyr::filter(Iter==1),
                 color='black',
                 size=I(4)
               ) +
-              geom_text(
-                aes(x=Var1,y=Var2,label=ObsLabel),
+              ggplot2::geom_text(
+                ggplot2::aes(x=Var1,y=Var2,label=ObsLabel),
                 size=I(6),
-                data=tmp %>% filter(Iter == 1)
+                data=tmp %>% dplyr::filter(Iter == 1)
               ) +
-              guides(color=FALSE,size=FALSE) +
-              theme(axis.title = element_text(size=25)) +
-              theme(axis.text = element_text(size=20)) +
-              xlab(input$columns[1]) +
-              ylab(input$columns[2])
+              ggplot2::guides(color=FALSE,size=FALSE) +
+              ggplot2::theme(axis.title = ggplot2::element_text(size=25)) +
+              ggplot2::theme(axis.text = ggplot2::element_text(size=20)) +
+              ggplot2::xlab(input$columns[1]) +
+              ggplot2::ylab(input$columns[2])
 
           })
-          output$dendplot_static <- renderPlot({
+          output$dendplot_static <- shiny::renderPlot({
             x$carp.dend %>%
-              as.dendrogram() %>%
+              stats::as.dendrogram() %>%
               dendextend::set("branches_lwd",2) %>%
               dendextend::set("labels_cex",.6) %>%
               plot(ylab='Amount of Regularization',cex.lab=1.5)
-            my.cols <- adjustcolor(RColorBrewer::brewer.pal(n=input$regcent_static,'Set1'),alpha.f=.2)
+            my.cols <- grDevices::adjustcolor(RColorBrewer::brewer.pal(n=input$regcent_static,'Set1'),alpha.f=.2)
             my.rect.hclust(x$carp.dend,k=input$regcent_static,border=2,my.col.vec=my.cols,lwd=3)
           })
-          output$pcapathplot_static <- renderPlot({
+          output$pcapathplot_static <- shiny::renderPlot({
             ncl <- input$regcent_static
-            my.cols <- adjustcolor(RColorBrewer::brewer.pal(n=ncl,'Set1'))[order(unique(cutree(x$carp.dend,k=ncl)[x$carp.dend$order]))]
+            my.cols <- grDevices::adjustcolor(RColorBrewer::brewer.pal(n=ncl,'Set1'))[order(unique(stats::cutree(x$carp.dend,k=ncl)[x$carp.dend$order]))]
             x$carp.cluster.path.vis %>%
-              distinct(Iter,NCluster) %>%
-              filter(NCluster == ncl) %>%
-              select(Iter) %>%
+              dplyr::distinct(Iter,NCluster) %>%
+              dplyr::filter(NCluster == ncl) %>%
+              dplyr::select(Iter) %>%
               unlist() %>%
               unname() %>%
-              median() -> cl.iter
+              stats::median() -> cl.iter
             cl.iter <- floor(cl.iter)
             rename.list <- list(Obs = 'Obs',
                                 Cluster = 'Cluster',
@@ -652,55 +709,55 @@ plot.CARP <- function(
                                 Var1 = input$columns_static[1],
                                 Var2 = input$columns_static[2])
             x$carp.cluster.path.vis %>%
-              select_(.dots=rename.list) -> carp.cluster.path.vis.rename
+              dplyr::select_(.dots=rename.list) -> carp.cluster.path.vis.rename
 
             carp.cluster.path.vis.rename %>%
-              filter(Iter == cl.iter) %>%
-              select(Obs,Cluster,Var1,Var2) %>%
-              rename(
+              dplyr::filter(Iter == cl.iter) %>%
+              dplyr::select(Obs,Cluster,Var1,Var2) %>%
+              dplyr::rename(
                 MaxVar1 = Var1,
                 MaxVar2 = Var2,
                 PlotCluster=Cluster
               ) %>%
-              mutate(
+              dplyr::mutate(
                 PlotCluster = as.factor(PlotCluster)
               ) -> cl.assgn
 
             carp.cluster.path.vis.rename %>%
-              filter(Iter <= cl.iter) %>%
-              left_join(
+              dplyr::filter(Iter <= cl.iter) %>%
+              dplyr::left_join(
                 cl.assgn,
                 by=c('Obs')
               ) -> tmp
             tmp %>%
-              filter(Iter > 50 ) %>%
-              ggplot(aes(x=Var1,y=Var2,group=Obs)) +
-              geom_path(
-                aes(x=Var1,y=Var2,color=PlotCluster),
+              dplyr::filter(Iter > 50 ) %>%
+              ggplot2::ggplot(aes(x=Var1,y=Var2,group=Obs)) +
+              ggplot2::geom_path(
+                ggplot2::aes(x=Var1,y=Var2,color=PlotCluster),
                 linejoin = 'round'
               ) +
-              geom_point(
-                aes(x=MaxVar1,y=MaxVar2,color=PlotCluster),
-                data = tmp %>% filter(Iter==1),
+              ggplot2::geom_point(
+                ggplot2::aes(x=MaxVar1,y=MaxVar2,color=PlotCluster),
+                data = tmp %>% dplyr::filter(Iter==1),
                 size=I(4)
               ) +
-              geom_point(
-                aes(x=Var1,y=Var2),
-                data=tmp %>% filter(Iter==1),
+              ggplot2::geom_point(
+                ggplot2::aes(x=Var1,y=Var2),
+                data=tmp %>% dplyr::filter(Iter==1),
                 color='black',
                 size=I(4)
               ) +
-              geom_text(
+              ggplot2::geom_text(
                 aes(x=Var1,y=Var2,label=ObsLabel),
                 size=I(6),
-                data=tmp %>% filter(Iter == 1)
+                data=tmp %>% dplyr::filter(Iter == 1)
               ) +
-              scale_color_manual(values=my.cols)+
-              guides(color=FALSE,size=FALSE) +
-              theme(axis.title = element_text(size=25)) +
-              theme(axis.text = element_text(size=20)) +
-              xlab(input$columns_static[1]) +
-              ylab(input$columns_static[2])
+              ggplot2::scale_color_manual(values=my.cols)+
+              ggplot2::guides(color=FALSE,size=FALSE) +
+              ggplot2::theme(axis.title = ggplot2::element_text(size=25)) +
+              ggplot2::theme(axis.text = ggplot2::element_text(size=20)) +
+              ggplot2::xlab(input$columns_static[1]) +
+              ggplot2::ylab(input$columns_static[2])
           })
 
 
@@ -762,6 +819,7 @@ Clustering <- function(x,...) {
 #' for each cluster assignment along the CARP path.
 #' }
 #' }
+#' @importFrom stats cutree
 #' @export
 #' @examples
 #' library(clustRviz)
@@ -784,7 +842,7 @@ Clustering <- function(x,...) {
 #' head(carp.clustering.full$cluster.means[[5]])
 Clustering.CARP <- function(x,k=NULL,percent=NULL,...){
   if(!is.null(k)){
-      clust.assign <- cutree(x$carp.dend,k=k)
+      clust.assign <- stats::cutree(x$carp.dend,k=k)
       lapply(unique(clust.assign),function(cl.lab){
         apply(
           matrix(t(x$X)[,clust.assign==cl.lab],nrow=x$p.vars),
@@ -854,6 +912,14 @@ Clustering.CARP <- function(x,k=NULL,percent=NULL,...){
 #' Determines observation pair fusions weight.
 #' @param weights.vars A vector of positive number of length choose(p.vars,2).
 #' Determines variable pair fusions weight.
+#' @param obs.weight.dist a string indicating the distance metric used to calculate
+#' observation weights
+#' @param obs.weight.dist.p The power of the Minkowski distance, if used for
+#' observation weights.
+#' @param vars.weight.dist a string indicating the distance metric used to calculate
+#' variable weights
+#' @param vars.weight.dist.p The power of the Minkowski distance, if used for
+#' variable weights.
 #' @param k.obs an integer >= 1. The number of neighbors used to create sparse
 #' observation weights
 #' @param k.var an integer >= 1. The number of neighbors used to create sparse
@@ -904,6 +970,10 @@ CBASS <- function(X,
                  phi=1e-1,
                  weights.obs=NULL,
                  weights.vars=NULL,
+                 obs.weight.dist=c('euclidean','maximum','manhattan','canberra','binary','minkowski'),
+                 obs.weight.dist.p = 2,
+                 vars.weight.dist=c('euclidean','maximum','manhattan','canberra','binary','minkowski'),
+                 vars.weight.dist.p = 2,
                  k.obs=NULL,
                  k.var=NULL,
                  t=NULL,
@@ -914,6 +984,8 @@ CBASS <- function(X,
                  alg.type='cbassviz',
                  interactive=TRUE,
                  static=TRUE){
+  obs.weight.dist = match.arg(obs.weight.dist)
+  vars.weight.dist = match.arg(vars.weight.dist)
   if(is.logical(verbose)){
     verbose.basic = TRUE
     verbose.deep=FALSE
@@ -929,12 +1001,20 @@ CBASS <- function(X,
   }
   # get labels
   if(is.null(obs.labels)){
-    n.labels <- rownames(X)
+    if(!is.null(rownames(X))){
+      n.labels <- rownames(X)
+    } else {
+      n.labels <- 1:nrow(X)
+    }
   } else{
     n.labels <- obs.labels
   }
   if(is.null(var.labels)){
-    p.labels <- colnames(X)
+    if(!is.null(colnames(X))){
+      p.labels <- colnames(X)
+    } else{
+      p.labels <- 1:ncol(X)
+    }
   } else{
     p.labels <- var.labels
   }
@@ -953,13 +1033,21 @@ CBASS <- function(X,
   n.obs <- ncol(X)
   p.vars <- nrow(X)
 
-
-  phi.row=phi/n.obs
-  weights.row <- cvxclustr::kernel_weights(t(X),phi.row)
-  k.row <- MinKNN(weights.row,p.vars)
-  weights.row <- cvxclustr::knn_weights(weights.row,k.row,p.vars)
+  if(!is.null(weights.vars)){
+    weights.row <- weights.vars
+  } else{
+    phi.row=phi/n.obs
+    weights.row <- DenseWeights(X = X,phi = phi.row,method = vars.weight.dist,p = vars.weight.dist.p)
+    if(is.null(k.var)){
+      k.row <- MinKNN(X = X,dense.weights = weights.row)
+    } else{
+      k.row <- k.var
+    }
+    weights.row <- SparseWeights(X = X,dense.weights = weights.row,k = k.row)
+  }
   weights.row <- weights.row/sum(weights.row)
   weights.row <- weights.row/sqrt(n.obs)
+
   PreCompList.row <- suppressMessages(
     ConvexClusteringPreCompute(X=t(X),
                                weights = weights.row,
@@ -967,12 +1055,21 @@ CBASS <- function(X,
   )
   cardE.row <- nrow(PreCompList.row$E)
 
-  phi.col=phi/p.vars
-  weights.col <- cvxclustr::kernel_weights(X,phi.col)
-  k.col <- MinKNN(weights.col,n.obs)
-  weights.col <- cvxclustr::knn_weights(weights.col,k.col,n.obs)
+  if(!is.null(weights.obs)){
+    weights.cols <- weights.obs
+  } else{
+    phi.col=phi/p.vars
+    weights.col <- DenseWeights(X = t(X),phi = phi.col,method = obs.weight.dist,p = obs.weight.dist.p)
+    if(is.null(k.obs)){
+      k.col <- MinKNN(X = t(X),dense.weights = weights.col)
+    } else{
+      k.col <- k.obs
+    }
+    weights.col <- SparseWeights(X=t(X),dense.weights = weights.col,k = k.col)
+  }
   weights.col <- weights.col/sum(weights.col)
   weights.col <- weights.col/sqrt(p.vars)
+
   PreCompList.col <- suppressMessages(
     ConvexClusteringPreCompute(X=X,
                                weights = weights.col,
@@ -982,7 +1079,7 @@ CBASS <- function(X,
 
 
 
-  if(verbose.basic) cat('Computing CBASS Path\n')
+  if(verbose.basic) message('Computing CBASS Path\n')
   switch(
     alg.type,
     cbassviz={
@@ -1014,11 +1111,11 @@ CBASS <- function(X,
                    t_switch = 1.01) -> bicarp.sol.path
     },
     cbass={
-      cat('carp\n')
+      message('carp\n')
     }
   )
 
-  if(verbose.basic) cat('Post-processing\n')
+  if(verbose.basic) message('Post-processing\n')
   ISP(
     sp.path = bicarp.sol.path$v.row.zero.inds %>% t(),
     v.path = bicarp.sol.path$v.row.path,
@@ -1117,16 +1214,16 @@ print.CBASS <- function(x,...){
       alg.string = 'CBASS'
     })
   viz.string <- c('Static Dend', 'Static Heatmap','Interactive Heatmap')
-  cat('CBASS Fit Summary\n')
-  cat('Number of Observations:', x$n.obs,'\n')
-  cat('Number of Variables:', x$p.vars,'\n')
-  cat('Pre-processing:',preprocess.string[c(x$X.center.global)],'\n')
-  cat('Obs. Weights: RBF Kernel, phi =',x$phi.obs, 'k =',x$k.obs,'\n')
-  cat('Var. Weights: RBF Kernel, phi =',x$phi.var, 'k =',x$k.var,'\n')
-  cat('Algorithm:',alg.string,'\n')
-  cat('Visualizations:',viz.string[c(x$static,x$static,x$interactive)],'\n')
+  message('CBASS Fit Summary\n')
+  message('Number of Observations: ', x$n.obs,'\n')
+  message('Number of Variables: ', x$p.vars,'\n')
+  message('Pre-processing: ',preprocess.string[c(x$X.center.global)],'\n')
+  message('Obs. Weights: RBF Kernel, phi = ',x$phi.obs, ', k = ',x$k.obs,'\n')
+  message('Var. Weights: RBF Kernel, phi = ',x$phi.var, ', k = ',x$k.var,'\n')
+  message('Algorithm: ',alg.string,'\n')
+  message('Visualizations: ',viz.string[c(x$static,x$static,x$interactive)],'\n')
 
-  cat('Raw Data:\n')
+  message('Raw Data:\n')
   x$X[1:min(5,x$n.obs),1:min(5,x$p.vars)]
 
 }
@@ -1151,14 +1248,27 @@ print.CBASS <- function(x,...){
 #' and 'interactive' produces an interactive visualization of cluster
 #' heatmap and its associated dendrograms.
 #' @param ... Unused additional generic arguements
-#' @param blwd a positive number. Line width on dendrograms.
-#' @param lcex a positive number. Label size on dendrograms.
-#' @param cexRow row label size
-#' @param cexCol column label size
+#' @param dend.branch.width a positive number. Line width on dendrograms.
+#' @param dend.labels.cex a positive number. Label size on dendrograms.
+#' @param heatrow.label.cex heatmap row label size
+#' @param heatcol.label.cex heatmap column label size
 #' @export
-#' @import shiny
-#' @import ggplot2
-#' @import dplyr
+#' @importFrom shiny shinyApp
+#' @importFrom shiny fluidPage
+#' @importFrom shiny titlePanel
+#' @importFrom shiny tabsetPanel
+#' @importFrom shiny fluidRow
+#' @importFrom shiny animationOptions
+#' @importFrom shiny tags
+#' @importFrom shiny column
+#' @importFrom shiny plotOutput
+#' @importFrom shiny renderPlot
+#' @importFrom shiny sliderInput
+#' @importFrom stats as.dendrogram
+#' @importFrom stats as.hclust
+#' @importFrom stats quantile
+#' @importFrom grDevices colorRampPalette
+#' @importFrom grDevices adjustcolor
 #' @examples
 #' \dontrun{
 #' library(clustRviz)
@@ -1171,26 +1281,27 @@ print.CBASS <- function(x,...){
 #' }
 plot.CBASS <- function(
   x,
-  type='obs.dendrogram',
-  blwd=2,
-  lcex=.6,
-  cexRow=1,
-  cexCol=1,
+  type=c('obs.dendrogram','var.dendrogram','heatmap','interactive'),
+  dend.branch.width=2,
+  dend.labels.cex=.6,
+  heatrow.label.cex=1.5,
+  heatcol.label.cex=1.5,
   ...){
+  type = match.arg(type)
   switch(
     type,
     obs.dendrogram={
       x$cbass.dend.obs %>%
-        as.dendrogram() %>%
-        dendextend::set("branches_lwd",blwd) %>%
-        dendextend::set("labels_cex",lcex) %>%
+        stats::as.dendrogram() %>%
+        dendextend::set("branches_lwd",dend.branch.width) %>%
+        dendextend::set("labels_cex",dend.labels.cex) %>%
         plot(ylab='Amount of Regularization')
     },
     var.dendrogram={
       x$cbass.dend.var %>%
-        as.dendrogram() %>%
-        dendextend::set("branches_lwd",blwd) %>%
-        dendextend::set("labels_cex",lcex) %>%
+        stats::as.dendrogram() %>%
+        dendextend::set("branches_lwd",dend.branch.width) %>%
+        dendextend::set("labels_cex",dend.labels.cex) %>%
         plot(ylab='Amount of Regularization')
     },
     heatmap={
@@ -1205,54 +1316,54 @@ plot.CBASS <- function(
       colnames(X) <- x$obs.labels
       nbreaks <- 50
       quant.probs <- seq(0,1,length.out = nbreaks)
-      breaks <- unique(quantile(X[TRUE],probs = quant.probs))
+      breaks <- unique(stats::quantile(X[TRUE],probs = quant.probs))
       nbreaks <- length(breaks)
-      heatcols <- colorRampPalette(c("blue","yellow"))(nbreaks - 1)
+      heatcols <- grDevices::colorRampPalette(c("blue","yellow"))(nbreaks - 1)
 
-      my.cols <- adjustcolor(c('black','grey'),alpha.f = .3)
+      my.cols <- grDevices::adjustcolor(c('black','grey'),alpha.f = .3)
       my.heatmap.2(x=X,
                    scale='none',
-                   Colv=as.dendrogram(x$cbass.dend.obs),
-                   Rowv = as.dendrogram(x$cbass.dend.var),
+                   Colv=stats::as.dendrogram(x$cbass.dend.obs),
+                   Rowv = stats::as.dendrogram(x$cbass.dend.var),
                    trace='none',
                    density.info = 'none',
                    key=FALSE,
                    breaks = breaks,
                    col=heatcols,
                    symkey = F,
-                   Row.hclust = x$cbass.dend.var %>% as.hclust(),
-                   Col.hclust = x$cbass.dend.obs %>% as.hclust(),
+                   Row.hclust = x$cbass.dend.var %>% stats::as.hclust(),
+                   Col.hclust = x$cbass.dend.obs %>% stats::as.hclust(),
                    k.col=x$n.obs,
                    k.row=x$p.vars,
                    my.col.vec = my.cols,
-                   cexRow = 1.5,
-                   cexCol = 1.5,
+                   cexRow = heatrow.label.cex,
+                   cexCol = heatcol.label.cex,
                    margins = c(14,8))
     },
     interactive={
-      shinyApp(
-        ui=fluidPage(
-          tags$style(type="text/css",
+      shiny::shinyApp(
+        ui=shiny::fluidPage(
+          shiny::tags$style(type="text/css",
                      ".recalculating { opacity: 1.0; }"
           ),
 
 
-          titlePanel("BiClustering"),
-          tabsetPanel(
-            tabPanel("Heatmap",
-                     fluidRow(
-                       column(3,
-                              sliderInput(
+          shiny::titlePanel("BiClustering"),
+          shiny::tabsetPanel(
+            shiny::tabPanel("Heatmap",
+                     shiny::fluidRow(
+                       shiny::column(3,
+                              shiny::sliderInput(
                                 "regcent",
                                 "Amount of Regularization",
                                 min = 0,
                                 max = 1,
                                 value = .5,
-                                step=.03,animate = animationOptions(interval=300,loop=T)
+                                step=.03,animate = shiny::animationOptions(interval=300,loop=T)
                               )
                        ),
-                       column(9,
-                              plotOutput("heatmap",height = "900px",width = '1200px')
+                       shiny::column(9,
+                              shiny::plotOutput("heatmap",height = "900px",width = '1200px')
                        )
                      )
             )
@@ -1276,11 +1387,11 @@ plot.CBASS <- function(
           lam.prop.seq <- lam.seq / max(lam.seq)
           nbreaks <- 50
           quant.probs <- seq(0,1,length.out = nbreaks)
-          breaks <- unique(quantile(X[TRUE],probs = quant.probs))
+          breaks <- unique(stats::quantile(X[TRUE],probs = quant.probs))
           nbreaks <- length(breaks)
-          heatcols <- colorRampPalette(c("blue","yellow"))(nbreaks - 1)
-          my.cols <- adjustcolor(c('black','grey'),alpha.f = .3)
-          output$heatmap <- renderPlot({
+          heatcols <- grDevices::colorRampPalette(c("blue","yellow"))(nbreaks - 1)
+          my.cols <- grDevices::adjustcolor(c('black','grey'),alpha.f = .3)
+          output$heatmap <- shiny::renderPlot({
             plt.iter <- which.min(abs(input$regcent - lam.prop.seq))
             # find lambda at iter
             cur.lam <- x$cbass.sol.path$lambda.path[plt.iter]
@@ -1309,21 +1420,21 @@ plot.CBASS <- function(
             }
             my.heatmap.2(x=X.heat,
                          scale='none',
-                         Colv=as.dendrogram(x$cbass.dend.obs),
-                         Rowv = as.dendrogram(x$cbass.dend.var),
+                         Colv=stats::as.dendrogram(x$cbass.dend.obs),
+                         Rowv = stats::as.dendrogram(x$cbass.dend.var),
                          trace='none',
                          density.info = 'none',
                          key=FALSE,
                          breaks = breaks,
                          col=heatcols,
                          symkey = F,
-                         Row.hclust = x$cbass.dend.var %>% as.hclust(),
-                         Col.hclust = x$cbass.dend.obs %>% as.hclust(),
+                         Row.hclust = x$cbass.dend.var %>% stats::as.hclust(),
+                         Col.hclust = x$cbass.dend.obs %>% stats::as.hclust(),
                          k.col=cur.col.nclust,
                          k.row=cur.row.nclust,
                          my.col.vec = my.cols,
-                         cexRow = 1,
-                         cexCol = 1,
+                         cexRow = heatrow.label.cex,
+                         cexCol = heatcol.label.cex,
                          margins = c(10,10))
 
           })

@@ -4,9 +4,9 @@
 \alias{plot.CARP}
 \title{Plot function for CARP objects}
 \usage{
-\method{plot}{CARP}(x, type = "dendrogram", axis = c("PC1", "PC2"),
-  blwd = 2, lcex = 0.6, percent = 1, max.nclust = 9, min.nclust = 1,
-  ...)
+\method{plot}{CARP}(x, type = c("dendrogram", "path", "interactive"),
+  axis = c("PC1", "PC2"), dend.branch.width = 2, dend.labels.cex = 0.6,
+  percent = 1, max.nclust = 9, min.nclust = 1, ...)
 }
 \arguments{
 \item{x}{a CARP object returned by \code{CARP}}
@@ -20,9 +20,9 @@ both the cluster path and dendrogram}
 etc. Specifics which principal component axis to display for the 'path'
 visualization}
 
-\item{blwd}{a positive number. Line width on dendrograms.}
+\item{dend.branch.width}{a positive number. Line width on dendrograms.}
 
-\item{lcex}{a positive number. Label size on dendrograms.}
+\item{dend.labels.cex}{a positive number. Label size on dendrograms.}
 
 \item{percent}{a number between 0 and 1. Specifies how far along the
 CARP path the 'path' visualization should display.}

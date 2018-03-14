@@ -5,10 +5,12 @@
 \title{Compute CARP solution path}
 \usage{
 CARP(X, obs.labels = NULL, var.labels = NULL, X.center = TRUE,
-  X.scale = FALSE, rho = 1, phi = 0.001, weights = NULL, k = NULL,
-  ncores = 1, max.iter = 1e+06, burn.in = 50, verbose = 1,
-  alg.type = "carpviz", t = 1.05, interactive = TRUE, static = TRUE,
-  npcs = 4)
+  X.scale = FALSE, rho = 1, phi = 0.001, weight.dist = c("euclidean",
+  "maximum", "manhattan", "canberra", "binary", "minkowski"),
+  weight.dist.p = 2, weights = NULL, k = NULL, ncores = 1,
+  max.iter = 1e+06, burn.in = 50, verbose = 1, alg.type = c("carpviz",
+  "carp", "carpl1", "carpvizl1"), t = 1.05, interactive = TRUE,
+  static = TRUE, npcs = 4)
 }
 \arguments{
 \item{X}{A n by p matrix with rows the observations and columns the variables}
@@ -25,8 +27,13 @@ CARP(X, obs.labels = NULL, var.labels = NULL, X.center = TRUE,
 
 \item{phi}{A positive numner used for scaling in RBF kernel}
 
+\item{weight.dist}{a string indicating the distance metric used to calculate
+weights}
+
+\item{weight.dist.p}{The power of the Minkowski distance, if used.}
+
 \item{weights}{A vector of positive number of length choose(n,2).
-Determines observation pairs fusions weight.}
+Determines observation pairs' fusion amount.}
 
 \item{k}{an integer >= 1. The number of neighbors used to create sparse weights}
 
