@@ -1107,13 +1107,50 @@ SparseWeights <- function(X,dense.weights, k){
 #'
 #' @param weights a vector of weights such as returned by \code{SparseWeights}
 #' @param nobs the number of observations being clustered
+#' @param weighted a logical. If \code{FALSE} created unweighted adjacency matrix
+#' determined by support of weight vector. If TRUE create weighted adjacency;
+#' default is FALSE.
+#' @param upper a logical. If \code{TRUE} only return upper triangular of matrix.
+#' If \code{FALSE} return symmetric adjacency
 #' @return adj a sparse adjacency matrix
 #' @importFrom Matrix Matrix
 #' @importFrom Matrix t
 #' @export
-WeightAdjacency <- function(weights,nobs){
+WeightAdjacency <- function(weights,nobs,weighted=FALSE,upper=TRUE){
   adj <- Matrix::Matrix(data=0,nrow=nobs,ncol=nobs,sparse = TRUE)
-  adj[lower.tri(adj,diag=FALSE)] <- as.numeric(weights!=0)
+  if(!weighted){
+    adj[lower.tri(adj,diag=FALSE)] <- as.numeric(weights!=0)
+  } else {
+    adj[lower.tri(adj,diag=FALSE)] <- weights
+  }
   adj <- Matrix::t(adj)
+  if(!upper){
+    adj <- adj + Matrix::t(adj)
+  }
   adj
+}
+
+#' Plot graph induced by weights
+#'
+#' @param weights a vector of weights such as returned by \code{SparseWeights}
+#' @param nobs the number of observations being clustered
+#' @param edge.labels a logical. Should weight values be displayed along edges?
+#' @param obs.labels a vector of observation labels
+#' @param ... additional parameters passed to qgraph::qgraph
+#' @import qgraph
+#' @export
+PlotWeightGraph <- function(weights,nobs,edge.labels=TRUE,obs.labels=NULL,...){
+  WeightAdjacency(
+    weights = weights,
+    nobs = nobs,
+    weighted = TRUE,
+    upper=FALSE
+  ) -> wt.adj
+
+  qgraph(input = wt.adj,
+         labels=obs.labels,
+         layout = "spring",
+         edge.labels=edge.labels,
+         weighted=FALSE,
+         ...)
 }

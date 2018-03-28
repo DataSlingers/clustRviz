@@ -37,5 +37,6 @@ LinkingTo: Rcpp,RcppArmadillo
 Suggests: testthat,
     knitr,
     rmarkdown,
-    gridExtra
+    gridExtra,
+    tidyverse
 VignetteBuilder: knitr

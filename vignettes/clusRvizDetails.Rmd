@@ -21,7 +21,8 @@ knitr::opts_chunk$set(
 ```
 
 \renewcommand{\vec}[1]{\boldsymbol{#1}}
-## Introduction
+
+# Introduction
 
 The `clustRviz` package intends to make fitting and visualizing CARP and CBASS 
 solution paths an easy process. In the [Getting Started](Getting_Started.html) 
@@ -31,7 +32,7 @@ detailed explanation for the variety of options available in `clustRviz`.
 
 
 
-## Background
+# Background
 
 The starting point for CARP the Convex Clustering problem. 
 
@@ -42,6 +43,7 @@ $$
 \lambda \sum_{ l < m} 
 w_{l,m} \| \vec u_l - \vec u_m \|_2
 $$
+
 
 The above can be solved via ADMM
 
@@ -59,7 +61,7 @@ This must be done for each $\lambda_k$ which is costly
 CARP augments the ADMM as follows:
 
 
-## Preprocessing and Inputs
+# Preprocessing and Inputs
 
 While the `CARP` and `CBASS` functions provides several reasonable default choices for weights, algorithms, etc, it
 is important to know their details if one wishes to compute more customized clustering choices.
@@ -76,14 +78,19 @@ package and the dataset.
 library(clustRviz)
 data("presidential_speech")
 Xdat <- presidential_speech$X
+obs.labels <- presidential_speech$labels
+var.labels <- colnames(Xdat)
 Xdat[1:5,1:5]
+head(obs.labels)
+head(var.labels)
 ```
+
 
 Again our speech data consists of log-transformed word counts from speech found at url.
 
-### Preprocessing 
+## Preprocessing 
 
-##### Normalization
+### Normalization
 An important first choice before clustering is whether to center and scale our observations.
 
 Centering should always be done.
@@ -114,7 +121,7 @@ Xdat.bi <- Xdat
 Xdat.bi.preprocessed <- Xdat -  mean(Xdat)
 ```
 
-##### Dimension Reduction
+### Dimension Reduction
 
 While not directly addressed by `CARP` or `CBASS`, high dimensional 
 measurements can present a challenge for clustering methods.
@@ -134,7 +141,7 @@ of high dimenstionality by visualizing the principal components
 of the data by default.
 
 
-### Weights
+## Weights
 
 Weights are arguably one of the most important inputs to both `CARP` and `CBASS`.
 
@@ -147,16 +154,21 @@ This important feature allows us to incorportate domain knowledge, if available.
 In the absense of domain knowledge, however, weights can easily be 
 constructed via the data itself.
 
-While perhaps not appearent at first, weight choices can also greatly 
-affect the computation time of both `CARP` and `CBASS`.
+One might first consider simply using a set of uninformative weights,
+$w_{l.m} = 1$
 
-In the `CARP` problem above, for example, we note the regularization term 
-contains $\binom{n}{2}$ summands, making computations slow.
+While perhaps not appearent at first, such weight choices can also greatly 
+affect the computation time of both `CARP` and `CBASS` 
+(and certainly Convex Clustering).
+
+To see this note that in the Convex Clustering problem above 
+the regularization term contains $\binom{n}{2}$ summands, 
+drastically increasing computations as $n$ increases.
 
 Computations can be reduced by making the majority of weights zero and 
-greatly reducing compuatation time.
+greatly reducing the number of summands.
 
-Here we discuss `clustRviz`'s default weight choices, as well as how 
+Here we detail `clustRviz`'s default weight choices, as well as how 
 weights can be constructed manually.
 
 By default `CARP` and `CBASS` assume no prior domain knowledge 
@@ -190,6 +202,7 @@ The value of $\phi$ can have a marked effect on the weights.
 
 ```{r, fig.height=5,fig.width=10,fig.align='center',echo=FALSE,fig.cap="Dense weights for different choices of phi"}
 library(tidyverse)
+library(gridExtra)
 gridExtra::grid.arrange(
 DenseWeights(X = Xdat.preprocessed,phi=1e-3) %>%
   qplot(bins=35)+
@@ -206,7 +219,8 @@ ncol=2
 The choice of $\phi$ determines variance of the weights.
 
 Generally, choices of $\phi$ which result in higher variance weights tend to be more 
-informative. For example
+informative. A simple method for finding a reasonable choice of $\phi$ is a basic
+grid search. For example:
 ```{r}
 phi.vec <- 10^(-4:4)
 sapply(phi.vec,function(phi){
@@ -218,18 +232,163 @@ sapply(phi.vec,function(phi){
 
 Additionally, `DenseWeights` allows for the specification of alternative distance measures
 
+Depending on the dataset, alternative metrics to traditional euclidean distance may 
+result in more informative clustering solutions.
+
 ```{r}
 dense.weights.can <- DenseWeights(X = Xdat.preprocessed,phi=1e-5,method = 'canberra')
 ```
 
-```{r, fig.height=5,fig.width=10,fig.align='center',echo=FALSE,fig.cap="Dense weights with Canberra distance"}
-qplot(dense.weights.can,bins=35) 
+
+```{r, fig.height=5,fig.width=7,fig.align='center',echo=FALSE,fig.cap="Dense weights with Canberra distance"}
+qplot(dense.weights.can,bins=35) + 
+  xlab('Weight Value') +
+  ylab('Count')
 ```
-## Fitting
 
+Distance-based weights can be made sparse by only fusing together nearest neighbors.
 
+For a given observations $l$ we consider its $k$ nearest neighbors $\textrm{ne}_k(l)$. 
 
-## Visualizations
+Given a pair of observations $l,m$, we set their corresponding weight, $w_{l,m}$, to zero 
+if either is not amongst the other nearest neighbors. Specifically,
+
+$$
+\tilde{w}_{l,m} = w_{l,m} \vec{1}_{\textrm{ne}_k(l)}(m) \vec{1}_{\textrm{ne}_k(m)}(l)
+$$
+where $w_{l,m}$ is our original dense weight values and $\vec{1}_{A}(x)$ denotes the indicator function of the set $A$.
+
+For a specifid value of $k$, a sparse vector of $k$ nearest neighbor weights can be generated via the `SparseWeights` function:
+
+```{r}
+k.neighbors <- 5
+SparseWeights(
+  X=Xdat.preprocessed,
+  dense.weights = dense.weights,
+  k = k.neighbors) -> sparse.weights
+```
+In the case of $k=$ `r k.neighbors` above, the number of non-zero weight values 
+(and hence the number of summands in our original objective) has been reduced from $\binom{44}{2} = 956$ 
+to 
+
+```{r}
+sum(sparse.weights!=0)
+```
+
+Computationally, it is tempting to set $k$ small and ensure fast compuatation.
+
+Setting $k$ too small, however, can potentially prevent observations from fusing, 
+regardless of the amount of regularization.
+
+In order to verify that our sparse set of weights allows for the eventual fusion 
+of all observations we can examine its graphical representation.
+
+The function `PlotWeightGraph` displays the fusion graph of our observations induced 
+by the support of our weight set. 
+
+The fusion graph displays each observation as a vertex, and connects 
+two observation with an edge if their corresponding weight is non-zero. 
+
+Such connections between observations indicate their ability fuse into a common 
+cluster, given large enough regularization.
+
+Below we consider the extreme case of $k=1$, which while computationally fast 
+presents an immediate difficulty.
+
+```{r,fig.width=5,fig.height=5,fig.align='center'}
+PlotWeightGraph(
+  weights = SparseWeights(
+    X=Xdat.preprocessed,
+    dense.weights = dense.weights,
+    k=1
+  ),
+  nobs = nrow(Xdat.preprocessed),
+  edge.labels = TRUE,
+  obs.labels = obs.labels,
+  vsize=3,
+  label.scale=FALSE,
+  label.cex=.7,
+  repulsion=.9)
+```
+
+Examining the graph above, we note that the number of connected components is strictly greater than one.
+As such, regardless of the number of `CARP` iteratations (and the associated regularization increases) it will 
+not be possible fuse all observations into a single cluster.
+Such extreme weight choices should typically be avoided as they not only hinder the agglomorative nature of `CARP` and `CBASS`, but also lead to biased and less interpretable solution paths. 
+result in. 
+
+At the other extreme, large values of $k$ again result in long computation time and 
+bring little to no improvement on the resulting solution sequence; an example of 
+such an overly dense graph can be seen below.
+
+```{r,fig.width=5,fig.height=5,fig.align='center'}
+PlotWeightGraph(
+  weights = SparseWeights(
+    X=Xdat.preprocessed,
+    dense.weights = dense.weights,
+    k=15
+  ),
+  nobs = nrow(Xdat.preprocessed),
+  edge.labels = FALSE,
+  obs.labels = obs.labels,
+  vsize=3,
+  label.scale=FALSE,
+  label.cex=.7,
+  repulsion=.9)
+```
+
+In order to provide a reasonable choice regarding weight sparsity, the function `MinKNN` may be used to 
+find a balance between computational efficiency and poor clustering performance. 
+`MinKNN` takes as its arguement an initial set of dense weights and returns the smallest $k$ such 
+the graph induced by the support of the resulting set of sparse weights contains exactly one 
+connected component. For our current vector of weights we have:
+```{r}
+MinKNN(
+  X = Xdat.preprocessed,
+  dense.weights = dense.weights
+) -> k.min
+k.min
+```
+Using the `k.min` value above we may compute the corresponding sparse weight vector and 
+view its resulting graph below.
+```{r}
+SparseWeights(
+  X = Xdat.preprocessed,
+  dense.weights = dense.weights,
+  k = k.min
+) -> sparse.weights
+```
+
+```{r,fig.width=5,fig.height=5,fig.align='center'}
+PlotWeightGraph(
+  weights = sparse.weights,
+  nobs = nrow(Xdat.preprocessed),
+  edge.labels = FALSE,
+  obs.labels = obs.labels,
+  vsize=3,
+  label.scale=FALSE,
+  label.cex=.7,
+  repulsion=.9)
+```
+
+We can see that the resulting graph offers a compromise between the two extremes.
+By default both `CARP` and `CBASS` use the value returned by `MinKNN` to produce 
+sparse sets of weights. While slightly larger values of $k$ can be used, it is
+not recommended to pass below this threshold for the reasons stated above.
+
+# Fitting
+
+# Solutions
+
+# Visualizations
+
+## Static
+
+## Dynamic
+
+## Saving 
+
+# Discussion
 
 
 
