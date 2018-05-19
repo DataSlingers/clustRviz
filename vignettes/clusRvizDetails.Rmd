@@ -56,9 +56,8 @@ $$
 
 Convex clustering is traditionally solved by iteratively applying ADMM updates until convergence.
 
-This must be done for each $\lambda_k$ which is costly
+This must be done for each $\lambda_k$ which is costly.
 
-CARP augments the ADMM as follows:
 
 
 # Preprocessing and Inputs
@@ -422,15 +421,92 @@ Indeed, in the case strong apriori information concerning clusters is
 available, distance-based weight computations may be avoided altogether and 
 user-specified weights given directly via the `weights` arguement.
 
+
+`CBASS` solutions can be fit in a similar manner:
+
+```{r}
+CBASS(
+  X=Xdat,
+  obs.labels = obs.labels,
+  var.labels = var.labels
+) -> cbass.fit
+```
+
+And display its output:
+```{r}
+cbass.fit
+```
 # Solutions
+
+
+```{r}
+carp.clustering <- Clustering(carp.fit,k = 2)
+```
+
+```{r}
+table(carp.clustering$clustering.assignment)
+```
+
+```{r,fig.width=5,fig.height=5,fig.align='center'}
+PlotWeightGraph(
+  weights = sparse.weights,
+  nobs = nrow(Xdat.preprocessed),
+  edge.labels = FALSE,
+  obs.labels = obs.labels,
+  vsize=3,
+  color=rainbow(2)[as.numeric(str_extract(carp.clustering$clustering.assignment,"(\\d)+"))],
+  label.scale=FALSE,
+  label.cex=.7,
+  repulsion=.9)
+```
+
+```{r}
+head(carp.clustering$cluster.means)
+```
+
+
+```{r,fig.width=5,fig.height=5,fig.align='center'}
+carp.clustering <- Clustering(carp.fit,percent = .25)
+
+PlotWeightGraph(
+  weights = sparse.weights,
+  nobs = nrow(Xdat.preprocessed),
+  edge.labels = FALSE,
+  obs.labels = obs.labels,
+  vsize=3,
+  color=rainbow(ncol(carp.clustering$cluster.means))[
+    as.numeric(str_extract(carp.clustering$clustering.assignment,"(\\d)+"))
+    ],
+  label.scale=FALSE,
+  label.cex=.7,
+  repulsion=.9)
+```
+
+
+```{r,eval=FALSE}
+cbass.clustering <- Clustering(cbass.fit,percent = .8)
+```
+
+
+
 
 # Visualizations
 
 ## Static
 
+
+```{r,fig.width=5,fig.height=5,fig.align='center'}
+plot(carp.fit,type = 'path',percent=.5)
+```
+
+```{r,fig.width=5,fig.height=5,fig.align='center'}
+plot(carp.fit,type = 'dendrogram')
+```
+
+
 ## Dynamic
 
-## Saving 
+## Saving
 
 # Discussion
 

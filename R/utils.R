@@ -160,42 +160,75 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
     dplyr::mutate(
       NChanges = n()
     ) -> change.frame
-
-  dplyr::tibble(
-    Iter = 1:length(lambda.path)
-  ) %>%
-    dplyr::left_join(
-      change.frame %>%
-        dplyr::filter(NChanges>1) %>%
-        dplyr::group_by(Iter) %>%
-        tidyr::nest() %>%
-        dplyr::mutate(
-          tst = purrr::map2(.x=Iter,.y=data,.f=function(x,y){
-            prev.mags <- apply(matrix(v.path[,x-1],ncol=cardE)[,y$ColIndNum],2,function(x){sum(x^2)})
-            data.frame(
-              ColIndNum = y$ColIndNum,
-              Rank = order(prev.mags)
-            )
-          })
-        ) %>%
-        dplyr::select(-data) %>%
-        tidyr::unnest() %>%
-        dplyr::ungroup() %>%
-        dplyr::arrange(Iter,Rank) %>%
-        dplyr::select(-Rank),
-      by=c('Iter')
-    ) %>%
-    dplyr::left_join(
-      change.frame %>%
-        dplyr::filter(NChanges==1) %>%
-        dplyr::select(-NChanges),
-      by=c('Iter')
-    ) %>%
-    dplyr::arrange(Iter) %>%
+  change.frame %>%
+    dplyr::filter(NChanges>1) %>%
+    dplyr::group_by(Iter) %>%
+    tidyr::nest() %>%
     dplyr::mutate(
-      ColIndNum = ifelse(is.na(ColIndNum.x),ColIndNum.y,ColIndNum.x)
+      tst = purrr::map2(.x=Iter,.y=data,.f=function(x,y){
+        prev.mags <- apply(matrix(v.path[,x-1],ncol=cardE)[,y$ColIndNum],2,function(x){sum(x^2)})
+        data.frame(
+          ColIndNum = y$ColIndNum,
+          Rank = order(prev.mags)
+        )
+      })
+    ) -> mc.frame
+
+  if(nrow(mc.frame)==0){
+    dplyr::tibble(
+      Iter = 1:length(lambda.path)
     ) %>%
-    select(Iter,ColIndNum) -> IterRankCols
+      dplyr::left_join(
+        change.frame %>%
+          dplyr::filter(NChanges==1) %>%
+          dplyr::select(-NChanges),
+        by=c('Iter')
+      ) %>%
+      dplyr::arrange(Iter) %>%
+      select(Iter,ColIndNum) -> IterRankCols
+
+
+
+
+  } else{
+    dplyr::tibble(
+      Iter = 1:length(lambda.path)
+    ) %>%
+      dplyr::left_join(
+        change.frame %>%
+          dplyr::filter(NChanges>1) %>%
+          dplyr::group_by(Iter) %>%
+          tidyr::nest() %>%
+          dplyr::mutate(
+            tst = purrr::map2(.x=Iter,.y=data,.f=function(x,y){
+              prev.mags <- apply(matrix(v.path[,x-1],ncol=cardE)[,y$ColIndNum],2,function(x){sum(x^2)})
+              data.frame(
+                ColIndNum = y$ColIndNum,
+                Rank = order(prev.mags)
+              )
+            })
+          ) %>%
+          dplyr::select(-data) %>%
+          tidyr::unnest() %>%
+          dplyr::ungroup() %>%
+          dplyr::arrange(Iter,Rank) %>%
+          dplyr::select(-Rank),
+        by=c('Iter')
+      ) %>%
+      dplyr::left_join(
+        change.frame %>%
+          dplyr::filter(NChanges==1) %>%
+          dplyr::select(-NChanges),
+        by=c('Iter')
+      ) %>%
+      dplyr::arrange(Iter) %>%
+      dplyr::mutate(
+        ColIndNum = ifelse(is.na(ColIndNum.x),ColIndNum.y,ColIndNum.x)
+      ) %>%
+      select(Iter,ColIndNum) -> IterRankCols
+  }
+
+
   IterRankCols$ColInd <- zoo::na.locf(IterRankCols$ColIndNum,na.rm=FALSE)
   IterRankCols %>%
     dplyr::select(Iter,ColInd) -> IterRankCols
@@ -213,81 +246,114 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
 
 
 
-  dplyr::tibble(
-    Iter = 1:length(lambda.path),
-    Lambda = lambda.path[Iter]
-  ) %>%
-    dplyr::left_join(
-      change.frame %>%
-        dplyr::mutate(
-          Lambda = lambda.path[Iter]
-        ) %>%
-        dplyr::filter(NChanges>1) %>%
-        dplyr::group_by(Iter) %>%
-        tidyr::nest() %>%
-        dplyr::mutate(
-          NewLambda = purrr::map2(.x=Iter,.y=data,.f=function(x,y){
-            cur.lam <- unique(y$Lambda)
-            next.lam <- lambda.path[x+1]
-            lam.seq <- seq(from=cur.lam,to=next.lam,length.out = nrow(y)+1 )
-            lam.seq <- lam.seq[-length(lam.seq)]
-            lam.seq
-          })
-        ) %>%
-        dplyr::select(-data) %>%
-        tidyr::unnest() %>%
-        dplyr::arrange(Iter),
-      by=c('Iter')
+  if(nrow(mc.frame)==0){
+    dplyr::tibble(
+      Iter = 1:length(lambda.path),
+      Lambda = lambda.path[Iter]
     ) %>%
     dplyr::mutate(
-      Lambda = ifelse(is.na(NewLambda),Lambda,NewLambda),
       Iter = 1:n()
     ) %>%
     dplyr::select(Lambda) %>%
     unlist() %>%
     unname() -> lambda.path.inter2
 
+  } else{
+    dplyr::tibble(
+      Iter = 1:length(lambda.path),
+      Lambda = lambda.path[Iter]
+    ) %>%
+      dplyr::left_join(
+        change.frame %>%
+          dplyr::mutate(
+            Lambda = lambda.path[Iter]
+          ) %>%
+          dplyr::filter(NChanges>1) %>%
+          dplyr::group_by(Iter) %>%
+          tidyr::nest() %>%
+          dplyr::mutate(
+            NewLambda = purrr::map2(.x=Iter,.y=data,.f=function(x,y){
+              cur.lam <- unique(y$Lambda)
+              next.lam <- lambda.path[x+1]
+              lam.seq <- seq(from=cur.lam,to=next.lam,length.out = nrow(y)+1 )
+              lam.seq <- lam.seq[-length(lam.seq)]
+              lam.seq
+            })
+          ) %>%
+          dplyr::select(-data) %>%
+          tidyr::unnest() %>%
+          dplyr::arrange(Iter),
+        by=c('Iter')
+      ) %>%
+      dplyr::mutate(
+        Lambda = ifelse(is.na(NewLambda),Lambda,NewLambda),
+        Iter = 1:n()
+      ) %>%
+      dplyr::select(Lambda) %>%
+      unlist() %>%
+      unname() -> lambda.path.inter2
+  }
+
   seq2 <- Vectorize(seq.default, vectorize.args = c("from", "to"))
-  dplyr::tibble(
-    Iter = 1:ncol(u.path)
-  )  %>%
-    dplyr::mutate(
-      U = purrr::map(.x=Iter,.f=function(x){
-        u.path[,x]
-      })
-    ) %>%
-    dplyr::left_join(
-      change.frame %>%
-        dplyr::filter(
-          NChanges > 1
-        ) %>%
-        dplyr::select(-ColIndNum) %>%
-        dplyr::ungroup() %>%
-        dplyr::group_by(Iter) %>%
-        tidyr::nest()  %>%
-        dplyr::mutate(
-          NewU = purrr::map2(.x=Iter,.y=data,.f=function(x,y){
-            cur.u <- u.path[,x]
-            next.u <- u.path[,x+1]
-            new.u <- matrix(seq2(from=cur.u,to=next.u,length.out = nrow(y) + 1),nrow=length(cur.u),byrow = TRUE)
-            new.u <- new.u[,-ncol(new.u)]
-            lapply(seq_len(ncol(new.u)),function(i){new.u[,i]})
-          })
-        ) %>%
-        dplyr::select(-data) %>%
-        tidyr::unnest(),
-      by=c('Iter')
-    ) %>%
-    dplyr::mutate(
-      Iter = 1:n()
-    ) %>%
-    dplyr::group_by(Iter) %>%
-    dplyr::mutate(
-      Up = ifelse(is.null(NewU[[1]]),U,NewU)
-    ) %>%
-    dplyr::ungroup() -> u.path.inter2
-  u.path.inter2$Up %>%
-    do.call(cbind,.) -> u.path.inter2
+  if(nrow(mc.frame)==0){
+    dplyr::tibble(
+      Iter = 1:ncol(u.path)
+    )  %>%
+      dplyr::mutate(
+        Up = purrr::map(.x=Iter,.f=function(x){
+          u.path[,x]
+        })
+      ) %>%
+      dplyr::mutate(
+        Iter = 1:n()
+      ) %>%
+      dplyr::group_by(Iter) %>%
+      dplyr::ungroup() -> u.path.inter2
+    u.path.inter2$Up %>%
+      do.call(cbind,.) -> u.path.inter2
+
+  } else{
+    dplyr::tibble(
+      Iter = 1:ncol(u.path)
+    )  %>%
+      dplyr::mutate(
+        U = purrr::map(.x=Iter,.f=function(x){
+          u.path[,x]
+        })
+      ) %>%
+      dplyr::left_join(
+        change.frame %>%
+          dplyr::filter(
+            NChanges > 1
+          ) %>%
+          dplyr::select(-ColIndNum) %>%
+          dplyr::ungroup() %>%
+          dplyr::group_by(Iter) %>%
+          tidyr::nest()  %>%
+          dplyr::mutate(
+            NewU = purrr::map2(.x=Iter,.y=data,.f=function(x,y){
+              cur.u <- u.path[,x]
+              next.u <- u.path[,x+1]
+              new.u <- matrix(seq2(from=cur.u,to=next.u,length.out = nrow(y) + 1),nrow=length(cur.u),byrow = TRUE)
+              new.u <- new.u[,-ncol(new.u)]
+              lapply(seq_len(ncol(new.u)),function(i){new.u[,i]})
+            })
+          ) %>%
+          dplyr::select(-data) %>%
+          tidyr::unnest(),
+        by=c('Iter')
+      ) %>%
+      dplyr::mutate(
+        Iter = 1:n()
+      ) %>%
+      dplyr::group_by(Iter) %>%
+      dplyr::mutate(
+        Up = ifelse(is.null(NewU[[1]]),U,NewU)
+      ) %>%
+      dplyr::ungroup() -> u.path.inter2
+    u.path.inter2$Up %>%
+      do.call(cbind,.) -> u.path.inter2
+  }
 
   list(sp.path.inter=sp.path.inter2,lambda.path.inter=lambda.path.inter2,u.path.inter=u.path.inter2)
 

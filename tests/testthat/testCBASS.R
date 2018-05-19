@@ -53,3 +53,10 @@ test_that("plot.CBASS interactive Runs",{
     NA
   )
 })
+
+test_that("Clustering CBASS  Runs",{
+  expect_error(
+    Clustering(cbass.fit,k.obs=1),
+    NA
+  )
+})

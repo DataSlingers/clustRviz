@@ -364,7 +364,7 @@ print.CARP <- function(x,...){
   message('Visualizations: ',viz.string[c(x$static,x$static,x$interactive)],'\n')
 
   message('Raw Data:\n')
-  x$X[1:min(5,x$n.obs),1:min(5,x$p.vars)]
+  print(x$X[1:min(5,x$n.obs),1:min(5,x$p.vars)])
 
 }
 
@@ -894,6 +894,162 @@ Clustering.CARP <- function(x,k=NULL,percent=NULL,...){
 }
 
 
+#' Get biclustering solution from a CBASS object
+#'
+#' Returns (observation and variable) cluster labels and
+#' cluster mean matrix at a point along the CBASS path.
+#'
+#' Passing either the desired number of clusters (\code{k}) or the percent
+#' regularization (\code{percent}) returns the clustering assignment
+#' and cluster mean matrix at the specific point along the CBASS path.
+#'
+#' @param x A CARP object returned by \code{CARP}
+#' @param k.obs An interger between 1 and \code{n.obs}. The number of unique
+#' observation clusters.
+#' @param k.vars An interger between 1 and \code{p.vars}. The number of unique
+#' variable clusters.
+#' @param percent A number between 0 and 1. The percent of regularization at
+#' which to cut the path.
+#' @param ... Unused additional generic arguements
+#' @return A list with elements
+#' \describe{
+#' \item{\code{clustering.assignment.obs}}{
+#' A vector of observation cluster labels of length \code{n.obs}.
+#' }
+#' \item{\code{clustering.assignment.vars}}{
+#' A vector of variable cluster labels of length \code{p.vars}.
+#' }
+#' \item{\code{cluster.mean.matrix}}{
+#' The cluster mean matrix of size \code{n.obs} by \code{p.vars}.
+#' }
+#' }
+#' @importFrom stats cutree
+#' @importFrom purrr map_dfr
+#' @importFrom dplyr tibble
+#' @importFrom dplyr mutate
+#' @importFrom dplyr filter
+#' @importFrom dplyr slice
+#' @importFrom dplyr select
+#' @importFrom dplyr n
+#' @export
+#' @examples
+#' library(clustRviz)
+#' data("presidential_speech")
+#' Xdat <- presidential_speech$X[1:10,1:4]
+Clustering.CBASS <- function(x,k.obs=NULL,k.vars=NULL,percent=NULL,...){
+
+  n.not.null <- sum(
+    c(
+      !is.null(k.obs),
+      !is.null(k.vars),
+      !is.null(percent)
+    )
+  )
+  if( n.not.null != 1){
+    stop('Select exactly one of k.obs, k.vars, or percent')
+  }
+  lam.vec <- x$cbass.sol.path$lambda.path %>% as.vector()
+  max.lam <- max(lam.vec)
+  lam.vec %>%
+    purrr::map_dfr(.f=function(cur.lam){
+      # find lambda closest in column path
+      cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
+      # find clustering solution in column path
+      cur.col.clust.assignment <- x$cbass.cluster.path.obs$clust.path[[cur.col.lam.ind]]$membership
+      cur.col.clust.labels <- unique(cur.col.clust.assignment)
+      cur.col.nclust <- length(cur.col.clust.labels)
+      # find lambda closest in rowumn path
+      cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.var$lambda.path.inter - cur.lam))
+      # find clustering solution in rowumn path
+      cur.row.clust.assignment <- x$cbass.cluster.path.var$clust.path[[cur.row.lam.ind]]$membership
+      cur.row.clust.labels <- unique(cur.row.clust.assignment)
+      cur.row.nclust <- length(cur.row.clust.labels)
+      dplyr::tibble(
+        Lambda = cur.lam,
+        NObsCl = cur.col.nclust,
+        NVarCl = cur.row.nclust
+      )
+    })  %>%
+    dplyr::mutate(
+      Percent = Lambda / max.lam
+    ) -> cut.table
+
+  if(!is.null(k.obs)){
+    cut.table %>%
+      dplyr::filter(NObsCl <= k.obs) %>%
+      dplyr::slice(1) %>%
+      dplyr::select(Lambda) %>%
+      unlist() %>%
+      unname() -> cur.lam
+  } else if(!is.null(k.vars)){
+    cut.table %>%
+      dplyr::filter(NVarCl <= k.vars) %>%
+      dplyr::slice(1) %>%
+      dplyr::select(Lambda) %>%
+      unlist() %>%
+      unname() -> cur.lam
+  } else if(!is.null(percent)){
+    cut.table %>%
+      dplyr::filter(Percent >= percent) %>%
+      dplyr::slice(1) %>%
+      dplyr::select(Lambda) %>%
+      unlist() %>%
+      unname() -> cur.lam
+  } else{
+      stop('Select exactly one of k.obs, k.vars, or percent')
+  }
+  # find lambda closest in column path
+  cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
+  # find clustering solution in column path
+  cur.col.clust.assignment <- x$cbass.cluster.path.obs$clust.path[[cur.col.lam.ind]]$membership
+  cur.col.clust.labels <- unique(cur.col.clust.assignment)
+  cur.col.nclust <- length(cur.col.clust.labels)
+  # find lambda closest in row path
+  cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.var$lambda.path.inter - cur.lam))
+  # find clustering solution in row path
+  cur.row.clust.assignment <- x$cbass.cluster.path.var$clust.path[[cur.row.lam.ind]]$membership
+  cur.row.clust.labels <- unique(cur.row.clust.assignment)
+  cur.row.nclust <- length(cur.row.clust.labels)
+
+  if(x$X.center.global){
+    X.heat <- x$X
+    X.heat <- X.heat - mean(X.heat)
+    X.heat <- t(X.heat)
+    X <- x$X
+    X <- X - mean(X)
+    X <- t(X)
+  }else{
+    X.heat <- t(x$X)
+    X <- t(x$X)
+  }
+  colnames(X.heat) <- x$obs.labels
+  rownames(X.heat) <- x$var.labels
+  for(col.label.ind in seq_along(cur.col.clust.labels)){
+    cur.col.label <- cur.col.clust.labels[col.label.ind]
+    col.inds <- which(cur.col.clust.assignment == cur.col.label)
+    for(row.label.ind in seq_along(cur.row.clust.labels)){
+      cur.row.label <- cur.row.clust.labels[row.label.ind]
+      row.inds <- which(cur.row.clust.assignment == cur.row.label)
+      mean.value <- mean(X[row.inds,col.inds])
+      X.heat[row.inds,col.inds] <- mean.value
+    }
+  }
+
+
+  clust.assign.obs <- paste('cl',cur.col.clust.assignment,sep='')
+  clust.assign.vars <- paste('cl',cur.row.clust.assignment,sep='')
+  list(
+    clustering.assignment.obs = clust.assign.obs,
+    clustering.assignment.vars = clust.assign.vars,
+    cluster.mean.matrix = X.heat
+  )
+
+
+}
+
+
+
+
 #' Compute CBASS solution path
 #'
 #' \code{CBASS} returns a fast approximation to the Convex BiClustering
@@ -1224,7 +1380,7 @@ print.CBASS <- function(x,...){
   message('Visualizations: ',viz.string[c(x$static,x$static,x$interactive)],'\n')
 
   message('Raw Data:\n')
-  x$X[1:min(5,x$n.obs),1:min(5,x$p.vars)]
+  print(x$X[1:min(5,x$n.obs),1:min(5,x$p.vars)])
 
 }
 
