@@ -33,7 +33,8 @@ Imports:
     ggrepel,
     RColorBrewer,
     plyr,
-    qgraph
+    qgraph,
+    zoo
 RoxygenNote: 6.0.1
 LinkingTo: Rcpp,RcppArmadillo
 Suggests: testthat,

@@ -128,7 +128,8 @@ ConvexClusteringPreCompute <- function(X,weights,rho,ncores=2,verbose=FALSE){
 #' @importFrom purrr map2
 #' @importFrom stringr str_replace
 #' @importFrom stats na.omit
-ISPFast <- function(sp.path,v.path,u.path, lambda.path,cardE){
+#' @importFrom zoo na.locf
+ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
   sp.path%>%
     dplyr::tbl_df() %>%
     dplyr::mutate(Iter = 1:n()) %>%
@@ -160,68 +161,48 @@ ISPFast <- function(sp.path,v.path,u.path, lambda.path,cardE){
       NChanges = n()
     ) -> change.frame
 
-
-
-
-  dplyr::full_join(
-    change.frame %>%
-      dplyr::filter(NChanges ==1) %>%
-      dplyr::select(-NChanges) %>%
-      dplyr::mutate(Rank=1),
-    change.frame %>%
-      dplyr::filter(NChanges>1) %>%
-      dplyr::group_by(Iter) %>%
-      tidyr::nest() %>%
-      dplyr::mutate(
-        tst = purrr::map2(.x=Iter,.y=data,.f=function(x,y){
-          prev.mags <- apply(matrix(v.path[,x-1],ncol=cardE)[,y$ColIndNum],2,function(x){sum(x^2)})
-          data.frame(
-            ColIndNum = y$ColIndNum,
-            Rank = order(prev.mags)
-          )
-        })
-      ) %>%
-      dplyr::select(-data) %>%
-      tidyr::unnest() %>%
-      dplyr::ungroup() %>%
-      dplyr::arrange(Iter,Rank),
-    by=c('Iter')
+  dplyr::tibble(
+    Iter = 1:length(lambda.path)
   ) %>%
+    dplyr::left_join(
+      change.frame %>%
+        dplyr::filter(NChanges>1) %>%
+        dplyr::group_by(Iter) %>%
+        tidyr::nest() %>%
+        dplyr::mutate(
+          tst = purrr::map2(.x=Iter,.y=data,.f=function(x,y){
+            prev.mags <- apply(matrix(v.path[,x-1],ncol=cardE)[,y$ColIndNum],2,function(x){sum(x^2)})
+            data.frame(
+              ColIndNum = y$ColIndNum,
+              Rank = order(prev.mags)
+            )
+          })
+        ) %>%
+        dplyr::select(-data) %>%
+        tidyr::unnest() %>%
+        dplyr::ungroup() %>%
+        dplyr::arrange(Iter,Rank) %>%
+        dplyr::select(-Rank),
+      by=c('Iter')
+    ) %>%
+    dplyr::left_join(
+      change.frame %>%
+        dplyr::filter(NChanges==1) %>%
+        dplyr::select(-NChanges),
+      by=c('Iter')
+    ) %>%
     dplyr::arrange(Iter) %>%
-    dplyr::ungroup() %>%
     dplyr::mutate(
       ColIndNum = ifelse(is.na(ColIndNum.x),ColIndNum.y,ColIndNum.x)
     ) %>%
-    dplyr::select(Iter,ColIndNum) %>%
-    dplyr::mutate(
-      IterDiff = dplyr::lead(Iter) - Iter,
-      IterDiff = ifelse(is.na(IterDiff) | IterDiff == 0, 1,IterDiff)
-    ) -> IterRankCols
-  ColIndVec <- rep(IterRankCols$ColIndNum,times=IterRankCols$IterDiff)
+    select(Iter,ColIndNum) -> IterRankCols
+  IterRankCols$ColInd <- zoo::na.locf(IterRankCols$ColIndNum,na.rm=FALSE)
   IterRankCols %>%
-    dplyr::slice(1) %>%
-    dplyr::select(Iter) %>%
-    unlist() %>%
-    unname() -> first.iter
-  dplyr::tibble(
-    ColInd = ColIndVec
-  ) %>%
-    dplyr::mutate(
-      Iter = 1:n(),
-      Iter = Iter + (first.iter - 1)
-    ) -> IterRankCols
-  IterRankCols %>%
-    dplyr::slice(1) %>%
-    dplyr::select(Iter) %>%
-    unlist() %>%
-    unname() -> first.iter
-  if(first.iter != 1){
-    dplyr::tibble(
-      ColInd = NA,
-      Iter = 1:(first.iter - 1)
-    )  %>%
-      dplyr::bind_rows(IterRankCols) -> IterRankCols
-  }
+    dplyr::select(Iter,ColInd) -> IterRankCols
+
+
+
+
 
   lapply(1:nrow(IterRankCols),function(idx){
     indvec <- rep(0,times=cardE)
@@ -334,7 +315,7 @@ ISPFast <- function(sp.path,v.path,u.path, lambda.path,cardE){
 #' @importFrom tidyr gather
 #' @importFrom stringr str_replace
 #' @importFrom stats approx
-ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
+ISPOLD <- function(sp.path,v.path,u.path, lambda.path,cardE){
   sp.path%>%
     dplyr::tbl_df() %>%
     dplyr::mutate(Iter = 1:n()) %>%
