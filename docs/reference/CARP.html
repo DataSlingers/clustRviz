@@ -68,6 +68,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
+    </li>
+    <li>
       <a href="../articles/Getting_Started.html">Getting Started</a>
     </li>
   </ul>
@@ -97,10 +100,12 @@ cluster paths. Visualizations may be static, interactive, or both.</p>
     
 
     <pre class="usage"><span class='fu'>CARP</span>(<span class='no'>X</span>, <span class='kw'>obs.labels</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>var.labels</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>X.center</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>X.scale</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>rho</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>phi</span> <span class='kw'>=</span> <span class='fl'>0.001</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>k</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>ncores</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>max.iter</span> <span class='kw'>=</span> <span class='fl'>1e+06</span>, <span class='kw'>burn.in</span> <span class='kw'>=</span> <span class='fl'>50</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>alg.type</span> <span class='kw'>=</span> <span class='st'>"carpviz"</span>, <span class='kw'>t</span> <span class='kw'>=</span> <span class='fl'>1.05</span>, <span class='kw'>interactive</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>static</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>npcs</span> <span class='kw'>=</span> <span class='fl'>4</span>)</pre>
+  <span class='kw'>X.scale</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>rho</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>phi</span> <span class='kw'>=</span> <span class='fl'>0.001</span>, <span class='kw'>weight.dist</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"euclidean"</span>,
+  <span class='st'>"maximum"</span>, <span class='st'>"manhattan"</span>, <span class='st'>"canberra"</span>, <span class='st'>"binary"</span>, <span class='st'>"minkowski"</span>),
+  <span class='kw'>weight.dist.p</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>k</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ncores</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>max.iter</span> <span class='kw'>=</span> <span class='fl'>1e+06</span>, <span class='kw'>burn.in</span> <span class='kw'>=</span> <span class='fl'>50</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>alg.type</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"carpviz"</span>,
+  <span class='st'>"carp"</span>, <span class='st'>"carpl1"</span>, <span class='st'>"carpvizl1"</span>), <span class='kw'>t</span> <span class='kw'>=</span> <span class='fl'>1.05</span>, <span class='kw'>interactive</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>static</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>npcs</span> <span class='kw'>=</span> <span class='fl'>4</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -134,9 +139,18 @@ cluster paths. Visualizations may be static, interactive, or both.</p>
       <td><p>A positive numner used for scaling in RBF kernel</p></td>
     </tr>
     <tr>
+      <th>weight.dist</th>
+      <td><p>a string indicating the distance metric used to calculate
+weights</p></td>
+    </tr>
+    <tr>
+      <th>weight.dist.p</th>
+      <td><p>The power of the Minkowski distance, if used.</p></td>
+    </tr>
+    <tr>
       <th>weights</th>
       <td><p>A vector of positive number of length choose(n,2).
-Determines observation pairs fusions weight.</p></td>
+Determines observation pairs' fusion amount.</p></td>
     </tr>
     <tr>
       <th>k</th>
@@ -204,19 +218,20 @@ and 'carp;</p>
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p><code>CARP</code> solves the following problem.
-\(\textrm{min}_{U} \|X - U \| + \lambda \sum_{i &lt;j} w_{ij} \| U_{\dot,i} - U_{\dot, j} \| \)</p>
+    <p><code>CARP</code> solves the Convex Clustering problem via
+Algorithmic Regularization Paths. A seqeunce of clustering
+solutions is returned along with several visualizations.</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>library</span>(<span class='no'>clustRviz</span>)
+    <pre class="examples"><span class='co'># NOT RUN {</span>
+<span class='fu'>library</span>(<span class='no'>clustRviz</span>)
 <span class='fu'>data</span>(<span class='st'>"presidential_speech"</span>)
-<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>$<span class='no'>X</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>]
+<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>$<span class='no'>X</span>
 <span class='no'>carp.fit</span> <span class='kw'>&lt;-</span> <span class='fu'>CARP</span>(
     <span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>,
-    <span class='kw'>obs.labels</span><span class='kw'>=</span><span class='no'>presidential_speech</span>$<span class='no'>labels</span>[<span class='fl'>1</span>:<span class='fl'>10</span>])</div><div class='output co'>#&gt; Pre-computing weight-based edge sets
-#&gt; Computing CARP Path
-#&gt; Post-processing</div></pre>
+    <span class='kw'>obs.labels</span><span class='kw'>=</span><span class='no'>presidential_speech</span>$<span class='no'>labels</span>)
+<span class='co'># }</span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

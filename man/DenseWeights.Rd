@@ -22,3 +22,12 @@ dense.weights a numeric vector of weights
 \description{
 Compute dense distanced-based gaussian kernel weights for use in CARP or CBASS
 }
+\examples{
+\dontrun{
+library(clustRviz)
+data("presidential_speech")
+Xdat <- presidential_speech$X
+Xdat.preprocessed <- scale(Xdat,center=TRUE,scale=FALSE)
+dense.weights <- DenseWeights(X = Xdat.preprocessed,phi=1e-3)
+}
+}

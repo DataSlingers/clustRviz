@@ -92,14 +92,17 @@ solution path along with visualizations such as dendrograms and
 cluster paths. Visualizations may be static, interactive, or both.
 }
 \details{
-\code{CARP} solves the following problem.
-\eqn{\textrm{min}_{U} \|X - U \| + \lambda \sum_{i <j} w_{ij} \| U_{\dot,i} - U_{\dot, j} \| }
+\code{CARP} solves the Convex Clustering problem via
+Algorithmic Regularization Paths. A seqeunce of clustering
+solutions is returned along with several visualizations.
 }
 \examples{
+\dontrun{
 library(clustRviz)
 data("presidential_speech")
-Xdat <- presidential_speech$X[1:10,1:4]
+Xdat <- presidential_speech$X
 carp.fit <- CARP(
     X=Xdat,
-    obs.labels=presidential_speech$labels[1:10])
+    obs.labels=presidential_speech$labels)
+}
 }

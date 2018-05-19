@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Plot function for CBASS objects — plot.CBASS • clustRviz</title>
+<title>Plot graph induced by weights — PlotWeightGraph • clustRviz</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -90,87 +90,47 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Plot function for CBASS objects</h1>
+    <h1>Plot graph induced by weights</h1>
     </div>
 
     
-    <p><code>plot.CBASS</code> displays both static and interactive visualizations of
-the CBASS clustering solution path, including dendrograms and heatmaps.</p>
+    <p>Plot graph induced by weights</p>
     
 
-    <pre class="usage"><span class='co'># S3 method for CBASS</span>
-<span class='fu'>plot</span>(<span class='no'>x</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"obs.dendrogram"</span>, <span class='st'>"var.dendrogram"</span>,
-  <span class='st'>"heatmap"</span>, <span class='st'>"interactive"</span>), <span class='kw'>dend.branch.width</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>dend.labels.cex</span> <span class='kw'>=</span> <span class='fl'>0.6</span>,
-  <span class='kw'>heatrow.label.cex</span> <span class='kw'>=</span> <span class='fl'>1.5</span>, <span class='kw'>heatcol.label.cex</span> <span class='kw'>=</span> <span class='fl'>1.5</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>PlotWeightGraph</span>(<span class='no'>weights</span>, <span class='no'>nobs</span>, <span class='kw'>edge.labels</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>obs.labels</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>x</th>
-      <td><p>a CBASS object returned by <code>CARP</code></p></td>
+      <th>weights</th>
+      <td><p>a vector of weights such as returned by <code>SparseWeights</code></p></td>
     </tr>
     <tr>
-      <th>type</th>
-      <td><p>a string specifying the type of plot to produce.
-'obs.dendrogram' produces the static cluster dendrogram for the observations;
-'var.dendrogram' produces the static cluster dendrogram for the variables;
-'heatmap' produces the static cluster heatmap with assiociated observation
-and variable dendrograms;
-and 'interactive' produces an interactive visualization of cluster
-heatmap and its associated dendrograms.</p></td>
+      <th>nobs</th>
+      <td><p>the number of observations being clustered</p></td>
     </tr>
     <tr>
-      <th>dend.branch.width</th>
-      <td><p>a positive number. Line width on dendrograms.</p></td>
+      <th>edge.labels</th>
+      <td><p>a logical. Should weight values be displayed along edges?</p></td>
     </tr>
     <tr>
-      <th>dend.labels.cex</th>
-      <td><p>a positive number. Label size on dendrograms.</p></td>
-    </tr>
-    <tr>
-      <th>heatrow.label.cex</th>
-      <td><p>heatmap row label size</p></td>
-    </tr>
-    <tr>
-      <th>heatcol.label.cex</th>
-      <td><p>heatmap column label size</p></td>
+      <th>obs.labels</th>
+      <td><p>a vector of observation labels</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Unused additional generic arguements</p></td>
+      <td><p>additional parameters passed to qgraph::qgraph</p></td>
     </tr>
     </table>
     
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>Possible visualizations of the CBASS solution path are: (i) a static
-dendrogram representing the clustering solution path at various
-levels of regularization (both observations and variables); and (ii) an
-interactive cluster heatmap, showing
-how the clustering solutions change with increased reguarliazation.</p>
-    
-
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><span class='co'># NOT RUN {</span>
-<span class='fu'>library</span>(<span class='no'>clustRviz</span>)
-<span class='fu'>data</span>(<span class='st'>"presidential_speech"</span>)
-<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>$<span class='no'>X</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>]
-<span class='no'>cbass.fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='CARP.html'>CARP</a></span>(
-    <span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>,
-    <span class='kw'>obs.labels</span><span class='kw'>=</span><span class='no'>presidential_speech</span>$<span class='no'>labels</span>[<span class='fl'>1</span>:<span class='fl'>10</span>])
-<span class='fu'>plot</span>(<span class='no'>cbass.fit</span>,<span class='kw'>type</span><span class='kw'>=</span><span class='st'>'interactive'</span>)
-<span class='co'># }</span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-      
-      <li><a href="#details">Details</a></li>
-      
-      <li><a href="#examples">Examples</a></li>
-    </ul>
+                </ul>
 
   </div>
 </div>

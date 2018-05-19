@@ -4,8 +4,10 @@
 #' solution path along with visualizations such as dendrograms and
 #' cluster paths. Visualizations may be static, interactive, or both.
 #'
-#' \code{CARP} solves the following problem.
-#' \eqn{\textrm{min}_{U} \|X - U \| + \lambda \sum_{i <j} w_{ij} \| U_{\dot,i} - U_{\dot, j} \| }
+#' \code{CARP} solves the Convex Clustering problem via
+#' Algorithmic Regularization Paths. A seqeunce of clustering
+#' solutions is returned along with several visualizations.
+#'
 #'
 #' @param X A n by p matrix with rows the observations and columns the variables
 #' @param obs.labels a vector of length n containing observations (row) labels
@@ -56,12 +58,14 @@
 #' @importFrom dplyr ungroup
 #' @export
 #' @examples
+#' \dontrun{
 #' library(clustRviz)
 #' data("presidential_speech")
-#' Xdat <- presidential_speech$X[1:10,1:4]
+#' Xdat <- presidential_speech$X
 #' carp.fit <- CARP(
 #'     X=Xdat,
-#'     obs.labels=presidential_speech$labels[1:10])
+#'     obs.labels=presidential_speech$labels)
+#' }
 CARP <- function(X,
                  obs.labels=NULL,
                  var.labels=NULL,
@@ -903,7 +907,7 @@ Clustering.CARP <- function(x,k=NULL,percent=NULL,...){
 #' regularization (\code{percent}) returns the clustering assignment
 #' and cluster mean matrix at the specific point along the CBASS path.
 #'
-#' @param x A CARP object returned by \code{CARP}
+#' @param x A CBASS object returned by \code{CBASS}
 #' @param k.obs An interger between 1 and \code{n.obs}. The number of unique
 #' observation clusters.
 #' @param k.vars An interger between 1 and \code{p.vars}. The number of unique
@@ -933,9 +937,13 @@ Clustering.CARP <- function(x,k=NULL,percent=NULL,...){
 #' @importFrom dplyr n
 #' @export
 #' @examples
+#' \dontrun{
 #' library(clustRviz)
 #' data("presidential_speech")
-#' Xdat <- presidential_speech$X[1:10,1:4]
+#' Xdat <- presidential_speech$X
+#' cbass.fit <- CBASS(X=Xdat)
+#' cbass.clustering <- Clustering(cbass.fit,percent = .8)
+#' }
 Clustering.CBASS <- function(x,k.obs=NULL,k.vars=NULL,percent=NULL,...){
 
   n.not.null <- sum(
@@ -1056,7 +1064,9 @@ Clustering.CBASS <- function(x,k.obs=NULL,k.vars=NULL,percent=NULL,...){
 #' solution path along with visualizations such as dendrograms and
 #' heatmaps. Visualizations may be static, interactive, or both.
 #'
-#' \code{CBASS} solves the following problem.
+#' \code{CBASS} solves the Convex Biclustering problem via
+#' Algorithmic Regularization Paths. A seqeunce of biclustering
+#' solutions is returned along with several visualizations.
 #'
 #' @param X A n.obs by p.vars matrix with rows the observations and columns the variables
 #' @param obs.labels a vector of length n.obs containing observations (row) labels
@@ -1118,6 +1128,15 @@ Clustering.CBASS <- function(x,k.obs=NULL,k.vars=NULL,percent=NULL,...){
 #' @return var.labels a vector of length p.vars containing variable (column) labels
 #' @return X.center.global a logical. If TRUE, the global mean of X is removed.
 #' @export
+#' @examples
+#' \dontrun{
+#' library(clustRviz)
+#' data("presidential_speech")
+#' Xdat <- presidential_speech$X
+#' CBASS(
+#' X=Xdat
+#' ) -> cbass.fit
+#' }
 CBASS <- function(X,
                  obs.labels=NULL,
                  var.labels=NULL,

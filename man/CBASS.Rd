@@ -118,5 +118,17 @@ solution path along with visualizations such as dendrograms and
 heatmaps. Visualizations may be static, interactive, or both.
 }
 \details{
-\code{CBASS} solves the following problem.
+\code{CBASS} solves the Convex Biclustering problem via
+Algorithmic Regularization Paths. A seqeunce of biclustering
+solutions is returned along with several visualizations.
+}
+\examples{
+\dontrun{
+library(clustRviz)
+data("presidential_speech")
+Xdat <- presidential_speech$X
+CBASS(
+X=Xdat
+) -> cbass.fit
+}
 }

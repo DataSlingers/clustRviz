@@ -68,6 +68,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
+    </li>
+    <li>
       <a href="../articles/Getting_Started.html">Getting Started</a>
     </li>
   </ul>
@@ -122,16 +125,7 @@ the type of CBASS algorithm performed, and the visualizations returned.</p>
 <span class='fu'>data</span>(<span class='st'>"presidential_speech"</span>)
 <span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>$<span class='no'>X</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>]
 <span class='no'>cbass.fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='CBASS.html'>CBASS</a></span>(
-    <span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>)</div><div class='output co'>#&gt; Computing CBASS Path
-#&gt; Post-processing</div><div class='input'><span class='fu'>print</span>(<span class='no'>cbass.fit</span>)</div><div class='output co'>#&gt; CBASS Fit Summary
-#&gt; Number of Observations: 10 
-#&gt; Number of Variables: 4 
-#&gt; Pre-processing: global-center 
-#&gt; Obs. Weights: RBF Kernel, phi = 0.025 k = 2 
-#&gt; Var. Weights: RBF Kernel, phi = 0.01 k = 1 
-#&gt; Algorithm: CBASS VIZ 
-#&gt; Visualizations: Static Dend Static Heatmap Interactive Heatmap 
-#&gt; Raw Data:</div><div class='output co'>#&gt;          [,1]     [,2]     [,3]     [,4]
+    <span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>)</div><div class='output co'>#&gt; <span class='message'>Computing CBASS Path</span></div><div class='output co'>#&gt; <span class='message'>Post-processing</span></div><div class='input'><span class='fu'>print</span>(<span class='no'>cbass.fit</span>)</div><div class='output co'>#&gt; <span class='message'>CBASS Fit Summary</span></div><div class='output co'>#&gt; <span class='message'>Number of Observations: 10</span></div><div class='output co'>#&gt; <span class='message'>Number of Variables: 4</span></div><div class='output co'>#&gt; <span class='message'>Pre-processing: global-center</span></div><div class='output co'>#&gt; <span class='message'>Obs. Weights: RBF Kernel, phi = 0.025, k = 2</span></div><div class='output co'>#&gt; <span class='message'>Var. Weights: RBF Kernel, phi = 0.01, k = 1</span></div><div class='output co'>#&gt; <span class='message'>Algorithm: CBASS VIZ</span></div><div class='output co'>#&gt; <span class='message'>Visualizations: Static DendStatic HeatmapInteractive Heatmap</span></div><div class='output co'>#&gt; <span class='message'>Raw Data:</span></div><div class='output co'>#&gt;          [,1]     [,2]     [,3]     [,4]
 #&gt; [1,] 3.433987 2.397895 1.791759 2.564949
 #&gt; [2,] 4.248495 4.663439 2.995732 1.945910
 #&gt; [3,] 4.025352 3.091042 2.833213 3.332205

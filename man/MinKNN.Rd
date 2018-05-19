@@ -21,3 +21,16 @@ fully cluster all observations.
 Compute the minimum number of nearest neighbors required to fully
 cluster all observations
 }
+\examples{
+\dontrun{
+library(clustRviz)
+data("presidential_speech")
+Xdat <- presidential_speech$X
+Xdat.preprocessed <- scale(Xdat,center=TRUE,scale=FALSE)
+dense.weights <- DenseWeights(X = Xdat.preprocessed,phi=1e-3)
+MinKNN(
+X = Xdat.preprocessed,
+dense.weights = dense.weights
+) -> k.min
+}
+}

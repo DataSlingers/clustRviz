@@ -68,6 +68,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
+    </li>
+    <li>
       <a href="../articles/Getting_Started.html">Getting Started</a>
     </li>
   </ul>
@@ -153,9 +156,7 @@ mean matricies are returned.</p>
 <span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>$<span class='no'>X</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>]
 <span class='no'>carp.fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='CARP.html'>CARP</a></span>(
     <span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>,
-    <span class='kw'>obs.labels</span><span class='kw'>=</span><span class='no'>presidential_speech</span>$<span class='no'>labels</span>[<span class='fl'>1</span>:<span class='fl'>10</span>])</div><div class='output co'>#&gt; Pre-computing weight-based edge sets
-#&gt; Computing CARP Path
-#&gt; Post-processing</div><div class='input'><span class='co'># Return the CARP iterate with k=5 clusters</span>
+    <span class='kw'>obs.labels</span><span class='kw'>=</span><span class='no'>presidential_speech</span>$<span class='no'>labels</span>[<span class='fl'>1</span>:<span class='fl'>10</span>])</div><div class='output co'>#&gt; <span class='message'>Pre-computing weight-based edge sets</span></div><div class='output co'>#&gt; <span class='message'>Computing CARP Path</span></div><div class='output co'>#&gt; <span class='message'>Post-processing</span></div><div class='input'><span class='co'># Return the CARP iterate with k=5 clusters</span>
 <span class='no'>carp.clustering</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Clustering.html'>Clustering</a></span>(<span class='no'>carp.fit</span>,<span class='kw'>k</span><span class='kw'>=</span><span class='fl'>5</span>)
 <span class='co'># Examine the cluster labels</span>
 <span class='no'>carp.clustering</span>$<span class='no'>clustering.assignment</span></div><div class='output co'>#&gt;  [1] "cl1" "cl2" "cl2" "cl3" "cl2" "cl2" "cl2" "cl3" "cl4" "cl5"</div><div class='input'><span class='co'># Examine the cluster means</span>

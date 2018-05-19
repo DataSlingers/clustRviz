@@ -8,7 +8,7 @@
   ...)
 }
 \arguments{
-\item{x}{A CARP object returned by \code{CARP}}
+\item{x}{A CBASS object returned by \code{CBASS}}
 
 \item{k.obs}{An interger between 1 and \code{n.obs}. The number of unique
 observation clusters.}
@@ -45,7 +45,11 @@ regularization (\code{percent}) returns the clustering assignment
 and cluster mean matrix at the specific point along the CBASS path.
 }
 \examples{
+\dontrun{
 library(clustRviz)
 data("presidential_speech")
-Xdat <- presidential_speech$X[1:10,1:4]
+Xdat <- presidential_speech$X
+cbass.fit <- CBASS(X=Xdat)
+cbass.clustering <- Clustering(cbass.fit,percent = .8)
+}
 }

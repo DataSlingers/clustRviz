@@ -68,6 +68,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
+    </li>
+    <li>
       <a href="../articles/Getting_Started.html">Getting Started</a>
     </li>
   </ul>
@@ -98,9 +101,12 @@ heatmaps. Visualizations may be static, interactive, or both.</p>
 
     <pre class="usage"><span class='fu'>CBASS</span>(<span class='no'>X</span>, <span class='kw'>obs.labels</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>var.labels</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>X.center.global</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>rho</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>phi</span> <span class='kw'>=</span> <span class='fl'>0.1</span>, <span class='kw'>weights.obs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>weights.vars</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>k.obs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>k.var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>t</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ncores</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>max.iter</span> <span class='kw'>=</span> <span class='fl'>1e+06</span>,
-  <span class='kw'>burn.in</span> <span class='kw'>=</span> <span class='fl'>50</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>alg.type</span> <span class='kw'>=</span> <span class='st'>"cbassviz"</span>, <span class='kw'>interactive</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>static</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+  <span class='kw'>obs.weight.dist</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"euclidean"</span>, <span class='st'>"maximum"</span>, <span class='st'>"manhattan"</span>, <span class='st'>"canberra"</span>,
+  <span class='st'>"binary"</span>, <span class='st'>"minkowski"</span>), <span class='kw'>obs.weight.dist.p</span> <span class='kw'>=</span> <span class='fl'>2</span>,
+  <span class='kw'>vars.weight.dist</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"euclidean"</span>, <span class='st'>"maximum"</span>, <span class='st'>"manhattan"</span>, <span class='st'>"canberra"</span>,
+  <span class='st'>"binary"</span>, <span class='st'>"minkowski"</span>), <span class='kw'>vars.weight.dist.p</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>k.obs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>k.var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>t</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ncores</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>max.iter</span> <span class='kw'>=</span> <span class='fl'>1e+06</span>, <span class='kw'>burn.in</span> <span class='kw'>=</span> <span class='fl'>50</span>,
+  <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>alg.type</span> <span class='kw'>=</span> <span class='st'>"cbassviz"</span>, <span class='kw'>interactive</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>static</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -138,6 +144,26 @@ Determines observation pair fusions weight.</p></td>
       <th>weights.vars</th>
       <td><p>A vector of positive number of length choose(p.vars,2).
 Determines variable pair fusions weight.</p></td>
+    </tr>
+    <tr>
+      <th>obs.weight.dist</th>
+      <td><p>a string indicating the distance metric used to calculate
+observation weights</p></td>
+    </tr>
+    <tr>
+      <th>obs.weight.dist.p</th>
+      <td><p>The power of the Minkowski distance, if used for
+observation weights.</p></td>
+    </tr>
+    <tr>
+      <th>vars.weight.dist</th>
+      <td><p>a string indicating the distance metric used to calculate
+variable weights</p></td>
+    </tr>
+    <tr>
+      <th>vars.weight.dist.p</th>
+      <td><p>The power of the Minkowski distance, if used for
+variable weights.</p></td>
     </tr>
     <tr>
       <th>k.obs</th>
@@ -217,9 +243,20 @@ be returned?</p>
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p><code>CBASS</code> solves the following problem.</p>
+    <p><code>CBASS</code> solves the Convex Biclustering problem via
+Algorithmic Regularization Paths. A seqeunce of biclustering
+solutions is returned along with several visualizations.</p>
     
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><span class='co'># NOT RUN {</span>
+<span class='fu'>library</span>(<span class='no'>clustRviz</span>)
+<span class='fu'>data</span>(<span class='st'>"presidential_speech"</span>)
+<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>$<span class='no'>X</span>
+<span class='fu'>CBASS</span>(
+<span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>
+) <span class='kw'>-&gt;</span> <span class='no'>cbass.fit</span>
+<span class='co'># }</span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -229,7 +266,9 @@ be returned?</p>
       <li><a href="#value">Value</a></li>
 
       <li><a href="#details">Details</a></li>
-          </ul>
+      
+      <li><a href="#examples">Examples</a></li>
+    </ul>
 
   </div>
 </div>

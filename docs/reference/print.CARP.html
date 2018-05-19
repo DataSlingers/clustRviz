@@ -68,6 +68,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
+    </li>
+    <li>
       <a href="../articles/Getting_Started.html">Getting Started</a>
     </li>
   </ul>
@@ -123,16 +126,7 @@ the type of CARP algorithm performed, and the visualizations returned.</p>
 <span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>$<span class='no'>X</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>]
 <span class='no'>carp.fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='CARP.html'>CARP</a></span>(
     <span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>,
-    <span class='kw'>obs.labels</span><span class='kw'>=</span><span class='no'>presidential_speech</span>$<span class='no'>labels</span>[<span class='fl'>1</span>:<span class='fl'>10</span>])</div><div class='output co'>#&gt; Pre-computing weight-based edge sets
-#&gt; Computing CARP Path
-#&gt; Post-processing</div><div class='input'><span class='fu'>print</span>(<span class='no'>carp.fit</span>)</div><div class='output co'>#&gt; CARP Fit Summary
-#&gt; Number of Observations: 10 
-#&gt; Number of Variables: 4 
-#&gt; Pre-processing: center 
-#&gt; Weights: RBF Kernel, phi = 0.001 k = 2 
-#&gt; Algorithm: CARP-VIZ 
-#&gt; Visualizations: Static Dend Static Path Interactive Dend/Path 
-#&gt; Raw Data:</div><div class='output co'>#&gt;                     amount appropri  british     cent
+    <span class='kw'>obs.labels</span><span class='kw'>=</span><span class='no'>presidential_speech</span>$<span class='no'>labels</span>[<span class='fl'>1</span>:<span class='fl'>10</span>])</div><div class='output co'>#&gt; <span class='message'>Pre-computing weight-based edge sets</span></div><div class='output co'>#&gt; <span class='message'>Computing CARP Path</span></div><div class='output co'>#&gt; <span class='message'>Post-processing</span></div><div class='input'><span class='fu'>print</span>(<span class='no'>carp.fit</span>)</div><div class='output co'>#&gt; <span class='message'>CARP Fit Summary</span></div><div class='output co'>#&gt; <span class='message'>Number of Observations: 10</span></div><div class='output co'>#&gt; <span class='message'>Number of Variables: 4</span></div><div class='output co'>#&gt; <span class='message'>Pre-processing: center</span></div><div class='output co'>#&gt; <span class='message'>Weights: RBF Kernel, phi = 0.001, k = 2</span></div><div class='output co'>#&gt; <span class='message'>Algorithm: CARP-VIZ</span></div><div class='output co'>#&gt; <span class='message'>Visualizations: Static DendStatic PathInteractive Dend/Path</span></div><div class='output co'>#&gt; <span class='message'>Raw Data:</span></div><div class='output co'>#&gt;                     amount appropri  british     cent
 #&gt; Abraham Lincoln   3.433987 2.397895 1.791759 2.564949
 #&gt; Andrew Jackson    4.248495 4.663439 2.995732 1.945910
 #&gt; Andrew Johnson    4.025352 3.091042 2.833213 3.332205

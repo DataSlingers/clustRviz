@@ -576,6 +576,18 @@ ISPOLD <- function(sp.path,v.path,u.path, lambda.path,cardE){
 #' @return k an integer. The smallest number of nearest neighbors required to
 #' fully cluster all observations.
 #' @export
+#' @examples
+#' \dontrun{
+#' library(clustRviz)
+#' data("presidential_speech")
+#' Xdat <- presidential_speech$X
+#' Xdat.preprocessed <- scale(Xdat,center=TRUE,scale=FALSE)
+#' dense.weights <- DenseWeights(X = Xdat.preprocessed,phi=1e-3)
+#' MinKNN(
+#' X = Xdat.preprocessed,
+#' dense.weights = dense.weights
+#' ) -> k.min
+#' }
 MinKNN <- function(X,dense.weights){
   n <- nrow(X)
   weight.adj <- WeightAdjacency(dense.weights,n)
@@ -1325,6 +1337,14 @@ CreateDendrogram <- function(carp_cluster_path,n_labels,scale){
 #' @return dense.weights a numeric vector of weights
 #' @importFrom stats dist
 #' @export
+#' @examples
+#' \dontrun{
+#' library(clustRviz)
+#' data("presidential_speech")
+#' Xdat <- presidential_speech$X
+#' Xdat.preprocessed <- scale(Xdat,center=TRUE,scale=FALSE)
+#' dense.weights <- DenseWeights(X = Xdat.preprocessed,phi=1e-3)
+#' }
 DenseWeights <- function(X,
                          phi=1,
                          method=c('euclidean','maximum','manhattan','canberra','binary','minkowski'),
