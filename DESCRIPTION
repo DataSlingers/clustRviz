@@ -21,6 +21,7 @@ Imports:
     dplyr,
     ggplot2,
     tidyr,
+    purrr,
     shiny,
     Matrix,
     FNN,
@@ -31,7 +32,8 @@ Imports:
     gtools,
     ggrepel,
     RColorBrewer,
-    plyr
+    plyr,
+    qgraph
 RoxygenNote: 6.0.1
 LinkingTo: Rcpp,RcppArmadillo
 Suggests: testthat,

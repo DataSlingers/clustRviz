@@ -110,6 +110,220 @@ ConvexClusteringPreCompute <- function(X,weights,rho,ncores=2,verbose=FALSE){
 #' @importFrom dplyr tbl_df
 #' @importFrom dplyr mutate
 #' @importFrom dplyr select
+#' @importFrom dplyr slice
+#' @importFrom dplyr filter
+#' @importFrom dplyr arrange
+#' @importFrom dplyr left_join
+#' @importFrom dplyr full_join
+#' @importFrom dplyr group_by
+#' @importFrom dplyr ungroup
+#' @importFrom dplyr tibble
+#' @importFrom dplyr bind_rows
+#' @importFrom dplyr lead
+#' @importFrom dplyr n
+#' @importFrom tidyr gather
+#' @importFrom tidyr nest
+#' @importFrom tidyr unnest
+#' @importFrom purrr map
+#' @importFrom purrr map2
+#' @importFrom stringr str_replace
+#' @importFrom stats na.omit
+ISPFast <- function(sp.path,v.path,u.path, lambda.path,cardE){
+  sp.path%>%
+    dplyr::tbl_df() %>%
+    dplyr::mutate(Iter = 1:n()) %>%
+    tidyr::gather(ColLab,SpValue,-Iter) %>%
+    dplyr::mutate(
+      ColLab = factor(ColLab,levels=paste('V',1:cardE,sep=''),ordered=TRUE)
+    ) %>%
+    dplyr::arrange(Iter,ColLab) %>%
+    dplyr::group_by(ColLab) %>%
+    dplyr::mutate(
+      SpValueLag = dplyr::lag(SpValue)
+    ) %>%
+    dplyr::ungroup() %>%
+    dplyr::filter(Iter != 1) %>%
+    # does the sparsity pattern change this iteration?
+    dplyr::mutate(
+      HasChange = SpValue - SpValueLag
+    ) %>%
+    # get iterations where sparsity has changed
+    dplyr::filter(HasChange > 0) %>%
+    dplyr::mutate(
+      ColIndNum = as.numeric(stringr::str_replace(as.character(ColLab),'V',''))
+    ) %>%
+    dplyr::select(Iter,ColIndNum) %>%
+    dplyr::arrange(Iter,ColIndNum) %>%
+    dplyr::group_by(Iter) %>%
+    # How many changes in this iteration?
+    dplyr::mutate(
+      NChanges = n()
+    ) -> change.frame
+
+
+
+
+  dplyr::full_join(
+    change.frame %>%
+      dplyr::filter(NChanges ==1) %>%
+      dplyr::select(-NChanges) %>%
+      dplyr::mutate(Rank=1),
+    change.frame %>%
+      dplyr::filter(NChanges>1) %>%
+      dplyr::group_by(Iter) %>%
+      tidyr::nest() %>%
+      dplyr::mutate(
+        tst = purrr::map2(.x=Iter,.y=data,.f=function(x,y){
+          prev.mags <- apply(matrix(v.path[,x-1],ncol=cardE)[,y$ColIndNum],2,function(x){sum(x^2)})
+          data.frame(
+            ColIndNum = y$ColIndNum,
+            Rank = order(prev.mags)
+          )
+        })
+      ) %>%
+      dplyr::select(-data) %>%
+      tidyr::unnest() %>%
+      dplyr::ungroup() %>%
+      dplyr::arrange(Iter,Rank),
+    by=c('Iter')
+  ) %>%
+    dplyr::arrange(Iter) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(
+      ColIndNum = ifelse(is.na(ColIndNum.x),ColIndNum.y,ColIndNum.x)
+    ) %>%
+    dplyr::select(Iter,ColIndNum) %>%
+    dplyr::mutate(
+      IterDiff = dplyr::lead(Iter) - Iter,
+      IterDiff = ifelse(is.na(IterDiff) | IterDiff == 0, 1,IterDiff)
+    ) -> IterRankCols
+  ColIndVec <- rep(IterRankCols$ColIndNum,times=IterRankCols$IterDiff)
+  IterRankCols %>%
+    dplyr::slice(1) %>%
+    dplyr::select(Iter) %>%
+    unlist() %>%
+    unname() -> first.iter
+  dplyr::tibble(
+    ColInd = ColIndVec
+  ) %>%
+    dplyr::mutate(
+      Iter = 1:n(),
+      Iter = Iter + (first.iter - 1)
+    ) -> IterRankCols
+  IterRankCols %>%
+    dplyr::slice(1) %>%
+    dplyr::select(Iter) %>%
+    unlist() %>%
+    unname() -> first.iter
+  if(first.iter != 1){
+    dplyr::tibble(
+      ColInd = NA,
+      Iter = 1:(first.iter - 1)
+    )  %>%
+      dplyr::bind_rows(IterRankCols) -> IterRankCols
+  }
+
+  lapply(1:nrow(IterRankCols),function(idx){
+    indvec <- rep(0,times=cardE)
+    indvec[unique(stats::na.omit(IterRankCols$ColInd[1:idx]))] <- 1
+    indvec
+  }) %>%
+  do.call(rbind,.) -> sp.path.inter2
+
+
+
+  dplyr::tibble(
+    Iter = 1:length(lambda.path),
+    Lambda = lambda.path[Iter]
+  ) %>%
+    dplyr::left_join(
+      change.frame %>%
+        dplyr::mutate(
+          Lambda = lambda.path[Iter]
+        ) %>%
+        dplyr::filter(NChanges>1) %>%
+        dplyr::group_by(Iter) %>%
+        tidyr::nest() %>%
+        dplyr::mutate(
+          NewLambda = purrr::map2(.x=Iter,.y=data,.f=function(x,y){
+            cur.lam <- unique(y$Lambda)
+            next.lam <- lambda.path[x+1]
+            lam.seq <- seq(from=cur.lam,to=next.lam,length.out = nrow(y)+1 )
+            lam.seq <- lam.seq[-length(lam.seq)]
+            lam.seq
+          })
+        ) %>%
+        dplyr::select(-data) %>%
+        tidyr::unnest() %>%
+        dplyr::arrange(Iter),
+      by=c('Iter')
+    ) %>%
+    dplyr::mutate(
+      Lambda = ifelse(is.na(NewLambda),Lambda,NewLambda),
+      Iter = 1:n()
+    ) %>%
+    dplyr::select(Lambda) %>%
+    unlist() %>%
+    unname() -> lambda.path.inter2
+
+  seq2 <- Vectorize(seq.default, vectorize.args = c("from", "to"))
+  dplyr::tibble(
+    Iter = 1:ncol(u.path)
+  )  %>%
+    dplyr::mutate(
+      U = purrr::map(.x=Iter,.f=function(x){
+        u.path[,x]
+      })
+    ) %>%
+    dplyr::left_join(
+      change.frame %>%
+        dplyr::filter(
+          NChanges > 1
+        ) %>%
+        dplyr::select(-ColIndNum) %>%
+        dplyr::ungroup() %>%
+        dplyr::group_by(Iter) %>%
+        tidyr::nest()  %>%
+        dplyr::mutate(
+          NewU = purrr::map2(.x=Iter,.y=data,.f=function(x,y){
+            cur.u <- u.path[,x]
+            next.u <- u.path[,x+1]
+            new.u <- matrix(seq2(from=cur.u,to=next.u,length.out = nrow(y) + 1),nrow=length(cur.u),byrow = TRUE)
+            new.u <- new.u[,-ncol(new.u)]
+            lapply(seq_len(ncol(new.u)),function(i){new.u[,i]})
+          })
+        ) %>%
+        dplyr::select(-data) %>%
+        tidyr::unnest(),
+      by=c('Iter')
+    ) %>%
+    dplyr::mutate(
+      Iter = 1:n()
+    ) %>%
+    dplyr::group_by(Iter) %>%
+    dplyr::mutate(
+      Up = ifelse(is.null(NewU[[1]]),U,NewU)
+    ) %>%
+    dplyr::ungroup() -> u.path.inter2
+  u.path.inter2$Up %>%
+    do.call(cbind,.) -> u.path.inter2
+
+  list(sp.path.inter=sp.path.inter2,lambda.path.inter=lambda.path.inter2,u.path.inter=u.path.inter2)
+
+}
+
+
+
+
+
+
+
+
+
+
+#' @importFrom dplyr tbl_df
+#' @importFrom dplyr mutate
+#' @importFrom dplyr select
 #' @importFrom dplyr filter
 #' @importFrom dplyr arrange
 #' @importFrom dplyr group_by
@@ -1147,7 +1361,7 @@ PlotWeightGraph <- function(weights,nobs,edge.labels=TRUE,obs.labels=NULL,...){
     upper=FALSE
   ) -> wt.adj
 
-  qgraph(input = wt.adj,
+  qgraph::qgraph(input = wt.adj,
          labels=obs.labels,
          layout = "spring",
          edge.labels=edge.labels,
