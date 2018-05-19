@@ -378,6 +378,50 @@ not recommended to pass below this threshold for the reasons stated above.
 
 # Fitting
 
+`clustRviz` aims to make it easy to compute the CARP and CBASS solution paths, and 
+to quickly begin exploring the results. To this end, many reasonable choices 
+regarding both preprocessing and inputs disucussed above are made by default, 
+allowing for solution path to be computed from the raw data alone. 
+In the case of CARP, for example, we may fit the compute the solution 
+path for the presidents data via the `CARP` function:
+```{r}
+CARP(
+  X=Xdat,
+  obs.labels = obs.labels
+) -> carp.fit
+```
+Once completed, we can examine a brief summary of the fitted object
+```{r,message=TRUE}
+print(carp.fit)
+```
+The output above displays characteristics of our data, such as sample size 
+and number of variables, and also gives a preview of the raw input. 
+Additionally, the summary provides information regarding both data
+pre-processing and weight computations. From the above we see that 
+`CARP` has by default: (i) centered our data, (ii) computed 
+distance-based weights using a gaussian kernel with $\phi=.001$, and 
+(iii) created a sparse set of weights using $k=4$ nearest neighbors.
+Finally, the summary also provides information about the algorithm, here 
+CARP-VIZ, as well as the available visualizations.
+
+While `CARP`'s default choices work well in most scenarios, customized inputs 
+can also be provided. For example, choices regrarding preprocessing and weight 
+computations discussed above can quickly be incorporated:
+```{r,eval=FALSE}
+CARP(
+  X=Xdat,
+  obs.labels = obs.labels,
+  X.center=TRUE,
+  X.scale=TRUE,
+  phi = 1e-5,
+  weight.dist = 'canberra',
+  k = 5
+) -> carp.fit.custom
+```
+Indeed, in the case strong apriori information concerning clusters is 
+available, distance-based weight computations may be avoided altogether and 
+user-specified weights given directly via the `weights` arguement.
+
 # Solutions
 
 # Visualizations
