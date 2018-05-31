@@ -483,7 +483,7 @@ PlotWeightGraph(
 ```
 
 
-```{r,eval=FALSE}
+```{r,eval=TRUE}
 cbass.clustering <- Clustering(cbass.fit,percent = .8)
 ```
 
