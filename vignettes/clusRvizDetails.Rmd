@@ -54,9 +54,21 @@ $$
 \vec u_{l} - \vec u_{m} = \vec v_{l,m}, \;\; \forall l,m
 $$
 
-Convex clustering is traditionally solved by iteratively applying ADMM updates until convergence.
+Convex clustering is traditionally solved by iteratively applying ADMM updates until convergence.  This must be done for each $\lambda_k$ which is computationally expensive.
 
-This must be done for each $\lambda_k$ which is costly.
+To address the computational burden of Convex Clustering,
+we utilize the framework of Algorithmic Regularization Paths 
+to develop efficient methods for approximating the Convex 
+Clustering and Biclustering solution paths: Convex Clustering via 
+Algorithmic Regularization Paths (CARP) and Convex Biclustering via 
+Algorthmic Regularization with Small Steps (CBASS), respectively.
+Rather than fully solving the Convex Clustering optimization problem via 
+traditional iterative optimization techniques, we instead 
+employ the iterates themselves as approximations 
+for the true solution path.
+Remarkably, this approximation not only works well empirically, but
+can be shown theoretically to well approximate the true Convex 
+Clustering solution path.
 
 
 
@@ -90,13 +102,10 @@ Again our speech data consists of log-transformed word counts from speech found 
 ## Preprocessing 
 
 ### Normalization
-An important first choice before clustering is whether to center and scale our observations.
-
-Centering should always be done.
-
+An important first choice before clustering is whether to center and scale our observations.  
+Centering is typically appropriate, and is done by default for CARP and CBASS.
 The choice of scaling is left to the user discression, but should typically be applied 
 if measurements are a vastly different scales.
-
 In the case of the presidental speech dataset, all variables are of the same type and 
 so we do not scale our data matrix
 
@@ -108,7 +117,11 @@ Xdat.preprocessed <- scale(Xdat,center=TRUE,scale=FALSE)
 In the `CARP` function this preprocessing is done via the `X.center` and `X.scale`
 arguements.
 If the data is pre-processed outside of `CARP`, as is the case here, these options
-may be set to `FALSE`
+may be set to `FALSE`.
+
+Both `CARP` and `CBASS` (below) admit several options for computing the (bi)clustering 
+solution path. While we will encounter many options along the way, see the `carp.control` and `cbass.control` 
+functions for full details. 
 
 Similarly, the `CBASS` function also requires that data preprocessed prior usage.
 Because `CBASS` clusters both observations and variables, here centering is done 
@@ -124,13 +137,10 @@ Xdat.bi.preprocessed <- Xdat -  mean(Xdat)
 
 While not directly addressed by `CARP` or `CBASS`, high dimensional 
 measurements can present a challenge for clustering methods.
-
 Owing to the "curse of dimensionality", high dimensional measurements 
 may deliver sub-optimal performance for distance-based methods generally.
-
 As such, performing dimensionality reduction before applying `CARP`  
 may result in more interpretable clusters.
-
 We leave the choice of dimensionality reduction to the end-user, 
 but still recommend the reduced feature set be pre-processed 
 as described above.
@@ -143,33 +153,26 @@ of the data by default.
 ## Weights
 
 Weights are arguably one of the most important inputs to both `CARP` and `CBASS`.
-
 As we can see from the optimization probelms above, weights impart apriori 
 preference concerning which observations (and variables in the case of `CBASS`)
 should be fused together.
-
 This important feature allows us to incorportate domain knowledge, if available.
-
 In the absense of domain knowledge, however, weights can easily be 
 constructed via the data itself.
 
 One might first consider simply using a set of uninformative weights,
 $w_{l.m} = 1$
-
 While perhaps not appearent at first, such weight choices can also greatly 
 affect the computation time of both `CARP` and `CBASS` 
 (and certainly Convex Clustering).
-
 To see this note that in the Convex Clustering problem above 
 the regularization term contains $\binom{n}{2}$ summands, 
 drastically increasing computations as $n$ increases.
-
 Computations can be reduced by making the majority of weights zero and 
 greatly reducing the number of summands.
 
 Here we detail `clustRviz`'s default weight choices, as well as how 
 weights can be constructed manually.
-
 By default `CARP` and `CBASS` assume no prior domain knowledge 
 and construct distance-based weights via a gaussian kernel:
 
@@ -186,7 +189,6 @@ head(dense.weights)
 ```
 
 As the name suggests `DenseWeights` computes $w_{l,m}$ for all pairs of observations.
-
 For the presidents data, with $n=44$ observations, this results in a vector of length 
 $\binom{44}{2} = 956$.
 
@@ -196,7 +198,6 @@ length(dense.weights)
 
 The weights are returned in lexicographical order, namely 
 $\vec w = (w_{1,2},w_{1,3},\dots,w_{l,m},\dots,w_{n-1,n} )$
-
 The value of $\phi$ can have a marked effect on the weights.
 
 ```{r, fig.height=5,fig.width=10,fig.align='center',echo=FALSE,fig.cap="Dense weights for different choices of phi"}
@@ -216,7 +217,6 @@ ncol=2
 ```
 
 The choice of $\phi$ determines variance of the weights.
-
 Generally, choices of $\phi$ which result in higher variance weights tend to be more 
 informative. A simple method for finding a reasonable choice of $\phi$ is a basic
 grid search. For example:
@@ -230,7 +230,6 @@ sapply(phi.vec,function(phi){
 ```
 
 Additionally, `DenseWeights` allows for the specification of alternative distance measures
-
 Depending on the dataset, alternative metrics to traditional euclidean distance may 
 result in more informative clustering solutions.
 
@@ -246,9 +245,7 @@ qplot(dense.weights.can,bins=35) +
 ```
 
 Distance-based weights can be made sparse by only fusing together nearest neighbors.
-
 For a given observations $l$ we consider its $k$ nearest neighbors $\textrm{ne}_k(l)$. 
-
 Given a pair of observations $l,m$, we set their corresponding weight, $w_{l,m}$, to zero 
 if either is not amongst the other nearest neighbors. Specifically,
 
@@ -275,19 +272,14 @@ sum(sparse.weights!=0)
 ```
 
 Computationally, it is tempting to set $k$ small and ensure fast compuatation.
-
 Setting $k$ too small, however, can potentially prevent observations from fusing, 
 regardless of the amount of regularization.
-
 In order to verify that our sparse set of weights allows for the eventual fusion 
 of all observations we can examine its graphical representation.
-
 The function `PlotWeightGraph` displays the fusion graph of our observations induced 
 by the support of our weight set. 
-
 The fusion graph displays each observation as a vertex, and connects 
 two observation with an edge if their corresponding weight is non-zero. 
-
 Such connections between observations indicate their ability fuse into a common 
 cluster, given large enough regularization.
 
@@ -561,7 +553,7 @@ clustering solution paths, and biclustering heatmaps may be easily obtained.
 plot(carp.fit,type='interactive')
 ```
 
-Also to CBASS,
+Also for CBASS:
 
 ```{r,echo=TRUE,eval=FALSE}
 plot(cbass.fit,type='interactive')
@@ -574,6 +566,44 @@ knitr::include_url(url="https://clustrviz.shinyapps.io/PathShiny/",height='850px
 
 ## Saving
 
+`clustRviz` allows for visualizations, both static and dynamic, to be 
+easily saved for use in presentations and publications. 
+Static snapshots of the clustering solution paths may be 
+saved via the `saveviz` function.
+Similar to 
+plotting a CARP object, the percent of regularization 
+is sufficient to obtain a visualization along the path:
+
+```{r,echo=TRUE,eval=FALSE}
+saveviz(
+  carp.fit,
+  file.name = 'carp_path_static.png',
+  plot.type = 'path',
+  image.type = 'static',
+  percent=.5
+)
+```
+`saveviz` allows the user to specify both the the `plot.type` (cluster path 
+or dendgram) and the `image.type` (static or dynamic). In the static 
+example above, a `.png` file of the CARP solution path at $50$\% regularization 
+is outputed. In a similar manner, dendrograms may also be easily saved:
+
+```{r,echo=TRUE,eval=FALSE}
+saveviz(
+  carp.fit,
+  file.name = 'carp_dend_static.png',
+  plot.type = 'dendrogram',
+  image.type = 'static',
+  percent=.5
+)
+```
+
+
+
+Dynamic visualizations can also be saved for viewing outside of Shiny applications.
+In the case of dynamic visuals, `saveviz` will output a `.gif` demonstrating 
+cluster formation.
+
 ```{r,echo=TRUE,eval=FALSE}
 saveviz(
   carp.fit,
@@ -583,14 +613,10 @@ saveviz(
 )
 ```
 
-```{r,echo=TRUE,eval=FALSE}
-saveviz(
-  carp.fit,
-  file.name = 'carp_dend_static.png',
-  plot.type = 'dendrogram',
-  image.type = 'static'
-)
-```
+
+`saveviz` may be used for CBASS objects as well, outputing dendrograms 
+for observation or variables, as well as heatmaps. In the example 
+below we save a `.gif` biclustering heatmap.
 
 ```{r,echo=TRUE,eval=FALSE}
 saveviz(
@@ -601,8 +627,16 @@ saveviz(
 )
 
 ```
+
+
 # Discussion
 
+
+`clustRviz` provides a integrated framework for fitting and visualizing 
+the CARP and CBASS solution paths. 
+`clustRviz` delivers fast computation relative to traditional Convex Clustering 
+solution techniques, and brings traditional and modern clustering 
+visualization techniques together in a unified framework.
 
 
 

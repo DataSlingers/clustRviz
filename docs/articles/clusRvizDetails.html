@@ -97,8 +97,8 @@ w_{l,m} \| {\boldsymbol{u}}_l - {\boldsymbol{u}}_m \|_2
 \text{subject to}\;\;\;\;\;
 {\boldsymbol{u}}_{l} - {\boldsymbol{u}}_{m} = {\boldsymbol{v}}_{l,m}, \;\; \forall l,m
 \]</span></p>
-<p>Convex clustering is traditionally solved by iteratively applying ADMM updates until convergence.</p>
-<p>This must be done for each <span class="math inline">\(\lambda_k\)</span> which is costly.</p>
+<p>Convex clustering is traditionally solved by iteratively applying ADMM updates until convergence. This must be done for each <span class="math inline">\(\lambda_k\)</span> which is computationally expensive.</p>
+<p>To address the computational burden of Convex Clustering, we utilize the framework of Algorithmic Regularization Paths to develop efficient methods for approximating the Convex Clustering and Biclustering solution paths: Convex Clustering via Algorithmic Regularization Paths (CARP) and Convex Biclustering via Algorthmic Regularization with Small Steps (CBASS), respectively. Rather than fully solving the Convex Clustering optimization problem via traditional iterative optimization techniques, we instead employ the iterates themselves as approximations for the true solution path. Remarkably, this approximation not only works well empirically, but can be shown theoretically to well approximate the true Convex Clustering solution path.</p>
 </div>
 <div id="preprocessing-and-inputs" class="section level1">
 <h1 class="hasAnchor">
@@ -131,13 +131,12 @@ Xdat[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>
 <div id="normalization" class="section level3">
 <h3 class="hasAnchor">
 <a href="#normalization" class="anchor"></a>Normalization</h3>
-<p>An important first choice before clustering is whether to center and scale our observations.</p>
-<p>Centering should always be done.</p>
-<p>The choice of scaling is left to the user discression, but should typically be applied if measurements are a vastly different scales.</p>
-<p>In the case of the presidental speech dataset, all variables are of the same type and so we do not scale our data matrix</p>
+<p>An important first choice before clustering is whether to center and scale our observations.<br>
+Centering is typically appropriate, and is done by default for CARP and CBASS. The choice of scaling is left to the user discression, but should typically be applied if measurements are a vastly different scales. In the case of the presidental speech dataset, all variables are of the same type and so we do not scale our data matrix</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Centering data before computing the CARP solution path</span>
 Xdat.preprocessed &lt;-<span class="st"> </span><span class="kw">scale</span>(Xdat,<span class="dt">center=</span><span class="ot">TRUE</span>,<span class="dt">scale=</span><span class="ot">FALSE</span>)</code></pre></div>
-<p>In the <code>CARP</code> function this preprocessing is done via the <code>X.center</code> and <code>X.scale</code> arguements. If the data is pre-processed outside of <code>CARP</code>, as is the case here, these options may be set to <code>FALSE</code></p>
+<p>In the <code>CARP</code> function this preprocessing is done via the <code>X.center</code> and <code>X.scale</code> arguements. If the data is pre-processed outside of <code>CARP</code>, as is the case here, these options may be set to <code>FALSE</code>.</p>
+<p>Both <code>CARP</code> and <code>CBASS</code> (below) admit several options for computing the (bi)clustering solution path. While we will encounter many options along the way, see the <code>carp.control</code> and <code>cbass.control</code> functions for full details.</p>
 <p>Similarly, the <code>CBASS</code> function also requires that data preprocessed prior usage. Because <code>CBASS</code> clusters both observations and variables, here centering is done by subtracting away the global mean of our data matrix.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Subtracting global mean before computing the CBASS solution path</span>
 Xdat.bi &lt;-<span class="st"> </span>Xdat
@@ -146,46 +145,33 @@ Xdat.bi.preprocessed &lt;-<span class="st"> </span>Xdat <span class="op">-</span
 <div id="dimension-reduction" class="section level3">
 <h3 class="hasAnchor">
 <a href="#dimension-reduction" class="anchor"></a>Dimension Reduction</h3>
-<p>While not directly addressed by <code>CARP</code> or <code>CBASS</code>, high dimensional measurements can present a challenge for clustering methods.</p>
-<p>Owing to the “curse of dimensionality”, high dimensional measurements may deliver sub-optimal performance for distance-based methods generally.</p>
-<p>As such, performing dimensionality reduction before applying <code>CARP</code><br>
-may result in more interpretable clusters.</p>
-<p>We leave the choice of dimensionality reduction to the end-user, but still recommend the reduced feature set be pre-processed as described above.</p>
+<p>While not directly addressed by <code>CARP</code> or <code>CBASS</code>, high dimensional measurements can present a challenge for clustering methods. Owing to the “curse of dimensionality”, high dimensional measurements may deliver sub-optimal performance for distance-based methods generally. As such, performing dimensionality reduction before applying <code>CARP</code><br>
+may result in more interpretable clusters. We leave the choice of dimensionality reduction to the end-user, but still recommend the reduced feature set be pre-processed as described above.</p>
 <p>For the purpose of visualuization, <code>CARP</code> addresses the problem of high dimenstionality by visualizing the principal components of the data by default.</p>
 </div>
 </div>
 <div id="weights" class="section level2">
 <h2 class="hasAnchor">
 <a href="#weights" class="anchor"></a>Weights</h2>
-<p>Weights are arguably one of the most important inputs to both <code>CARP</code> and <code>CBASS</code>.</p>
-<p>As we can see from the optimization probelms above, weights impart apriori preference concerning which observations (and variables in the case of <code>CBASS</code>) should be fused together.</p>
-<p>This important feature allows us to incorportate domain knowledge, if available.</p>
-<p>In the absense of domain knowledge, however, weights can easily be constructed via the data itself.</p>
-<p>One might first consider simply using a set of uninformative weights, <span class="math inline">\(w_{l.m} = 1\)</span></p>
-<p>While perhaps not appearent at first, such weight choices can also greatly affect the computation time of both <code>CARP</code> and <code>CBASS</code> (and certainly Convex Clustering).</p>
-<p>To see this note that in the Convex Clustering problem above the regularization term contains <span class="math inline">\(\binom{n}{2}\)</span> summands, drastically increasing computations as <span class="math inline">\(n\)</span> increases.</p>
-<p>Computations can be reduced by making the majority of weights zero and greatly reducing the number of summands.</p>
-<p>Here we detail <code>clustRviz</code>’s default weight choices, as well as how weights can be constructed manually.</p>
-<p>By default <code>CARP</code> and <code>CBASS</code> assume no prior domain knowledge and construct distance-based weights via a gaussian kernel:</p>
+<p>Weights are arguably one of the most important inputs to both <code>CARP</code> and <code>CBASS</code>. As we can see from the optimization probelms above, weights impart apriori preference concerning which observations (and variables in the case of <code>CBASS</code>) should be fused together. This important feature allows us to incorportate domain knowledge, if available. In the absense of domain knowledge, however, weights can easily be constructed via the data itself.</p>
+<p>One might first consider simply using a set of uninformative weights, <span class="math inline">\(w_{l.m} = 1\)</span> While perhaps not appearent at first, such weight choices can also greatly affect the computation time of both <code>CARP</code> and <code>CBASS</code> (and certainly Convex Clustering). To see this note that in the Convex Clustering problem above the regularization term contains <span class="math inline">\(\binom{n}{2}\)</span> summands, drastically increasing computations as <span class="math inline">\(n\)</span> increases. Computations can be reduced by making the majority of weights zero and greatly reducing the number of summands.</p>
+<p>Here we detail <code>clustRviz</code>’s default weight choices, as well as how weights can be constructed manually. By default <code>CARP</code> and <code>CBASS</code> assume no prior domain knowledge and construct distance-based weights via a gaussian kernel:</p>
 <p><span class="math display">\[
 w_{l,m}  = \exp\{ -\phi \|{\boldsymbol{x}}_l - {\boldsymbol{x}}_m \|^2_2 \}
 \]</span> Given a choice of <span class="math inline">\(\phi\)</span> (discussed in more detail below), an initial set of weights can be constructed via <code>DenseWeights</code> function. In the case of presidential speech data for example,</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dense.weights &lt;-<span class="st"> </span>clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/DenseWeights.html">DenseWeights</a></span>(<span class="dt">X =</span> Xdat.preprocessed,<span class="dt">phi=</span><span class="fl">1e-3</span>)
 <span class="kw">head</span>(dense.weights)
 <span class="co">#&gt; [1] 0.9053890 0.9676079 0.5474781 0.8777638 0.8041133 0.9350156</span></code></pre></div>
-<p>As the name suggests <code>DenseWeights</code> computes <span class="math inline">\(w_{l,m}\)</span> for all pairs of observations.</p>
-<p>For the presidents data, with <span class="math inline">\(n=44\)</span> observations, this results in a vector of length <span class="math inline">\(\binom{44}{2} = 956\)</span>.</p>
+<p>As the name suggests <code>DenseWeights</code> computes <span class="math inline">\(w_{l,m}\)</span> for all pairs of observations. For the presidents data, with <span class="math inline">\(n=44\)</span> observations, this results in a vector of length <span class="math inline">\(\binom{44}{2} = 956\)</span>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">length</span>(dense.weights)
 <span class="co">#&gt; [1] 946</span></code></pre></div>
-<p>The weights are returned in lexicographical order, namely <span class="math inline">\({\boldsymbol{w}} = (w_{1,2},w_{1,3},\dots,w_{l,m},\dots,w_{n-1,n} )\)</span></p>
-<p>The value of <span class="math inline">\(\phi\)</span> can have a marked effect on the weights.</p>
+<p>The weights are returned in lexicographical order, namely <span class="math inline">\({\boldsymbol{w}} = (w_{1,2},w_{1,3},\dots,w_{l,m},\dots,w_{n-1,n} )\)</span> The value of <span class="math inline">\(\phi\)</span> can have a marked effect on the weights.</p>
 <div class="figure" style="text-align: center">
 <img src="clusRvizDetails_files/figure-html/unnamed-chunk-6-1.png" alt="Dense weights for different choices of phi" width="960"><p class="caption">
 Dense weights for different choices of phi
 </p>
 </div>
-<p>The choice of <span class="math inline">\(\phi\)</span> determines variance of the weights.</p>
-<p>Generally, choices of <span class="math inline">\(\phi\)</span> which result in higher variance weights tend to be more informative. A simple method for finding a reasonable choice of <span class="math inline">\(\phi\)</span> is a basic grid search. For example:</p>
+<p>The choice of <span class="math inline">\(\phi\)</span> determines variance of the weights. Generally, choices of <span class="math inline">\(\phi\)</span> which result in higher variance weights tend to be more informative. A simple method for finding a reasonable choice of <span class="math inline">\(\phi\)</span> is a basic grid search. For example:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">phi.vec &lt;-<span class="st"> </span><span class="dv">10</span><span class="op">^</span>(<span class="op">-</span><span class="dv">4</span><span class="op">:</span><span class="dv">4</span>)
 <span class="kw">sapply</span>(phi.vec,<span class="cf">function</span>(phi){
   <span class="kw">var</span>(clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/DenseWeights.html">DenseWeights</a></span>(<span class="dt">X=</span>Xdat.preprocessed,<span class="dt">phi =</span> phi))
@@ -193,17 +179,14 @@ Dense weights for different choices of phi
 <span class="st">  </span><span class="kw">which.max</span>() <span class="op">%&gt;%</span>
 <span class="st">  </span>phi.vec[.]
 <span class="co">#&gt; [1] 0.01</span></code></pre></div>
-<p>Additionally, <code>DenseWeights</code> allows for the specification of alternative distance measures</p>
-<p>Depending on the dataset, alternative metrics to traditional euclidean distance may result in more informative clustering solutions.</p>
+<p>Additionally, <code>DenseWeights</code> allows for the specification of alternative distance measures Depending on the dataset, alternative metrics to traditional euclidean distance may result in more informative clustering solutions.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dense.weights.can &lt;-<span class="st"> </span>clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/DenseWeights.html">DenseWeights</a></span>(<span class="dt">X =</span> Xdat.preprocessed,<span class="dt">phi=</span><span class="fl">1e-5</span>,<span class="dt">method =</span> <span class="st">'canberra'</span>)</code></pre></div>
 <div class="figure" style="text-align: center">
 <img src="clusRvizDetails_files/figure-html/unnamed-chunk-9-1.png" alt="Dense weights with Canberra distance" width="672"><p class="caption">
 Dense weights with Canberra distance
 </p>
 </div>
-<p>Distance-based weights can be made sparse by only fusing together nearest neighbors.</p>
-<p>For a given observations <span class="math inline">\(l\)</span> we consider its <span class="math inline">\(k\)</span> nearest neighbors <span class="math inline">\(\textrm{ne}_k(l)\)</span>.</p>
-<p>Given a pair of observations <span class="math inline">\(l,m\)</span>, we set their corresponding weight, <span class="math inline">\(w_{l,m}\)</span>, to zero if either is not amongst the other nearest neighbors. Specifically,</p>
+<p>Distance-based weights can be made sparse by only fusing together nearest neighbors. For a given observations <span class="math inline">\(l\)</span> we consider its <span class="math inline">\(k\)</span> nearest neighbors <span class="math inline">\(\textrm{ne}_k(l)\)</span>. Given a pair of observations <span class="math inline">\(l,m\)</span>, we set their corresponding weight, <span class="math inline">\(w_{l,m}\)</span>, to zero if either is not amongst the other nearest neighbors. Specifically,</p>
 <p><span class="math display">\[
 \tilde{w}_{l,m} = w_{l,m} {\boldsymbol{1}}_{\textrm{ne}_k(l)}(m) {\boldsymbol{1}}_{\textrm{ne}_k(m)}(l)
 \]</span> where <span class="math inline">\(w_{l,m}\)</span> is our original dense weight values and <span class="math inline">\({\boldsymbol{1}}_{A}(x)\)</span> denotes the indicator function of the set <span class="math inline">\(A\)</span>.</p>
@@ -216,12 +199,7 @@ clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/Spars
 <p>In the case of <span class="math inline">\(k=\)</span> 5 above, the number of non-zero weight values (and hence the number of summands in our original objective) has been reduced from <span class="math inline">\(\binom{44}{2} = 956\)</span> to</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sum</span>(sparse.weights<span class="op">!=</span><span class="dv">0</span>)
 <span class="co">#&gt; [1] 144</span></code></pre></div>
-<p>Computationally, it is tempting to set <span class="math inline">\(k\)</span> small and ensure fast compuatation.</p>
-<p>Setting <span class="math inline">\(k\)</span> too small, however, can potentially prevent observations from fusing, regardless of the amount of regularization.</p>
-<p>In order to verify that our sparse set of weights allows for the eventual fusion of all observations we can examine its graphical representation.</p>
-<p>The function <code>PlotWeightGraph</code> displays the fusion graph of our observations induced by the support of our weight set.</p>
-<p>The fusion graph displays each observation as a vertex, and connects two observation with an edge if their corresponding weight is non-zero.</p>
-<p>Such connections between observations indicate their ability fuse into a common cluster, given large enough regularization.</p>
+<p>Computationally, it is tempting to set <span class="math inline">\(k\)</span> small and ensure fast compuatation. Setting <span class="math inline">\(k\)</span> too small, however, can potentially prevent observations from fusing, regardless of the amount of regularization. In order to verify that our sparse set of weights allows for the eventual fusion of all observations we can examine its graphical representation. The function <code>PlotWeightGraph</code> displays the fusion graph of our observations induced by the support of our weight set. The fusion graph displays each observation as a vertex, and connects two observation with an edge if their corresponding weight is non-zero. Such connections between observations indicate their ability fuse into a common cluster, given large enough regularization.</p>
 <p>Below we consider the extreme case of <span class="math inline">\(k=1\)</span>, which while computationally fast presents an immediate difficulty.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
   <span class="dt">weights =</span> clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/SparseWeights.html">SparseWeights</a></span>(
@@ -333,7 +311,9 @@ k.min
 <div id="solutions" class="section level1">
 <h1 class="hasAnchor">
 <a href="#solutions" class="anchor"></a>Solutions</h1>
+<p>Once fit, both the clustering solution of both CARP and CBASS may be examined via the <code>Clustering</code> function. Using our <code>carp.fit</code> object from above, we can extract the solution along the path which gives <span class="math inline">\(k=2\)</span> clusters.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.clustering &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(carp.fit,<span class="dt">k =</span> <span class="dv">2</span>)</code></pre></div>
+<p>Once extracted we may examine the clustering assignment. In the table below we see of count of the cluster membership. Additionally we consider the cluster assignment in relation to our original weight graph. We can see that the cluster membership respect our original weights.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">table</span>(carp.clustering<span class="op">$</span>clustering.assignment)
 <span class="co">#&gt; </span>
 <span class="co">#&gt; cl1 cl2 </span>
@@ -349,6 +329,7 @@ k.min
   <span class="dt">label.cex=</span>.<span class="dv">7</span>,
   <span class="dt">repulsion=</span>.<span class="dv">9</span>)</code></pre></div>
 <p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-24-1.png" width="480" style="display: block; margin: auto;"></p>
+<p>Additionally, we can extract the cluster means associated with <span class="math inline">\(k=2\)</span> solution. The object <code>cluster.means</code> below gives the CARP iterate <span class="math inline">\({\boldsymbol{U}}^{(k)}\)</span> along the path. We note that the columns of the respective clusters have fused together as desired.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(carp.clustering<span class="op">$</span>cluster.means)
 <span class="co">#&gt;           cl1       cl2</span>
 <span class="co">#&gt; [1,] 3.247043 1.8627224</span>
@@ -357,6 +338,7 @@ k.min
 <span class="co">#&gt; [4,] 2.055121 0.7925161</span>
 <span class="co">#&gt; [5,] 2.743924 0.9780746</span>
 <span class="co">#&gt; [6,] 2.380273 0.1980421</span></code></pre></div>
+<p>Along with specifying the number of clusters <span class="math inline">\(k\)</span>, we may also specify the percent of regulariziation. In the example below, we extract the clustering solution at <span class="math inline">\(25\)</span>% along the regularization path; we plot the new cluster labels along with the original weight graph.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.clustering &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(carp.fit,<span class="dt">percent =</span> .<span class="dv">25</span>)
 
 clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
@@ -372,40 +354,64 @@ clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotW
   <span class="dt">label.cex=</span>.<span class="dv">7</span>,
   <span class="dt">repulsion=</span>.<span class="dv">9</span>)</code></pre></div>
 <p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-26-1.png" width="480" style="display: block; margin: auto;"></p>
+<p>Simiarly to CARP objects, CBASS clustering solutions may also be extracted via the <code>Clustering</code> function. In the example below we extract the biclustering solution at the level of <span class="math inline">\(85\)</span>% regularization.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cbass.clustering &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(cbass.fit,<span class="dt">percent =</span> .<span class="dv">8</span>)</code></pre></div>
 </div>
 <div id="visualizations" class="section level1">
 <h1 class="hasAnchor">
 <a href="#visualizations" class="anchor"></a>Visualizations</h1>
+<p>An important feature of both CARP and CBASS fits, is the ability to visualize an entire path of solutions. Unlike traditional clustering methods, CARP and CBASS allow for dynamic visualization of cluster formation, giving a more wholistic view of the underlying data.</p>
+<p>In this section we examine both static and dynamic visualizations for CARP and CBASS.</p>
 <div id="static" class="section level2">
 <h2 class="hasAnchor">
 <a href="#static" class="anchor"></a>Static</h2>
+<p>Static visualizations allow the user to view snapshots along the cluster solution path. In the plot below the first two principal components of the original observations (US presidents) are plotted (black dots) along with the CARP solution path (red curves). Following along the CARP solution path, we can watch<br>
+the fusions between observations as regulaization increases. To obtain a snapshot we again specify the percent of regularization.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(carp.fit,<span class="dt">type =</span> <span class="st">'path'</span>,<span class="dt">percent=</span>.<span class="dv">5</span>)</code></pre></div>
 <p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-28-1.png" width="480" style="display: block; margin: auto;"></p>
+<p>Owing to the CARP-VIZ algorithm, we are also ensured a dendrogram representation for the resulting path. In the figure below we display the dendrogram of CARP-VIZ:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(carp.fit,<span class="dt">type =</span> <span class="st">'dendrogram'</span>)</code></pre></div>
 <p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-29-1.png" width="480" style="display: block; margin: auto;"></p>
+<p>Additional static visualization are available for CBASS objects, allowing both static heatmaps and dendrograms for observations and variables.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(cbass.fit,<span class="dt">type=</span><span class="st">'var.dendrogram'</span>)</code></pre></div>
 </div>
 <div id="dynamic" class="section level2">
 <h2 class="hasAnchor">
 <a href="#dynamic" class="anchor"></a>Dynamic</h2>
+<p>The dynamic visualization of both CARP and CBASS give a wholistic view of cluster formation. Via the use of Shiny applications, dynamic displays of dendrograms, clustering solution paths, and biclustering heatmaps may be easily obtained.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(carp.fit,<span class="dt">type=</span><span class="st">'interactive'</span>)</code></pre></div>
+<p>Also for CBASS:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(cbass.fit,<span class="dt">type=</span><span class="st">'interactive'</span>)</code></pre></div>
 <iframe src="https://clustrviz.shinyapps.io/PathShiny/" width="100%" height="850px">
 </iframe>
 </div>
 <div id="saving" class="section level2">
 <h2 class="hasAnchor">
 <a href="#saving" class="anchor"></a>Saving</h2>
+<p><code>clustRviz</code> allows for visualizations, both static and dynamic, to be easily saved for use in presentations and publications. Static snapshots of the clustering solution paths may be saved via the <code>saveviz</code> function. Similar to plotting a CARP object, the percent of regularization is sufficient to obtain a visualization along the path:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/saveviz.html">saveviz</a></span>(
+  carp.fit,
+  <span class="dt">file.name =</span> <span class="st">'carp_path_static.png'</span>,
+  <span class="dt">plot.type =</span> <span class="st">'path'</span>,
+  <span class="dt">image.type =</span> <span class="st">'static'</span>,
+  <span class="dt">percent=</span>.<span class="dv">5</span>
+)</code></pre></div>
+<p><code>saveviz</code> allows the user to specify both the the <code>plot.type</code> (cluster path or dendgram) and the <code>image.type</code> (static or dynamic). In the static example above, a <code>.png</code> file of the CARP solution path at <span class="math inline">\(50\)</span>% regularization is outputed. In a similar manner, dendrograms may also be easily saved:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/saveviz.html">saveviz</a></span>(
+  carp.fit,
+  <span class="dt">file.name =</span> <span class="st">'carp_dend_static.png'</span>,
+  <span class="dt">plot.type =</span> <span class="st">'dendrogram'</span>,
+  <span class="dt">image.type =</span> <span class="st">'static'</span>,
+  <span class="dt">percent=</span>.<span class="dv">5</span>
+)</code></pre></div>
+<p>Dynamic visualizations can also be saved for viewing outside of Shiny applications. In the case of dynamic visuals, <code>saveviz</code> will output a <code>.gif</code> demonstrating cluster formation.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/saveviz.html">saveviz</a></span>(
   carp.fit,
   <span class="dt">file.name =</span> <span class="st">'path_dyn.gif'</span>,
   <span class="dt">plot.type =</span> <span class="st">'path'</span>,
   <span class="dt">image.type =</span> <span class="st">'dynamic'</span>
 )</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/saveviz.html">saveviz</a></span>(
-  carp.fit,
-  <span class="dt">file.name =</span> <span class="st">'carp_dend_static.png'</span>,
-  <span class="dt">plot.type =</span> <span class="st">'dendrogram'</span>,
-  <span class="dt">image.type =</span> <span class="st">'static'</span>
-)</code></pre></div>
+<p><code>saveviz</code> may be used for CBASS objects as well, outputing dendrograms for observation or variables, as well as heatmaps. In the example below we save a <code>.gif</code> biclustering heatmap.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/saveviz.html">saveviz</a></span>(
   cbass.fit,
   <span class="dt">file.name =</span> <span class="st">'cbass_heat_dyn.gif'</span>,
@@ -417,6 +423,7 @@ clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotW
 <div id="discussion" class="section level1">
 <h1 class="hasAnchor">
 <a href="#discussion" class="anchor"></a>Discussion</h1>
+<p><code>clustRviz</code> provides a integrated framework for fitting and visualizing the CARP and CBASS solution paths. <code>clustRviz</code> delivers fast computation relative to traditional Convex Clustering solution techniques, and brings traditional and modern clustering visualization techniques together in a unified framework.</p>
 </div>
 </div>
   </div>
