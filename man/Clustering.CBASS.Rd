@@ -4,7 +4,7 @@
 \alias{Clustering.CBASS}
 \title{Get biclustering solution from a CBASS object}
 \usage{
-\method{Clustering}{CBASS}(x, k.obs = NULL, k.vars = NULL, percent = NULL,
+\method{Clustering}{CBASS}(x, k.obs = NULL, k.var = NULL, percent = NULL,
   ...)
 }
 \arguments{
@@ -13,7 +13,7 @@
 \item{k.obs}{An interger between 1 and \code{n.obs}. The number of unique
 observation clusters.}
 
-\item{k.vars}{An interger between 1 and \code{p.vars}. The number of unique
+\item{k.var}{An interger between 1 and \code{p.var}. The number of unique
 variable clusters.}
 
 \item{percent}{A number between 0 and 1. The percent of regularization at
@@ -27,11 +27,11 @@ A list with elements
 \item{\code{clustering.assignment.obs}}{
 A vector of observation cluster labels of length \code{n.obs}.
 }
-\item{\code{clustering.assignment.vars}}{
-A vector of variable cluster labels of length \code{p.vars}.
+\item{\code{clustering.assignment.var}}{
+A vector of variable cluster labels of length \code{p.var}.
 }
 \item{\code{cluster.mean.matrix}}{
-The cluster mean matrix of size \code{n.obs} by \code{p.vars}.
+The cluster mean matrix of size \code{n.obs} by \code{p.var}.
 }
 }
 }

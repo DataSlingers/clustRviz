@@ -4,73 +4,23 @@
 \alias{CBASS}
 \title{Compute CBASS solution path}
 \usage{
-CBASS(X, obs.labels = NULL, var.labels = NULL, X.center.global = TRUE,
-  rho = 1, phi = 0.1, weights.obs = NULL, weights.vars = NULL,
-  obs.weight.dist = c("euclidean", "maximum", "manhattan", "canberra",
-  "binary", "minkowski"), obs.weight.dist.p = 2,
-  vars.weight.dist = c("euclidean", "maximum", "manhattan", "canberra",
-  "binary", "minkowski"), vars.weight.dist.p = 2, k.obs = NULL,
-  k.var = NULL, t = NULL, ncores = 1, max.iter = 1e+06, burn.in = 50,
-  verbose = 1, alg.type = "cbassviz", interactive = TRUE, static = TRUE)
+CBASS(X, t = NULL, verbose = 1, interactive = TRUE, static = TRUE,
+  control = NULL, ...)
 }
 \arguments{
-\item{X}{A n.obs by p.vars matrix with rows the observations and columns the variables}
-
-\item{obs.labels}{a vector of length n.obs containing observations (row) labels}
-
-\item{var.labels}{a vector of length p.vars containing variable (column) labels}
-
-\item{X.center.global}{a logical. If TRUE, the global mean of X is removed.}
-
-\item{rho}{A positive number for augmented lagrangian. Not advisable to change.}
-
-\item{phi}{A positive numner used for scaling in RBF kernel}
-
-\item{weights.obs}{A vector of positive number of length choose(n.obs,2).
-Determines observation pair fusions weight.}
-
-\item{weights.vars}{A vector of positive number of length choose(p.vars,2).
-Determines variable pair fusions weight.}
-
-\item{obs.weight.dist}{a string indicating the distance metric used to calculate
-observation weights}
-
-\item{obs.weight.dist.p}{The power of the Minkowski distance, if used for
-observation weights.}
-
-\item{vars.weight.dist}{a string indicating the distance metric used to calculate
-variable weights}
-
-\item{vars.weight.dist.p}{The power of the Minkowski distance, if used for
-variable weights.}
-
-\item{k.obs}{an integer >= 1. The number of neighbors used to create sparse
-observation weights}
-
-\item{k.var}{an integer >= 1. The number of neighbors used to create sparse
-variable weights}
-
-\item{t}{a number greater than 1. The size of the multiplicitive
-regularization parameter update. Typical values are: 1.1, 1.05, 1.01, 1.005.
-Not used CBASS-VIZ algorithms.}
-
-\item{ncores}{an integer >= 1. The number of cores to use.}
-
-\item{max.iter}{an integer. The maximum number of CARP iterations.}
-
-\item{burn.in}{an integer. The number of initial iterations at a fixed
-value of (small) lambda_k}
+\item{X}{A n.obs by p.var matrix with rows the observations and columns the variables}
 
 \item{verbose}{either 0,1,or 2. Higher numbers indicate more verbosity while
 computing.}
-
-\item{alg.type}{Which CARP algorithm to perform. Choices are 'cbassviz'
-and 'cbass';}
 
 \item{interactive}{A logical. Should an interactive heatmap be returned?}
 
 \item{static}{A logical. Should observation and variable dendrograms
 be returned?}
+
+\item{control}{a list of CBASS control arguements; see \code{cbass.control}}
+
+\item{...}{additional arguments passed to \code{cbass.control}}
 }
 \value{
 X the original data matrix
@@ -108,7 +58,7 @@ be returned?
 
 obs.labels a vector of length n.obs containing observations (row) labels
 
-var.labels a vector of length p.vars containing variable (column) labels
+var.labels a vector of length p.var containing variable (column) labels
 
 X.center.global a logical. If TRUE, the global mean of X is removed.
 }

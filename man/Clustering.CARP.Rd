@@ -29,7 +29,7 @@ cluster assignment along the CARP path.
 }
 \item{\code{cluster.means}}{
 In the case where either \code{k} or \code{percent} is specified, a matrix
-of dimension \code{p.vars} by \code{length(unique(clustering.assignment))}
+of dimension \code{p.var} by \code{length(unique(clustering.assignment))}
 with each column a cluster mean.
 In the case where neither \code{k} nor \code{percent} is specificed, a
 list of matricies of length \code{n.obs}, representing the cluster means

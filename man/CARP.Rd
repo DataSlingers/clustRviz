@@ -4,62 +4,23 @@
 \alias{CARP}
 \title{Compute CARP solution path}
 \usage{
-CARP(X, obs.labels = NULL, var.labels = NULL, X.center = TRUE,
-  X.scale = FALSE, rho = 1, phi = 0.001, weight.dist = c("euclidean",
-  "maximum", "manhattan", "canberra", "binary", "minkowski"),
-  weight.dist.p = 2, weights = NULL, k = NULL, ncores = 1,
-  max.iter = 1e+06, burn.in = 50, verbose = 1, alg.type = c("carpviz",
-  "carp", "carpl1", "carpvizl1"), t = 1.05, interactive = TRUE,
-  static = TRUE, npcs = 4)
+CARP(X, verbose = 1, interactive = TRUE, static = TRUE, control = NULL,
+  ...)
 }
 \arguments{
 \item{X}{A n by p matrix with rows the observations and columns the variables}
 
-\item{obs.labels}{a vector of length n containing observations (row) labels}
-
-\item{var.labels}{a vector of length p containing variable (column) labels}
-
-\item{X.center}{A logical. Should X be centered?}
-
-\item{X.scale}{A logical. Should X be scaled?}
-
-\item{rho}{A positive number for augmented lagrangian. Not advisable to change.}
-
-\item{phi}{A positive numner used for scaling in RBF kernel}
-
-\item{weight.dist}{a string indicating the distance metric used to calculate
-weights}
-
-\item{weight.dist.p}{The power of the Minkowski distance, if used.}
-
-\item{weights}{A vector of positive number of length choose(n,2).
-Determines observation pairs' fusion amount.}
-
-\item{k}{an integer >= 1. The number of neighbors used to create sparse weights}
-
-\item{ncores}{an integer >= 1. The number of cores to use.}
-
-\item{max.iter}{an integer. The maximum number of CARP iterations.}
-
-\item{burn.in}{an integer. The number of initial iterations at a fixed
-value of (small) lambda_k}
-
 \item{verbose}{either 0,1,or 2. Higher numbers indicate more verbosity while
 computing.}
-
-\item{alg.type}{Which CARP algorithm to perform. Choices are 'carpviz'
-and 'carp;}
-
-\item{t}{a number greater than 1. The size of the multiplicitive
-regularization parameter update. Typical values are: 1.1, 1.05, 1.01, 1.005}
 
 \item{interactive}{A logical. Should interactive paths and dendrograms be
 returned?}
 
 \item{static}{A logical. Should static paths and dendrograms be returned?}
 
-\item{npcs}{A integer >= 2. The number of principal components to compute
-for path visualization.}
+\item{control}{A list. list of parameters for CARP fitting. see carp.control.}
+
+\item{...}{arguements to carp.control}
 }
 \value{
 X the original data matrix
@@ -70,7 +31,7 @@ carp.cluster.path.vis the CARP solution path
 
 n.obs the number of observations
 
-p.vars the number of variables
+p.var the number of variables
 
 phi A positive numner used for scaling in RBF kernel
 
