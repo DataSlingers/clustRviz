@@ -181,7 +181,7 @@ weights can be constructed via `DenseWeights` function. In the case of president
 speech data for example,
 
 ```{r}
-dense.weights <- DenseWeights(X = Xdat.preprocessed,phi=1e-3)
+dense.weights <- clustRviz:::DenseWeights(X = Xdat.preprocessed,phi=1e-3)
 head(dense.weights)
 ```
 
@@ -203,11 +203,11 @@ The value of $\phi$ can have a marked effect on the weights.
 library(tidyverse)
 library(gridExtra)
 gridExtra::grid.arrange(
-DenseWeights(X = Xdat.preprocessed,phi=1e-3) %>%
+clustRviz:::DenseWeights(X = Xdat.preprocessed,phi=1e-3) %>%
   qplot(bins=35)+
   xlab('Weight Value')+
   ylab('Count'),
-DenseWeights(X = Xdat.preprocessed,phi=1e-1) %>%
+clustRviz:::DenseWeights(X = Xdat.preprocessed,phi=1e-1) %>%
   qplot(bins=35) +
   xlab('Weight Value')+
   ylab('Count'),
@@ -235,7 +235,7 @@ Depending on the dataset, alternative metrics to traditional euclidean distance 
 result in more informative clustering solutions.
 
 ```{r}
-dense.weights.can <- DenseWeights(X = Xdat.preprocessed,phi=1e-5,method = 'canberra')
+dense.weights.can <- clustRviz:::DenseWeights(X = Xdat.preprocessed,phi=1e-5,method = 'canberra')
 ```
 
 
@@ -261,7 +261,7 @@ For a specifid value of $k$, a sparse vector of $k$ nearest neighbor weights can
 
 ```{r}
 k.neighbors <- 5
-SparseWeights(
+clustRviz:::SparseWeights(
   X=Xdat.preprocessed,
   dense.weights = dense.weights,
   k = k.neighbors) -> sparse.weights
@@ -295,8 +295,8 @@ Below we consider the extreme case of $k=1$, which while computationally fast
 presents an immediate difficulty.
 
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
-PlotWeightGraph(
-  weights = SparseWeights(
+clustRviz:::PlotWeightGraph(
+  weights = clustRviz:::SparseWeights(
     X=Xdat.preprocessed,
     dense.weights = dense.weights,
     k=1
@@ -321,8 +321,8 @@ bring little to no improvement on the resulting solution sequence; an example of
 such an overly dense graph can be seen below.
 
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
-PlotWeightGraph(
-  weights = SparseWeights(
+clustRviz:::PlotWeightGraph(
+  weights = clustRviz:::SparseWeights(
     X=Xdat.preprocessed,
     dense.weights = dense.weights,
     k=15
@@ -342,7 +342,7 @@ find a balance between computational efficiency and poor clustering performance.
 the graph induced by the support of the resulting set of sparse weights contains exactly one 
 connected component. For our current vector of weights we have:
 ```{r}
-MinKNN(
+clustRviz:::MinKNN(
   X = Xdat.preprocessed,
   dense.weights = dense.weights
 ) -> k.min
@@ -351,7 +351,7 @@ k.min
 Using the `k.min` value above we may compute the corresponding sparse weight vector and 
 view its resulting graph below.
 ```{r}
-SparseWeights(
+clustRviz:::SparseWeights(
   X = Xdat.preprocessed,
   dense.weights = dense.weights,
   k = k.min
@@ -448,7 +448,7 @@ table(carp.clustering$clustering.assignment)
 ```
 
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
-PlotWeightGraph(
+clustRviz:::PlotWeightGraph(
   weights = sparse.weights,
   nobs = nrow(Xdat.preprocessed),
   edge.labels = FALSE,
@@ -513,7 +513,7 @@ knitr::include_url(url="https://clustrviz.shinyapps.io/PathShiny/",height='850px
 
 ## Saving
 
-```{r,echo=FALSE,eval=FALSE}
+```{r,echo=TRUE,eval=FALSE}
 saveviz(
   carp.fit,
   file.name = 'path_dyn.gif',
@@ -522,7 +522,7 @@ saveviz(
 )
 ```
 
-```{r,echo=FALSE,eval=FALSE}
+```{r,echo=TRUE,eval=FALSE}
 saveviz(
   carp.fit,
   file.name = 'carp_dend_static.png',
@@ -531,7 +531,7 @@ saveviz(
 )
 ```
 
-```{r,echo=FALSE,eval=FALSE}
+```{r,echo=TRUE,eval=FALSE}
 saveviz(
   cbass.fit,
   file.name = 'cbass_heat_dyn.gif',
