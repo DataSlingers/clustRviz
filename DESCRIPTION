@@ -18,6 +18,8 @@ Imports:
     Rcpp, 
     stats,
     graphics,
+    animation,
+    gganimate,
     dplyr,
     ggplot2,
     tidyr,

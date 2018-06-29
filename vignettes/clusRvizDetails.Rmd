@@ -509,8 +509,37 @@ plot(carp.fit,type = 'dendrogram')
 ```{r,echo=FALSE,eval=TRUE,out.width='100%'}
 knitr::include_url(url="https://clustrviz.shinyapps.io/PathShiny/",height='850px')
 ```
+
+
 ## Saving
 
+```{r,echo=FALSE,eval=FALSE}
+saveviz(
+  carp.fit,
+  file.name = 'path_dyn.gif',
+  plot.type = 'path',
+  image.type = 'dynamic'
+)
+```
+
+```{r,echo=FALSE,eval=FALSE}
+saveviz(
+  carp.fit,
+  file.name = 'carp_dend_static.png',
+  plot.type = 'dendrogram',
+  image.type = 'static'
+)
+```
+
+```{r,echo=FALSE,eval=FALSE}
+saveviz(
+  cbass.fit,
+  file.name = 'cbass_heat_dyn.gif',
+  plot.type = 'heatmap',
+  image.type = 'dynamic'
+)
+
+```
 # Discussion
 
 

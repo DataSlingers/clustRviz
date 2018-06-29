@@ -1336,7 +1336,6 @@ CreateDendrogram <- function(carp_cluster_path,n_labels,scale){
 #' @param p The power of Minkowski distance. Passed to the \code{dist} function. See \code{?dist}
 #' @return dense.weights a numeric vector of weights
 #' @importFrom stats dist
-#' @export
 #' @examples
 #' \dontrun{
 #' library(clustRviz)
@@ -1363,7 +1362,6 @@ DenseWeights <- function(X,
 #' @importFrom FNN get.knn
 #' @importFrom utils combn
 #' @importFrom dplyr %>%
-#' @export
 SparseWeights <- function(X,dense.weights, k){
   nobs <- nrow(X)
   tmp <- FNN::get.knn(X,k=k,algorithm = 'brute')
@@ -1396,7 +1394,6 @@ SparseWeights <- function(X,dense.weights, k){
 #' @return adj a sparse adjacency matrix
 #' @importFrom Matrix Matrix
 #' @importFrom Matrix t
-#' @export
 WeightAdjacency <- function(weights,nobs,weighted=FALSE,upper=TRUE){
   adj <- Matrix::Matrix(data=0,nrow=nobs,ncol=nobs,sparse = TRUE)
   if(!weighted){
@@ -1419,7 +1416,6 @@ WeightAdjacency <- function(weights,nobs,weighted=FALSE,upper=TRUE){
 #' @param obs.labels a vector of observation labels
 #' @param ... additional parameters passed to qgraph::qgraph
 #' @import qgraph
-#' @export
 PlotWeightGraph <- function(weights,nobs,edge.labels=TRUE,obs.labels=NULL,...){
   WeightAdjacency(
     weights = weights,
