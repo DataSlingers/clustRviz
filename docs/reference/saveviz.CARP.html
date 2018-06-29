@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Print CARP Summary — print.CARP • clustRviz</title>
+<title>Save CARP visualizations — saveviz.CARP • clustRviz</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -90,15 +90,20 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Print CARP Summary</h1>
+    <h1>Save CARP visualizations</h1>
     </div>
 
     
-    <p>Prints a brief descripton of a fitted carp object.</p>
+    <p>This function will save dynamic CARP visualizations as gifs and static visualizations as image files</p>
     
 
     <pre class="usage"><span class='co'># S3 method for CARP</span>
-<span class='fu'>print</span>(<span class='no'>x</span>, <span class='no'>...</span>)</pre>
+<span class='fu'><a href='saveviz.html'>saveviz</a></span>(<span class='no'>x</span>, <span class='no'>file.name</span>, <span class='kw'>plot.type</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"path"</span>, <span class='st'>"dendrogram"</span>),
+  <span class='kw'>image.type</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"dynamic"</span>, <span class='st'>"static"</span>), <span class='kw'>static.image.type</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"png"</span>),
+  <span class='kw'>axis</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"PC1"</span>, <span class='st'>"PC2"</span>), <span class='kw'>dend.branch.width</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>dend.labels.cex</span> <span class='kw'>=</span> <span class='fl'>0.6</span>,
+  <span class='kw'>percent</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>percent.seq</span> <span class='kw'>=</span> <span class='fu'>seq</span>(<span class='kw'>from</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>to</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>by</span> <span class='kw'>=</span> <span class='fl'>0.05</span>),
+  <span class='kw'>dynamic.width</span> <span class='kw'>=</span> <span class='fl'>1200</span>, <span class='kw'>dynamic.height</span> <span class='kw'>=</span> <span class='fl'>700</span>, <span class='kw'>static.width</span> <span class='kw'>=</span> <span class='fl'>8</span>,
+  <span class='kw'>static.height</span> <span class='kw'>=</span> <span class='fl'>5</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -108,38 +113,75 @@
       <td><p>a CARP object returned by <code>CARP</code></p></td>
     </tr>
     <tr>
-      <th>...</th>
-      <td><p>Unused additional generic arguements</p></td>
+      <th>file.name</th>
+      <td><p>name and location of image to be saved.</p></td>
+    </tr>
+    <tr>
+      <th>plot.type</th>
+      <td><p>a string specifying the type of plot to produce. 'dendrogram'
+produces CARP's cluster dendrogram and 'path' produces the
+cluster path</p></td>
+    </tr>
+    <tr>
+      <th>image.type</th>
+      <td><p>a string specifying the type of image output. 'dynamic'
+produced a gif of the plot.type along the CARP path. 'static' produces
+a single image of plot.type at a point along the CARP path.</p></td>
+    </tr>
+    <tr>
+      <th>static.image.type</th>
+      <td><p>string specifying the graphics device with which to save
+static images.</p></td>
+    </tr>
+    <tr>
+      <th>axis</th>
+      <td><p>a character vector of length two with elements as 'PC1','PC2',..
+etc. Specifics which principal component axis to display for the 'path'
+plot.type</p></td>
+    </tr>
+    <tr>
+      <th>dend.branch.width</th>
+      <td><p>a positive number. Line width on dendrograms.</p></td>
+    </tr>
+    <tr>
+      <th>dend.labels.cex</th>
+      <td><p>a positive number. Label size on dendrograms.</p></td>
+    </tr>
+    <tr>
+      <th>percent</th>
+      <td><p>a number between 0 and 1. Specifies how far along the
+CARP path the static visualizations should display.</p></td>
+    </tr>
+    <tr>
+      <th>percent.seq</th>
+      <td><p>a vector of numbers between 0 and 1 specifying the
+positions along the CARP path used to generate dynamic images.</p></td>
+    </tr>
+    <tr>
+      <th>dynamic.width</th>
+      <td><p>dynamic output width in pixels</p></td>
+    </tr>
+    <tr>
+      <th>dynamic.height</th>
+      <td><p>dynamic output heigth in pixels</p></td>
+    </tr>
+    <tr>
+      <th>static.width</th>
+      <td><p>static output width in inches</p></td>
+    </tr>
+    <tr>
+      <th>static.height</th>
+      <td><p>static output height in inches</p></td>
     </tr>
     </table>
     
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>Reports number of observations and variables of dataset, any preprocessing
-done by the <code>CARP</code> function, regularization weight information,
-the type of CARP algorithm performed, and the visualizations returned.</p>
-    
-
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>library</span>(<span class='no'>clustRviz</span>)
-<span class='fu'>data</span>(<span class='st'>"presidential_speech"</span>)
-<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>]
-<span class='no'>carp.fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='CARP.html'>CARP</a></span>(<span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>)</div><div class='output co'>#&gt; <span class='message'>Pre-computing weight-based edge sets</span></div><div class='output co'>#&gt; <span class='message'>Computing CARP Path</span></div><div class='output co'>#&gt; <span class='message'>Post-processing</span></div><div class='input'><span class='fu'>print</span>(<span class='no'>carp.fit</span>)</div><div class='output co'>#&gt; <span class='message'>CARP Fit Summary</span></div><div class='output co'>#&gt; <span class='message'>Number of Observations: 10</span></div><div class='output co'>#&gt; <span class='message'>Number of Variables: 4</span></div><div class='output co'>#&gt; <span class='message'>Pre-processing: center</span></div><div class='output co'>#&gt; <span class='message'>Weights: RBF Kernel, phi = 0.001, k = 2</span></div><div class='output co'>#&gt; <span class='message'>Algorithm: CARP-VIZ</span></div><div class='output co'>#&gt; <span class='message'>Visualizations: Static DendStatic PathInteractive Dend/Path</span></div><div class='output co'>#&gt; <span class='message'>Raw Data:</span></div><div class='output co'>#&gt;                     amount appropri  british     cent
-#&gt; Abraham Lincoln   3.433987 2.397895 1.791759 2.564949
-#&gt; Andrew Jackson    4.248495 4.663439 2.995732 1.945910
-#&gt; Andrew Johnson    4.025352 3.091042 2.833213 3.332205
-#&gt; Barack Obama      1.386294 0.000000 0.000000 1.386294
-#&gt; Benjamin Harrison 4.060443 4.174387 2.302585 4.304065</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-      
-      <li><a href="#details">Details</a></li>
-      
-      <li><a href="#examples">Examples</a></li>
-    </ul>
+                </ul>
 
   </div>
 </div>

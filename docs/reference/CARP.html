@@ -99,13 +99,8 @@ solution path along with visualizations such as dendrograms and
 cluster paths. Visualizations may be static, interactive, or both.</p>
     
 
-    <pre class="usage"><span class='fu'>CARP</span>(<span class='no'>X</span>, <span class='kw'>obs.labels</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>var.labels</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>X.center</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>X.scale</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>rho</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>phi</span> <span class='kw'>=</span> <span class='fl'>0.001</span>, <span class='kw'>weight.dist</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"euclidean"</span>,
-  <span class='st'>"maximum"</span>, <span class='st'>"manhattan"</span>, <span class='st'>"canberra"</span>, <span class='st'>"binary"</span>, <span class='st'>"minkowski"</span>),
-  <span class='kw'>weight.dist.p</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>k</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ncores</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>max.iter</span> <span class='kw'>=</span> <span class='fl'>1e+06</span>, <span class='kw'>burn.in</span> <span class='kw'>=</span> <span class='fl'>50</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>alg.type</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"carpviz"</span>,
-  <span class='st'>"carp"</span>, <span class='st'>"carpl1"</span>, <span class='st'>"carpvizl1"</span>), <span class='kw'>t</span> <span class='kw'>=</span> <span class='fl'>1.05</span>, <span class='kw'>interactive</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>static</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>npcs</span> <span class='kw'>=</span> <span class='fl'>4</span>)</pre>
+    <pre class="usage"><span class='fu'>CARP</span>(<span class='no'>X</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>interactive</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>static</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>control</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>...</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -115,74 +110,9 @@ cluster paths. Visualizations may be static, interactive, or both.</p>
       <td><p>A n by p matrix with rows the observations and columns the variables</p></td>
     </tr>
     <tr>
-      <th>obs.labels</th>
-      <td><p>a vector of length n containing observations (row) labels</p></td>
-    </tr>
-    <tr>
-      <th>var.labels</th>
-      <td><p>a vector of length p containing variable (column) labels</p></td>
-    </tr>
-    <tr>
-      <th>X.center</th>
-      <td><p>A logical. Should X be centered?</p></td>
-    </tr>
-    <tr>
-      <th>X.scale</th>
-      <td><p>A logical. Should X be scaled?</p></td>
-    </tr>
-    <tr>
-      <th>rho</th>
-      <td><p>A positive number for augmented lagrangian. Not advisable to change.</p></td>
-    </tr>
-    <tr>
-      <th>phi</th>
-      <td><p>A positive numner used for scaling in RBF kernel</p></td>
-    </tr>
-    <tr>
-      <th>weight.dist</th>
-      <td><p>a string indicating the distance metric used to calculate
-weights</p></td>
-    </tr>
-    <tr>
-      <th>weight.dist.p</th>
-      <td><p>The power of the Minkowski distance, if used.</p></td>
-    </tr>
-    <tr>
-      <th>weights</th>
-      <td><p>A vector of positive number of length choose(n,2).
-Determines observation pairs' fusion amount.</p></td>
-    </tr>
-    <tr>
-      <th>k</th>
-      <td><p>an integer &gt;= 1. The number of neighbors used to create sparse weights</p></td>
-    </tr>
-    <tr>
-      <th>ncores</th>
-      <td><p>an integer &gt;= 1. The number of cores to use.</p></td>
-    </tr>
-    <tr>
-      <th>max.iter</th>
-      <td><p>an integer. The maximum number of CARP iterations.</p></td>
-    </tr>
-    <tr>
-      <th>burn.in</th>
-      <td><p>an integer. The number of initial iterations at a fixed
-value of (small) lambda_k</p></td>
-    </tr>
-    <tr>
       <th>verbose</th>
       <td><p>either 0,1,or 2. Higher numbers indicate more verbosity while
 computing.</p></td>
-    </tr>
-    <tr>
-      <th>alg.type</th>
-      <td><p>Which CARP algorithm to perform. Choices are 'carpviz'
-and 'carp;</p></td>
-    </tr>
-    <tr>
-      <th>t</th>
-      <td><p>a number greater than 1. The size of the multiplicitive
-regularization parameter update. Typical values are: 1.1, 1.05, 1.01, 1.005</p></td>
     </tr>
     <tr>
       <th>interactive</th>
@@ -194,9 +124,12 @@ returned?</p></td>
       <td><p>A logical. Should static paths and dendrograms be returned?</p></td>
     </tr>
     <tr>
-      <th>npcs</th>
-      <td><p>A integer &gt;= 2. The number of principal components to compute
-for path visualization.</p></td>
+      <th>control</th>
+      <td><p>A list. list of parameters for CARP fitting. see carp.control.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>arguements to carp.control</p></td>
     </tr>
     </table>
     
@@ -206,7 +139,7 @@ for path visualization.</p></td>
 <p>carp.dend if static==TRUE, a dendrogam representation of the clustering solution path</p>
 <p>carp.cluster.path.vis the CARP solution path</p>
 <p>n.obs the number of observations</p>
-<p>p.vars the number of variables</p>
+<p>p.var the number of variables</p>
 <p>phi A positive numner used for scaling in RBF kernel</p>
 <p>k an integer &gt;= 1. The number of neighbors used to create sparse weights</p>
 <p>burn.in an integer. The number of initial iterations at a fixed
@@ -226,10 +159,8 @@ solutions is returned along with several visualizations.</p>
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='fu'>library</span>(<span class='no'>clustRviz</span>)
 <span class='fu'>data</span>(<span class='st'>"presidential_speech"</span>)
-<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>$<span class='no'>X</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>]
-<span class='no'>carp.fit</span> <span class='kw'>&lt;-</span> <span class='fu'>CARP</span>(
-    <span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>,
-    <span class='kw'>obs.labels</span><span class='kw'>=</span><span class='no'>presidential_speech</span>$<span class='no'>labels</span>[<span class='fl'>1</span>:<span class='fl'>10</span>])</div><div class='output co'>#&gt; <span class='message'>Pre-computing weight-based edge sets</span></div><div class='output co'>#&gt; <span class='message'>Computing CARP Path</span></div><div class='output co'>#&gt; <span class='message'>Post-processing</span></div><div class='input'><span class='no'>carp.fit</span></div><div class='output co'>#&gt; <span class='message'>CARP Fit Summary</span></div><div class='output co'>#&gt; <span class='message'>Number of Observations: 10</span></div><div class='output co'>#&gt; <span class='message'>Number of Variables: 4</span></div><div class='output co'>#&gt; <span class='message'>Pre-processing: center</span></div><div class='output co'>#&gt; <span class='message'>Weights: RBF Kernel, phi = 0.001, k = 2</span></div><div class='output co'>#&gt; <span class='message'>Algorithm: CARP-VIZ</span></div><div class='output co'>#&gt; <span class='message'>Visualizations: Static DendStatic PathInteractive Dend/Path</span></div><div class='output co'>#&gt; <span class='message'>Raw Data:</span></div><div class='output co'>#&gt;                     amount appropri  british     cent
+<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>]
+<span class='no'>carp.fit</span> <span class='kw'>&lt;-</span> <span class='fu'>CARP</span>(<span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>)</div><div class='output co'>#&gt; <span class='message'>Pre-computing weight-based edge sets</span></div><div class='output co'>#&gt; <span class='message'>Computing CARP Path</span></div><div class='output co'>#&gt; <span class='message'>Post-processing</span></div><div class='input'><span class='no'>carp.fit</span></div><div class='output co'>#&gt; <span class='message'>CARP Fit Summary</span></div><div class='output co'>#&gt; <span class='message'>Number of Observations: 10</span></div><div class='output co'>#&gt; <span class='message'>Number of Variables: 4</span></div><div class='output co'>#&gt; <span class='message'>Pre-processing: center</span></div><div class='output co'>#&gt; <span class='message'>Weights: RBF Kernel, phi = 0.001, k = 2</span></div><div class='output co'>#&gt; <span class='message'>Algorithm: CARP-VIZ</span></div><div class='output co'>#&gt; <span class='message'>Visualizations: Static DendStatic PathInteractive Dend/Path</span></div><div class='output co'>#&gt; <span class='message'>Raw Data:</span></div><div class='output co'>#&gt;                     amount appropri  british     cent
 #&gt; Abraham Lincoln   3.433987 2.397895 1.791759 2.564949
 #&gt; Andrew Jackson    4.248495 4.663439 2.995732 1.945910
 #&gt; Andrew Johnson    4.025352 3.091042 2.833213 3.332205

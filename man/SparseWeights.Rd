@@ -20,3 +20,4 @@ sparse.weights a numeric vector of sparse weights
 \description{
 Compute sparse kNN weight vector from dense weights
 }
+\keyword{internal}

@@ -155,10 +155,8 @@ how the clustering solutions change with increased reguarliazation.</p>
     <pre class="examples"><span class='co'># NOT RUN {</span>
 <span class='fu'>library</span>(<span class='no'>clustRviz</span>)
 <span class='fu'>data</span>(<span class='st'>"presidential_speech"</span>)
-<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>$<span class='no'>X</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>]
-<span class='no'>cbass.fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='CARP.html'>CARP</a></span>(
-    <span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>,
-    <span class='kw'>obs.labels</span><span class='kw'>=</span><span class='no'>presidential_speech</span>$<span class='no'>labels</span>[<span class='fl'>1</span>:<span class='fl'>10</span>])
+<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>]
+<span class='no'>cbass.fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='CARP.html'>CARP</a></span>(<span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>)
 <span class='fu'>plot</span>(<span class='no'>cbass.fit</span>,<span class='kw'>type</span><span class='kw'>=</span><span class='st'>'interactive'</span>)
 <span class='co'># }</span></pre>
   </div>

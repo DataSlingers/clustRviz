@@ -20,3 +20,4 @@ PlotWeightGraph(weights, nobs, edge.labels = TRUE, obs.labels = NULL, ...)
 \description{
 Plot graph induced by weights
 }
+\keyword{internal}

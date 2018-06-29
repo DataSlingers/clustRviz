@@ -99,7 +99,7 @@ cluster mean matrix at a point along the CBASS path.</p>
     
 
     <pre class="usage"><span class='co'># S3 method for CBASS</span>
-<span class='fu'><a href='Clustering.html'>Clustering</a></span>(<span class='no'>x</span>, <span class='kw'>k.obs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>k.vars</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>percent</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+<span class='fu'><a href='Clustering.html'>Clustering</a></span>(<span class='no'>x</span>, <span class='kw'>k.obs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>k.var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>percent</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='no'>...</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
@@ -115,8 +115,8 @@ cluster mean matrix at a point along the CBASS path.</p>
 observation clusters.</p></td>
     </tr>
     <tr>
-      <th>k.vars</th>
-      <td><p>An interger between 1 and <code>p.vars</code>. The number of unique
+      <th>k.var</th>
+      <td><p>An interger between 1 and <code>p.var</code>. The number of unique
 variable clusters.</p></td>
     </tr>
     <tr>
@@ -134,8 +134,8 @@ which to cut the path.</p></td>
 
     <p>A list with elements</p><dl class='dl-horizontal'>
 <dt><code>clustering.assignment.obs</code></dt><dd><p>A vector of observation cluster labels of length <code>n.obs</code>.</p></dd>
-<dt><code>clustering.assignment.vars</code></dt><dd><p>A vector of variable cluster labels of length <code>p.vars</code>.</p></dd>
-<dt><code>cluster.mean.matrix</code></dt><dd><p>The cluster mean matrix of size <code>n.obs</code> by <code>p.vars</code>.</p></dd>
+<dt><code>clustering.assignment.var</code></dt><dd><p>A vector of variable cluster labels of length <code>p.var</code>.</p></dd>
+<dt><code>cluster.mean.matrix</code></dt><dd><p>The cluster mean matrix of size <code>n.obs</code> by <code>p.var</code>.</p></dd>
 </dl>
 
     
@@ -150,7 +150,7 @@ and cluster mean matrix at the specific point along the CBASS path.</p>
     <pre class="examples"><span class='co'># NOT RUN {</span>
 <span class='fu'>library</span>(<span class='no'>clustRviz</span>)
 <span class='fu'>data</span>(<span class='st'>"presidential_speech"</span>)
-<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>$<span class='no'>X</span>
+<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>
 <span class='no'>cbass.fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='CBASS.html'>CBASS</a></span>(<span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>)
 <span class='no'>cbass.clustering</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Clustering.html'>Clustering</a></span>(<span class='no'>cbass.fit</span>,<span class='kw'>percent</span> <span class='kw'>=</span> <span class='fl'>.8</span>)
 <span class='co'># }</span></pre>

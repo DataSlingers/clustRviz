@@ -223,7 +223,7 @@ grid search. For example:
 ```{r}
 phi.vec <- 10^(-4:4)
 sapply(phi.vec,function(phi){
-  var(DenseWeights(X=Xdat.preprocessed,phi = phi))
+  var(clustRviz:::DenseWeights(X=Xdat.preprocessed,phi = phi))
 }) %>%
   which.max() %>%
   phi.vec[.]
@@ -359,7 +359,7 @@ clustRviz:::SparseWeights(
 ```
 
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
-PlotWeightGraph(
+clustRviz:::PlotWeightGraph(
   weights = sparse.weights,
   nobs = nrow(Xdat.preprocessed),
   edge.labels = FALSE,
@@ -468,7 +468,7 @@ head(carp.clustering$cluster.means)
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
 carp.clustering <- Clustering(carp.fit,percent = .25)
 
-PlotWeightGraph(
+clustRviz:::PlotWeightGraph(
   weights = sparse.weights,
   nobs = nrow(Xdat.preprocessed),
   edge.labels = FALSE,

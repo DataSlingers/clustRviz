@@ -133,7 +133,7 @@ In the case where neither <code>k</code> nor <code>percent</code> is specified, 
 matrix of size <code>n.obs</code> by <code>n.obs</code>, each row specifying a unique
 cluster assignment along the CARP path.</p></dd>
 <dt><code>cluster.means</code></dt><dd><p>In the case where either <code>k</code> or <code>percent</code> is specified, a matrix
-of dimension <code>p.vars</code> by <code>length(unique(clustering.assignment))</code>
+of dimension <code>p.var</code> by <code>length(unique(clustering.assignment))</code>
 with each column a cluster mean.
 In the case where neither <code>k</code> nor <code>percent</code> is specificed, a
 list of matricies of length <code>n.obs</code>, representing the cluster means
@@ -153,10 +153,8 @@ mean matricies are returned.</p>
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='fu'>library</span>(<span class='no'>clustRviz</span>)
 <span class='fu'>data</span>(<span class='st'>"presidential_speech"</span>)
-<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>$<span class='no'>X</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>]
-<span class='no'>carp.fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='CARP.html'>CARP</a></span>(
-    <span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>,
-    <span class='kw'>obs.labels</span><span class='kw'>=</span><span class='no'>presidential_speech</span>$<span class='no'>labels</span>[<span class='fl'>1</span>:<span class='fl'>10</span>])</div><div class='output co'>#&gt; <span class='message'>Pre-computing weight-based edge sets</span></div><div class='output co'>#&gt; <span class='message'>Computing CARP Path</span></div><div class='output co'>#&gt; <span class='message'>Post-processing</span></div><div class='input'><span class='co'># Return the CARP iterate with k=5 clusters</span>
+<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>]
+<span class='no'>carp.fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='CARP.html'>CARP</a></span>(<span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>)</div><div class='output co'>#&gt; <span class='message'>Pre-computing weight-based edge sets</span></div><div class='output co'>#&gt; <span class='message'>Computing CARP Path</span></div><div class='output co'>#&gt; <span class='message'>Post-processing</span></div><div class='input'><span class='co'># Return the CARP iterate with k=5 clusters</span>
 <span class='no'>carp.clustering</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Clustering.html'>Clustering</a></span>(<span class='no'>carp.fit</span>,<span class='kw'>k</span><span class='kw'>=</span><span class='fl'>5</span>)
 <span class='co'># Examine the cluster labels</span>
 <span class='no'>carp.clustering</span>$<span class='no'>clustering.assignment</span></div><div class='output co'>#&gt;  [1] "cl1" "cl2" "cl2" "cl3" "cl2" "cl2" "cl2" "cl3" "cl4" "cl5"</div><div class='input'><span class='co'># Examine the cluster means</span>

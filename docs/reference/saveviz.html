@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Print CBASS Summary — print.CBASS • clustRviz</title>
+<title>Method for saving CARP and CBASS visualizations — saveviz • clustRviz</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -90,56 +90,36 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Print CBASS Summary</h1>
+    <h1>Method for saving CARP and CBASS visualizations</h1>
     </div>
 
     
-    <p>Prints a brief descripton of a fitted cbass object.</p>
+    <p>See <code>saveviz.CARP</code> and <code>saveviz.CBASS</code> for details</p>
     
 
-    <pre class="usage"><span class='co'># S3 method for CBASS</span>
-<span class='fu'>print</span>(<span class='no'>x</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>saveviz</span>(<span class='no'>x</span>, <span class='no'>...</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>a CBASS object returned by <code>CARP</code></p></td>
+      <td><p>a CARP or CBASS object</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Unused additional generic arguements</p></td>
+      <td><p>additional arguements passed to <code>saveviz.CARP</code> or
+<code>saveviz.CBASS</code></p></td>
     </tr>
     </table>
     
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>Reports number of observations and variables of dataset, any preprocessing
-done by the <code>CBASS</code> function, regularization weight information,
-the type of CBASS algorithm performed, and the visualizations returned.</p>
-    
-
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>library</span>(<span class='no'>clustRviz</span>)
-<span class='fu'>data</span>(<span class='st'>"presidential_speech"</span>)
-<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>]
-<span class='no'>cbass.fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='CBASS.html'>CBASS</a></span>(<span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>)</div><div class='output co'>#&gt; <span class='message'>Computing CBASS Path</span></div><div class='output co'>#&gt; <span class='message'>Post-processing</span></div><div class='input'><span class='fu'>print</span>(<span class='no'>cbass.fit</span>)</div><div class='output co'>#&gt; <span class='message'>CBASS Fit Summary</span></div><div class='output co'>#&gt; <span class='message'>Number of Observations: 10</span></div><div class='output co'>#&gt; <span class='message'>Number of Variables: 4</span></div><div class='output co'>#&gt; <span class='message'>Pre-processing: global-center</span></div><div class='output co'>#&gt; <span class='message'>Obs. Weights: RBF Kernel, phi = 0.025, k = 2</span></div><div class='output co'>#&gt; <span class='message'>Var. Weights: RBF Kernel, phi = 0.01, k = 1</span></div><div class='output co'>#&gt; <span class='message'>Algorithm: CBASS VIZ</span></div><div class='output co'>#&gt; <span class='message'>Visualizations: Static DendStatic HeatmapInteractive Heatmap</span></div><div class='output co'>#&gt; <span class='message'>Raw Data:</span></div><div class='output co'>#&gt;          [,1]     [,2]     [,3]     [,4]
-#&gt; [1,] 3.433987 2.397895 1.791759 2.564949
-#&gt; [2,] 4.248495 4.663439 2.995732 1.945910
-#&gt; [3,] 4.025352 3.091042 2.833213 3.332205
-#&gt; [4,] 1.386294 0.000000 0.000000 1.386294
-#&gt; [5,] 4.060443 4.174387 2.302585 4.304065</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-      
-      <li><a href="#details">Details</a></li>
-      
-      <li><a href="#examples">Examples</a></li>
-    </ul>
+                </ul>
 
   </div>
 </div>

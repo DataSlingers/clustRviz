@@ -108,16 +108,16 @@ w_{l,m} \| {\boldsymbol{u}}_l - {\boldsymbol{u}}_m \|_2
 <p>As before, we will use the presidential speech dataset to illustrate the variety of options available. Let’s begin by loading our package and the dataset.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(clustRviz)
 <span class="kw">data</span>(<span class="st">"presidential_speech"</span>)
-Xdat &lt;-<span class="st"> </span>presidential_speech<span class="op">$</span>X
-obs.labels &lt;-<span class="st"> </span>presidential_speech<span class="op">$</span>labels
+Xdat &lt;-<span class="st"> </span>presidential_speech
+obs.labels &lt;-<span class="st"> </span><span class="kw">rownames</span>(Xdat)
 var.labels &lt;-<span class="st"> </span><span class="kw">colnames</span>(Xdat)
 Xdat[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]
-<span class="co">#&gt;        amount appropri  british     cent commerci</span>
-<span class="co">#&gt; [1,] 3.433987 2.397895 1.791759 2.564949 2.708050</span>
-<span class="co">#&gt; [2,] 4.248495 4.663439 2.995732 1.945910 3.828641</span>
-<span class="co">#&gt; [3,] 4.025352 3.091042 2.833213 3.332205 2.772589</span>
-<span class="co">#&gt; [4,] 1.386294 0.000000 0.000000 1.386294 0.000000</span>
-<span class="co">#&gt; [5,] 4.060443 4.174387 2.302585 4.304065 3.663562</span>
+<span class="co">#&gt;                     amount appropri  british     cent commerci</span>
+<span class="co">#&gt; Abraham Lincoln   3.433987 2.397895 1.791759 2.564949 2.708050</span>
+<span class="co">#&gt; Andrew Jackson    4.248495 4.663439 2.995732 1.945910 3.828641</span>
+<span class="co">#&gt; Andrew Johnson    4.025352 3.091042 2.833213 3.332205 2.772589</span>
+<span class="co">#&gt; Barack Obama      1.386294 0.000000 0.000000 1.386294 0.000000</span>
+<span class="co">#&gt; Benjamin Harrison 4.060443 4.174387 2.302585 4.304065 3.663562</span>
 <span class="kw">head</span>(obs.labels)
 <span class="co">#&gt; [1] "Abraham Lincoln"   "Andrew Jackson"    "Andrew Johnson"   </span>
 <span class="co">#&gt; [4] "Barack Obama"      "Benjamin Harrison" "Calvin Coolidge"</span>
@@ -170,7 +170,7 @@ may result in more interpretable clusters.</p>
 <p><span class="math display">\[
 w_{l,m}  = \exp\{ -\phi \|{\boldsymbol{x}}_l - {\boldsymbol{x}}_m \|^2_2 \}
 \]</span> Given a choice of <span class="math inline">\(\phi\)</span> (discussed in more detail below), an initial set of weights can be constructed via <code>DenseWeights</code> function. In the case of presidential speech data for example,</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dense.weights &lt;-<span class="st"> </span><span class="kw"><a href="../reference/DenseWeights.html">DenseWeights</a></span>(<span class="dt">X =</span> Xdat.preprocessed,<span class="dt">phi=</span><span class="fl">1e-3</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dense.weights &lt;-<span class="st"> </span>clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/DenseWeights.html">DenseWeights</a></span>(<span class="dt">X =</span> Xdat.preprocessed,<span class="dt">phi=</span><span class="fl">1e-3</span>)
 <span class="kw">head</span>(dense.weights)
 <span class="co">#&gt; [1] 0.9053890 0.9676079 0.5474781 0.8777638 0.8041133 0.9350156</span></code></pre></div>
 <p>As the name suggests <code>DenseWeights</code> computes <span class="math inline">\(w_{l,m}\)</span> for all pairs of observations.</p>
@@ -188,14 +188,14 @@ Dense weights for different choices of phi
 <p>Generally, choices of <span class="math inline">\(\phi\)</span> which result in higher variance weights tend to be more informative. A simple method for finding a reasonable choice of <span class="math inline">\(\phi\)</span> is a basic grid search. For example:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">phi.vec &lt;-<span class="st"> </span><span class="dv">10</span><span class="op">^</span>(<span class="op">-</span><span class="dv">4</span><span class="op">:</span><span class="dv">4</span>)
 <span class="kw">sapply</span>(phi.vec,<span class="cf">function</span>(phi){
-  <span class="kw">var</span>(<span class="kw"><a href="../reference/DenseWeights.html">DenseWeights</a></span>(<span class="dt">X=</span>Xdat.preprocessed,<span class="dt">phi =</span> phi))
+  <span class="kw">var</span>(clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/DenseWeights.html">DenseWeights</a></span>(<span class="dt">X=</span>Xdat.preprocessed,<span class="dt">phi =</span> phi))
 }) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">which.max</span>() <span class="op">%&gt;%</span>
 <span class="st">  </span>phi.vec[.]
 <span class="co">#&gt; [1] 0.01</span></code></pre></div>
 <p>Additionally, <code>DenseWeights</code> allows for the specification of alternative distance measures</p>
 <p>Depending on the dataset, alternative metrics to traditional euclidean distance may result in more informative clustering solutions.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dense.weights.can &lt;-<span class="st"> </span><span class="kw"><a href="../reference/DenseWeights.html">DenseWeights</a></span>(<span class="dt">X =</span> Xdat.preprocessed,<span class="dt">phi=</span><span class="fl">1e-5</span>,<span class="dt">method =</span> <span class="st">'canberra'</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dense.weights.can &lt;-<span class="st"> </span>clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/DenseWeights.html">DenseWeights</a></span>(<span class="dt">X =</span> Xdat.preprocessed,<span class="dt">phi=</span><span class="fl">1e-5</span>,<span class="dt">method =</span> <span class="st">'canberra'</span>)</code></pre></div>
 <div class="figure" style="text-align: center">
 <img src="clusRvizDetails_files/figure-html/unnamed-chunk-9-1.png" alt="Dense weights with Canberra distance" width="672"><p class="caption">
 Dense weights with Canberra distance
@@ -209,7 +209,7 @@ Dense weights with Canberra distance
 \]</span> where <span class="math inline">\(w_{l,m}\)</span> is our original dense weight values and <span class="math inline">\({\boldsymbol{1}}_{A}(x)\)</span> denotes the indicator function of the set <span class="math inline">\(A\)</span>.</p>
 <p>For a specifid value of <span class="math inline">\(k\)</span>, a sparse vector of <span class="math inline">\(k\)</span> nearest neighbor weights can be generated via the <code>SparseWeights</code> function:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">k.neighbors &lt;-<span class="st"> </span><span class="dv">5</span>
-<span class="kw"><a href="../reference/SparseWeights.html">SparseWeights</a></span>(
+clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/SparseWeights.html">SparseWeights</a></span>(
   <span class="dt">X=</span>Xdat.preprocessed,
   <span class="dt">dense.weights =</span> dense.weights,
   <span class="dt">k =</span> k.neighbors) -&gt;<span class="st"> </span>sparse.weights</code></pre></div>
@@ -223,8 +223,8 @@ Dense weights with Canberra distance
 <p>The fusion graph displays each observation as a vertex, and connects two observation with an edge if their corresponding weight is non-zero.</p>
 <p>Such connections between observations indicate their ability fuse into a common cluster, given large enough regularization.</p>
 <p>Below we consider the extreme case of <span class="math inline">\(k=1\)</span>, which while computationally fast presents an immediate difficulty.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
-  <span class="dt">weights =</span> <span class="kw"><a href="../reference/SparseWeights.html">SparseWeights</a></span>(
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
+  <span class="dt">weights =</span> clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/SparseWeights.html">SparseWeights</a></span>(
     <span class="dt">X=</span>Xdat.preprocessed,
     <span class="dt">dense.weights =</span> dense.weights,
     <span class="dt">k=</span><span class="dv">1</span>
@@ -239,8 +239,8 @@ Dense weights with Canberra distance
 <p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-12-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>Examining the graph above, we note that the number of connected components is strictly greater than one. As such, regardless of the number of <code>CARP</code> iteratations (and the associated regularization increases) it will not be possible fuse all observations into a single cluster. Such extreme weight choices should typically be avoided as they not only hinder the agglomorative nature of <code>CARP</code> and <code>CBASS</code>, but also lead to biased and less interpretable solution paths. result in.</p>
 <p>At the other extreme, large values of <span class="math inline">\(k\)</span> again result in long computation time and bring little to no improvement on the resulting solution sequence; an example of such an overly dense graph can be seen below.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
-  <span class="dt">weights =</span> <span class="kw"><a href="../reference/SparseWeights.html">SparseWeights</a></span>(
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
+  <span class="dt">weights =</span> clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/SparseWeights.html">SparseWeights</a></span>(
     <span class="dt">X=</span>Xdat.preprocessed,
     <span class="dt">dense.weights =</span> dense.weights,
     <span class="dt">k=</span><span class="dv">15</span>
@@ -254,19 +254,19 @@ Dense weights with Canberra distance
   <span class="dt">repulsion=</span>.<span class="dv">9</span>)</code></pre></div>
 <p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-13-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>In order to provide a reasonable choice regarding weight sparsity, the function <code>MinKNN</code> may be used to find a balance between computational efficiency and poor clustering performance. <code>MinKNN</code> takes as its arguement an initial set of dense weights and returns the smallest <span class="math inline">\(k\)</span> such the graph induced by the support of the resulting set of sparse weights contains exactly one connected component. For our current vector of weights we have:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/MinKNN.html">MinKNN</a></span>(
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/MinKNN.html">MinKNN</a></span>(
   <span class="dt">X =</span> Xdat.preprocessed,
   <span class="dt">dense.weights =</span> dense.weights
 ) -&gt;<span class="st"> </span>k.min
 k.min
 <span class="co">#&gt; [1] 4</span></code></pre></div>
 <p>Using the <code>k.min</code> value above we may compute the corresponding sparse weight vector and view its resulting graph below.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/SparseWeights.html">SparseWeights</a></span>(
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/SparseWeights.html">SparseWeights</a></span>(
   <span class="dt">X =</span> Xdat.preprocessed,
   <span class="dt">dense.weights =</span> dense.weights,
   <span class="dt">k =</span> k.min
 ) -&gt;<span class="st"> </span>sparse.weights</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
   <span class="dt">weights =</span> sparse.weights,
   <span class="dt">nobs =</span> <span class="kw">nrow</span>(Xdat.preprocessed),
   <span class="dt">edge.labels =</span> <span class="ot">FALSE</span>,
@@ -338,7 +338,7 @@ k.min
 <span class="co">#&gt; </span>
 <span class="co">#&gt; cl1 cl2 </span>
 <span class="co">#&gt;  30  14</span></code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
   <span class="dt">weights =</span> sparse.weights,
   <span class="dt">nobs =</span> <span class="kw">nrow</span>(Xdat.preprocessed),
   <span class="dt">edge.labels =</span> <span class="ot">FALSE</span>,
@@ -359,7 +359,7 @@ k.min
 <span class="co">#&gt; [6,] 2.380273 0.1980421</span></code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.clustering &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(carp.fit,<span class="dt">percent =</span> .<span class="dv">25</span>)
 
-<span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
+clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
   <span class="dt">weights =</span> sparse.weights,
   <span class="dt">nobs =</span> <span class="kw">nrow</span>(Xdat.preprocessed),
   <span class="dt">edge.labels =</span> <span class="ot">FALSE</span>,
@@ -394,6 +394,24 @@ k.min
 <div id="saving" class="section level2">
 <h2 class="hasAnchor">
 <a href="#saving" class="anchor"></a>Saving</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/saveviz.html">saveviz</a></span>(
+  carp.fit,
+  <span class="dt">file.name =</span> <span class="st">'path_dyn.gif'</span>,
+  <span class="dt">plot.type =</span> <span class="st">'path'</span>,
+  <span class="dt">image.type =</span> <span class="st">'dynamic'</span>
+)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/saveviz.html">saveviz</a></span>(
+  carp.fit,
+  <span class="dt">file.name =</span> <span class="st">'carp_dend_static.png'</span>,
+  <span class="dt">plot.type =</span> <span class="st">'dendrogram'</span>,
+  <span class="dt">image.type =</span> <span class="st">'static'</span>
+)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/saveviz.html">saveviz</a></span>(
+  cbass.fit,
+  <span class="dt">file.name =</span> <span class="st">'cbass_heat_dyn.gif'</span>,
+  <span class="dt">plot.type =</span> <span class="st">'heatmap'</span>,
+  <span class="dt">image.type =</span> <span class="st">'dynamic'</span>
+)</code></pre></div>
 </div>
 </div>
 <div id="discussion" class="section level1">

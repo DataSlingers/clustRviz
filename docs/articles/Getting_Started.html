@@ -99,21 +99,17 @@ w_{l,m} \| {\boldsymbol{u}}_l - {\boldsymbol{u}}_m \|_2
 <span class="kw">data</span>(<span class="st">"presidential_speech"</span>)</code></pre></div>
 <p>The presidential speech data set contains the top 75 most variable log-transformed word counts of each US president, aggregated over several speeches. Additional text processing such as removing stop words and stemming have been done via the <code>tm</code> package.<br>
 We quickly examine the speech data:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Xdat &lt;-<span class="st"> </span>presidential_speech<span class="op">$</span>X
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Xdat &lt;-<span class="st"> </span>presidential_speech
 <span class="kw">dim</span>(Xdat)
 <span class="co">#&gt; [1] 44 75</span>
 Xdat[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]
-<span class="co">#&gt;        amount appropri  british     cent commerci</span>
-<span class="co">#&gt; [1,] 3.433987 2.397895 1.791759 2.564949 2.708050</span>
-<span class="co">#&gt; [2,] 4.248495 4.663439 2.995732 1.945910 3.828641</span>
-<span class="co">#&gt; [3,] 4.025352 3.091042 2.833213 3.332205 2.772589</span>
-<span class="co">#&gt; [4,] 1.386294 0.000000 0.000000 1.386294 0.000000</span>
-<span class="co">#&gt; [5,] 4.060443 4.174387 2.302585 4.304065 3.663562</span></code></pre></div>
-<p>Here we see the columns correspond to stemmed words.</p>
-<p>In addition, <code>presidential_speech</code> also contains observation labels:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(presidential_speech<span class="op">$</span>labels)
-<span class="co">#&gt; [1] "Abraham Lincoln"   "Andrew Jackson"    "Andrew Johnson"   </span>
-<span class="co">#&gt; [4] "Barack Obama"      "Benjamin Harrison" "Calvin Coolidge"</span></code></pre></div>
+<span class="co">#&gt;                     amount appropri  british     cent commerci</span>
+<span class="co">#&gt; Abraham Lincoln   3.433987 2.397895 1.791759 2.564949 2.708050</span>
+<span class="co">#&gt; Andrew Jackson    4.248495 4.663439 2.995732 1.945910 3.828641</span>
+<span class="co">#&gt; Andrew Johnson    4.025352 3.091042 2.833213 3.332205 2.772589</span>
+<span class="co">#&gt; Barack Obama      1.386294 0.000000 0.000000 1.386294 0.000000</span>
+<span class="co">#&gt; Benjamin Harrison 4.060443 4.174387 2.302585 4.304065 3.663562</span></code></pre></div>
+<p>Here we see the columns correspond to stemmed words and rows correspond to presidents.</p>
 </div>
 <div id="carp---the-basics" class="section level2">
 <h2 class="hasAnchor">
@@ -122,10 +118,7 @@ Xdat[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><a href="../reference/CARP.html">?CARP</a></code></pre></div>
 <p>By default, however, CARP makes reasonable default choices and be run out of the box.</p>
 <p>We begin by fitting the CARP solution path to the presidents data.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># carp.fit &lt;- CARP(Xdat[1:10,1:5],</span>
-<span class="co">#                  obs.labels = presidential_speech$labels[1:10])</span>
-carp.fit &lt;-<span class="st"> </span><span class="kw"><a href="../reference/CARP.html">CARP</a></span>(Xdat,
-                 <span class="dt">obs.labels =</span> presidential_speech<span class="op">$</span>labels)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.fit &lt;-<span class="st"> </span><span class="kw"><a href="../reference/CARP.html">CARP</a></span>(Xdat)
 <span class="co">#&gt; Pre-computing weight-based edge sets</span>
 <span class="co">#&gt; Computing CARP Path</span>
 <span class="co">#&gt; Post-processing</span></code></pre></div>

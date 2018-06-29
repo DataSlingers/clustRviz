@@ -575,7 +575,7 @@ ISPOLD <- function(sp.path,v.path,u.path, lambda.path,cardE){
 #' \code{DenseWeights}
 #' @return k an integer. The smallest number of nearest neighbors required to
 #' fully cluster all observations.
-#' @export
+#' @keywords internal
 #' @examples
 #' \dontrun{
 #' library(clustRviz)
@@ -1336,6 +1336,7 @@ CreateDendrogram <- function(carp_cluster_path,n_labels,scale){
 #' @param p The power of Minkowski distance. Passed to the \code{dist} function. See \code{?dist}
 #' @return dense.weights a numeric vector of weights
 #' @importFrom stats dist
+#' @keywords internal
 #' @examples
 #' \dontrun{
 #' library(clustRviz)
@@ -1359,6 +1360,7 @@ DenseWeights <- function(X,
 #' by \code{DenseWeights}
 #' @param k a positive integer less than nobs. The number of nearest neighbors.
 #' @return sparse.weights a numeric vector of sparse weights
+#' @keywords internal
 #' @importFrom FNN get.knn
 #' @importFrom utils combn
 #' @importFrom dplyr %>%
@@ -1392,6 +1394,7 @@ SparseWeights <- function(X,dense.weights, k){
 #' @param upper a logical. If \code{TRUE} only return upper triangular of matrix.
 #' If \code{FALSE} return symmetric adjacency
 #' @return adj a sparse adjacency matrix
+#' @keywords internal
 #' @importFrom Matrix Matrix
 #' @importFrom Matrix t
 WeightAdjacency <- function(weights,nobs,weighted=FALSE,upper=TRUE){
@@ -1415,6 +1418,7 @@ WeightAdjacency <- function(weights,nobs,weighted=FALSE,upper=TRUE){
 #' @param edge.labels a logical. Should weight values be displayed along edges?
 #' @param obs.labels a vector of observation labels
 #' @param ... additional parameters passed to qgraph::qgraph
+#' @keywords internal
 #' @import qgraph
 PlotWeightGraph <- function(weights,nobs,edge.labels=TRUE,obs.labels=NULL,...){
   WeightAdjacency(

@@ -31,3 +31,4 @@ Xdat.preprocessed <- scale(Xdat,center=TRUE,scale=FALSE)
 dense.weights <- DenseWeights(X = Xdat.preprocessed,phi=1e-3)
 }
 }
+\keyword{internal}

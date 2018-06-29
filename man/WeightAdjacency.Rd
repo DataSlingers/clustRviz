@@ -24,3 +24,4 @@ adj a sparse adjacency matrix
 \description{
 Construct adjacency matrix induced by weights
 }
+\keyword{internal}
