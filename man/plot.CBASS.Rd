@@ -44,10 +44,8 @@ how the clustering solutions change with increased reguarliazation.
 \dontrun{
 library(clustRviz)
 data("presidential_speech")
-Xdat <- presidential_speech$X[1:10,1:4]
-cbass.fit <- CARP(
-    X=Xdat,
-    obs.labels=presidential_speech$labels[1:10])
+Xdat <- presidential_speech[1:10,1:4]
+cbass.fit <- CARP(X=Xdat)
 plot(cbass.fit,type='interactive')
 }
 }

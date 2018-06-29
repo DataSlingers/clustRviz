@@ -65,16 +65,12 @@ speeches. Additional text processing such as removing stop words and
 stemming have been done via the `tm` package.  
 We quickly examine the speech data:
 ```{r, headdat}
-Xdat <- presidential_speech$X
+Xdat <- presidential_speech
 dim(Xdat)
 Xdat[1:5,1:5]
 ```
-Here we see the columns correspond to stemmed words.
+Here we see the columns correspond to stemmed words and rows correspond to presidents.
 
-In addition, `presidential_speech` also contains observation labels:
-```{r, headlab}
-head(presidential_speech$labels)
-```
 
 ## CARP - The Basics
 
@@ -91,10 +87,7 @@ box.
 We begin by fitting the CARP solution path to the presidents data.
 
 ```{r CARPfit}
-# carp.fit <- CARP(Xdat[1:10,1:5],
-#                  obs.labels = presidential_speech$labels[1:10])
-carp.fit <- CARP(Xdat,
-                 obs.labels = presidential_speech$labels)
+carp.fit <- CARP(Xdat)
 ```
 
 We can examine our CARP fit via

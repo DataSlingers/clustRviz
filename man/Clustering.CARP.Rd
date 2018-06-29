@@ -51,10 +51,8 @@ mean matricies are returned.
 \examples{
 library(clustRviz)
 data("presidential_speech")
-Xdat <- presidential_speech$X[1:10,1:4]
-carp.fit <- CARP(
-    X=Xdat,
-    obs.labels=presidential_speech$labels[1:10])
+Xdat <- presidential_speech[1:10,1:4]
+carp.fit <- CARP(X=Xdat)
 # Return the CARP iterate with k=5 clusters
 carp.clustering <- Clustering(carp.fit,k=5)
 # Examine the cluster labels

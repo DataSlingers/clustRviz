@@ -2,7 +2,7 @@ library(clustRviz)
 
 context("CBASS Function")
 data("presidential_speech")
-Xdat <- presidential_speech$X[1:10,1:4]
+Xdat <- presidential_speech[1:10,1:4]
 
 test_that("CBASS Runs",{
   expect_error(

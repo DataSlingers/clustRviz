@@ -2,19 +2,17 @@ library(clustRviz)
 
 context("CARP Function")
 data("presidential_speech")
-Xdat <- presidential_speech$X[1:10,1:4]
+Xdat <- presidential_speech[1:10,1:4]
 
 test_that("CARP Runs",{
   expect_error(
     carp.fit <- CARP(
-        X=Xdat,
-        obs.labels=presidential_speech$labels[1:10]),
+        X=Xdat),
     NA
   )
 })
 
-carp.fit <- CARP(X=Xdat,
-                 obs.labels=presidential_speech$labels[1:10])
+carp.fit <- CARP(X=Xdat)
 test_that("print.CARP Runs",{
   expect_error(
     print(carp.fit),

@@ -76,7 +76,7 @@ solutions is returned along with several visualizations.
 \dontrun{
 library(clustRviz)
 data("presidential_speech")
-Xdat <- presidential_speech$X
+Xdat <- presidential_speech
 CBASS(
 X=Xdat
 ) -> cbass.fit

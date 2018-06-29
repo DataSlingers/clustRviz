@@ -76,8 +76,8 @@ package and the dataset.
 ```{r}
 library(clustRviz)
 data("presidential_speech")
-Xdat <- presidential_speech$X
-obs.labels <- presidential_speech$labels
+Xdat <- presidential_speech
+obs.labels <- rownames(Xdat)
 var.labels <- colnames(Xdat)
 Xdat[1:5,1:5]
 head(obs.labels)

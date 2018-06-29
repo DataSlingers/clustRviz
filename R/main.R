@@ -40,10 +40,8 @@
 #' @examples
 #' library(clustRviz)
 #' data("presidential_speech")
-#' Xdat <- presidential_speech$X[1:10,1:4]
-#' carp.fit <- CARP(
-#'     X=Xdat,
-#'     obs.labels=presidential_speech$labels[1:10])
+#' Xdat <- presidential_speech[1:10,1:4]
+#' carp.fit <- CARP(X=Xdat)
 #' carp.fit
 CARP <- function(X,
                  verbose=1,
@@ -375,7 +373,7 @@ CARP <- function(X,
 #' \dontrun{
 #' library(clustRviz)
 #' data("presidential_speech")
-#' Xdat <- presidential_speech$X
+#' Xdat <- presidential_speech
 #' CBASS(
 #' X=Xdat
 #' ) -> cbass.fit
@@ -897,10 +895,8 @@ cbass.control <- function(
 #' @examples
 #' library(clustRviz)
 #' data("presidential_speech")
-#' Xdat <- presidential_speech$X[1:10,1:4]
-#' carp.fit <- CARP(
-#'     X=Xdat,
-#'     obs.labels=presidential_speech$labels[1:10])
+#' Xdat <- presidential_speech[1:10,1:4]
+#' carp.fit <- CARP(X=Xdat)
 #' print(carp.fit)
 print.CARP <- function(x,...){
   preprocess.string <- c('center','scale')
@@ -948,9 +944,8 @@ print.CARP <- function(x,...){
 #' @examples
 #' library(clustRviz)
 #' data("presidential_speech")
-#' Xdat <- presidential_speech$X[1:10,1:4]
-#' cbass.fit <- CBASS(
-#'     X=Xdat)
+#' Xdat <- presidential_speech[1:10,1:4]
+#' cbass.fit <- CBASS(X=Xdat)
 #' print(cbass.fit)
 print.CBASS <- function(x,...){
   preprocess.string <- c('global-center')
@@ -1057,10 +1052,8 @@ print.CBASS <- function(x,...){
 #' \dontrun{
 #' library(clustRviz)
 #' data("presidential_speech")
-#' Xdat <- presidential_speech$X[1:10,1:4]
-#' carp.fit <- CARP(
-#'     X=Xdat,
-#'     obs.labels=presidential_speech$labels[1:10])
+#' Xdat <- presidential_speech[1:10,1:4]
+#' carp.fit <- CARP(X=Xdat)
 #' plot(carp.fit,type='interactive')
 #' }
 plot.CARP <- function(
@@ -1430,10 +1423,8 @@ plot.CARP <- function(
 #' \dontrun{
 #' library(clustRviz)
 #' data("presidential_speech")
-#' Xdat <- presidential_speech$X[1:10,1:4]
-#' cbass.fit <- CARP(
-#'     X=Xdat,
-#'     obs.labels=presidential_speech$labels[1:10])
+#' Xdat <- presidential_speech[1:10,1:4]
+#' cbass.fit <- CARP(X=Xdat)
 #' plot(cbass.fit,type='interactive')
 #' }
 plot.CBASS <- function(
@@ -1655,13 +1646,12 @@ Clustering <- function(x,...) {
 #' }
 #' }
 #' @importFrom stats cutree
+#' @export
 #' @examples
 #' library(clustRviz)
 #' data("presidential_speech")
-#' Xdat <- presidential_speech$X[1:10,1:4]
-#' carp.fit <- CARP(
-#'     X=Xdat,
-#'     obs.labels=presidential_speech$labels[1:10])
+#' Xdat <- presidential_speech[1:10,1:4]
+#' carp.fit <- CARP(X=Xdat)
 #' # Return the CARP iterate with k=5 clusters
 #' carp.clustering <- Clustering(carp.fit,k=5)
 #' # Examine the cluster labels
@@ -1765,11 +1755,12 @@ Clustering.CARP <- function(x,k=NULL,percent=NULL,...){
 #' @importFrom dplyr slice
 #' @importFrom dplyr select
 #' @importFrom dplyr n
+#' @export
 #' @examples
 #' \dontrun{
 #' library(clustRviz)
 #' data("presidential_speech")
-#' Xdat <- presidential_speech$X
+#' Xdat <- presidential_speech
 #' cbass.fit <- CBASS(X=Xdat)
 #' cbass.clustering <- Clustering(cbass.fit,percent = .8)
 #' }

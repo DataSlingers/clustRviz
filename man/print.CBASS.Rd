@@ -22,8 +22,7 @@ the type of CBASS algorithm performed, and the visualizations returned.
 \examples{
 library(clustRviz)
 data("presidential_speech")
-Xdat <- presidential_speech$X[1:10,1:4]
-cbass.fit <- CBASS(
-    X=Xdat)
+Xdat <- presidential_speech[1:10,1:4]
+cbass.fit <- CBASS(X=Xdat)
 print(cbass.fit)
 }

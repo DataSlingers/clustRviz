@@ -48,7 +48,7 @@ and cluster mean matrix at the specific point along the CBASS path.
 \dontrun{
 library(clustRviz)
 data("presidential_speech")
-Xdat <- presidential_speech$X
+Xdat <- presidential_speech
 cbass.fit <- CBASS(X=Xdat)
 cbass.clustering <- Clustering(cbass.fit,percent = .8)
 }
