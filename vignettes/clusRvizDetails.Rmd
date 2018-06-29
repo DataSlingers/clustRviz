@@ -506,6 +506,9 @@ plot(carp.fit,type = 'dendrogram')
 
 ## Dynamic
 
+```{r,echo=FALSE,eval=TRUE,out.width='100%'}
+knitr::include_url(url="https://clustrviz.shinyapps.io/PathShiny/",height='850px')
+```
 ## Saving
 
 # Discussion

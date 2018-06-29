@@ -58,14 +58,13 @@
 #' @importFrom dplyr ungroup
 #' @export
 #' @examples
-#' \dontrun{
 #' library(clustRviz)
 #' data("presidential_speech")
-#' Xdat <- presidential_speech$X
+#' Xdat <- presidential_speech$X[1:10,1:4]
 #' carp.fit <- CARP(
 #'     X=Xdat,
-#'     obs.labels=presidential_speech$labels)
-#' }
+#'     obs.labels=presidential_speech$labels[1:10])
+#' carp.fit
 CARP <- function(X,
                  obs.labels=NULL,
                  var.labels=NULL,

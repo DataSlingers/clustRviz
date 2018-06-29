@@ -97,12 +97,11 @@ Algorithmic Regularization Paths. A seqeunce of clustering
 solutions is returned along with several visualizations.
 }
 \examples{
-\dontrun{
 library(clustRviz)
 data("presidential_speech")
-Xdat <- presidential_speech$X
+Xdat <- presidential_speech$X[1:10,1:4]
 carp.fit <- CARP(
     X=Xdat,
-    obs.labels=presidential_speech$labels)
-}
+    obs.labels=presidential_speech$labels[1:10])
+carp.fit
 }
