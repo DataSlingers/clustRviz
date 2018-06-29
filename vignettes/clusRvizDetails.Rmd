@@ -438,14 +438,24 @@ cbass.fit
 ```
 # Solutions
 
+Once fit, both the clustering solution of both CARP and CBASS may be examined 
+via the `Clustering` function.
+Using our `carp.fit` object from above, we can extract the solution along 
+the path which gives $k=2$ clusters.
 
 ```{r}
 carp.clustering <- Clustering(carp.fit,k = 2)
 ```
 
+Once extracted we may examine the clustering assignment. In the table 
+below we see of count of the cluster membership. Additionally 
+we consider the cluster assignment in relation to our original weight
+graph. We can see that the cluster membership respect our original
+weights.
 ```{r}
 table(carp.clustering$clustering.assignment)
 ```
+
 
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
 clustRviz:::PlotWeightGraph(
@@ -460,9 +470,16 @@ clustRviz:::PlotWeightGraph(
   repulsion=.9)
 ```
 
+Additionally, we can extract the cluster means associated with $k=2$ solution. The object `cluster.means`
+below gives the CARP iterate $\vec U^{(k)}$ along the path. We note that the columns 
+of the respective clusters have fused together as desired.
 ```{r}
 head(carp.clustering$cluster.means)
 ```
+Along with specifying the number of clusters $k$, we may also specify the percent of 
+regulariziation. In the example below, we extract the clustering solution at $25$\% 
+along the regularization path; we plot the new cluster labels along with 
+the original weight graph.
 
 
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
@@ -482,7 +499,9 @@ clustRviz:::PlotWeightGraph(
   repulsion=.9)
 ```
 
-
+Simiarly to CARP objects, CBASS clustering solutions may also be extracted via the 
+`Clustering` function. In the example below we extract the biclustering solution
+at the level of $85$\% regularization.
 ```{r,eval=TRUE}
 cbass.clustering <- Clustering(cbass.fit,percent = .8)
 ```
@@ -492,19 +511,61 @@ cbass.clustering <- Clustering(cbass.fit,percent = .8)
 
 # Visualizations
 
+An important feature of both CARP and CBASS fits, is the ability to visualize 
+an entire path of solutions. Unlike traditional clustering methods, CARP and CBASS
+allow for dynamic visualization of cluster formation, giving a more 
+wholistic view of the underlying data.
+
+In this section we examine both static and dynamic visualizations for 
+CARP and CBASS.
+
 ## Static
 
+Static visualizations allow the user to view snapshots along the cluster
+solution path. In the plot below
+the first two 
+principal components of the original observations (US presidents) 
+are plotted (black dots) along with the CARP solution path (red curves). 
+Following along the CARP solution path, we can watch  
+the fusions between observations as regulaization increases.
+To obtain a snapshot we again specify the percent of regularization.
 
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
 plot(carp.fit,type = 'path',percent=.5)
 ```
 
+Owing to the CARP-VIZ algorithm, we are also ensured a 
+dendrogram representation for the resulting path. In the 
+figure below we display the dendrogram of CARP-VIZ:
+
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
 plot(carp.fit,type = 'dendrogram')
 ```
 
+Additional static visualization are available for 
+CBASS objects, allowing both static heatmaps and 
+dendrograms for observations and variables.
+
+```{r,echo=TRUE,eval=FALSE}
+plot(cbass.fit,type='var.dendrogram')
+```
 
 ## Dynamic
+
+The dynamic visualization of both CARP and CBASS give a wholistic view 
+of cluster formation.
+Via the use of Shiny applications, dynamic displays of dendrograms, 
+clustering solution paths, and biclustering heatmaps may be easily obtained.
+
+```{r,echo=TRUE,eval=FALSE}
+plot(carp.fit,type='interactive')
+```
+
+Also to CBASS,
+
+```{r,echo=TRUE,eval=FALSE}
+plot(cbass.fit,type='interactive')
+```
 
 ```{r,echo=FALSE,eval=TRUE,out.width='100%'}
 knitr::include_url(url="https://clustrviz.shinyapps.io/PathShiny/",height='850px')
