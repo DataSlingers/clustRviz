@@ -93,6 +93,7 @@ CARP <- function(X,
   alg.type = internal.control$alg.type
   t = internal.control$t
   npcs = internal.control$npcs
+  dendrogram.scale = internal.control$dendrogram.scale
 
 
 
@@ -124,8 +125,35 @@ CARP <- function(X,
       stop('var.labels should be have length ncol(X)')
     }
   }
-  colnames(X) <- p.labels
-  rownames(X) <- n.labels
+
+  if(is.null(npcs)){
+    npcs = min(4,p.var)
+    npcs = as.integer(npcs)
+  } else{
+    npcs = as.integer(npcs)
+    if(!is.integer(npcs) | npcs < 2){
+      stop('npcs should be an integer greater than or equal to 2.')
+    }
+    if(npcs > p.var){
+      stop('npcs should be less than or equal to ncol(X)')
+    }
+  }
+  if(!is.null(phi)){
+    if(phi <= 0){
+      stop('phi should be positive.')
+    }
+  }
+
+  if(length(unique(p.labels)!=length(p.labels))){
+    colnames(X) <- make.names(p.labels,unique=TRUE)
+  } else{
+    colnames(X) <- p.labels
+  }
+  if(length(unique(n.labels))!=length(n.labels)){
+    rownames(X) <- make.names(n.labels,unique=TRUE)
+  } else{
+    rownames(X) <- n.labels
+  }
 
   # center and scale
   X.orig <- X
@@ -139,6 +167,14 @@ CARP <- function(X,
 
   # get weights
   if(is.null(weights)){
+    if(is.null(phi)){
+      phi.vec <- 10^(-10:10)
+      sapply(phi.vec,function(phi){
+        var(DenseWeights(X=t(X),phi = phi,method=weight.dist,p=weight.dist.p))
+      }) %>%
+        which.max() %>%
+        phi.vec[.] -> phi
+    }
     weights <- DenseWeights(t(X),phi=phi,method=weight.dist,p=weight.dist.p)
     if(is.null(k)){
        k <- MinKNN(t(X),weights)
@@ -267,7 +303,7 @@ CARP <- function(X,
   carp.cluster.path[['clust.path.dups']] <- clust.path.dups
 
   if(static|interactive){
-    carp.dend <- CreateDendrogram(carp.cluster.path,n.labels)
+    carp.dend <- CreateDendrogram(carp.cluster.path,n.labels,dendrogram.scale)
   } else{
     carp.dend <- NULL
   }
@@ -463,6 +499,11 @@ CBASS <- function(X,
     }
 
   }
+  if(!is.null(phi)){
+    if(phi <= 0){
+      stop('phi should be positive.')
+    }
+  }
 
 
   # center and scale
@@ -483,6 +524,14 @@ CBASS <- function(X,
       stop('weights.var should be length choose(ncol(X),2)')
     }
   } else{
+    if(is.null(phi)){
+      phi.vec <- 10^(-10:10)
+      sapply(phi.vec,function(phi){
+        var(DenseWeights(X=X,phi = phi,method=var.weight.dist,p=var.weight.dist.p))
+      }) %>%
+        which.max() %>%
+        phi.vec[.] -> phi
+    }
     phi.row=phi/n.obs
     weights.row <- DenseWeights(X = X,phi = phi.row,method = var.weight.dist,p = var.weight.dist.p)
     if(is.null(k.var)){
@@ -664,6 +713,9 @@ CBASS <- function(X,
 #' Determines observation pairs' fusion amount.
 #' @param npcs A integer >= 2. The number of principal components to compute
 #' for path visualization.
+#' @param dendrogram.scale a character string denoting how the scale of dendrogram
+#' regularization proportions should be visualized. Choices are 'original'
+#' or 'log'; if not provided, a choice is made based on the data provided.
 #' @param ... unused generic arguements.
 #' @return a list containing the CARP options.
 #' @export
@@ -672,7 +724,7 @@ carp.control <- function(
   var.labels=NULL,
   X.center=TRUE,
   X.scale=FALSE,
-  phi=1e-3,
+  phi=NULL,
   rho=1,
   weights=NULL,
   k=NULL,
@@ -683,7 +735,8 @@ carp.control <- function(
   burn.in=as.integer(50),
   alg.type='carpviz',
   t = 1.05,
-  npcs=as.integer(4),
+  npcs=NULL,
+  dendrogram.scale = NULL,
   ...
 ) {
   if(!is.logical(X.center)){
@@ -691,9 +744,6 @@ carp.control <- function(
   }
   if(!is.logical(X.scale)){
     stop('X.scale should be either TRUE or FALSE')
-  }
-  if(phi <= 0){
-    stop('phi should be positive.')
   }
   if(rho < 0){
     stop('rho should be non-negative')
@@ -724,8 +774,10 @@ carp.control <- function(
   if(t <= 1){
     stop('t should be greater than 1.')
   }
-  if(!is.integer(npcs) | npcs < 2){
-    stop('npcs should be an integer greater than or equal to 2.')
+  if(!is.null(dendrogram.scale)){
+    if( ! (dendrogram.scale %in% c('original','log') ) ){
+      stop("dendrogram.scale should be one of 'original' or 'log'")
+    }
   }
   list(
     obs.labels = obs.labels,
@@ -743,7 +795,8 @@ carp.control <- function(
     burn.in = burn.in,
     alg.type = alg.type,
     t = t,
-    npcs = npcs
+    npcs = npcs,
+    dendrogram.scale = dendrogram.scale
   )
 }
 
@@ -793,7 +846,7 @@ cbass.control <- function(
   var.labels=NULL,
   X.center.global=TRUE,
   rho=1,
-  phi=1e-1,
+  phi=NULL,
   weights.obs=NULL,
   weights.var=NULL,
   obs.weight.dist='euclidean',

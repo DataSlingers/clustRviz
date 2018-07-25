@@ -1,0 +1,38 @@
+---
+title: "clustRviz Details"
+author: "John Nagorski"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    css: style.css
+vignette: >
+  %\VignetteIndexEntry{clustRviz Details}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval=TRUE,
+  message = FALSE
+)
+```
+\renewcommand{\vec}[1]{\boldsymbol{#1}}
+
+# Introduction
+
+This vignette provides a quick usage guide to the `clustRviz` package, 
+including fitting and visualization.
+In the sections below we work through two example datasets, 
+illustrating both clustering and biclustering.
+While many details and customizations are discussed in [Details Vignette](clustRvizDetails.html), 
+for now we show how `clustRviz` can quickly and easily be used to achieved 
+insights into our clustering solutions.
+
+
+# Clustering
+
+
+

@@ -5,7 +5,7 @@
 \title{Control for CBASS fits}
 \usage{
 cbass.control(obs.labels = NULL, var.labels = NULL,
-  X.center.global = TRUE, rho = 1, phi = 0.1, weights.obs = NULL,
+  X.center.global = TRUE, rho = 1, phi = NULL, weights.obs = NULL,
   weights.var = NULL, obs.weight.dist = "euclidean",
   obs.weight.dist.p = 2, var.weight.dist = "euclidean",
   var.weight.dist.p = 2, k.obs = NULL, k.var = NULL, t = 1.01,

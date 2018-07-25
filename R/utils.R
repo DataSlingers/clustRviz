@@ -1307,7 +1307,7 @@ cvxhc <- function(clust.path,gamma.path,labels){
 
 }
 
-CreateDendrogram <- function(carp_cluster_path,n_labels,scale){
+CreateDendrogram <- function(carp_cluster_path,n_labels,scale=NULL){
   clust.path <- carp_cluster_path$clust.path[!carp_cluster_path$clust.path.dups]
   lapply(clust.path,function(x){
     mem <- x$membership
@@ -1320,8 +1320,21 @@ CreateDendrogram <- function(carp_cluster_path,n_labels,scale){
                       gamma.path = carp_cluster_path$lambda.path.inter[!carp_cluster_path$clust.path.dups],
                       labels = n_labels)
 
-  cvx.hclust$height <- cvx.hclust$height
-  # cvx.hclust$height <- log(cvx.hclust$height + 1)
+  if(is.null(scale)){
+    min.prop = min(cvx.hclust$height / max(cvx.hclust$height))
+    if(min.prop < .01){
+      scale='log'
+    } else{
+      scale = 'original'
+    }
+  }
+  if(scale == 'original'){
+    cvx.hclust$height <- cvx.hclust$height
+  } else if(scale=='log'){
+    cvx.hclust$height <- log(cvx.hclust$height + 1)
+  } else{
+    stop("CreateDendrogram scale argument must be either 'original' or 'log'")
+  }
   max.dend.height <- max(cvx.hclust$height)
   cvx.hclust$height <- cvx.hclust$height*(1/max.dend.height)
   cvx.hclust

@@ -5,10 +5,11 @@
 \title{Control for CARP fits}
 \usage{
 carp.control(obs.labels = NULL, var.labels = NULL, X.center = TRUE,
-  X.scale = FALSE, phi = 0.001, rho = 1, weights = NULL, k = NULL,
+  X.scale = FALSE, phi = NULL, rho = 1, weights = NULL, k = NULL,
   weight.dist = "euclidean", weight.dist.p = 2, ncores = as.integer(1),
   max.iter = as.integer(1e+06), burn.in = as.integer(50),
-  alg.type = "carpviz", t = 1.05, npcs = as.integer(4), ...)
+  alg.type = "carpviz", t = 1.05, npcs = NULL, dendrogram.scale = NULL,
+  ...)
 }
 \arguments{
 \item{obs.labels}{a vector of length n containing observations (row) labels}
@@ -47,6 +48,10 @@ Determines observation pairs' fusion amount.}
 
 \item{npcs}{A integer >= 2. The number of principal components to compute
 for path visualization.}
+
+\item{dendrogram.scale}{a character string denoting how the scale of dendrogram
+regularization proportions should be visualized. Choices are 'original'
+or 'log'; if not provided, a choice is made based on the data provided.}
 
 \item{...}{unused generic arguements.}
 }
