@@ -1981,6 +1981,7 @@ saveviz <- function(x,...) {
 #' @importFrom ggplot2 xlab
 #' @importFrom ggplot2 ylab
 #' @importFrom ggplot2 scale_color_manual
+#' @importFrom ggplot2 ggsave
 #' @importFrom ggrepel geom_text_repel
 #' @importFrom dplyr filter
 #' @importFrom dplyr select

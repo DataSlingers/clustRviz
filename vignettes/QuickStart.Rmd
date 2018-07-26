@@ -25,14 +25,178 @@ knitr::opts_chunk$set(
 
 This vignette provides a quick usage guide to the `clustRviz` package, 
 including fitting and visualization.
-In the sections below we work through two example datasets, 
+In the sections below we work through an example dataset, 
 illustrating both clustering and biclustering.
-While many details and customizations are discussed in [Details Vignette](clustRvizDetails.html), 
-for now we show how `clustRviz` can quickly and easily be used to achieved 
+While many details and customizations are discussed in the 
+[clustRviz Details Vignette](clustRvizDetails.html), 
+for now we show how `clustRviz` can quickly be used to achieved 
 insights into our clustering solutions.
 
 
-# Clustering
+# A Clustering Example
+
+`clustRviz` may be used for clustering together observations based on 
+similarities among their features.
+`clustRviz` accomplishes this by solving the Convex Clustering problem 
+quickly using the technique of Algorithmic Regularization.
+The resulting algorithm, Convex Clustering via Algorithmic Regularization Paths 
+(or CARP) provides a continuous path of clustering solutions which may 
+be visualized and interactively explored.
+
+For our first example we use the `petrol` data set from the `MASS` package.
+
+
+```{r, headdat}
+# optionally install MASS package
+# install.package('MASS')
+data('petrol',package='MASS')
+head(petrol)
+```
+
+The dataset contains the yield (`Y`) of a petroleum refining process and 
+with measurements for specific gravity (`SG`), vapour pressure (`VP`), 
+crude volatility (`V10`), 
+desired gasoline volatility (`EP`), as well as sample 
+identification labels (`No`); see `?petrol`for details. 
+
+Before clustering our data, we extract the columns of interest 
+(here `SG`, `VP`, `V10`, and `EP`), and create the input matrix:
+
+```{r}
+# create numeric input matrix
+Xdat <- as.matrix(petrol[,c('SG','VP','V10','EP')])
+head(Xdat)
+```
+
+Clustering is done via a simple call to the `CARP` function below.
+
+```{r}
+library(clustRviz)
+carp.fit <- CARP(
+  Xdat,
+  control=list(
+    obs.labels = petrol$No,
+    X.scale=TRUE)
+)
+```
+
+Here we specify the sample number (`No`) as the labels for our observations.
+This is done by providing `obs.labels` to the `control` argument. 
+While not necessary, providing labels adds clarity to many visualizations. 
+Additionally, since our variable are measured on different scales, we 
+set the `X.scale` option to `TRUE` as well; see `?carp.control` for additional 
+fitting options as well as examples in the 
+[clustRviz Details Vignette](clustRvizDetails.html)
+
+
+Once fitted, a brief description of the fit and parameter choices 
+may be shown
+
+```{r,message=TRUE}
+carp.fit
+```
+
+Visualizing the solution path is readily done via the `plot` function.
+A traditional dendrogram is displayed by default:
+
+```{r,fig.width=5,fig.height=5,fig.align='center'}
+plot(carp.fit)
+```
+
+A more detailed visualization of the solution path can be obtained by
+plotting the principal components of the cluster means:
+
+```{r,fig.width=5,fig.height=5,fig.align='center'}
+plot(carp.fit,type = 'path',percent = .10)
+```
+
+In the plot above displays the first two principal components of the 
+data, with black points representing the original data, and red 
+curves illustrating movement along the solution path. As curves 
+join together, observations are fused together and clusters are formed.
+
+Both the dendrogram and the clustering solution path may be 
+viewed together interactively via the use of `shiny` applications:
+
+```{r,eval=FALSE}
+plot(carp.fit,type = 'interactive')
+```
+
+In addition to visualizations, cluster solutions may be obtained 
+via the `Clustering` function:
+
+```{r}
+# get the 3 cluster solution along the path
+carp.clusters <- Clustering(carp.fit,k = 3)
+# display the labels
+head(carp.clusters$clustering.assignment)
+# display the cluster mean
+head(carp.clusters$cluster.means)
+```
+
+In the code above, we specify the number of clusters and `Clustering`
+returns the both the cluster assignment as well as the cluster means 
+for the $k=3$ solution along the path. As an example, we display the 
+yield (`Y`) distribution for each of the clusters: 
+
+```{r,fig.width=5,fig.height=5,fig.align='center'}
+library(ggplot2)
+ggplot(
+  aes(x=cl,y=yield),
+  data=data.frame(
+    yield = petrol$Y,
+    cl=carp.clusters$clustering.assignment
+  )
+) + geom_boxplot()
+```
+
+
+After exploring visualizations and cluster solutions interactively, 
+the visualization results can easily be exported via the `saveviz`
+function. For example, saving the cluster solution path plotted 
+above may be done as follows:
+
+
+```{r,eval=FALSE}
+saveviz(
+  carp.fit,
+  "ClusterPathStatic.png",
+  plot.type='path',
+  image.type = 'static',
+  percent=.10)
+```
+
+Interactive visualization may be saved as `.gif` files by 
+specifiying `image.type='dynamic'`; see `?saveviz.CARP` for 
+details.
 
 
 
+# A Biclustering Example
+
+Clustering may also be done simultaneously on both observations and 
+variables. `clustRviz` obtains such biclustering solutions by 
+approximating the Convex Biclustering solution path, again via 
+Algorithmic Regularization. The `CBASS` function is used to obtain 
+biclustering solutions, and its usage is similar to `CARP`.
+
+We fit the biclustering solution path as follows:
+
+```{r}
+cbass.fit <- CBASS(Xdat)
+```
+
+Once fitted, vizualizations are displayed again via the `plot` function. 
+For CBASS fits, the default visualization is the bicluster heatmap:
+
+```{r,fig.width=5,fig.height=5,fig.align='center'}
+plot(cbass.fit)
+```
+
+As was the case of `CARP`, interactive visualizations may also be displayed:
+
+```{r,eval=FALSE}
+plot(cbass.fit,type='interactive')
+```
+
+Saving our visualizations 

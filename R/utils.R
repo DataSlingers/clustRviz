@@ -161,6 +161,20 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
       NChanges = n()
     ) -> change.frame
   change.frame %>%
+    ungroup() %>%
+    filter(
+      Iter == length(lambda.path)
+    ) %>%
+    distinct(NChanges)  %>%
+    unlist() %>%
+    unname() -> max.lam.changes
+  if(isTRUE(max.lam.changes)){
+    if((max.lam.changes > 1)){
+      lambda.path <- rbind(lambda.path,1.05*lambda.path[length(lambda.path)])
+      u.path <- cbind(u.path,u.path[,ncol(u.path)])
+    }
+  }
+  change.frame %>%
     dplyr::filter(NChanges>1) %>%
     dplyr::group_by(Iter) %>%
     tidyr::nest() %>%
