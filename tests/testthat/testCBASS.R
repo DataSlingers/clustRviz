@@ -4,9 +4,25 @@ context("CBASS Function")
 data("presidential_speech")
 Xdat <- presidential_speech[1:10,1:4]
 
+
+
+
+context("CBASS fitting")
 test_that("CBASS Runs",{
   expect_error(
     cbass.fit <- CBASS(X=Xdat),
+    NA
+  )
+})
+test_that("CBASS Runs w/ cbassviz",{
+  expect_error(
+    cbass.fit <- CBASS(X=Xdat,control = list(alg.type='cbassviz')),
+    NA
+  )
+})
+test_that("CBASS Runs w/ cbassvizl1",{
+  expect_error(
+    cbass.fit <- CBASS(X=Xdat,control = list(alg.type='cbassvizl1')),
     NA
   )
 })

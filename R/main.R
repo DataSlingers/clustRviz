@@ -610,8 +610,33 @@ CBASS <- function(X,
                    ti = 10,
                    t_switch = 1.01) -> bicarp.sol.path
     },
-    cbass={
-      message('carp\n')
+    cbassvizl1={
+      BICARPL1_VIS(x=X[TRUE],
+                   n= as.integer(n.obs),
+                   p = as.integer(p.var),
+                   lambda_init = 1e-6,
+                   weights_row = weights.row[weights.row!=0],
+                   weights_col = weights.col[weights.col!=0],
+                   uinit_row = as.matrix(PreCompList.row$uinit),
+                   uinit_col = as.matrix(PreCompList.col$uinit),
+                   vinit_row = as.matrix(PreCompList.row$vinit),
+                   vinit_col = as.matrix(PreCompList.col$vinit),
+                   premat_row = PreCompList.row$PreMat,
+                   premat_col = PreCompList.col$PreMat,
+                   IndMat_row = PreCompList.row$ind.mat,
+                   IndMat_col = PreCompList.col$ind.mat,
+                   EOneIndMat_row = PreCompList.row$E1.ind.mat,
+                   EOneIndMat_col = PreCompList.col$E1.ind.mat,
+                   ETwoIndMat_row = PreCompList.row$E2.ind.mat,
+                   ETwoIndMat_col = PreCompList.col$E2.ind.mat,
+                   rho = rho,
+                   max_iter = as.integer(max.iter),
+                   burn_in = burn.in,
+                   verbose = verbose.deep,
+                   verbose_inner = verbose.deep,
+                   try_tol = 1e-3,
+                   ti = 10,
+                   t_switch = 1.01) -> bicarp.sol.path
     }
   )
 

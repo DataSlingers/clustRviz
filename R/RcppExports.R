@@ -28,3 +28,7 @@ BICARPL2_VIS <- function(x, n, p, lambda_init, weights_col, weights_row, uinit_r
     .Call('_clustRviz_BICARPL2_VIS', PACKAGE = 'clustRviz', x, n, p, lambda_init, weights_col, weights_row, uinit_row, uinit_col, vinit_row, vinit_col, premat_row, premat_col, IndMat_row, IndMat_col, EOneIndMat_row, EOneIndMat_col, ETwoIndMat_row, ETwoIndMat_col, rho, max_iter, burn_in, verbose, verbose_inner, try_tol, ti, t_switch)
 }
 
+BICARPL1_VIS <- function(x, n, p, lambda_init, weights_col, weights_row, uinit_row, uinit_col, vinit_row, vinit_col, premat_row, premat_col, IndMat_row, IndMat_col, EOneIndMat_row, EOneIndMat_col, ETwoIndMat_row, ETwoIndMat_col, rho = 1, max_iter = 1e4L, burn_in = 50L, verbose = FALSE, verbose_inner = FALSE, try_tol = 1e-3, ti = 15L, t_switch = 1.01) {
+    .Call('_clustRviz_BICARPL1_VIS', PACKAGE = 'clustRviz', x, n, p, lambda_init, weights_col, weights_row, uinit_row, uinit_col, vinit_row, vinit_col, premat_row, premat_col, IndMat_row, IndMat_col, EOneIndMat_row, EOneIndMat_col, ETwoIndMat_row, ETwoIndMat_col, rho, max_iter, burn_in, verbose, verbose_inner, try_tol, ti, t_switch)
+}
+
