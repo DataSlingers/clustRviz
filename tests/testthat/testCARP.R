@@ -15,6 +15,22 @@ test_that("CARP Runs",{
     NA
   )
 })
+test_that("CARP Runs w/ carpviz",{
+  expect_error(
+    carp.fit <- CARP(
+        X=Xdat,
+        control = list(alg.type='carpviz')),
+    NA
+  )
+})
+test_that("CARP Runs w/ carpvizl1",{
+  expect_error(
+    carp.fit <- CARP(
+        X=Xdat,
+        control = list(alg.type='carpvizl1')),
+    NA
+  )
+})
 test_that("CARP Runs w/ carp 1.05",{
   expect_error(
     carp.fit <- CARP(
@@ -55,6 +71,7 @@ test_that("CARP Runs w/ carpl1 1.1",{
 
 context("CARP printing")
 carp.fit <- CARP(X=Xdat)
+carp.fitl1 <- CARP(X=Xdat,control = list(alg.type='carpvizl1'))
 test_that("print.CARP Runs",{
   expect_error(
     print(carp.fit),
@@ -110,6 +127,12 @@ test_that("saveviz Runs w dynamic dendrogram",{
 test_that("saveviz Runs w static path",{
   expect_error(
     saveviz(carp.fit,file.name = 'saveviz4.png',plot.type = 'path',image.type = 'static'),
+    NA
+  )
+})
+test_that("saveviz Runs w static path",{
+  expect_error(
+    saveviz(carp.fitl1,file.name = 'saveviz45.png',plot.type = 'path',image.type = 'static'),
     NA
   )
 })

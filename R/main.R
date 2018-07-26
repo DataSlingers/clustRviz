@@ -259,7 +259,7 @@ CARP <- function(X,
                      keep=1) -> carp.sol.path
     },
     carpvizl1={
-      CARPL2_VIS_FRAC(x=X[TRUE],
+      CARPL1_VIS_FRAC(x=X[TRUE],
             n= as.integer(n.obs),
             p = as.integer(p.var),
             lambda_init = 1e-8,
