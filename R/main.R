@@ -1991,6 +1991,8 @@ saveviz <- function(x,...) {
 #' @importFrom dplyr left_join
 #' @importFrom dplyr select_
 #' @importFrom dplyr %>%
+#' @importFrom tools file_ext
+#' @importFrom tools file_path_sans_ext
 #' @importFrom grDevices adjustcolor
 #' @importFrom grDevices png
 #' @importFrom gganimate gganimate
@@ -2049,6 +2051,14 @@ saveviz.CARP <- function(
       switch(
         image.type,
         dynamic={
+          cur.file.ext = tools::file_ext(file.name)
+          if(cur.file.ext != 'gif'){
+            file.name = paste(
+              tools::file_path_sans_ext(file.name),
+              'gif',
+              sep='.'
+              )
+          }
           for(seq.idx in seq_along(percent.seq)){
             percent <- percent.seq[seq.idx]
             plot.frame %>%
@@ -2121,6 +2131,14 @@ saveviz.CARP <- function(
       switch(
         image.type,
         dynamic={
+          cur.file.ext = tools::file_ext(file.name)
+          if(cur.file.ext != 'gif'){
+            file.name = paste(
+              tools::file_path_sans_ext(file.name),
+              'gif',
+              sep='.'
+            )
+          }
           animation::saveGIF({
             for(seq.idx in seq_along(percent.seq)){
               percent <- percent.seq[seq.idx]

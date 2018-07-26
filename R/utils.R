@@ -168,7 +168,7 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
     distinct(NChanges)  %>%
     unlist() %>%
     unname() -> max.lam.changes
-  if(isTRUE(max.lam.changes)){
+  if(length(max.lam.changes) > 0){
     if((max.lam.changes > 1)){
       lambda.path <- rbind(lambda.path,1.05*lambda.path[length(lambda.path)])
       u.path <- cbind(u.path,u.path[,ncol(u.path)])
