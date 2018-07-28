@@ -2281,6 +2281,10 @@ saveviz.CARP <- function(
 #' static images.
 #' @param percent a number between 0 and 1. Specifies how far along the
 #' CARP path the static visualizations should display.
+#' @param k.obs An interger between 1 and \code{n.obs}. The number of unique
+#' observation clusters.
+#' @param k.var An interger between 1 and \code{p.var}. The number of unique
+#' variable clusters.
 #' @param percent.seq a vector of numbers between 0 and 1 specifying the
 #' positions along the CARP path used to generate dynamic images.
 #' @param dend.branch.width a positive number. Line width on dendrograms.
@@ -2329,13 +2333,25 @@ saveviz.CBASS <- function(
   dend.labels.cex=.6,
   heatrow.label.cex=1.5,
   heatcol.label.cex=1.5,
-  percent=1,
+  percent=NULL,
+  k.obs=NULL,
+  k.var=NULL,
   percent.seq = seq(from=.05,to=1,by=.05),
   dynamic.width=1200,
   dynamic.height = 700,
   static.width = 8,
   static.height = 5
 ) {
+  n.not.null <- sum(
+    c(
+      !is.null(k.obs),
+      !is.null(k.var),
+      !is.null(percent)
+    )
+  )
+  if( n.not.null != 1){
+    stop('Select exactly one of k.obs, k.var, or percent')
+  }
   switch(
     plot.type,
     heatmap={
@@ -2343,9 +2359,11 @@ saveviz.CBASS <- function(
       switch(
         image.type,
         dynamic={
+          ### Dynamic Heatmap
 
         },
         static={
+          ### Static Heatmap
 
         }
       )
@@ -2355,10 +2373,33 @@ saveviz.CBASS <- function(
       switch(
         image.type,
         dynamic={
+          ### Dynamic Obs Dend
 
         },
         static={
-
+          ### START Static Obs Dend
+          if(!is.null(k.obs)){
+            cbass.fit.clustering <- Clustering(cbass.fit,k.obs = k.obs)
+          } else if(!is.null(k.var)){
+            cbass.fit.clustering <- Clustering(cbass.fit,k.var = k.var)
+          } else if(!is.null(percent)){
+            cbass.fit.clustering <- Clustering(cbass.fit,percent = percent)
+          } else{
+            stop('Select exactly one of k.obs, k.var, or percent')
+          }
+          ncl <- length(unique(cbass.fit.clustering$clustering.assignment.obs))
+          png(file.name,width = dynamic.width,height = dynamic.height)
+          plot.new()
+          par(mar=c(14,7,2,1))
+          cbass.fit$cbass.dend.obs %>%
+            stats::as.dendrogram() %>%
+            dendextend::set("branches_lwd",dend.branch.width) %>%
+            dendextend::set("labels_cex",dend.labels.cex) %>%
+            plot(ylab='Amount of Regularization')
+          my.cols <- grDevices::adjustcolor(c('black','grey'),alpha.f = .3)
+          my.rect.hclust(x$cbass.dend.obs,k=ncl,border=2,my.col.vec=my.cols,lwd=3)
+          dev.off()
+          ### END Static Obs Dend
         }
       )
 
@@ -2367,10 +2408,32 @@ saveviz.CBASS <- function(
       switch(
         image.type,
         dynamic={
+          ### Dynamic Var Dend
 
         },
         static={
-
+          ### Static Var Dend
+          if(!is.null(k.obs)){
+            cbass.fit.clustering <- Clustering(cbass.fit,k.obs = k.obs)
+          } else if(!is.null(k.var)){
+            cbass.fit.clustering <- Clustering(cbass.fit,k.var = k.var)
+          } else if(!is.null(percent)){
+            cbass.fit.clustering <- Clustering(cbass.fit,percent = percent)
+          } else{
+            stop('Select exactly one of k.obs, k.var, or percent')
+          }
+          ncl <- length(unique(cbass.fit.clustering$clustering.assignment.var))
+          png(file.name,width = dynamic.width,height = dynamic.height)
+          plot.new()
+          par(mar=c(14,7,2,1))
+          cbass.fit$cbass.dend.var %>%
+            stats::as.dendrogram() %>%
+            dendextend::set("branches_lwd",dend.branch.width) %>%
+            dendextend::set("labels_cex",dend.labels.cex) %>%
+            plot(ylab='Amount of Regularization')
+          my.cols <- grDevices::adjustcolor(c('black','grey'),alpha.f = .3)
+          my.rect.hclust(x$cbass.dend.var,k=ncl,border=2,my.col.vec=my.cols,lwd=3)
+          dev.off()
         }
       )
 

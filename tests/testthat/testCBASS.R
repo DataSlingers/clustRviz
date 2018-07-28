@@ -94,6 +94,9 @@ test_that("plot.CBASS interactive Runs",{
 
 
 
+
+
+
 context('CBASS Clustering')
 test_that("Clustering CBASS  Runs k.obs=1",{
   expect_error(
@@ -116,6 +119,81 @@ test_that("Clustering CBASS  Runs k.var=2",{
 test_that("Clustering CBASS  Runs percent=.3",{
   expect_error(
     Clustering(cbass.fit,percent=.3),
+    NA
+  )
+})
+
+
+
+
+context('CBASS Saving')
+test_that("saveviz runs with static obs.dend, k.obs",{
+  expect_error(
+    saveviz(cbass.fit,
+            file.name = 'cbass_obsdend_static_kobs.png',
+            plot.type = 'obs.dendrogram',
+            image.type = 'static',
+            k.obs=3
+            ),
+    NA
+  )
+})
+test_that("saveviz runs with static obs.dend, k.var",{
+  expect_error(
+    saveviz(cbass.fit,
+            file.name = 'cbass_obsdend_static_kvar.png',
+            plot.type = 'obs.dendrogram',
+            image.type = 'static',
+            k.var=3
+            ),
+    NA
+  )
+})
+
+test_that("saveviz runs with static obs.dend, percent",{
+  expect_error(
+    saveviz(cbass.fit,
+            file.name = 'cbass_obsdend_static_percent.png',
+            plot.type = 'obs.dendrogram',
+            image.type = 'static',
+            percent=.3
+            ),
+    NA
+  )
+})
+
+
+test_that("saveviz runs with static var.dend, k.obs",{
+  expect_error(
+    saveviz(cbass.fit,
+            file.name = 'cbass_vardend_static_kobs.png',
+            plot.type = 'var.dendrogram',
+            image.type = 'static',
+            k.obs=3
+            ),
+    NA
+  )
+})
+test_that("saveviz runs with static var.dend, k.var",{
+  expect_error(
+    saveviz(cbass.fit,
+            file.name = 'cbass_vardend_static_kvar.png',
+            plot.type = 'var.dendrogram',
+            image.type = 'static',
+            k.var=3
+            ),
+    NA
+  )
+})
+
+test_that("saveviz runs with static var.dend, percent",{
+  expect_error(
+    saveviz(cbass.fit,
+            file.name = 'cbass_vardend_static_percent.png',
+            plot.type = 'var.dendrogram',
+            image.type = 'static',
+            percent=.3
+            ),
     NA
   )
 })
