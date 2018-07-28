@@ -2364,7 +2364,58 @@ saveviz.CBASS <- function(
         },
         static={
           ### Static Heatmap
+          lam.vec <- x$cbass.sol.path$lambda.path %>% as.vector()
+          max.lam <- max(lam.vec)
+          lam.vec %>%
+            purrr::map_dfr(.f=function(cur.lam){
+              # find lambda closest in column path
+              cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
+              # find clustering solution in column path
+              cur.col.clust.assignment <- x$cbass.cluster.path.obs$clust.path[[cur.col.lam.ind]]$membership
+              cur.col.clust.labels <- unique(cur.col.clust.assignment)
+              cur.col.nclust <- length(cur.col.clust.labels)
+              # find lambda closest in rowumn path
+              cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.var$lambda.path.inter - cur.lam))
+              # find clustering solution in rowumn path
+              cur.row.clust.assignment <- x$cbass.cluster.path.var$clust.path[[cur.row.lam.ind]]$membership
+              cur.row.clust.labels <- unique(cur.row.clust.assignment)
+              cur.row.nclust <- length(cur.row.clust.labels)
+              dplyr::tibble(
+                Lambda = cur.lam,
+                NObsCl = cur.col.nclust,
+                NVarCl = cur.row.nclust
+              )
+            })  %>%
+            dplyr::mutate(
+              Percent = Lambda / max.lam
+            ) -> cut.table
 
+          if(!is.null(k.obs)){
+            cut.table %>%
+              dplyr::filter(NObsCl <= k.obs) %>%
+              dplyr::slice(1) %>%
+              dplyr::select(Lambda) %>%
+              unlist() %>%
+              unname() -> cur.lam
+          } else if(!is.null(k.var)){
+            cut.table %>%
+              dplyr::filter(NVarCl <= k.var) %>%
+              dplyr::slice(1) %>%
+              dplyr::select(Lambda) %>%
+              unlist() %>%
+              unname() -> cur.lam
+          } else if(!is.null(percent)){
+            cut.table %>%
+              dplyr::filter(Percent >= percent) %>%
+              dplyr::slice(1) %>%
+              dplyr::select(Lambda) %>%
+              unlist() %>%
+              unname() -> cur.lam
+          } else{
+            stop('Select exactly one of k.obs, k.var, or percent')
+          }
+
+          ### END Static Heatmap
         }
       )
 
