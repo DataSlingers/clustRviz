@@ -1,5 +1,5 @@
 ---
-title: "clustRviz Details"
+title: "clustRviz Quick Start"
 author: "John Nagorski"
 date: "`r Sys.Date()`"
 output: 
@@ -25,12 +25,12 @@ knitr::opts_chunk$set(
 
 This vignette provides a quick usage guide to the `clustRviz` package, 
 including fitting and visualization.
-In the sections below we work through an example dataset, 
-illustrating both clustering and biclustering.
+In the sections below we work through a simple example dataset, 
+illustrating both clustering and biclustering in `clustRviz`.
 While many details and customizations are discussed in the 
 [clustRviz Details Vignette](clustRvizDetails.html), 
-for now we show how `clustRviz` can quickly be used to achieved 
-insights into our clustering solutions.
+for now we show how to quickly fit, visualize, and 
+save in `clustRviz`. 
 
 
 # A Clustering Example
@@ -114,6 +114,8 @@ In the plot above displays the first two principal components of the
 data, with black points representing the original data, and red 
 curves illustrating movement along the solution path. As curves 
 join together, observations are fused together and clusters are formed.
+The `percent` argument tells plot to display a snapshot of the 
+clustering solution path at $`10\%`$ regularization.
 
 Both the dendrogram and the clustering solution path may be 
 viewed together interactively via the use of `shiny` applications:
@@ -122,6 +124,10 @@ viewed together interactively via the use of `shiny` applications:
 plot(carp.fit,type = 'interactive')
 ```
 
+`CARP`'s interactive visualizations allow one to view cluster 
+solution path and dendrogram as the Algorithmic Regularization 
+iterates vary.
+
 In addition to visualizations, cluster solutions may be obtained 
 via the `Clustering` function:
 
@@ -129,7 +135,7 @@ via the `Clustering` function:
 # get the 3 cluster solution along the path
 carp.clusters <- Clustering(carp.fit,k = 3)
 # display the labels
-head(carp.clusters$clustering.assignment)
+table(carp.clusters$clustering.assignment)
 # display the cluster mean
 head(carp.clusters$cluster.means)
 ```
@@ -187,16 +193,64 @@ cbass.fit <- CBASS(Xdat)
 ```
 
 Once fitted, vizualizations are displayed again via the `plot` function. 
-For CBASS fits, the default visualization is the bicluster heatmap:
+For CBASS fits, the default visualization is again the cluster dendrogram 
+of the observations induced by the CBASS solution path.
 
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
 plot(cbass.fit)
 ```
 
+Since both observations and variables are clustered simultaneously, a 
+cluster dendrogram for the variables may also be plotted:
+
+```{r,fig.width=5,fig.height=5,fig.align='center'}
+plot(cbass.fit,type='var.dendrogram')
+```
+
+Additionally both dendrograms and the associated cluster heatmap 
+can be viewed by passing the `heatmap` arguement.
+
+```{r,fig.width=10,fig.height=10,fig.align='center'}
+plot(cbass.fit,type='heatmap')
+```
+
 As was the case of `CARP`, interactive visualizations may also be displayed:
 
 ```{r,eval=FALSE}
-plot(cbass.fit,type='interactive')
+# plot(cbass.fit,type='interactive')
 ```
 
-Saving our visualizations 
+`CBASS`'s interactive visualizations allows one to view dynamic changes in the 
+cluster heatmap and dendrogram solutions along the path.
+
+
+As was the case with `CARP`, clustering solutions are obtained via the 
+`Clustering` function. The desired clustering solution is returned by
+specifying either the number of observation clusters (`k.obs`), 
+the number of variable clusters (`k.var`), or the percent of 
+regularization (`percent`). In any case, `Clustering` returns 
+the observation and variable clustering assignments, as well as
+the matrix of cluster means.
+
+In the example below we obtain the biclustering solution 
+which obtains $3$ observation clusters:
+
+```{r}
+# obtain the desired clustering solution along the path
+cbass.clusters <- Clustering(cbass.fit,k.obs = 3)
+# observation clusters
+table(cbass.clusters$clustering.assignment.obs)
+# variable clusters
+table(cbass.clusters$clustering.assignment.var)
+# mean matrix
+cbass.clusters$cluster.mean.matrix[,1:5]
+```
+
+
+Finally we demonstrate how to save the visualizations 
+produced by `CBASS`. Similar to `CARP` visualizations 
+can be saved via the `saveviz` function which allows for saving 
+static and dynamic visuals.
+
+
+

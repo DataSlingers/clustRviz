@@ -38,8 +38,14 @@ test_that("CBASS Runs w/ cbassl1",{
     NA
   )
 })
-cbass.fit <- CBASS(X=Xdat)
 
+
+
+
+
+
+context('CBASS Printing')
+cbass.fit <- CBASS(X=Xdat)
 test_that("print.CBASS Runs",{
   expect_error(
     print(cbass.fit),
@@ -47,6 +53,10 @@ test_that("print.CBASS Runs",{
   )
 })
 
+
+
+
+context('CBASS Plotting')
 test_that("plot.CBASS Runs",{
   expect_error(
     plot(cbass.fit),
@@ -82,9 +92,30 @@ test_that("plot.CBASS interactive Runs",{
   )
 })
 
-test_that("Clustering CBASS  Runs",{
+
+
+context('CBASS Clustering')
+test_that("Clustering CBASS  Runs k.obs=1",{
   expect_error(
     Clustering(cbass.fit,k.obs=1),
+    NA
+  )
+})
+test_that("Clustering CBASS  Runs k.obs=2",{
+  expect_error(
+    Clustering(cbass.fit,k.obs=2),
+    NA
+  )
+})
+test_that("Clustering CBASS  Runs k.var=2",{
+  expect_error(
+    Clustering(cbass.fit,k.var=2),
+    NA
+  )
+})
+test_that("Clustering CBASS  Runs percent=.3",{
+  expect_error(
+    Clustering(cbass.fit,percent=.3),
     NA
   )
 })
