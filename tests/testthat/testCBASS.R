@@ -26,6 +26,18 @@ test_that("CBASS Runs w/ cbassvizl1",{
     NA
   )
 })
+test_that("CBASS Runs w/ cbass",{
+  expect_error(
+    cbass.fit <- CBASS(X=Xdat,control = list(alg.type='cbass')),
+    NA
+  )
+})
+test_that("CBASS Runs w/ cbassl1",{
+  expect_error(
+    cbass.fit <- CBASS(X=Xdat,control = list(alg.type='cbassl1')),
+    NA
+  )
+})
 cbass.fit <- CBASS(X=Xdat)
 
 test_that("print.CBASS Runs",{

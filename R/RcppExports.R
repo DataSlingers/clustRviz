@@ -32,3 +32,11 @@ BICARPL1_VIS <- function(x, n, p, lambda_init, weights_col, weights_row, uinit_r
     .Call('_clustRviz_BICARPL1_VIS', PACKAGE = 'clustRviz', x, n, p, lambda_init, weights_col, weights_row, uinit_row, uinit_col, vinit_row, vinit_col, premat_row, premat_col, IndMat_row, IndMat_col, EOneIndMat_row, EOneIndMat_col, ETwoIndMat_row, ETwoIndMat_col, rho, max_iter, burn_in, verbose, verbose_inner, try_tol, ti, t_switch)
 }
 
+BICARPL2_NF_FRAC <- function(x, n, p, lambda_init, t, weights_row, weights_col, uinit_row, uinit_col, vinit_row, vinit_col, premat_row, premat_col, IndMat_row, IndMat_col, EOneIndMat_row, EOneIndMat_col, ETwoIndMat_row, ETwoIndMat_col, rho = 1, max_iter = 1e4L, burn_in = 50L, verbose = FALSE, keep = 10L) {
+    .Call('_clustRviz_BICARPL2_NF_FRAC', PACKAGE = 'clustRviz', x, n, p, lambda_init, t, weights_row, weights_col, uinit_row, uinit_col, vinit_row, vinit_col, premat_row, premat_col, IndMat_row, IndMat_col, EOneIndMat_row, EOneIndMat_col, ETwoIndMat_row, ETwoIndMat_col, rho, max_iter, burn_in, verbose, keep)
+}
+
+BICARPL1_NF_FRAC <- function(x, n, p, lambda_init, t, weights_row, weights_col, uinit_row, uinit_col, vinit_row, vinit_col, premat_row, premat_col, IndMat_row, IndMat_col, EOneIndMat_row, EOneIndMat_col, ETwoIndMat_row, ETwoIndMat_col, rho = 1, max_iter = 1e4L, burn_in = 50L, verbose = FALSE, keep = 10L) {
+    .Call('_clustRviz_BICARPL1_NF_FRAC', PACKAGE = 'clustRviz', x, n, p, lambda_init, t, weights_row, weights_col, uinit_row, uinit_col, vinit_row, vinit_col, premat_row, premat_col, IndMat_row, IndMat_col, EOneIndMat_row, EOneIndMat_col, ETwoIndMat_row, ETwoIndMat_col, rho, max_iter, burn_in, verbose, keep)
+}
+
