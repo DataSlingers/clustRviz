@@ -197,3 +197,37 @@ test_that("saveviz runs with static var.dend, percent",{
     NA
   )
 })
+
+test_that("saveviz runs with static heatmap, k.obs",{
+  expect_error(
+    saveviz(cbass.fit,
+            file.name = 'cbass_heatmap_static_kobs.png',
+            plot.type = 'heatmap',
+            image.type = 'static',
+            k.obs = 4
+            ),
+    NA
+  )
+})
+test_that("saveviz runs with static heatmap, k.var",{
+  expect_error(
+    saveviz(cbass.fit,
+            file.name = 'cbass_heatmap_static_kvar.png',
+            plot.type = 'heatmap',
+            image.type = 'static',
+            k.var = 10
+            ),
+    NA
+  )
+})
+test_that("saveviz runs with static heatmap, percent",{
+  expect_error(
+    saveviz(cbass.fit,
+            file.name = 'cbass_heatmap_static_percent.png',
+            plot.type = 'heatmap',
+            image.type = 'static',
+            percent=.2
+            ),
+    NA
+  )
+})

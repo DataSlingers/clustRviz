@@ -2364,6 +2364,26 @@ saveviz.CBASS <- function(
         },
         static={
           ### Static Heatmap
+          if(x$X.center.global){
+            X.heat <- x$X
+            X.heat <- X.heat - mean(X.heat)
+            X.heat <- t(X.heat)
+            X <- x$X
+            X <- X - mean(X)
+            X <- t(X)
+          }else{
+            X.heat <- t(x$X)
+            X <- t(x$X)
+          }
+          colnames(X.heat) <- x$obs.labels
+          rownames(X.heat) <- x$var.labels
+          nbreaks <- 50
+          quant.probs <- seq(0,1,length.out = nbreaks)
+          breaks <- unique(stats::quantile(X[TRUE],probs = quant.probs))
+          nbreaks <- length(breaks)
+          heatcols <- grDevices::colorRampPalette(c("blue","yellow"))(nbreaks - 1)
+
+          my.cols <- grDevices::adjustcolor(c('black','grey'),alpha.f = .3)
           lam.vec <- x$cbass.sol.path$lambda.path %>% as.vector()
           max.lam <- max(lam.vec)
           lam.vec %>%
@@ -2414,7 +2434,50 @@ saveviz.CBASS <- function(
           } else{
             stop('Select exactly one of k.obs, k.var, or percent')
           }
-
+          # find lambda closest in column path
+          cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
+          # find clustering solution in column path
+          cur.col.clust.assignment <- x$cbass.cluster.path.obs$clust.path[[cur.col.lam.ind]]$membership
+          cur.col.clust.labels <- unique(cur.col.clust.assignment)
+          cur.col.nclust <- length(cur.col.clust.labels)
+          # find lambda closest in row path
+          cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.var$lambda.path.inter - cur.lam))
+          # find clustering solution in row path
+          cur.row.clust.assignment <- x$cbass.cluster.path.var$clust.path[[cur.row.lam.ind]]$membership
+          cur.row.clust.labels <- unique(cur.row.clust.assignment)
+          cur.row.nclust <- length(cur.row.clust.labels)
+          for(col.label.ind in seq_along(cur.col.clust.labels)){
+            cur.col.label <- cur.col.clust.labels[col.label.ind]
+            col.inds <- which(cur.col.clust.assignment == cur.col.label)
+            for(row.label.ind in seq_along(cur.row.clust.labels)){
+              cur.row.label <- cur.row.clust.labels[row.label.ind]
+              row.inds <- which(cur.row.clust.assignment == cur.row.label)
+              mean.value <- mean(X[row.inds,col.inds])
+              X.heat[row.inds,col.inds] <- mean.value
+            }
+          }
+          png(file.name,width = dynamic.width,height = dynamic.height)
+          plot.new()
+          par(mar=c(14,7,2,1))
+          my.heatmap.2(x=X.heat,
+                       scale='none',
+                       Colv=stats::as.dendrogram(x$cbass.dend.obs),
+                       Rowv = stats::as.dendrogram(x$cbass.dend.var),
+                       trace='none',
+                       density.info = 'none',
+                       key=FALSE,
+                       breaks = breaks,
+                       col=heatcols,
+                       symkey = F,
+                       Row.hclust = x$cbass.dend.var %>% stats::as.hclust(),
+                       Col.hclust = x$cbass.dend.obs %>% stats::as.hclust(),
+                       k.col=cur.col.nclust,
+                       k.row=cur.row.nclust,
+                       my.col.vec = my.cols,
+                       cexRow = heatrow.label.cex,
+                       cexCol = heatcol.label.cex,
+                       margins = c(10,10))
+          dev.off()
           ### END Static Heatmap
         }
       )
