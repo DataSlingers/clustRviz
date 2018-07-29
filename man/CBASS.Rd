@@ -48,8 +48,8 @@ variable weights
 burn.in an integer. The number of initial iterations at a fixed
 value of (small) lambda_k
 
-alg.type Which CARP algorithm to perform. Choices are 'cbassviz'
-and 'cbass'
+alg.type Which CARP algorithm to perform. Choices are 'cbassviz',
+'cbass','cbassl1', and 'cbassvizl1'
 
 interactive A logical. Should an interactive heatmap be returned?
 

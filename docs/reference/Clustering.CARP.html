@@ -73,6 +73,9 @@
     <li>
       <a href="../articles/Getting_Started.html">Getting Started</a>
     </li>
+    <li>
+      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
+    </li>
   </ul>
 </li>
       </ul>
@@ -157,20 +160,20 @@ mean matricies are returned.</p>
 <span class='no'>carp.fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='CARP.html'>CARP</a></span>(<span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>)</div><div class='output co'>#&gt; <span class='message'>Pre-computing weight-based edge sets</span></div><div class='output co'>#&gt; <span class='message'>Computing CARP Path</span></div><div class='output co'>#&gt; <span class='message'>Post-processing</span></div><div class='input'><span class='co'># Return the CARP iterate with k=5 clusters</span>
 <span class='no'>carp.clustering</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Clustering.html'>Clustering</a></span>(<span class='no'>carp.fit</span>,<span class='kw'>k</span><span class='kw'>=</span><span class='fl'>5</span>)
 <span class='co'># Examine the cluster labels</span>
-<span class='no'>carp.clustering</span>$<span class='no'>clustering.assignment</span></div><div class='output co'>#&gt;  [1] "cl1" "cl2" "cl2" "cl3" "cl2" "cl2" "cl2" "cl3" "cl4" "cl5"</div><div class='input'><span class='co'># Examine the cluster means</span>
-<span class='fu'>head</span>(<span class='no'>carp.clustering</span>$<span class='no'>cluster.means</span>)</div><div class='output co'>#&gt;           cl1      cl2       cl3       cl4      cl5
-#&gt; [1,] 3.433987 3.999821 1.0397208 2.9957323 2.197225
-#&gt; [2,] 2.397895 3.970371 0.0000000 3.6635616 2.708050
-#&gt; [3,] 1.791759 2.416555 0.0000000 0.6931472 2.944439
-#&gt; [4,] 2.564949 3.421564 0.6931472 1.9459101 0.000000</div><div class='input'><span class='co'># Return the whole sequence of solutions</span>
+<span class='no'>carp.clustering</span>$<span class='no'>clustering.assignment</span></div><div class='output co'>#&gt;  [1] "cl1" "cl2" "cl3" "cl4" "cl3" "cl3" "cl3" "cl4" "cl1" "cl5"</div><div class='input'><span class='co'># Examine the cluster means</span>
+<span class='fu'>head</span>(<span class='no'>carp.clustering</span>$<span class='no'>cluster.means</span>)</div><div class='output co'>#&gt;           cl1      cl2      cl3       cl4      cl5
+#&gt; [1,] 3.214860 4.248495 3.937653 1.0397208 2.197225
+#&gt; [2,] 3.030728 4.663439 3.797104 0.0000000 2.708050
+#&gt; [3,] 1.242453 2.995732 2.271761 0.0000000 2.944439
+#&gt; [4,] 2.255430 1.945910 3.790477 0.6931472 0.000000</div><div class='input'><span class='co'># Return the whole sequence of solutions</span>
 <span class='no'>carp.clustering.full</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='Clustering.html'>Clustering</a></span>(<span class='no'>carp.fit</span>)
 <span class='co'># Examine the k=5 solution again</span>
-<span class='no'>carp.clustering.full</span>$<span class='no'>clustering.assignment</span>[<span class='fl'>5</span>,]</div><div class='output co'>#&gt;  [1] "cl1" "cl2" "cl2" "cl3" "cl2" "cl2" "cl2" "cl3" "cl4" "cl5"</div><div class='input'><span class='co'># Examine the k=5 means again</span>
-<span class='fu'>head</span>(<span class='no'>carp.clustering.full</span>$<span class='no'>cluster.means</span><span class='kw'>[[</span><span class='fl'>5</span>]])</div><div class='output co'>#&gt;           cl1      cl2       cl3       cl4      cl5
-#&gt; [1,] 3.433987 3.999821 1.0397208 2.9957323 2.197225
-#&gt; [2,] 2.397895 3.970371 0.0000000 3.6635616 2.708050
-#&gt; [3,] 1.791759 2.416555 0.0000000 0.6931472 2.944439
-#&gt; [4,] 2.564949 3.421564 0.6931472 1.9459101 0.000000</div></pre>
+<span class='no'>carp.clustering.full</span>$<span class='no'>clustering.assignment</span>[<span class='fl'>5</span>,]</div><div class='output co'>#&gt;  [1] "cl1" "cl2" "cl3" "cl4" "cl3" "cl3" "cl3" "cl4" "cl1" "cl5"</div><div class='input'><span class='co'># Examine the k=5 means again</span>
+<span class='fu'>head</span>(<span class='no'>carp.clustering.full</span>$<span class='no'>cluster.means</span><span class='kw'>[[</span><span class='fl'>5</span>]])</div><div class='output co'>#&gt;           cl1      cl2      cl3       cl4      cl5
+#&gt; [1,] 3.214860 4.248495 3.937653 1.0397208 2.197225
+#&gt; [2,] 3.030728 4.663439 3.797104 0.0000000 2.708050
+#&gt; [3,] 1.242453 2.995732 2.271761 0.0000000 2.944439
+#&gt; [4,] 2.255430 1.945910 3.790477 0.6931472 0.000000</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

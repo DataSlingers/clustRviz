@@ -73,6 +73,9 @@
     <li>
       <a href="../articles/Getting_Started.html">Getting Started</a>
     </li>
+    <li>
+      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
+    </li>
   </ul>
 </li>
       </ul>
@@ -101,9 +104,9 @@
 <span class='fu'><a href='saveviz.html'>saveviz</a></span>(<span class='no'>x</span>, <span class='no'>file.name</span>, <span class='kw'>plot.type</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"path"</span>, <span class='st'>"dendrogram"</span>),
   <span class='kw'>image.type</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"dynamic"</span>, <span class='st'>"static"</span>), <span class='kw'>static.image.type</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"png"</span>),
   <span class='kw'>axis</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"PC1"</span>, <span class='st'>"PC2"</span>), <span class='kw'>dend.branch.width</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>dend.labels.cex</span> <span class='kw'>=</span> <span class='fl'>0.6</span>,
-  <span class='kw'>percent</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>percent.seq</span> <span class='kw'>=</span> <span class='fu'>seq</span>(<span class='kw'>from</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>to</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>by</span> <span class='kw'>=</span> <span class='fl'>0.05</span>),
-  <span class='kw'>dynamic.width</span> <span class='kw'>=</span> <span class='fl'>1200</span>, <span class='kw'>dynamic.height</span> <span class='kw'>=</span> <span class='fl'>700</span>, <span class='kw'>static.width</span> <span class='kw'>=</span> <span class='fl'>8</span>,
-  <span class='kw'>static.height</span> <span class='kw'>=</span> <span class='fl'>5</span>)</pre>
+  <span class='kw'>percent</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>k</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>percent.seq</span> <span class='kw'>=</span> <span class='fu'>seq</span>(<span class='kw'>from</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>to</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>by</span> <span class='kw'>=</span>
+  <span class='fl'>0.05</span>), <span class='kw'>dynamic.width</span> <span class='kw'>=</span> <span class='fl'>1200</span>, <span class='kw'>dynamic.height</span> <span class='kw'>=</span> <span class='fl'>700</span>, <span class='kw'>static.width</span> <span class='kw'>=</span> <span class='fl'>8</span>,
+  <span class='kw'>static.height</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='no'>...</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -150,7 +153,14 @@ plot.type</p></td>
     <tr>
       <th>percent</th>
       <td><p>a number between 0 and 1. Specifies how far along the
-CARP path the static visualizations should display.</p></td>
+CARP path the static visualizations should display in terms of
+percent reguarlization.</p></td>
+    </tr>
+    <tr>
+      <th>k</th>
+      <td><p>an interger between 1 and n.obs. Specifies how far along the
+CARP path the static visualizations should display in term of
+number of clusters.</p></td>
     </tr>
     <tr>
       <th>percent.seq</th>
@@ -172,6 +182,10 @@ positions along the CARP path used to generate dynamic images.</p></td>
     <tr>
       <th>static.height</th>
       <td><p>static output height in inches</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Unused additional generic arguements</p></td>
     </tr>
     </table>
     

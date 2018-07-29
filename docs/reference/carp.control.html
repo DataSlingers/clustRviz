@@ -73,6 +73,9 @@
     <li>
       <a href="../articles/Getting_Started.html">Getting Started</a>
     </li>
+    <li>
+      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
+    </li>
   </ul>
 </li>
       </ul>
@@ -98,10 +101,11 @@
     
 
     <pre class="usage"><span class='fu'>carp.control</span>(<span class='kw'>obs.labels</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>var.labels</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>X.center</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>X.scale</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>phi</span> <span class='kw'>=</span> <span class='fl'>0.001</span>, <span class='kw'>rho</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>k</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>X.scale</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>phi</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>rho</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>k</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>weight.dist</span> <span class='kw'>=</span> <span class='st'>"euclidean"</span>, <span class='kw'>weight.dist.p</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>ncores</span> <span class='kw'>=</span> <span class='fu'>as.integer</span>(<span class='fl'>1</span>),
   <span class='kw'>max.iter</span> <span class='kw'>=</span> <span class='fu'>as.integer</span>(<span class='fl'>1e+06</span>), <span class='kw'>burn.in</span> <span class='kw'>=</span> <span class='fu'>as.integer</span>(<span class='fl'>50</span>),
-  <span class='kw'>alg.type</span> <span class='kw'>=</span> <span class='st'>"carpviz"</span>, <span class='kw'>t</span> <span class='kw'>=</span> <span class='fl'>1.05</span>, <span class='kw'>npcs</span> <span class='kw'>=</span> <span class='fu'>as.integer</span>(<span class='fl'>4</span>), <span class='no'>...</span>)</pre>
+  <span class='kw'>alg.type</span> <span class='kw'>=</span> <span class='st'>"carpviz"</span>, <span class='kw'>t</span> <span class='kw'>=</span> <span class='fl'>1.05</span>, <span class='kw'>npcs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>dendrogram.scale</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>...</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -174,6 +178,12 @@ Determines observation pairs' fusion amount.</p></td>
       <th>npcs</th>
       <td><p>A integer &gt;= 2. The number of principal components to compute
 for path visualization.</p></td>
+    </tr>
+    <tr>
+      <th>dendrogram.scale</th>
+      <td><p>a character string denoting how the scale of dendrogram
+regularization proportions should be visualized. Choices are 'original'
+or 'log'; if not provided, a choice is made based on the data provided.</p></td>
     </tr>
     <tr>
       <th>...</th>

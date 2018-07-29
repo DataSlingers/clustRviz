@@ -51,6 +51,9 @@
     <li>
       <a href="../articles/Getting_Started.html">Getting Started</a>
     </li>
+    <li>
+      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
+    </li>
   </ul>
 </li>
       </ul>
@@ -69,7 +72,7 @@
       <h1>Getting Started</h1>
                         <h4 class="author">John Nagorski</h4>
             
-            <h4 class="date">2018-06-29</h4>
+            <h4 class="date">2018-07-28</h4>
           </div>
 
     
@@ -128,7 +131,7 @@ Xdat[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>
 <span class="co">#&gt; Number of Observations: 44</span>
 <span class="co">#&gt; Number of Variables: 75</span>
 <span class="co">#&gt; Pre-processing: center</span>
-<span class="co">#&gt; Weights: RBF Kernel, phi = 0.001, k = 4</span>
+<span class="co">#&gt; Weights: RBF Kernel, phi = 0.01, k = 4</span>
 <span class="co">#&gt; Algorithm: CARP-VIZ</span>
 <span class="co">#&gt; Visualizations: Static DendStatic PathInteractive Dend/Path</span>
 <span class="co">#&gt; Raw Data:</span>
@@ -143,29 +146,29 @@ Xdat[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.cluster.ksol &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(carp.fit,<span class="dt">k=</span><span class="dv">5</span>)</code></pre></div>
 <p>We can examine the cluster assignments</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(carp.cluster.ksol<span class="op">$</span>clustering.assignment)
-<span class="co">#&gt; [1] "cl1" "cl1" "cl1" "cl2" "cl3" "cl3"</span></code></pre></div>
+<span class="co">#&gt; [1] "cl1" "cl1" "cl1" "cl2" "cl1" "cl3"</span></code></pre></div>
 <p>and the cluster means</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(carp.cluster.ksol<span class="op">$</span>cluster.means)
-<span class="co">#&gt;           cl1       cl2      cl3      cl4       cl5</span>
-<span class="co">#&gt; [1,] 3.696392 1.8627224 4.038285 1.381924 0.0000000</span>
-<span class="co">#&gt; [2,] 3.395965 2.0425014 4.075400 1.641153 0.6931472</span>
-<span class="co">#&gt; [3,] 2.928241 0.5157932 2.300496 1.592841 0.0000000</span>
-<span class="co">#&gt; [4,] 1.531153 0.7925161 3.551143 0.000000 2.1972246</span>
-<span class="co">#&gt; [5,] 2.967835 0.9780746 3.356572 1.181679 2.3025851</span>
-<span class="co">#&gt; [6,] 2.467062 0.1980421 3.096177 1.186066 0.0000000</span></code></pre></div>
+<span class="co">#&gt;           cl1       cl2       cl3      cl4       cl5</span>
+<span class="co">#&gt; [1,] 4.008753 1.8627224 2.9815602 1.381924 0.0000000</span>
+<span class="co">#&gt; [2,] 3.785386 2.0425014 3.5175609 1.641153 0.6931472</span>
+<span class="co">#&gt; [3,] 2.886858 0.5157932 0.6931472 1.592841 0.0000000</span>
+<span class="co">#&gt; [4,] 2.526057 0.7925161 2.9784151 0.000000 2.1972246</span>
+<span class="co">#&gt; [5,] 3.335124 0.9780746 2.0741921 1.181679 2.3025851</span>
+<span class="co">#&gt; [6,] 2.967508 0.1980421 1.6472141 1.186066 0.0000000</span></code></pre></div>
 <p>Besides specifying the number of clusters, CARP can also return clustering assignment based on the amount of regularization. Using the <code>percent</code> arguement we can specify the percent of regularization along the path at which to examine.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.cluster.regsol &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(carp.fit,<span class="dt">percent=</span>.<span class="dv">3</span>)</code></pre></div>
 <p>Cluster assignments and cluster means are returned as before</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(carp.cluster.regsol<span class="op">$</span>clustering.assignment)
 <span class="co">#&gt; [1] "cl1" "cl1" "cl1" "cl2" "cl1" "cl1"</span>
 <span class="kw">head</span>(carp.cluster.regsol<span class="op">$</span>cluster.means)
-<span class="co">#&gt;           cl1       cl2      cl3       cl4</span>
-<span class="co">#&gt; [1,] 3.874771 1.8627224 1.381924 0.0000000</span>
-<span class="co">#&gt; [2,] 3.750453 2.0425014 1.641153 0.6931472</span>
-<span class="co">#&gt; [3,] 2.600722 0.5157932 1.592841 0.0000000</span>
-<span class="co">#&gt; [4,] 2.585061 0.7925161 0.000000 2.1972246</span>
-<span class="co">#&gt; [5,] 3.170654 0.9780746 1.181679 2.3025851</span>
-<span class="co">#&gt; [6,] 2.795296 0.1980421 1.186066 0.0000000</span></code></pre></div>
+<span class="co">#&gt;           cl1       cl2</span>
+<span class="co">#&gt; [1,] 3.247043 1.8627224</span>
+<span class="co">#&gt; [2,] 3.226682 2.0425014</span>
+<span class="co">#&gt; [3,] 2.312455 0.5157932</span>
+<span class="co">#&gt; [4,] 2.055121 0.7925161</span>
+<span class="co">#&gt; [5,] 2.743924 0.9780746</span>
+<span class="co">#&gt; [6,] 2.380273 0.1980421</span></code></pre></div>
 </div>
 <div id="carp---visualizations" class="section level2">
 <h2 class="hasAnchor">

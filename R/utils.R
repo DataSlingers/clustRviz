@@ -1198,6 +1198,37 @@ DenseWeights <- function(X,
   exp( (-1)*phi*( stats::dist(X,method=method,p=p)[TRUE] )^2)
 }
 
+#' (slowly) Compute sparse kNN weight vector from dense weights
+#'
+#' @param X an n by p matrix with rows the observations and columns the variables.
+#' @param dense.weights a vector dense weights, such as those returned
+#' by \code{DenseWeights}
+#' @param k a positive integer less than nobs. The number of nearest neighbors.
+#' @return sparse.weights a numeric vector of sparse weights
+#' @keywords internal
+#' @importFrom FNN get.knn
+#' @importFrom utils combn
+#' @importFrom dplyr %>%
+SparseWeights_LEGACY <- function(X,dense.weights, k){
+  nobs <- nrow(X)
+  tmp <- FNN::get.knn(X,k=k,algorithm = 'brute')
+  lapply(1:nobs,function(ind){
+    vec = rep(0,times=nobs)
+    vec[tmp$nn.index[ind,]] = 1
+    vec[ind] = 1
+    vec
+  }) %>%
+    do.call(rbind,.) -> mat.pat
+
+  apply(utils::combn(nobs,2),2,function(pair.ind){
+    vec1 <- mat.pat[pair.ind[1],]
+    vec2 <- mat.pat[pair.ind[2],]
+    andvec <- vec1*vec2
+    sum(as.logical(andvec[pair.ind[1]]) | as.logical(andvec[pair.ind[2]]))
+  }) -> sp.mask
+  dense.weights*sp.mask
+}
+
 #' Compute sparse kNN weight vector from dense weights
 #'
 #' @param X an n by p matrix with rows the observations and columns the variables.
@@ -1220,12 +1251,20 @@ SparseWeights <- function(X,dense.weights, k){
   }) %>%
     do.call(rbind,.) -> mat.pat
 
-  apply(utils::combn(nobs,2),2,function(pair.ind){
-    vec1 <- mat.pat[pair.ind[1],]
-    vec2 <- mat.pat[pair.ind[2],]
-    andvec <- vec1*vec2
-    sum(as.logical(andvec[pair.ind[1]]) | as.logical(andvec[pair.ind[2]]))
-  }) -> sp.mask
+
+  nnvec1 <- mat.pat
+  nnvec1[lower.tri(nnvec1,diag = TRUE)] <- NA
+  nnvec1 <- t(nnvec1)
+  nnvec1.final <- nnvec1[TRUE][!is.na(nnvec1[TRUE])]
+  nnvec1.final
+
+  nnvec2 <- t(mat.pat)
+  nnvec2[lower.tri(nnvec2,diag = TRUE)] <- NA
+  nnvec2 <- t(nnvec2)
+  nnvec2.final <- nnvec2[TRUE][!is.na(nnvec2[TRUE])]
+  nnvec2.final
+
+  sp.mask <- as.numeric(as.logical(nnvec1.final) | as.logical(nnvec2.final))
   dense.weights*sp.mask
 }
 

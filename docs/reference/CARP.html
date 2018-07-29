@@ -73,6 +73,9 @@
     <li>
       <a href="../articles/Getting_Started.html">Getting Started</a>
     </li>
+    <li>
+      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
+    </li>
   </ul>
 </li>
       </ul>
@@ -160,7 +163,7 @@ solutions is returned along with several visualizations.</p>
     <pre class="examples"><div class='input'><span class='fu'>library</span>(<span class='no'>clustRviz</span>)
 <span class='fu'>data</span>(<span class='st'>"presidential_speech"</span>)
 <span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>]
-<span class='no'>carp.fit</span> <span class='kw'>&lt;-</span> <span class='fu'>CARP</span>(<span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>)</div><div class='output co'>#&gt; <span class='message'>Pre-computing weight-based edge sets</span></div><div class='output co'>#&gt; <span class='message'>Computing CARP Path</span></div><div class='output co'>#&gt; <span class='message'>Post-processing</span></div><div class='input'><span class='no'>carp.fit</span></div><div class='output co'>#&gt; <span class='message'>CARP Fit Summary</span></div><div class='output co'>#&gt; <span class='message'>Number of Observations: 10</span></div><div class='output co'>#&gt; <span class='message'>Number of Variables: 4</span></div><div class='output co'>#&gt; <span class='message'>Pre-processing: center</span></div><div class='output co'>#&gt; <span class='message'>Weights: RBF Kernel, phi = 0.001, k = 2</span></div><div class='output co'>#&gt; <span class='message'>Algorithm: CARP-VIZ</span></div><div class='output co'>#&gt; <span class='message'>Visualizations: Static DendStatic PathInteractive Dend/Path</span></div><div class='output co'>#&gt; <span class='message'>Raw Data:</span></div><div class='output co'>#&gt;                     amount appropri  british     cent
+<span class='no'>carp.fit</span> <span class='kw'>&lt;-</span> <span class='fu'>CARP</span>(<span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>)</div><div class='output co'>#&gt; <span class='message'>Pre-computing weight-based edge sets</span></div><div class='output co'>#&gt; <span class='message'>Computing CARP Path</span></div><div class='output co'>#&gt; <span class='message'>Post-processing</span></div><div class='input'><span class='no'>carp.fit</span></div><div class='output co'>#&gt; <span class='message'>CARP Fit Summary</span></div><div class='output co'>#&gt; <span class='message'>Number of Observations: 10</span></div><div class='output co'>#&gt; <span class='message'>Number of Variables: 4</span></div><div class='output co'>#&gt; <span class='message'>Pre-processing: center</span></div><div class='output co'>#&gt; <span class='message'>Weights: RBF Kernel, phi = 0.1, k = 2</span></div><div class='output co'>#&gt; <span class='message'>Algorithm: CARP-VIZ</span></div><div class='output co'>#&gt; <span class='message'>Visualizations: Static DendStatic PathInteractive Dend/Path</span></div><div class='output co'>#&gt; <span class='message'>Raw Data:</span></div><div class='output co'>#&gt;                     amount appropri  british     cent
 #&gt; Abraham Lincoln   3.433987 2.397895 1.791759 2.564949
 #&gt; Andrew Jackson    4.248495 4.663439 2.995732 1.945910
 #&gt; Andrew Johnson    4.025352 3.091042 2.833213 3.332205

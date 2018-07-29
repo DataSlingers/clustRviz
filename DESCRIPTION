@@ -43,5 +43,6 @@ Suggests: testthat,
     knitr,
     rmarkdown,
     gridExtra,
-    tidyverse
+    tidyverse,
+    MASS
 VignetteBuilder: knitr

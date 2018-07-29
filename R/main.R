@@ -351,6 +351,7 @@ CARP <- function(X,
     k = k,
     burn.in = burn.in,
     alg.type = alg.type,
+    t = t,
     X.center=X.center,
     X.scale=X.scale,
     static=static,
@@ -398,8 +399,8 @@ CARP <- function(X,
 #' variable weights
 #' @return burn.in an integer. The number of initial iterations at a fixed
 #' value of (small) lambda_k
-#' @return alg.type Which CARP algorithm to perform. Choices are 'cbassviz'
-#' and 'cbass'
+#' @return alg.type Which CARP algorithm to perform. Choices are 'cbassviz',
+#' 'cbass','cbassl1', and 'cbassvizl1'
 #' @return interactive A logical. Should an interactive heatmap be returned?
 #' @return static A logical. Should observation and variable dendrograms
 #' be returned?
@@ -754,6 +755,7 @@ CBASS <- function(X,
     k.var = k.row,
     burn.in = burn.in,
     alg.type = alg.type,
+    t = t,
     X.center.global=X.center.global,
     static=static,
     interactive=interactive,
@@ -1040,10 +1042,10 @@ print.CARP <- function(x,...){
       alg.string = 'CARP-VIZ'
     },
     carp={
-      alg.string = 'CARP'
+      alg.string = paste('CARP (t=',x$t,')',sep='' )
     },
     carpl1={
-      alg.string = 'CARP L1'
+      alg.string = paste('CARP L1 (t=',x$t,')',sep='' )
     },
     carpvizl1={
       alg.string = 'CARP-VIZ L1'
@@ -1089,8 +1091,15 @@ print.CBASS <- function(x,...){
       alg.string = 'CBASS VIZ'
     },
     cbass={
-      alg.string = 'CBASS'
-    })
+      alg.string = paste('CBASS, (t=',x$t,')',sep='')
+    },
+    cbassl1={
+      alg.string = paste('CBASSL1, (t=',x$t,')',sep='')
+    },
+    cbassvizl1={
+      alg.string = 'CBASS VIZL1'
+    }
+  )
   viz.string <- c('Static Dend', 'Static Heatmap','Interactive Heatmap')
   message('CBASS Fit Summary\n')
   message('Number of Observations: ', x$n.obs,'\n')

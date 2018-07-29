@@ -68,6 +68,10 @@ Xdat <- as.matrix(petrol[,c('SG','VP','V10','EP')])
 head(Xdat)
 ```
 
+
+
+### Fitting with CARP
+
 Clustering is done via a simple call to the `CARP` function below.
 
 ```{r}
@@ -83,7 +87,7 @@ carp.fit <- CARP(
 Here we specify the sample number (`No`) as the labels for our observations.
 This is done by providing `obs.labels` to the `control` argument. 
 While not necessary, providing labels adds clarity to many visualizations. 
-Additionally, since our variable are measured on different scales, we 
+Additionally, since our variables are measured on different scales, we 
 set the `X.scale` option to `TRUE` as well; see `?carp.control` for additional 
 fitting options as well as examples in the 
 [clustRviz Details Vignette](clustRvizDetails.html)
@@ -110,12 +114,12 @@ plotting the principal components of the cluster means:
 plot(carp.fit,type = 'path',percent = .10)
 ```
 
-In the plot above displays the first two principal components of the 
+The plot above displays the first two principal components of the 
 data, with black points representing the original data, and red 
 curves illustrating movement along the solution path. As curves 
-join together, observations are fused together and clusters are formed.
-The `percent` argument tells plot to display a snapshot of the 
-clustering solution path at $`10\%`$ regularization.
+join together, observations are fused, and clusters formed.
+The `percent` argument tells `plot` to display a snapshot of the 
+clustering solution path at $10\%$ of total regularization.
 
 Both the dendrogram and the clustering solution path may be 
 viewed together interactively via the use of `shiny` applications:
@@ -124,7 +128,7 @@ viewed together interactively via the use of `shiny` applications:
 plot(carp.fit,type = 'interactive')
 ```
 
-`CARP`'s interactive visualizations allow one to view cluster 
+These interactive visualizations allow one to view the cluster 
 solution path and dendrogram as the Algorithmic Regularization 
 iterates vary.
 
@@ -192,7 +196,11 @@ biclustering solutions, and its usage is similar to `CARP`.
 We fit the biclustering solution path as follows:
 
 ```{r}
-cbass.fit <- CBASS(Xdat)
+CBASS(
+  X=Xdat,
+  control=list(
+    obs.labels = petrol$No
+  )) -> cbass.fit
 ```
 
 Once fitted, vizualizations are displayed again via the `plot` function. 
@@ -206,7 +214,7 @@ plot(cbass.fit)
 Since both observations and variables are clustered simultaneously, a 
 cluster dendrogram for the variables may also be plotted:
 
-```{r,fig.width=5,fig.height=5,fig.align='center'}
+```{r,eval=FALSE}
 plot(cbass.fit,type='var.dendrogram')
 ```
 
@@ -225,6 +233,7 @@ plot(cbass.fit,type='interactive')
 
 `CBASS`'s interactive visualizations allows one to view dynamic changes in the 
 cluster heatmap and dendrogram solutions along the path.
+
 As was the case with `CARP`, clustering solutions are obtained via the 
 `Clustering` function. The desired clustering solution is returned by
 specifying either the number of observation clusters (`k.obs`), 
