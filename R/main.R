@@ -36,6 +36,7 @@
 #' @importFrom dplyr mutate
 #' @importFrom dplyr group_by
 #' @importFrom dplyr ungroup
+#' @importFrom stats var
 #' @export
 #' @examples
 #' library(clustRviz)
@@ -170,7 +171,7 @@ CARP <- function(X,
     if(is.null(phi)){
       phi.vec <- 10^(-10:10)
       sapply(phi.vec,function(phi){
-        var(DenseWeights(X=t(X),phi = phi,method=weight.dist,p=weight.dist.p))
+        stats::var(DenseWeights(X=t(X),phi = phi,method=weight.dist,p=weight.dist.p))
       }) %>%
         which.max() %>%
         phi.vec[.] -> phi
@@ -404,6 +405,7 @@ CARP <- function(X,
 #' @return obs.labels a vector of length n.obs containing observations (row) labels
 #' @return var.labels a vector of length p.var containing variable (column) labels
 #' @return X.center.global a logical. If TRUE, the global mean of X is removed.
+#' @importFrom stats var
 #' @export
 #' @examples
 #' \dontrun{
@@ -527,7 +529,7 @@ CBASS <- function(X,
     if(is.null(phi)){
       phi.vec <- 10^(-10:10)
       sapply(phi.vec,function(phi){
-        var(DenseWeights(X=X,phi = phi,method=var.weight.dist,p=var.weight.dist.p))
+        stats::var(DenseWeights(X=X,phi = phi,method=var.weight.dist,p=var.weight.dist.p))
       }) %>%
         which.max() %>%
         phi.vec[.] -> phi
@@ -2073,6 +2075,7 @@ saveviz <- function(x,...) {
 #' @importFrom tools file_path_sans_ext
 #' @importFrom grDevices adjustcolor
 #' @importFrom grDevices png
+#' @importFrom grDevices dev.off
 #' @importFrom gganimate gganimate
 #' @importFrom animation ani.options
 #' @importFrom animation saveGIF
@@ -2256,7 +2259,7 @@ saveviz.CARP <- function(
             plot(ylab='Amount of Regularization',cex.lab=1.5)
           my.cols <- grDevices::adjustcolor(c('grey','black'),alpha.f = .2)
           my.rect.hclust(x$carp.dend,k=ncl,border=2,my.col.vec=my.cols,lwd=3)
-          dev.off()
+          grDevices::dev.off()
         }
       )
 
@@ -2308,6 +2311,8 @@ saveviz.CARP <- function(
 #' @importFrom ggplot2 ylab
 #' @importFrom ggplot2 scale_color_manual
 #' @importFrom ggrepel geom_text_repel
+#' @importFrom purrr map_dfr
+#' @importFrom dplyr tibble
 #' @importFrom dplyr filter
 #' @importFrom dplyr select
 #' @importFrom dplyr distinct
@@ -2316,8 +2321,12 @@ saveviz.CARP <- function(
 #' @importFrom dplyr left_join
 #' @importFrom dplyr select_
 #' @importFrom dplyr %>%
+#' @importFrom tools file_ext
+#' @importFrom tools file_path_sans_ext
 #' @importFrom grDevices adjustcolor
 #' @importFrom grDevices png
+#' @importFrom grDevices colorRampPalette
+#' @importFrom grDevices dev.off
 #' @importFrom gganimate gganimate
 #' @importFrom animation ani.options
 #' @importFrom animation saveGIF
@@ -2342,15 +2351,17 @@ saveviz.CBASS <- function(
   static.width = 8,
   static.height = 5
 ) {
-  n.not.null <- sum(
-    c(
-      !is.null(k.obs),
-      !is.null(k.var),
-      !is.null(percent)
+  if(image.type == 'static'){
+    n.not.null <- sum(
+      c(
+        !is.null(k.obs),
+        !is.null(k.var),
+        !is.null(percent)
+      )
     )
-  )
-  if( n.not.null != 1){
-    stop('Select exactly one of k.obs, k.var, or percent')
+    if( n.not.null != 1){
+      stop('Select exactly one of k.obs, k.var, or percent')
+    }
   }
   switch(
     plot.type,
@@ -2360,6 +2371,89 @@ saveviz.CBASS <- function(
         image.type,
         dynamic={
           ### Dynamic Heatmap
+          cur.file.ext = tools::file_ext(file.name)
+          if(cur.file.ext != 'gif'){
+            file.name = paste(
+              tools::file_path_sans_ext(file.name),
+              'gif',
+              sep='.'
+            )
+          }
+          if(x$X.center.global){
+            X.heat <- x$X
+            X.heat <- X.heat - mean(X.heat)
+            X.heat <- t(X.heat)
+            X <- x$X
+            X <- X - mean(X)
+            X <- t(X)
+          }else{
+            X.heat <- t(x$X)
+            X <- t(x$X)
+          }
+          colnames(X.heat) <- x$obs.labels
+          rownames(X.heat) <- x$var.labels
+          x$cbass.sol.path$lambda.path %>% as.vector() -> lam.seq
+          lam.prop.seq <- lam.seq / max(lam.seq)
+          nbreaks <- 50
+          quant.probs <- seq(0,1,length.out = nbreaks)
+          breaks <- unique(stats::quantile(X[TRUE],probs = quant.probs))
+          nbreaks <- length(breaks)
+          heatcols <- grDevices::colorRampPalette(c("blue","yellow"))(nbreaks - 1)
+          my.cols <- grDevices::adjustcolor(c('black','grey'),alpha.f = .3)
+
+
+          animation::saveGIF({
+            for(seq.idx in seq_along(percent.seq)){
+              percent.loop <- percent.seq[seq.idx]
+              plt.iter <- which.min(abs(percent.loop - lam.prop.seq))
+              # find lambda at iter
+              cur.lam <- x$cbass.sol.path$lambda.path[plt.iter]
+              cur.lam
+              # find lambda closest in column path
+              cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
+              # find clustering solution in column path
+              cur.col.clust.assignment <- x$cbass.cluster.path.obs$clust.path[[cur.col.lam.ind]]$membership
+              cur.col.clust.labels <- unique(cur.col.clust.assignment)
+              cur.col.nclust <- length(cur.col.clust.labels)
+              # find lambda closest in row path
+              cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.var$lambda.path.inter - cur.lam))
+              # find clustering solution in row path
+              cur.row.clust.assignment <- x$cbass.cluster.path.var$clust.path[[cur.row.lam.ind]]$membership
+              cur.row.clust.labels <- unique(cur.row.clust.assignment)
+              cur.row.nclust <- length(cur.row.clust.labels)
+              for(col.label.ind in seq_along(cur.col.clust.labels)){
+                cur.col.label <- cur.col.clust.labels[col.label.ind]
+                col.inds <- which(cur.col.clust.assignment == cur.col.label)
+                for(row.label.ind in seq_along(cur.row.clust.labels)){
+                  cur.row.label <- cur.row.clust.labels[row.label.ind]
+                  row.inds <- which(cur.row.clust.assignment == cur.row.label)
+                  mean.value <- mean(X[row.inds,col.inds])
+                  X.heat[row.inds,col.inds] <- mean.value
+                }
+              }
+              my.heatmap.2(x=X.heat,
+                           scale='none',
+                           Colv=stats::as.dendrogram(x$cbass.dend.obs),
+                           Rowv = stats::as.dendrogram(x$cbass.dend.var),
+                           trace='none',
+                           density.info = 'none',
+                           key=FALSE,
+                           breaks = breaks,
+                           col=heatcols,
+                           symkey = F,
+                           Row.hclust = x$cbass.dend.var %>% stats::as.hclust(),
+                           Col.hclust = x$cbass.dend.obs %>% stats::as.hclust(),
+                           k.col=cur.col.nclust,
+                           k.row=cur.row.nclust,
+                           my.col.vec = my.cols,
+                           cexRow = heatrow.label.cex,
+                           cexCol = heatcol.label.cex,
+                           margins = c(10,10))
+              par(mar=c(14,7,2,1))
+            }
+          },movie.name = file.name,img.name = "heatmap",ani.width=dynamic.width,ani.height=dynamic.height,clean=TRUE)
+
+          ### END Dynamic Heatmap
 
         },
         static={
@@ -2477,7 +2571,7 @@ saveviz.CBASS <- function(
                        cexRow = heatrow.label.cex,
                        cexCol = heatcol.label.cex,
                        margins = c(10,10))
-          dev.off()
+          grDevices::dev.off()
           ### END Static Heatmap
         }
       )
@@ -2488,6 +2582,63 @@ saveviz.CBASS <- function(
         image.type,
         dynamic={
           ### Dynamic Obs Dend
+          cur.file.ext = tools::file_ext(file.name)
+          if(cur.file.ext != 'gif'){
+            file.name = paste(
+              tools::file_path_sans_ext(file.name),
+              'gif',
+              sep='.'
+            )
+          }
+          lam.vec <- x$cbass.sol.path$lambda.path %>% as.vector()
+          max.lam <- max(lam.vec)
+          lam.vec %>%
+            purrr::map_dfr(.f=function(cur.lam){
+              # find lambda closest in column path
+              cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
+              # find clustering solution in column path
+              cur.col.clust.assignment <- x$cbass.cluster.path.obs$clust.path[[cur.col.lam.ind]]$membership
+              cur.col.clust.labels <- unique(cur.col.clust.assignment)
+              cur.col.nclust <- length(cur.col.clust.labels)
+              # find lambda closest in rowumn path
+              cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.var$lambda.path.inter - cur.lam))
+              # find clustering solution in rowumn path
+              cur.row.clust.assignment <- x$cbass.cluster.path.var$clust.path[[cur.row.lam.ind]]$membership
+              cur.row.clust.labels <- unique(cur.row.clust.assignment)
+              cur.row.nclust <- length(cur.row.clust.labels)
+              dplyr::tibble(
+                Lambda = cur.lam,
+                NObsCl = cur.col.nclust,
+                NVarCl = cur.row.nclust
+              )
+            })  %>%
+            dplyr::mutate(
+              Percent = Lambda / max.lam
+            ) -> cut.table
+
+          animation::saveGIF({
+            for(seq.idx in seq_along(percent.seq)){
+              percent <- percent.seq[seq.idx]
+              cut.table %>%
+                dplyr::filter(Percent <= percent)  %>%
+                dplyr::select(NObsCl) %>%
+                unlist() %>%
+                unname() %>%
+                min -> ncl
+              cbass.fit$cbass.dend.obs %>%
+                stats::as.dendrogram() %>%
+                dendextend::set("branches_lwd",dend.branch.width) %>%
+                dendextend::set("labels_cex",dend.labels.cex) %>%
+                plot(ylab='Amount of Regularization')
+              my.cols <- grDevices::adjustcolor(c('black','grey'),alpha.f = .3)
+              par(mar=c(14,7,2,1))
+              my.rect.hclust(x$cbass.dend.obs,k=ncl,border=2,my.col.vec=my.cols,lwd=3)
+
+
+
+            }
+          },movie.name = file.name,img.name = "obsdend",ani.width=dynamic.width,ani.height=dynamic.height,clean=TRUE)
+          ### END Dynamic Obs Dend
 
         },
         static={
@@ -2512,7 +2663,7 @@ saveviz.CBASS <- function(
             plot(ylab='Amount of Regularization')
           my.cols <- grDevices::adjustcolor(c('black','grey'),alpha.f = .3)
           my.rect.hclust(x$cbass.dend.obs,k=ncl,border=2,my.col.vec=my.cols,lwd=3)
-          dev.off()
+          grDevices::dev.off()
           ### END Static Obs Dend
         }
       )
@@ -2523,6 +2674,61 @@ saveviz.CBASS <- function(
         image.type,
         dynamic={
           ### Dynamic Var Dend
+          cur.file.ext = tools::file_ext(file.name)
+          if(cur.file.ext != 'gif'){
+            file.name = paste(
+              tools::file_path_sans_ext(file.name),
+              'gif',
+              sep='.'
+            )
+          }
+          lam.vec <- x$cbass.sol.path$lambda.path %>% as.vector()
+          max.lam <- max(lam.vec)
+          lam.vec %>%
+            purrr::map_dfr(.f=function(cur.lam){
+              # find lambda closest in column path
+              cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
+              # find clustering solution in column path
+              cur.col.clust.assignment <- x$cbass.cluster.path.obs$clust.path[[cur.col.lam.ind]]$membership
+              cur.col.clust.labels <- unique(cur.col.clust.assignment)
+              cur.col.nclust <- length(cur.col.clust.labels)
+              # find lambda closest in rowumn path
+              cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.var$lambda.path.inter - cur.lam))
+              # find clustering solution in rowumn path
+              cur.row.clust.assignment <- x$cbass.cluster.path.var$clust.path[[cur.row.lam.ind]]$membership
+              cur.row.clust.labels <- unique(cur.row.clust.assignment)
+              cur.row.nclust <- length(cur.row.clust.labels)
+              dplyr::tibble(
+                Lambda = cur.lam,
+                NObsCl = cur.col.nclust,
+                NVarCl = cur.row.nclust
+              )
+            })  %>%
+            dplyr::mutate(
+              Percent = Lambda / max.lam
+            ) -> cut.table
+
+          animation::saveGIF({
+            for(seq.idx in seq_along(percent.seq)){
+              percent <- percent.seq[seq.idx]
+              cut.table %>%
+                dplyr::filter(Percent <= percent)  %>%
+                dplyr::select(NVarCl) %>%
+                unlist() %>%
+                unname() %>%
+                min -> ncl
+              cbass.fit$cbass.dend.var %>%
+                stats::as.dendrogram() %>%
+                dendextend::set("branches_lwd",dend.branch.width) %>%
+                dendextend::set("labels_cex",dend.labels.cex) %>%
+                plot(ylab='Amount of Regularization')
+              my.cols <- grDevices::adjustcolor(c('black','grey'),alpha.f = .3)
+              par(mar=c(14,7,2,1))
+              my.rect.hclust(x$cbass.dend.var,k=ncl,border=2,my.col.vec=my.cols,lwd=3)
+
+            }
+          },movie.name = file.name,img.name = "vardend",ani.width=dynamic.width,ani.height=dynamic.height,clean=TRUE)
+          ### END Dynamic Var Dend
 
         },
         static={
@@ -2547,7 +2753,8 @@ saveviz.CBASS <- function(
             plot(ylab='Amount of Regularization')
           my.cols <- grDevices::adjustcolor(c('black','grey'),alpha.f = .3)
           my.rect.hclust(x$cbass.dend.var,k=ncl,border=2,my.col.vec=my.cols,lwd=3)
-          dev.off()
+          grDevices::dev.off()
+          ### END Static Var Dend
         }
       )
 

@@ -231,3 +231,24 @@ test_that("saveviz runs with static heatmap, percent",{
     NA
   )
 })
+
+test_that("saveviz runs with dynamic obsdend",{
+  expect_error(
+    saveviz(cbass.fit,
+            file.name = 'cbass_obsdend_dynamic.png',
+            plot.type = 'obs.dendrogram',
+            image.type = 'dynamic'
+            ),
+    NA
+  )
+})
+test_that("saveviz runs with dynamic vardend",{
+  expect_error(
+    saveviz(cbass.fit,
+            file.name = 'cbass_vardend_dynamic.png',
+            plot.type = 'var.dendrogram',
+            image.type = 'dynamic'
+            ),
+    NA
+  )
+})
