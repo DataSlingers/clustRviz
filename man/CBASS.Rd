@@ -4,8 +4,8 @@
 \alias{CBASS}
 \title{Compute CBASS solution path}
 \usage{
-CBASS(X, t = NULL, verbose = 1, interactive = TRUE, static = TRUE,
-  control = NULL, ...)
+CBASS(X, verbose = 1, interactive = TRUE, static = TRUE, control = NULL,
+  ...)
 }
 \arguments{
 \item{X}{A n.obs by p.var matrix with rows the observations and columns the variables}

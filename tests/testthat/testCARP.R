@@ -105,40 +105,41 @@ test_that("Clustering.CARP w/o args Runs",{
 
 
 
-context("CARP Saving")
-test_that("saveviz Runs w/o args",{
-  expect_error(
-    saveviz(carp.fit,file.name = 'saveviz1.png'),
-    NA
-  )
-})
-test_that("saveviz Runs w dynamic path",{
-  expect_error(
-    saveviz(carp.fit,file.name = 'saveviz2.png',plot.type = 'path',image.type = 'dynamic'),
-    NA
-  )
-})
-test_that("saveviz Runs w dynamic dendrogram",{
-  expect_error(
-    saveviz(carp.fit,file.name = 'saveviz3.png',plot.type = 'dendrogram',image.type = 'dynamic'),
-    NA
-  )
-})
-test_that("saveviz Runs w static path",{
-  expect_error(
-    saveviz(carp.fit,file.name = 'saveviz4.png',plot.type = 'path',image.type = 'static'),
-    NA
-  )
-})
-test_that("saveviz Runs w static path",{
-  expect_error(
-    saveviz(carp.fitl1,file.name = 'saveviz45.png',plot.type = 'path',image.type = 'static'),
-    NA
-  )
-})
-test_that("saveviz Runs w static dendrogram",{
-  expect_error(
-    saveviz(carp.fit,file.name = 'saveviz5.png',plot.type = 'dendrogram',image.type = 'static'),
-    NA
-  )
-})
+# context("CARP Saving")
+# test_that("saveviz Runs w dynamic path",{
+#   expect_error(
+#     saveviz(carp.fit,file.name = 'carp_path_dynamic.png',plot.type = 'path',image.type = 'dynamic'),
+#     NA
+#   )
+# })
+# test_that("saveviz Runs w dynamic dendrogram",{
+#   expect_error(
+#     saveviz(carp.fit,file.name = 'carp_dend_dynamic.png',plot.type = 'dendrogram',image.type = 'dynamic'),
+#     NA
+#   )
+# })
+#
+# test_that("saveviz Runs w static path, percent",{
+#   expect_error(
+#     saveviz(carp.fit,file.name = 'carp_path_static.png',plot.type = 'path',image.type = 'static',percent = .1),
+#     NA
+#   )
+# })
+# test_that("saveviz Runs w static path, k",{
+#   expect_error(
+#     saveviz(carp.fit,file.name = 'carp_path_static.png',plot.type = 'path',image.type = 'static',k=4),
+#     NA
+#   )
+# })
+# test_that("saveviz Runs w static dendrogram, percent",{
+#   expect_error(
+#     saveviz(carp.fit,file.name = 'carp_dend_static.png',plot.type = 'dendrogram',image.type = 'static',percent = .1),
+#     NA
+#   )
+# })
+# test_that("saveviz Runs w static dendrogram, k",{
+#   expect_error(
+#     saveviz(carp.fit,file.name = 'carp_dend_static.png',plot.type = 'dendrogram',image.type = 'static',k=4),
+#     NA
+#   )
+# })

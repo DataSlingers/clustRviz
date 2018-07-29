@@ -10,7 +10,7 @@
   dend.labels.cex = 0.6, heatrow.label.cex = 1.5, heatcol.label.cex = 1.5,
   percent = NULL, k.obs = NULL, k.var = NULL, percent.seq = seq(from =
   0.05, to = 1, by = 0.05), dynamic.width = 1200, dynamic.height = 700,
-  static.width = 8, static.height = 5)
+  static.width = 8, static.height = 5, ...)
 }
 \arguments{
 \item{x}{a CBASS object returned by \code{CBASS}}
@@ -37,12 +37,17 @@ static images.}
 \item{heatcol.label.cex}{heatmap column label size}
 
 \item{percent}{a number between 0 and 1. Specifies how far along the
-CARP path the static visualizations should display.}
+CARP path the static visualizations should display via the amount of
+regularization.}
 
-\item{k.obs}{An interger between 1 and \code{n.obs}. The number of unique
+\item{k.obs}{An interger between 1 and \code{n.obs}.
+Specifies how far along the
+CARP path the static visualizations should display via the number of unique
 observation clusters.}
 
-\item{k.var}{An interger between 1 and \code{p.var}. The number of unique
+\item{k.var}{An interger between 1 and \code{p.var}.
+Specifies how far along the
+CARP path the static visualizations should display via the number of unique
 variable clusters.}
 
 \item{percent.seq}{a vector of numbers between 0 and 1 specifying the
@@ -55,6 +60,8 @@ positions along the CARP path used to generate dynamic images.}
 \item{static.width}{static output width in inches}
 
 \item{static.height}{static output height in inches}
+
+\item{...}{Unused additional generic arguements}
 }
 \description{
 This function will save dynamic CBASS visualizations as gifs and static visualizations as image files

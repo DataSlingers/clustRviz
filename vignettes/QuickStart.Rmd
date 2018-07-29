@@ -165,13 +165,16 @@ above may be done as follows:
 
 ```{r,eval=FALSE}
 saveviz(
-  carp.fit,
-  "ClusterPathStatic.png",
+  x=carp.fit,
+  file.name="ClusterPathStatic.png",
   plot.type='path',
   image.type = 'static',
   percent=.10)
 ```
 
+The above saves a static snapshot of the cluster solution path 
+at $10\%$ regularization; the number of clusters `k` may
+also be specified instead of `percent`.
 Interactive visualization may be saved as `.gif` files by 
 specifiying `image.type='dynamic'`; see `?saveviz.CARP` for 
 details.
@@ -217,13 +220,11 @@ plot(cbass.fit,type='heatmap')
 As was the case of `CARP`, interactive visualizations may also be displayed:
 
 ```{r,eval=FALSE}
-# plot(cbass.fit,type='interactive')
+plot(cbass.fit,type='interactive')
 ```
 
 `CBASS`'s interactive visualizations allows one to view dynamic changes in the 
 cluster heatmap and dendrogram solutions along the path.
-
-
 As was the case with `CARP`, clustering solutions are obtained via the 
 `Clustering` function. The desired clustering solution is returned by
 specifying either the number of observation clusters (`k.obs`), 
@@ -250,7 +251,28 @@ cbass.clusters$cluster.mean.matrix[,1:5]
 Finally we demonstrate how to save the visualizations 
 produced by `CBASS`. Similar to `CARP` visualizations 
 can be saved via the `saveviz` function which allows for saving 
-static and dynamic visuals.
+static and dynamic visuals. For example, a `.gif` 
+of the variable dendrogram as it varies throughout the 
+path may be saved via:
 
+```{r,eval=FALSE}
+saveviz(x=cbass.fit,
+        file.name = 'cbass_vardend_dynamic.png',
+        plot.type = 'var.dendrogram',
+        image.type = 'dynamic'
+)
+```
+
+Similarly, a static snapshot of the bicluster heatmap at the moment 
+along the path when $4$ observation clusters are formed may be 
+saved also:
+```{r,eval=FALSE}
+saveviz(x=cbass.fit,
+        file.name = 'cbass_heatmap_static_kobs.png',
+        plot.type = 'heatmap',
+        image.type = 'static',
+        k.obs = 4
+)
+```
 
 

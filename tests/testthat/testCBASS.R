@@ -126,129 +126,129 @@ test_that("Clustering CBASS  Runs percent=.3",{
 
 
 
-context('CBASS Saving')
-test_that("saveviz runs with static obs.dend, k.obs",{
-  expect_error(
-    saveviz(cbass.fit,
-            file.name = 'cbass_obsdend_static_kobs.png',
-            plot.type = 'obs.dendrogram',
-            image.type = 'static',
-            k.obs=3
-            ),
-    NA
-  )
-})
-test_that("saveviz runs with static obs.dend, k.var",{
-  expect_error(
-    saveviz(cbass.fit,
-            file.name = 'cbass_obsdend_static_kvar.png',
-            plot.type = 'obs.dendrogram',
-            image.type = 'static',
-            k.var=3
-            ),
-    NA
-  )
-})
-
-test_that("saveviz runs with static obs.dend, percent",{
-  expect_error(
-    saveviz(cbass.fit,
-            file.name = 'cbass_obsdend_static_percent.png',
-            plot.type = 'obs.dendrogram',
-            image.type = 'static',
-            percent=.3
-            ),
-    NA
-  )
-})
-
-
-test_that("saveviz runs with static var.dend, k.obs",{
-  expect_error(
-    saveviz(cbass.fit,
-            file.name = 'cbass_vardend_static_kobs.png',
-            plot.type = 'var.dendrogram',
-            image.type = 'static',
-            k.obs=3
-            ),
-    NA
-  )
-})
-test_that("saveviz runs with static var.dend, k.var",{
-  expect_error(
-    saveviz(cbass.fit,
-            file.name = 'cbass_vardend_static_kvar.png',
-            plot.type = 'var.dendrogram',
-            image.type = 'static',
-            k.var=3
-            ),
-    NA
-  )
-})
-
-test_that("saveviz runs with static var.dend, percent",{
-  expect_error(
-    saveviz(cbass.fit,
-            file.name = 'cbass_vardend_static_percent.png',
-            plot.type = 'var.dendrogram',
-            image.type = 'static',
-            percent=.3
-            ),
-    NA
-  )
-})
-
-test_that("saveviz runs with static heatmap, k.obs",{
-  expect_error(
-    saveviz(cbass.fit,
-            file.name = 'cbass_heatmap_static_kobs.png',
-            plot.type = 'heatmap',
-            image.type = 'static',
-            k.obs = 4
-            ),
-    NA
-  )
-})
-test_that("saveviz runs with static heatmap, k.var",{
-  expect_error(
-    saveviz(cbass.fit,
-            file.name = 'cbass_heatmap_static_kvar.png',
-            plot.type = 'heatmap',
-            image.type = 'static',
-            k.var = 10
-            ),
-    NA
-  )
-})
-test_that("saveviz runs with static heatmap, percent",{
-  expect_error(
-    saveviz(cbass.fit,
-            file.name = 'cbass_heatmap_static_percent.png',
-            plot.type = 'heatmap',
-            image.type = 'static',
-            percent=.2
-            ),
-    NA
-  )
-})
-
-test_that("saveviz runs with dynamic obsdend",{
-  expect_error(
-    saveviz(cbass.fit,
-            file.name = 'cbass_obsdend_dynamic.png',
-            plot.type = 'obs.dendrogram',
-            image.type = 'dynamic'
-            ),
-    NA
-  )
-})
-test_that("saveviz runs with dynamic vardend",{
-  expect_error(
-    saveviz(cbass.fit,
-            file.name = 'cbass_vardend_dynamic.png',
-            plot.type = 'var.dendrogram',
-            image.type = 'dynamic'
-            ),
-    NA
-  )
-})
+# context('CBASS Saving')
+# test_that("saveviz runs with static obs.dend, k.obs",{
+#   expect_error(
+#     saveviz(cbass.fit,
+#             file.name = 'cbass_obsdend_static_kobs.png',
+#             plot.type = 'obs.dendrogram',
+#             image.type = 'static',
+#             k.obs=3
+#             ),
+#     NA
+#   )
+# })
+# test_that("saveviz runs with static obs.dend, k.var",{
+#   expect_error(
+#     saveviz(cbass.fit,
+#             file.name = 'cbass_obsdend_static_kvar.png',
+#             plot.type = 'obs.dendrogram',
+#             image.type = 'static',
+#             k.var=3
+#             ),
+#     NA
+#   )
+# })
+#
+# test_that("saveviz runs with static obs.dend, percent",{
+#   expect_error(
+#     saveviz(cbass.fit,
+#             file.name = 'cbass_obsdend_static_percent.png',
+#             plot.type = 'obs.dendrogram',
+#             image.type = 'static',
+#             percent=.3
+#             ),
+#     NA
+#   )
+# })
+#
+#
+# test_that("saveviz runs with static var.dend, k.obs",{
+#   expect_error(
+#     saveviz(cbass.fit,
+#             file.name = 'cbass_vardend_static_kobs.png',
+#             plot.type = 'var.dendrogram',
+#             image.type = 'static',
+#             k.obs=3
+#             ),
+#     NA
+#   )
+# })
+# test_that("saveviz runs with static var.dend, k.var",{
+#   expect_error(
+#     saveviz(cbass.fit,
+#             file.name = 'cbass_vardend_static_kvar.png',
+#             plot.type = 'var.dendrogram',
+#             image.type = 'static',
+#             k.var=3
+#             ),
+#     NA
+#   )
+# })
+#
+# test_that("saveviz runs with static var.dend, percent",{
+#   expect_error(
+#     saveviz(cbass.fit,
+#             file.name = 'cbass_vardend_static_percent.png',
+#             plot.type = 'var.dendrogram',
+#             image.type = 'static',
+#             percent=.3
+#             ),
+#     NA
+#   )
+# })
+#
+# test_that("saveviz runs with static heatmap, k.obs",{
+#   expect_error(
+#     saveviz(cbass.fit,
+#             file.name = 'cbass_heatmap_static_kobs.png',
+#             plot.type = 'heatmap',
+#             image.type = 'static',
+#             k.obs = 4
+#             ),
+#     NA
+#   )
+# })
+# test_that("saveviz runs with static heatmap, k.var",{
+#   expect_error(
+#     saveviz(cbass.fit,
+#             file.name = 'cbass_heatmap_static_kvar.png',
+#             plot.type = 'heatmap',
+#             image.type = 'static',
+#             k.var = 10
+#             ),
+#     NA
+#   )
+# })
+# test_that("saveviz runs with static heatmap, percent",{
+#   expect_error(
+#     saveviz(cbass.fit,
+#             file.name = 'cbass_heatmap_static_percent.png',
+#             plot.type = 'heatmap',
+#             image.type = 'static',
+#             percent=.2
+#             ),
+#     NA
+#   )
+# })
+#
+# test_that("saveviz runs with dynamic obsdend",{
+#   expect_error(
+#     saveviz(cbass.fit,
+#             file.name = 'cbass_obsdend_dynamic.png',
+#             plot.type = 'obs.dendrogram',
+#             image.type = 'dynamic'
+#             ),
+#     NA
+#   )
+# })
+# test_that("saveviz runs with dynamic vardend",{
+#   expect_error(
+#     saveviz(cbass.fit,
+#             file.name = 'cbass_vardend_dynamic.png',
+#             plot.type = 'var.dendrogram',
+#             image.type = 'dynamic'
+#             ),
+#     NA
+#   )
+# })

@@ -30,6 +30,7 @@
 #' and 'carp;
 #' @return X.center A logical. Should X be centered?
 #' @return X.scale A logical. Should X be scaled?
+#' @importFrom utils data
 #' @importFrom dplyr %>%
 #' @importFrom dplyr n
 #' @importFrom dplyr tbl_df
@@ -417,7 +418,6 @@ CARP <- function(X,
 #' ) -> cbass.fit
 #' }
 CBASS <- function(X,
-                 t=NULL,
                  verbose=1,
                  interactive=TRUE,
                  static=TRUE,
@@ -1200,6 +1200,24 @@ plot.CARP <- function(
   min.nclust=1,
   ...){
 
+  LambdaPercent <- NULL
+  Iter <- NULL
+  V1 <- NULL
+  V2 <- NULL
+  Obs <- NULL
+  ObsLabel <- NULL
+  LambdaPercent <- NULL
+  NCluster <- NULL
+  Iter <- NULL
+  Obs <- NULL
+  Cluster <- NULL
+  Var1 <- NULL
+  Var2 <- NULL
+  MaxVar1 <- NULL
+  MaxVar2 <- NULL
+  ObsLabel <- NULL
+  PlotCluster <- NULL
+
   type = match.arg(type)
   switch(
     type,
@@ -1898,6 +1916,7 @@ Clustering.CARP <- function(x,k=NULL,percent=NULL,...){
 #' cbass.clustering <- Clustering(cbass.fit,percent = .8)
 #' }
 Clustering.CBASS <- function(x,k.obs=NULL,k.var=NULL,percent=NULL,...){
+  Lambda <- NObsCl <- NVarCl <- Percent <- NULL
 
   n.not.null <- sum(
     c(
@@ -2040,7 +2059,11 @@ saveviz <- function(x,...) {
 #' etc. Specifics which principal component axis to display for the 'path'
 #' plot.type
 #' @param percent a number between 0 and 1. Specifies how far along the
-#' CARP path the static visualizations should display.
+#' CARP path the static visualizations should display in terms of
+#' percent reguarlization.
+#' @param k an interger between 1 and n.obs. Specifies how far along the
+#' CARP path the static visualizations should display in term of
+#' number of clusters.
 #' @param percent.seq a vector of numbers between 0 and 1 specifying the
 #' positions along the CARP path used to generate dynamic images.
 #' @param dend.branch.width a positive number. Line width on dendrograms.
@@ -2049,6 +2072,7 @@ saveviz <- function(x,...) {
 #' @param dynamic.height dynamic output heigth in pixels
 #' @param static.width static output width in inches
 #' @param static.height static output height in inches
+#' @param ... Unused additional generic arguements
 #' @importFrom stats as.dendrogram
 #' @importFrom ggplot2 ggplot
 #' @importFrom ggplot2 aes
@@ -2090,16 +2114,42 @@ saveviz.CARP <- function(
   axis = c('PC1','PC2'),
   dend.branch.width=2,
   dend.labels.cex=.6,
-  percent=1,
+  percent=NULL,
+  k=NULL,
   percent.seq = seq(from=.05,to=1,by=.05),
   dynamic.width=1200,
   dynamic.height = 700,
   static.width = 8,
-  static.height = 5
+  static.height = 5,
+  ...
 ) {
+
+  Iter <- NULL
+  Obs <- NULL
+  V1 <- NULL
+  V2 <- NULL
+  ObsLabel <- NULL
+  LambdaPercent <- NULL
+  PlotIdx <- NULL
+  FirstV1 <- NULL
+  FirstV2 <- NULL
+  FirstObsLabel <- NULL
+  NCluster <- NULL
+
   plot.type = match.arg(plot.type)
   image.type = match.arg(image.type)
   static.image.type = match.arg(static.image.type)
+  if(image.type == 'static'){
+    n.not.null <- sum(
+      c(
+        !is.null(k),
+        !is.null(percent)
+      )
+    )
+    if( n.not.null != 1){
+      stop('Select exactly one of k or percent for static images')
+    }
+  }
   switch(
     plot.type,
     path={
@@ -2178,31 +2228,60 @@ saveviz.CARP <- function(
 
         },
         static={
-          plot.frame %>%
-            dplyr::filter(LambdaPercent <= percent) %>%
-            dplyr::filter(Iter > x$burn.in) %>%
-            ggplot2::ggplot(ggplot2::aes(x=V1,y=V2,group=Obs))  +
-            ggplot2::geom_path(
-              ggplot2::aes(x=V1,y=V2),
-              linejoin = 'round',
-              color='red',
-              size=1
-            )  +
-            ggplot2::geom_point(
-              ggplot2::aes(x=FirstV1,y=FirstV2),
-              color='black',
-              size=I(2)
-            ) +
-            ggplot2::geom_text(
-              ggplot2::aes(x=FirstV1,y=FirstV2,label=FirstObsLabel),
-              size=I(3)
-            ) +
-            ggplot2::guides(color=FALSE,size=FALSE) +
-            ggplot2::theme(axis.title = ggplot2::element_text(size=15)) +
-            ggplot2::theme(axis.text = ggplot2::element_text(size=10)) +
-            ggplot2::xlab(axis[1]) +
-            ggplot2::ylab(axis[2]) -> p
-          ggsave(filename = file.name,plot=p,width=static.width,height = static.height,device=static.image.type)
+          if(!is.null(percent)){
+            plot.frame %>%
+              dplyr::filter(LambdaPercent <= percent) %>%
+              dplyr::filter(Iter > x$burn.in) %>%
+              ggplot2::ggplot(ggplot2::aes(x=V1,y=V2,group=Obs))  +
+              ggplot2::geom_path(
+                ggplot2::aes(x=V1,y=V2),
+                linejoin = 'round',
+                color='red',
+                size=1
+              )  +
+              ggplot2::geom_point(
+                ggplot2::aes(x=FirstV1,y=FirstV2),
+                color='black',
+                size=I(2)
+              ) +
+              ggplot2::geom_text(
+                ggplot2::aes(x=FirstV1,y=FirstV2,label=FirstObsLabel),
+                size=I(3)
+              ) +
+              ggplot2::guides(color=FALSE,size=FALSE) +
+              ggplot2::theme(axis.title = ggplot2::element_text(size=15)) +
+              ggplot2::theme(axis.text = ggplot2::element_text(size=10)) +
+              ggplot2::xlab(axis[1]) +
+              ggplot2::ylab(axis[2]) -> p
+            ggsave(filename = file.name,plot=p,width=static.width,height = static.height,device=static.image.type)
+          } else if(!is.null(k)){
+            plot.frame %>%
+              dplyr::filter(NCluster >= k) %>%
+              dplyr::filter(Iter > x$burn.in) %>%
+              ggplot2::ggplot(ggplot2::aes(x=V1,y=V2,group=Obs))  +
+              ggplot2::geom_path(
+                ggplot2::aes(x=V1,y=V2),
+                linejoin = 'round',
+                color='red',
+                size=1
+              )  +
+              ggplot2::geom_point(
+                ggplot2::aes(x=FirstV1,y=FirstV2),
+                color='black',
+                size=I(2)
+              ) +
+              ggplot2::geom_text(
+                ggplot2::aes(x=FirstV1,y=FirstV2,label=FirstObsLabel),
+                size=I(3)
+              ) +
+              ggplot2::guides(color=FALSE,size=FALSE) +
+              ggplot2::theme(axis.title = ggplot2::element_text(size=15)) +
+              ggplot2::theme(axis.text = ggplot2::element_text(size=10)) +
+              ggplot2::xlab(axis[1]) +
+              ggplot2::ylab(axis[2]) -> p
+            ggsave(filename = file.name,plot=p,width=static.width,height = static.height,device=static.image.type)
+
+          }
 
         }
       )
@@ -2243,23 +2322,38 @@ saveviz.CARP <- function(
 
         },
         static={
-          x$carp.cluster.path.vis %>%
-            dplyr::filter(LambdaPercent <= percent)  %>%
-            dplyr::select(NCluster) %>%
-            unlist() %>%
-            unname() %>%
-            min -> ncl
-          png(file.name,width = dynamic.width,height = dynamic.height)
-          plot.new()
-          par(mar=c(14,7,2,1))
-          x$carp.dend %>%
-            stats::as.dendrogram() %>%
-            dendextend::set("branches_lwd",2) %>%
-            dendextend::set("labels_cex",.6) %>%
-            plot(ylab='Amount of Regularization',cex.lab=1.5)
-          my.cols <- grDevices::adjustcolor(c('grey','black'),alpha.f = .2)
-          my.rect.hclust(x$carp.dend,k=ncl,border=2,my.col.vec=my.cols,lwd=3)
-          grDevices::dev.off()
+          if(!is.null(percent)){
+            x$carp.cluster.path.vis %>%
+              dplyr::filter(LambdaPercent <= percent)  %>%
+              dplyr::select(NCluster) %>%
+              unlist() %>%
+              unname() %>%
+              min -> ncl
+            png(file.name,width = dynamic.width,height = dynamic.height)
+            plot.new()
+            par(mar=c(14,7,2,1))
+            x$carp.dend %>%
+              stats::as.dendrogram() %>%
+              dendextend::set("branches_lwd",2) %>%
+              dendextend::set("labels_cex",.6) %>%
+              plot(ylab='Amount of Regularization',cex.lab=1.5)
+            my.cols <- grDevices::adjustcolor(c('grey','black'),alpha.f = .2)
+            my.rect.hclust(x$carp.dend,k=ncl,border=2,my.col.vec=my.cols,lwd=3)
+            grDevices::dev.off()
+          } else if(!is.null(k)){
+            ncl <- k
+            png(file.name,width = dynamic.width,height = dynamic.height)
+            plot.new()
+            par(mar=c(14,7,2,1))
+            x$carp.dend %>%
+              stats::as.dendrogram() %>%
+              dendextend::set("branches_lwd",2) %>%
+              dendextend::set("labels_cex",.6) %>%
+              plot(ylab='Amount of Regularization',cex.lab=1.5)
+            my.cols <- grDevices::adjustcolor(c('grey','black'),alpha.f = .2)
+            my.rect.hclust(x$carp.dend,k=ncl,border=2,my.col.vec=my.cols,lwd=3)
+            grDevices::dev.off()
+          }
         }
       )
 
@@ -2283,10 +2377,15 @@ saveviz.CARP <- function(
 #' @param static.image.type string specifying the graphics device with which to save
 #' static images.
 #' @param percent a number between 0 and 1. Specifies how far along the
-#' CARP path the static visualizations should display.
-#' @param k.obs An interger between 1 and \code{n.obs}. The number of unique
+#' CARP path the static visualizations should display via the amount of
+#' regularization.
+#' @param k.obs An interger between 1 and \code{n.obs}.
+#' Specifies how far along the
+#' CARP path the static visualizations should display via the number of unique
 #' observation clusters.
-#' @param k.var An interger between 1 and \code{p.var}. The number of unique
+#' @param k.var An interger between 1 and \code{p.var}.
+#' Specifies how far along the
+#' CARP path the static visualizations should display via the number of unique
 #' variable clusters.
 #' @param percent.seq a vector of numbers between 0 and 1 specifying the
 #' positions along the CARP path used to generate dynamic images.
@@ -2298,6 +2397,7 @@ saveviz.CARP <- function(
 #' @param dynamic.height dynamic output heigth in pixels
 #' @param static.width static output width in inches
 #' @param static.height static output height in inches
+#' @param ... Unused additional generic arguements
 #' @importFrom stats as.dendrogram
 #' @importFrom ggplot2 ggplot
 #' @importFrom ggplot2 aes
@@ -2349,8 +2449,27 @@ saveviz.CBASS <- function(
   dynamic.width=1200,
   dynamic.height = 700,
   static.width = 8,
-  static.height = 5
+  static.height = 5,
+  ...
 ) {
+
+  Iter <- NULL
+  Obs <- NULL
+  V1 <- NULL
+  V2 <- NULL
+  ObsLabel <- NULL
+  LambdaPercent <- NULL
+  PlotIdx <- NULL
+  FirstV1 <- NULL
+  FirstV2 <- NULL
+  FirstObsLabel <- NULL
+  NCluster <- NULL
+  Lambda <- NULL
+  NObsCl <- NULL
+  NVarCl <- NULL
+  Percent <- NULL
+  cbass.fit <- NULL
+
   if(image.type == 'static'){
     n.not.null <- sum(
       c(

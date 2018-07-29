@@ -130,6 +130,23 @@ ConvexClusteringPreCompute <- function(X,weights,rho,ncores=2,verbose=FALSE){
 #' @importFrom stats na.omit
 #' @importFrom zoo na.locf
 ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
+  ColLab <- NULL
+  SpValue <- NULL
+  Iter <- NULL
+  SpValueLag <- NULL
+  HasChange <- NULL
+  ColIndNum <- NULL
+  NChanges <- NULL
+  data <- NULL
+  Rank <- NULL
+  ColIndNum.x <- NULL
+  ColIndNum.y <- NULL
+  ColInd <- NULL
+  Lambda <- NULL
+  NewLambda <- NULL
+  NewU <- NULL
+  U <- NULL
+
   sp.path%>%
     dplyr::tbl_df() %>%
     dplyr::mutate(Iter = 1:n()) %>%
@@ -379,205 +396,6 @@ ISP <- function(sp.path,v.path,u.path, lambda.path,cardE){
 
 
 
-
-
-
-#' @importFrom dplyr tbl_df
-#' @importFrom dplyr mutate
-#' @importFrom dplyr select
-#' @importFrom dplyr filter
-#' @importFrom dplyr arrange
-#' @importFrom dplyr group_by
-#' @importFrom dplyr ungroup
-#' @importFrom dplyr lag
-#' @importFrom dplyr n
-#' @importFrom plyr dlply
-#' @importFrom tidyr gather
-#' @importFrom stringr str_replace
-#' @importFrom stats approx
-ISPOLD <- function(sp.path,v.path,u.path, lambda.path,cardE){
-  sp.path%>%
-    dplyr::tbl_df() %>%
-    dplyr::mutate(Iter = 1:n()) %>%
-    tidyr::gather(ColLab,SpValue,-Iter) %>%
-    dplyr::mutate(
-      ColLab = factor(ColLab,levels=paste('V',1:cardE,sep=''),ordered=TRUE)
-    ) %>%
-    dplyr::arrange(Iter,ColLab) %>%
-    dplyr::group_by(ColLab) %>%
-    dplyr::mutate(
-      SpValueLag = dplyr::lag(SpValue)
-    ) %>%
-    dplyr::ungroup() %>%
-    dplyr::filter(Iter != 1) %>%
-    # does the sparsity pattern change this iteration?
-    dplyr::mutate(
-      HasChange = SpValue - SpValueLag
-    ) %>%
-    # get iterations where sparsity has changed
-    dplyr::filter(HasChange > 0) %>%
-    dplyr::mutate(
-      ColIndNum = as.numeric(stringr::str_replace(as.character(ColLab),'V',''))
-    ) %>%
-    dplyr::select(Iter,ColIndNum) %>%
-    dplyr::arrange(Iter,ColIndNum) %>%
-    dplyr::group_by(Iter) %>%
-    # How many changes in this iteration?
-    dplyr::mutate(
-      NChanges = n()
-    ) -> change.frame
-
-  sp.path %>%
-    dplyr::tbl_df() %>%
-    dplyr::mutate(
-      Iter = 1:n()
-    ) %>%
-    dplyr::filter(Iter > 1) %>%
-    plyr::ddply(.variables = 'Iter',.fun=function(df){
-      # browser()
-      current.iter <- unique(df$Iter)
-      change.df <- change.frame %>% dplyr::filter(Iter == current.iter)
-      if(nrow(change.df) == 0){
-        ret <- df %>% dplyr::select(-Iter) %>% as.matrix %>% unname()
-      }
-      else if(nrow(change.df)==1){
-        ret <- df %>% dplyr::select(-Iter) %>% as.matrix %>% unname()
-      } else{
-        df %>%
-          dplyr::select(-Iter) %>%
-          unlist() %>%
-          as.vector -> cur.sp
-        change.inds <- change.df$ColIndNum
-        cur.sp[change.inds] <- 0
-        prev.mags <- apply(matrix(v.path[,current.iter-1],ncol=cardE)[,change.inds],2,function(x){sum(x^2)})
-        change.inds.order <- change.inds[order(prev.mags)]
-        lapply(change.inds.order,function(ind){
-          cur.sp
-        }) -> ret.list
-        for(ind in seq_along(change.inds.order)){
-          ret.list[[ind]][change.inds.order[1:ind]] <- 1
-        }
-        Reduce(rbind,ret.list) -> ret
-      }
-      ret
-    }) %>%
-    dplyr::select(-Iter) %>%
-    as.matrix -> sp.path.inter
-  rbind(
-    sp.path[1,],
-    sp.path.inter
-  ) -> sp.path.inter
-
-  data.frame(
-    Iter = 1:length(lambda.path)
-  ) %>%
-    dplyr::tbl_df() %>%
-    plyr::dlply(.variables = 'Iter',.fun=function(df){
-      # browser()
-      current.iter <- unique(df$Iter)
-      change.df <- change.frame %>% dplyr::filter(Iter == current.iter)
-      if(nrow(change.df)==0){
-        ret <- lambda.path[current.iter]
-      }else if(nrow(change.df) == 1){
-        ret <- lambda.path[current.iter]
-      } else{
-        n.changes <- nrow(change.df)
-        if(current.iter - 1 ==0){
-          # have no before
-          IterBefore <- current.iter
-          IterAfter <- (current.iter+1):(length(lambda.path))
-          lam.path.before <- lambda.path[IterBefore]
-          lam.path.after <- lambda.path[IterAfter]
-          stats::approx(x=IterAfter,
-                 y=lam.path.after,
-                 xout = seq(current.iter,current.iter+1,length.out = 2+n.changes)) -> lam.approx
-        } else if( (current.iter + 1) > length(lambda.path) ){
-          # have no after
-          IterBefore <- 1:(current.iter-1)
-          IterAfter = current.iter
-          lam.path.before <- lambda.path[IterBefore]
-          lam.path.after <- lambda.path[IterAfter]
-          stats::approx(x=c(IterBefore,IterAfter),
-                 y=c(lam.path.before,lam.path.after),
-                 xout = seq(current.iter-1,current.iter,length.out = 2+n.changes)) -> lam.approx
-
-        } else{
-          IterBefore <- 1:(current.iter-1)
-          IterAfter <- (current.iter):(length(lambda.path))
-          lam.path.before <- lambda.path[IterBefore]
-          lam.path.after <- lambda.path[IterAfter]
-          stats::approx(x=c(IterBefore,IterAfter),
-                 y=c(lam.path.before,lam.path.after),
-                 xout = seq(current.iter-1,current.iter+1,length.out = 2+n.changes)) -> lam.approx
-        }
-        ret <- lam.approx$y[c(-1,-length(lam.approx$y))]
-      }
-      ret
-    }) %>%
-    unlist -> lambda.path.inter
-
-
-  data.frame(
-    Iter = 1:length(lambda.path)
-  ) %>%
-    dplyr::tbl_df() %>%
-    plyr::dlply(.variables = 'Iter',.fun=function(df){
-      # browser()
-      current.iter <- unique(df$Iter)
-      change.df <- change.frame %>% dplyr::filter(Iter == current.iter)
-      if(nrow(change.df)==0){
-        ret <- matrix(u.path[,current.iter],ncol=1)
-      }else if(nrow(change.df) == 1){
-        ret <- matrix(u.path[,current.iter],ncol=1)
-      } else{
-        n.changes <- nrow(change.df)
-        if(current.iter - 1 ==0){
-          # have no before
-          IterBefore <- current.iter
-          IterAfter <- (current.iter+1):(length(lambda.path))
-          u.path.before <- matrix(u.path[,IterBefore],nrow=nrow(u.path))
-          u.path.after <- matrix(u.path[,IterAfter],nrow=nrow(u.path))
-          lapply(1:nrow(u.path),function(ind){
-            stats::approx(x=c(IterBefore,IterAfter),
-                   y=c(u.path.before[ind,],u.path.after[ind,]),
-                   xout = seq(current.iter,current.iter+1,length.out = 2+n.changes)) -> u.ind.approx
-            u.ind.approx$y[c(-1,-length(u.ind.approx$y))]
-          }) %>%
-            Reduce(rbind,.) -> ret
-        } else if( (current.iter + 1) > length(lambda.path) ){
-          # have no after
-          IterBefore <- 1:(current.iter-1)
-          IterAfter = current.iter
-          u.path.before <- matrix(u.path[,IterBefore],nrow=nrow(u.path))
-          u.path.after <- matrix(u.path[,IterAfter],nrow=nrow(u.path))
-          lapply(1:nrow(u.path),function(ind){
-            stats::approx(x=c(IterBefore,IterAfter),
-                   y=c(u.path.before[ind,],u.path.after[ind,]),
-                   xout = seq(current.iter-1,current.iter,length.out = 2+n.changes)) -> u.ind.approx
-            u.ind.approx$y[c(-1,-length(u.ind.approx$y))]
-          }) %>%
-            Reduce(rbind,.) -> ret
-
-        } else{
-          IterBefore <- 1:(current.iter-1)
-          IterAfter <- (current.iter):(length(lambda.path))
-          u.path.before <- matrix(u.path[,IterBefore],nrow=nrow(u.path))
-          u.path.after <- matrix(u.path[,IterAfter],nrow=nrow(u.path))
-          lapply(1:nrow(u.path),function(ind){
-            stats::approx(x=c(IterBefore,IterAfter),
-                   y=c(u.path.before[ind,],u.path.after[ind,]),
-                   xout = seq(current.iter-1,current.iter+1,length.out = 2+n.changes)) -> u.ind.approx
-            u.ind.approx$y[c(-1,-length(u.ind.approx$y))]
-          }) %>%
-            Reduce(rbind,.) -> ret
-        }
-      }
-      ret
-    }) %>%
-    Reduce(cbind,.) -> u.path.inter
-  list(sp.path.inter=sp.path.inter,lambda.path.inter=lambda.path.inter,u.path.inter=u.path.inter)
-
-}
 
 
 #' Compute the minimum number of nearest neighbors required to fully

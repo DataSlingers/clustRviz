@@ -7,9 +7,9 @@
 \method{saveviz}{CARP}(x, file.name, plot.type = c("path", "dendrogram"),
   image.type = c("dynamic", "static"), static.image.type = c("png"),
   axis = c("PC1", "PC2"), dend.branch.width = 2, dend.labels.cex = 0.6,
-  percent = 1, percent.seq = seq(from = 0.05, to = 1, by = 0.05),
-  dynamic.width = 1200, dynamic.height = 700, static.width = 8,
-  static.height = 5)
+  percent = NULL, k = NULL, percent.seq = seq(from = 0.05, to = 1, by =
+  0.05), dynamic.width = 1200, dynamic.height = 700, static.width = 8,
+  static.height = 5, ...)
 }
 \arguments{
 \item{x}{a CARP object returned by \code{CARP}}
@@ -36,7 +36,12 @@ plot.type}
 \item{dend.labels.cex}{a positive number. Label size on dendrograms.}
 
 \item{percent}{a number between 0 and 1. Specifies how far along the
-CARP path the static visualizations should display.}
+CARP path the static visualizations should display in terms of
+percent reguarlization.}
+
+\item{k}{an interger between 1 and n.obs. Specifies how far along the
+CARP path the static visualizations should display in term of
+number of clusters.}
 
 \item{percent.seq}{a vector of numbers between 0 and 1 specifying the
 positions along the CARP path used to generate dynamic images.}
@@ -48,6 +53,8 @@ positions along the CARP path used to generate dynamic images.}
 \item{static.width}{static output width in inches}
 
 \item{static.height}{static output height in inches}
+
+\item{...}{Unused additional generic arguements}
 }
 \description{
 This function will save dynamic CARP visualizations as gifs and static visualizations as image files
