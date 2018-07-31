@@ -2,6 +2,7 @@
 // Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #include <RcppArmadillo.h>
+#include <RcppEigen.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
@@ -51,7 +52,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // CARPL2_NF_FRAC
-Rcpp::List CARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init, double t, arma::colvec weights, arma::colvec uinit, arma::colvec vinit, arma::sp_mat premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho, int max_iter, int burn_in, bool verbose, int keep);
+Rcpp::List CARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init, double t, arma::colvec weights, arma::colvec uinit, arma::colvec vinit, Eigen::SparseMatrix<double> premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho, int max_iter, int burn_in, bool verbose, int keep);
 RcppExport SEXP _clustRviz_CARPL2_NF_FRAC(SEXP xSEXP, SEXP nSEXP, SEXP pSEXP, SEXP lambda_initSEXP, SEXP tSEXP, SEXP weightsSEXP, SEXP uinitSEXP, SEXP vinitSEXP, SEXP prematSEXP, SEXP IndMatSEXP, SEXP EOneIndMatSEXP, SEXP ETwoIndMatSEXP, SEXP rhoSEXP, SEXP max_iterSEXP, SEXP burn_inSEXP, SEXP verboseSEXP, SEXP keepSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -64,7 +65,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::colvec >::type weights(weightsSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type uinit(uinitSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type vinit(vinitSEXP);
-    Rcpp::traits::input_parameter< arma::sp_mat >::type premat(prematSEXP);
+    Rcpp::traits::input_parameter< Eigen::SparseMatrix<double> >::type premat(prematSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type IndMat(IndMatSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type EOneIndMat(EOneIndMatSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type ETwoIndMat(ETwoIndMatSEXP);
