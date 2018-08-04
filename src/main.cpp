@@ -154,7 +154,7 @@ arma::colvec ProxL1(arma::colvec delta, int p, double lambda, arma::colvec weigh
 }
 
 // [[Rcpp::export]]
-Rcpp::List CARPL2_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights,arma::colvec uinit, arma::colvec vinit,arma::sp_mat premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,double back = 0.5, double try_tol = 1e-3,int ti = 15, double t_switch = 1.01,int keep=10){
+Rcpp::List CARPL2_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights,arma::colvec uinit, arma::colvec vinit,Eigen::SparseMatrix<double> premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,double back = 0.5, double try_tol = 1e-3,int ti = 15, double t_switch = 1.01,int keep=10){
 
   double t = 1.1;
   int try_iter;
@@ -194,6 +194,7 @@ Rcpp::List CARPL2_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arm
   arma::ucolvec vIdx(p);
   arma::mat vZeroInds_Path(cardE,1,arma::fill::zeros);
 
+  arma::colvec arma_sparse_solver_input(n*p);
   bool rep_iter;
   int nzeros_old;
   int nzeros_new = 0;
@@ -217,7 +218,9 @@ Rcpp::List CARPL2_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arm
       try_iter = try_iter + 1;
       // Do update
       // u update
-      unew = arma::spsolve(premat, (1/rho)*x + (1/rho)*DtMatOpv2(rho*vold - lamold,n,p,IndMat,EOneIndMat,ETwoIndMat));
+      // unew = arma::spsolve(premat, (1/rho)*x + (1/rho)*DtMatOpv2(rho*vold - lamold,n,p,IndMat,EOneIndMat,ETwoIndMat));
+      arma_sparse_solver_input = (1/rho)*x + (1/rho)*DtMatOpv2(rho*vold - lamold,n,p,IndMat,EOneIndMat,ETwoIndMat);
+      unew = sparse_solver(premat,arma_sparse_solver_input);
       // v update
       proxin = DMatOpv2(unew,p,IndMat,EOneIndMat,ETwoIndMat) + (1/rho)*lamold;
       vnew = ProxL2(proxin,p,(1/rho)*weights*lambda, IndMat);
@@ -396,7 +399,7 @@ Rcpp::List CARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,doubl
 }
 
 // [[Rcpp::export]]
-Rcpp::List CARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,double t, arma::colvec weights,arma::colvec uinit, arma::colvec vinit,arma::sp_mat premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,int keep=10){
+Rcpp::List CARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,double t, arma::colvec weights,arma::colvec uinit, arma::colvec vinit,Eigen::SparseMatrix<double> premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,int keep=10){
 
 
   int cardE = EOneIndMat.n_rows;
@@ -429,6 +432,7 @@ Rcpp::List CARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,doubl
   arma::ucolvec vIdx(p);
   arma::mat vZeroInds_Path(cardE,1,arma::fill::zeros);
 
+  arma::colvec arma_sparse_solver_input(n*p);
   int nzeros_old = 0;
   int nzeros_new = 0;
   Rcpp::List ret;
@@ -443,7 +447,9 @@ Rcpp::List CARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,doubl
     nzeros_old = nzeros_new;
 
     // u update
-    unew = arma::spsolve(premat, (1/rho)*x + (1/rho)*DtMatOpv2(rho*vold - lamold,n,p,IndMat,EOneIndMat,ETwoIndMat));
+    // unew = arma::spsolve(premat, (1/rho)*x + (1/rho)*DtMatOpv2(rho*vold - lamold,n,p,IndMat,EOneIndMat,ETwoIndMat));
+    arma_sparse_solver_input = (1/rho)*x + (1/rho)*DtMatOpv2(rho*vold - lamold,n,p,IndMat,EOneIndMat,ETwoIndMat);
+    unew = sparse_solver(premat,arma_sparse_solver_input);
     // v update
     proxin = DMatOpv2(unew,p,IndMat,EOneIndMat,ETwoIndMat) + (1/rho)*lamold;
     vnew = ProxL1(proxin,p,(1/rho)*lambda,weights);
@@ -488,7 +494,7 @@ Rcpp::List CARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,doubl
 }
 
 // [[Rcpp::export]]
-Rcpp::List CARPL1_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights,arma::colvec uinit, arma::colvec vinit,arma::sp_mat premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,double back = 0.5, double try_tol = 1e-3,int ti = 15, double t_switch = 1.01,int keep=10){
+Rcpp::List CARPL1_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights,arma::colvec uinit, arma::colvec vinit,Eigen::SparseMatrix<double> premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,double back = 0.5, double try_tol = 1e-3,int ti = 15, double t_switch = 1.01,int keep=10){
 
   double t = 1.1;
   int try_iter;
@@ -528,6 +534,7 @@ Rcpp::List CARPL1_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arm
   arma::ucolvec vIdx(p);
   arma::mat vZeroInds_Path(cardE,1,arma::fill::zeros);
 
+  arma::colvec arma_sparse_solver_input(n*p);
   bool rep_iter;
   int nzeros_old;
   int nzeros_new = 0;
@@ -551,7 +558,10 @@ Rcpp::List CARPL1_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arm
       try_iter = try_iter + 1;
       // Do update
       // u update
-      unew = arma::spsolve(premat, (1/rho)*x + (1/rho)*DtMatOpv2(rho*vold - lamold,n,p,IndMat,EOneIndMat,ETwoIndMat));
+      // unew = arma::spsolve(premat, (1/rho)*x + (1/rho)*DtMatOpv2(rho*vold - lamold,n,p,IndMat,EOneIndMat,ETwoIndMat));
+
+      arma_sparse_solver_input = (1/rho)*x + (1/rho)*DtMatOpv2(rho*vold - lamold,n,p,IndMat,EOneIndMat,ETwoIndMat);
+      unew = sparse_solver(premat,arma_sparse_solver_input);
       // v update
       proxin = DMatOpv2(unew,p,IndMat,EOneIndMat,ETwoIndMat) + (1/rho)*lamold;
       vnew = ProxL1(proxin,p,(1/rho)*lambda,weights);
@@ -634,7 +644,7 @@ Rcpp::List CARPL1_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arm
 }
 
 // [[Rcpp::export]]
-Rcpp::List BICARPL2_VIS(arma::colvec x, int n, int p, double lambda_init,arma::colvec weights_col, arma::colvec weights_row, arma::colvec uinit_row, arma::colvec uinit_col,arma::colvec vinit_row, arma::colvec vinit_col,arma::sp_mat premat_row,arma::sp_mat premat_col, arma::umat IndMat_row, arma::umat IndMat_col,arma::umat EOneIndMat_row, arma::umat EOneIndMat_col, arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col,double rho = 1, int max_iter = 1e4, int burn_in =50, bool verbose=false,bool verbose_inner=false, double try_tol = 1e-3,int ti = 15, double t_switch = 1.01){
+Rcpp::List BICARPL2_VIS(arma::colvec x, int n, int p, double lambda_init,arma::colvec weights_col, arma::colvec weights_row, arma::colvec uinit_row, arma::colvec uinit_col,arma::colvec vinit_row, arma::colvec vinit_col,Eigen::SparseMatrix<double> premat_row,Eigen::SparseMatrix<double> premat_col, arma::umat IndMat_row, arma::umat IndMat_col,arma::umat EOneIndMat_row, arma::umat EOneIndMat_col, arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col,double rho = 1, int max_iter = 1e4, int burn_in =50, bool verbose=false,bool verbose_inner=false, double try_tol = 1e-3,int ti = 15, double t_switch = 1.01){
 
   double t = 1.1;
   int try_iter;
@@ -705,6 +715,9 @@ Rcpp::List BICARPL2_VIS(arma::colvec x, int n, int p, double lambda_init,arma::c
   arma::mat vZeroIndsPath_col(cardE_col,1,arma::fill::zeros);
 
 
+  arma::colvec arma_sparse_solver_input_row(n*p);
+  arma::colvec arma_sparse_solver_input_col(n*p);
+
   Rcpp::List ret;
   bool rep_iter;
   while( ((nzerosnew_row < cardE_row) | (nzerosnew_col < cardE_col)) & (iter < max_iter)){
@@ -734,7 +747,9 @@ Rcpp::List BICARPL2_VIS(arma::colvec x, int n, int p, double lambda_init,arma::c
       try_iter = try_iter + 1;
       ////////////// solve row problem
         // u update
-        yt = arma::spsolve(premat_row, (1/rho)*(ut+pt) + (1/rho)*DtMatOpv2(rho*vold_row - lamold_row,p,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row));
+        // yt = arma::spsolve(premat_row, (1/rho)*(ut+pt) + (1/rho)*DtMatOpv2(rho*vold_row - lamold_row,p,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row));
+        arma_sparse_solver_input_row = (1/rho)*(ut+pt) + (1/rho)*DtMatOpv2(rho*vold_row - lamold_row,p,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row);
+        yt = sparse_solver(premat_row,arma_sparse_solver_input_row);
         // v update
         proxin_row = DMatOpv2(yt,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row) + (1/rho)*lamold_row;
         vnew_row = ProxL2(proxin_row,n,(1/rho)*weights_row*lambda, IndMat_row);
@@ -746,7 +761,9 @@ Rcpp::List BICARPL2_VIS(arma::colvec x, int n, int p, double lambda_init,arma::c
       pnew = uold + pold - y;
       ////////////// Solve col problem
         // u update
-        unew = arma::spsolve(premat_col, (1/rho)*(y + qold) + (1/rho)*DtMatOpv2(rho*vold_col - lamold_col,n,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col));
+        // unew = arma::spsolve(premat_col, (1/rho)*(y + qold) + (1/rho)*DtMatOpv2(rho*vold_col - lamold_col,n,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col));
+        arma_sparse_solver_input_col = (1/rho)*(y + qold) + (1/rho)*DtMatOpv2(rho*vold_col - lamold_col,n,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col);
+        unew = sparse_solver(premat_col,arma_sparse_solver_input_col);
         // v update
         proxin_col = DMatOpv2(unew,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col) + (1/rho)*lamold_col;
         vnew_col = ProxL2(proxin_col,p,(1/rho)*weights_col*lambda, IndMat_col);
@@ -838,7 +855,7 @@ Rcpp::List BICARPL2_VIS(arma::colvec x, int n, int p, double lambda_init,arma::c
 }
 
 // [[Rcpp::export]]
-Rcpp::List BICARPL1_VIS(arma::colvec x, int n, int p, double lambda_init,arma::colvec weights_col, arma::colvec weights_row, arma::colvec uinit_row, arma::colvec uinit_col,arma::colvec vinit_row, arma::colvec vinit_col,arma::sp_mat premat_row,arma::sp_mat premat_col, arma::umat IndMat_row, arma::umat IndMat_col,arma::umat EOneIndMat_row, arma::umat EOneIndMat_col, arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col,double rho = 1, int max_iter = 1e4, int burn_in =50, bool verbose=false,bool verbose_inner=false, double try_tol = 1e-3,int ti = 15, double t_switch = 1.01){
+Rcpp::List BICARPL1_VIS(arma::colvec x, int n, int p, double lambda_init,arma::colvec weights_col, arma::colvec weights_row, arma::colvec uinit_row, arma::colvec uinit_col,arma::colvec vinit_row, arma::colvec vinit_col,Eigen::SparseMatrix<double> premat_row,Eigen::SparseMatrix<double> premat_col, arma::umat IndMat_row, arma::umat IndMat_col,arma::umat EOneIndMat_row, arma::umat EOneIndMat_col, arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col,double rho = 1, int max_iter = 1e4, int burn_in =50, bool verbose=false,bool verbose_inner=false, double try_tol = 1e-3,int ti = 15, double t_switch = 1.01){
 
   double t = 1.1;
   int try_iter;
@@ -908,6 +925,8 @@ Rcpp::List BICARPL1_VIS(arma::colvec x, int n, int p, double lambda_init,arma::c
   arma::mat vZeroIndsPath_row(cardE_row,1,arma::fill::zeros);
   arma::mat vZeroIndsPath_col(cardE_col,1,arma::fill::zeros);
 
+  arma::colvec arma_sparse_solver_input_row(n*p);
+  arma::colvec arma_sparse_solver_input_col(n*p);
 
   Rcpp::List ret;
   bool rep_iter;
@@ -938,7 +957,9 @@ Rcpp::List BICARPL1_VIS(arma::colvec x, int n, int p, double lambda_init,arma::c
       try_iter = try_iter + 1;
       ////////////// solve row problem
       // u update
-      yt = arma::spsolve(premat_row, (1/rho)*(ut+pt) + (1/rho)*DtMatOpv2(rho*vold_row - lamold_row,p,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row));
+      // yt = arma::spsolve(premat_row, (1/rho)*(ut+pt) + (1/rho)*DtMatOpv2(rho*vold_row - lamold_row,p,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row));
+      arma_sparse_solver_input_row = (1/rho)*(ut+pt) + (1/rho)*DtMatOpv2(rho*vold_row - lamold_row,p,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row);
+      yt = sparse_solver(premat_row,arma_sparse_solver_input_row);
       // v update
       proxin_row = DMatOpv2(yt,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row) + (1/rho)*lamold_row;
       vnew_row = ProxL1(proxin_row,n,(1/rho)*lambda, weights_row);
@@ -950,7 +971,10 @@ Rcpp::List BICARPL1_VIS(arma::colvec x, int n, int p, double lambda_init,arma::c
       pnew = uold + pold - y;
       ////////////// Solve col problem
       // u update
-      unew = arma::spsolve(premat_col, (1/rho)*(y + qold) + (1/rho)*DtMatOpv2(rho*vold_col - lamold_col,n,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col));
+      // unew = arma::spsolve(premat_col, (1/rho)*(y + qold) + (1/rho)*DtMatOpv2(rho*vold_col - lamold_col,n,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col));
+
+      arma_sparse_solver_input_col = (1/rho)*(y + qold) + (1/rho)*DtMatOpv2(rho*vold_col - lamold_col,n,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col);
+      unew = sparse_solver(premat_col,arma_sparse_solver_input_col);
       // v update
       proxin_col = DMatOpv2(unew,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col) + (1/rho)*lamold_col;
       vnew_col = ProxL1(proxin_col,p,(1/rho)*lambda,weights_col);
@@ -1044,7 +1068,7 @@ Rcpp::List BICARPL1_VIS(arma::colvec x, int n, int p, double lambda_init,arma::c
 
 
 // [[Rcpp::export]]
-Rcpp::List BICARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,double t, arma::colvec weights_row,arma::colvec weights_col,arma::colvec uinit_row, arma::colvec uinit_col,arma::colvec vinit_row,arma::colvec vinit_col,arma::sp_mat premat_row, arma::sp_mat premat_col,arma::umat IndMat_row, arma::umat IndMat_col,arma::umat EOneIndMat_row, arma::umat EOneIndMat_col,arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,int keep=10){
+Rcpp::List BICARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,double t, arma::colvec weights_row,arma::colvec weights_col,arma::colvec uinit_row, arma::colvec uinit_col,arma::colvec vinit_row,arma::colvec vinit_col,Eigen::SparseMatrix<double> premat_row, Eigen::SparseMatrix<double> premat_col,arma::umat IndMat_row, arma::umat IndMat_col,arma::umat EOneIndMat_row, arma::umat EOneIndMat_col,arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,int keep=10){
 
   int cardE_row = EOneIndMat_row.n_rows;
   int cardE_col = EOneIndMat_col.n_rows;
@@ -1100,6 +1124,9 @@ Rcpp::List BICARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,dou
   arma::mat vZeroIndsPath_row(cardE_row,1,arma::fill::zeros);
   arma::mat vZeroIndsPath_col(cardE_col,1,arma::fill::zeros);
 
+  arma::colvec arma_sparse_solver_input_row(n*p);
+  arma::colvec arma_sparse_solver_input_col(n*p);
+
   int nzerosold_row = 0;
   int nzerosnew_row = 0;
   int nzerosold_col = 0;
@@ -1129,7 +1156,9 @@ Rcpp::List BICARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,dou
 
     ////////////// solve row problem
     // u update
-    yt = arma::spsolve(premat_row, (1/rho)*(ut+pt) + (1/rho)*DtMatOpv2(rho*vold_row - lamold_row,p,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row));
+    // yt = arma::spsolve(premat_row, (1/rho)*(ut+pt) + (1/rho)*DtMatOpv2(rho*vold_row - lamold_row,p,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row));
+    arma_sparse_solver_input_row = (1/rho)*(ut+pt) + (1/rho)*DtMatOpv2(rho*vold_row - lamold_row,p,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row);
+    yt = sparse_solver(premat_row,arma_sparse_solver_input_row);
     // v update
     proxin_row = DMatOpv2(yt,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row) + (1/rho)*lamold_row;
     vnew_row = ProxL2(proxin_row,n,(1/rho)*weights_row*lambda, IndMat_row);
@@ -1141,7 +1170,9 @@ Rcpp::List BICARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,dou
     pnew = uold + pold - y;
     ////////////// Solve col problem
     // u update
-    unew = arma::spsolve(premat_col, (1/rho)*(y + qold) + (1/rho)*DtMatOpv2(rho*vold_col - lamold_col,n,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col));
+    // unew = arma::spsolve(premat_col, (1/rho)*(y + qold) + (1/rho)*DtMatOpv2(rho*vold_col - lamold_col,n,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col));
+    arma_sparse_solver_input_col = (1/rho)*(y + qold) + (1/rho)*DtMatOpv2(rho*vold_col - lamold_col,n,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col);
+    unew = sparse_solver(premat_col,arma_sparse_solver_input_col);
     // v update
     proxin_col = DMatOpv2(unew,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col) + (1/rho)*lamold_col;
     vnew_col = ProxL2(proxin_col,p,(1/rho)*weights_col*lambda, IndMat_col);
@@ -1202,7 +1233,7 @@ Rcpp::List BICARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,dou
 
 
 // [[Rcpp::export]]
-Rcpp::List BICARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,double t, arma::colvec weights_row,arma::colvec weights_col,arma::colvec uinit_row, arma::colvec uinit_col,arma::colvec vinit_row,arma::colvec vinit_col,arma::sp_mat premat_row, arma::sp_mat premat_col,arma::umat IndMat_row, arma::umat IndMat_col,arma::umat EOneIndMat_row, arma::umat EOneIndMat_col,arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,int keep=10){
+Rcpp::List BICARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,double t, arma::colvec weights_row,arma::colvec weights_col,arma::colvec uinit_row, arma::colvec uinit_col,arma::colvec vinit_row,arma::colvec vinit_col,Eigen::SparseMatrix<double> premat_row, Eigen::SparseMatrix<double> premat_col,arma::umat IndMat_row, arma::umat IndMat_col,arma::umat EOneIndMat_row, arma::umat EOneIndMat_col,arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,int keep=10){
 
   int cardE_row = EOneIndMat_row.n_rows;
   int cardE_col = EOneIndMat_col.n_rows;
@@ -1258,6 +1289,10 @@ Rcpp::List BICARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,dou
   arma::mat vZeroIndsPath_row(cardE_row,1,arma::fill::zeros);
   arma::mat vZeroIndsPath_col(cardE_col,1,arma::fill::zeros);
 
+
+  arma::colvec arma_sparse_solver_input_row(n*p);
+  arma::colvec arma_sparse_solver_input_col(n*p);
+
   int nzerosold_row = 0;
   int nzerosnew_row = 0;
   int nzerosold_col = 0;
@@ -1287,7 +1322,9 @@ Rcpp::List BICARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,dou
 
     ////////////// solve row problem
     // u update
-    yt = arma::spsolve(premat_row, (1/rho)*(ut+pt) + (1/rho)*DtMatOpv2(rho*vold_row - lamold_row,p,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row));
+    // yt = arma::spsolve(premat_row, (1/rho)*(ut+pt) + (1/rho)*DtMatOpv2(rho*vold_row - lamold_row,p,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row));
+    arma_sparse_solver_input_row = (1/rho)*(ut+pt) + (1/rho)*DtMatOpv2(rho*vold_row - lamold_row,p,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row);
+    yt = sparse_solver(premat_row,arma_sparse_solver_input_row);
     // v update
     proxin_row = DMatOpv2(yt,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row) + (1/rho)*lamold_row;
     vnew_row = ProxL1(proxin_row,n,(1/rho)*lambda, weights_row);
@@ -1299,7 +1336,9 @@ Rcpp::List BICARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,dou
     pnew = uold + pold - y;
     ////////////// Solve col problem
     // u update
-    unew = arma::spsolve(premat_col, (1/rho)*(y + qold) + (1/rho)*DtMatOpv2(rho*vold_col - lamold_col,n,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col));
+    // unew = arma::spsolve(premat_col, (1/rho)*(y + qold) + (1/rho)*DtMatOpv2(rho*vold_col - lamold_col,n,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col));
+    arma_sparse_solver_input_col = (1/rho)*(y + qold) + (1/rho)*DtMatOpv2(rho*vold_col - lamold_col,n,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col);
+    unew = sparse_solver(premat_col,arma_sparse_solver_input_col);
     // v update
     proxin_col = DMatOpv2(unew,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col) + (1/rho)*lamold_col;
     vnew_col = ProxL1(proxin_col,p,(1/rho)*lambda,weights_col);

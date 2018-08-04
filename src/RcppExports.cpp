@@ -22,7 +22,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // CARPL2_VIS_FRAC
-Rcpp::List CARPL2_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights, arma::colvec uinit, arma::colvec vinit, arma::sp_mat premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho, int max_iter, int burn_in, bool verbose, double back, double try_tol, int ti, double t_switch, int keep);
+Rcpp::List CARPL2_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights, arma::colvec uinit, arma::colvec vinit, Eigen::SparseMatrix<double> premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho, int max_iter, int burn_in, bool verbose, double back, double try_tol, int ti, double t_switch, int keep);
 RcppExport SEXP _clustRviz_CARPL2_VIS_FRAC(SEXP xSEXP, SEXP nSEXP, SEXP pSEXP, SEXP lambda_initSEXP, SEXP weightsSEXP, SEXP uinitSEXP, SEXP vinitSEXP, SEXP prematSEXP, SEXP IndMatSEXP, SEXP EOneIndMatSEXP, SEXP ETwoIndMatSEXP, SEXP rhoSEXP, SEXP max_iterSEXP, SEXP burn_inSEXP, SEXP verboseSEXP, SEXP backSEXP, SEXP try_tolSEXP, SEXP tiSEXP, SEXP t_switchSEXP, SEXP keepSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -34,7 +34,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::colvec >::type weights(weightsSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type uinit(uinitSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type vinit(vinitSEXP);
-    Rcpp::traits::input_parameter< arma::sp_mat >::type premat(prematSEXP);
+    Rcpp::traits::input_parameter< Eigen::SparseMatrix<double> >::type premat(prematSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type IndMat(IndMatSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type EOneIndMat(EOneIndMatSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type ETwoIndMat(ETwoIndMatSEXP);
@@ -79,7 +79,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // CARPL1_NF_FRAC
-Rcpp::List CARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init, double t, arma::colvec weights, arma::colvec uinit, arma::colvec vinit, arma::sp_mat premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho, int max_iter, int burn_in, bool verbose, int keep);
+Rcpp::List CARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init, double t, arma::colvec weights, arma::colvec uinit, arma::colvec vinit, Eigen::SparseMatrix<double> premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho, int max_iter, int burn_in, bool verbose, int keep);
 RcppExport SEXP _clustRviz_CARPL1_NF_FRAC(SEXP xSEXP, SEXP nSEXP, SEXP pSEXP, SEXP lambda_initSEXP, SEXP tSEXP, SEXP weightsSEXP, SEXP uinitSEXP, SEXP vinitSEXP, SEXP prematSEXP, SEXP IndMatSEXP, SEXP EOneIndMatSEXP, SEXP ETwoIndMatSEXP, SEXP rhoSEXP, SEXP max_iterSEXP, SEXP burn_inSEXP, SEXP verboseSEXP, SEXP keepSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -92,7 +92,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::colvec >::type weights(weightsSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type uinit(uinitSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type vinit(vinitSEXP);
-    Rcpp::traits::input_parameter< arma::sp_mat >::type premat(prematSEXP);
+    Rcpp::traits::input_parameter< Eigen::SparseMatrix<double> >::type premat(prematSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type IndMat(IndMatSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type EOneIndMat(EOneIndMatSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type ETwoIndMat(ETwoIndMatSEXP);
@@ -106,7 +106,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // CARPL1_VIS_FRAC
-Rcpp::List CARPL1_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights, arma::colvec uinit, arma::colvec vinit, arma::sp_mat premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho, int max_iter, int burn_in, bool verbose, double back, double try_tol, int ti, double t_switch, int keep);
+Rcpp::List CARPL1_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights, arma::colvec uinit, arma::colvec vinit, Eigen::SparseMatrix<double> premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho, int max_iter, int burn_in, bool verbose, double back, double try_tol, int ti, double t_switch, int keep);
 RcppExport SEXP _clustRviz_CARPL1_VIS_FRAC(SEXP xSEXP, SEXP nSEXP, SEXP pSEXP, SEXP lambda_initSEXP, SEXP weightsSEXP, SEXP uinitSEXP, SEXP vinitSEXP, SEXP prematSEXP, SEXP IndMatSEXP, SEXP EOneIndMatSEXP, SEXP ETwoIndMatSEXP, SEXP rhoSEXP, SEXP max_iterSEXP, SEXP burn_inSEXP, SEXP verboseSEXP, SEXP backSEXP, SEXP try_tolSEXP, SEXP tiSEXP, SEXP t_switchSEXP, SEXP keepSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -118,7 +118,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::colvec >::type weights(weightsSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type uinit(uinitSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type vinit(vinitSEXP);
-    Rcpp::traits::input_parameter< arma::sp_mat >::type premat(prematSEXP);
+    Rcpp::traits::input_parameter< Eigen::SparseMatrix<double> >::type premat(prematSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type IndMat(IndMatSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type EOneIndMat(EOneIndMatSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type ETwoIndMat(ETwoIndMatSEXP);
@@ -136,7 +136,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // BICARPL2_VIS
-Rcpp::List BICARPL2_VIS(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights_col, arma::colvec weights_row, arma::colvec uinit_row, arma::colvec uinit_col, arma::colvec vinit_row, arma::colvec vinit_col, arma::sp_mat premat_row, arma::sp_mat premat_col, arma::umat IndMat_row, arma::umat IndMat_col, arma::umat EOneIndMat_row, arma::umat EOneIndMat_col, arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col, double rho, int max_iter, int burn_in, bool verbose, bool verbose_inner, double try_tol, int ti, double t_switch);
+Rcpp::List BICARPL2_VIS(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights_col, arma::colvec weights_row, arma::colvec uinit_row, arma::colvec uinit_col, arma::colvec vinit_row, arma::colvec vinit_col, Eigen::SparseMatrix<double> premat_row, Eigen::SparseMatrix<double> premat_col, arma::umat IndMat_row, arma::umat IndMat_col, arma::umat EOneIndMat_row, arma::umat EOneIndMat_col, arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col, double rho, int max_iter, int burn_in, bool verbose, bool verbose_inner, double try_tol, int ti, double t_switch);
 RcppExport SEXP _clustRviz_BICARPL2_VIS(SEXP xSEXP, SEXP nSEXP, SEXP pSEXP, SEXP lambda_initSEXP, SEXP weights_colSEXP, SEXP weights_rowSEXP, SEXP uinit_rowSEXP, SEXP uinit_colSEXP, SEXP vinit_rowSEXP, SEXP vinit_colSEXP, SEXP premat_rowSEXP, SEXP premat_colSEXP, SEXP IndMat_rowSEXP, SEXP IndMat_colSEXP, SEXP EOneIndMat_rowSEXP, SEXP EOneIndMat_colSEXP, SEXP ETwoIndMat_rowSEXP, SEXP ETwoIndMat_colSEXP, SEXP rhoSEXP, SEXP max_iterSEXP, SEXP burn_inSEXP, SEXP verboseSEXP, SEXP verbose_innerSEXP, SEXP try_tolSEXP, SEXP tiSEXP, SEXP t_switchSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -151,8 +151,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::colvec >::type uinit_col(uinit_colSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type vinit_row(vinit_rowSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type vinit_col(vinit_colSEXP);
-    Rcpp::traits::input_parameter< arma::sp_mat >::type premat_row(premat_rowSEXP);
-    Rcpp::traits::input_parameter< arma::sp_mat >::type premat_col(premat_colSEXP);
+    Rcpp::traits::input_parameter< Eigen::SparseMatrix<double> >::type premat_row(premat_rowSEXP);
+    Rcpp::traits::input_parameter< Eigen::SparseMatrix<double> >::type premat_col(premat_colSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type IndMat_row(IndMat_rowSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type IndMat_col(IndMat_colSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type EOneIndMat_row(EOneIndMat_rowSEXP);
@@ -172,7 +172,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // BICARPL1_VIS
-Rcpp::List BICARPL1_VIS(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights_col, arma::colvec weights_row, arma::colvec uinit_row, arma::colvec uinit_col, arma::colvec vinit_row, arma::colvec vinit_col, arma::sp_mat premat_row, arma::sp_mat premat_col, arma::umat IndMat_row, arma::umat IndMat_col, arma::umat EOneIndMat_row, arma::umat EOneIndMat_col, arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col, double rho, int max_iter, int burn_in, bool verbose, bool verbose_inner, double try_tol, int ti, double t_switch);
+Rcpp::List BICARPL1_VIS(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights_col, arma::colvec weights_row, arma::colvec uinit_row, arma::colvec uinit_col, arma::colvec vinit_row, arma::colvec vinit_col, Eigen::SparseMatrix<double> premat_row, Eigen::SparseMatrix<double> premat_col, arma::umat IndMat_row, arma::umat IndMat_col, arma::umat EOneIndMat_row, arma::umat EOneIndMat_col, arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col, double rho, int max_iter, int burn_in, bool verbose, bool verbose_inner, double try_tol, int ti, double t_switch);
 RcppExport SEXP _clustRviz_BICARPL1_VIS(SEXP xSEXP, SEXP nSEXP, SEXP pSEXP, SEXP lambda_initSEXP, SEXP weights_colSEXP, SEXP weights_rowSEXP, SEXP uinit_rowSEXP, SEXP uinit_colSEXP, SEXP vinit_rowSEXP, SEXP vinit_colSEXP, SEXP premat_rowSEXP, SEXP premat_colSEXP, SEXP IndMat_rowSEXP, SEXP IndMat_colSEXP, SEXP EOneIndMat_rowSEXP, SEXP EOneIndMat_colSEXP, SEXP ETwoIndMat_rowSEXP, SEXP ETwoIndMat_colSEXP, SEXP rhoSEXP, SEXP max_iterSEXP, SEXP burn_inSEXP, SEXP verboseSEXP, SEXP verbose_innerSEXP, SEXP try_tolSEXP, SEXP tiSEXP, SEXP t_switchSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -187,8 +187,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::colvec >::type uinit_col(uinit_colSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type vinit_row(vinit_rowSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type vinit_col(vinit_colSEXP);
-    Rcpp::traits::input_parameter< arma::sp_mat >::type premat_row(premat_rowSEXP);
-    Rcpp::traits::input_parameter< arma::sp_mat >::type premat_col(premat_colSEXP);
+    Rcpp::traits::input_parameter< Eigen::SparseMatrix<double> >::type premat_row(premat_rowSEXP);
+    Rcpp::traits::input_parameter< Eigen::SparseMatrix<double> >::type premat_col(premat_colSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type IndMat_row(IndMat_rowSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type IndMat_col(IndMat_colSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type EOneIndMat_row(EOneIndMat_rowSEXP);
@@ -208,7 +208,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // BICARPL2_NF_FRAC
-Rcpp::List BICARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init, double t, arma::colvec weights_row, arma::colvec weights_col, arma::colvec uinit_row, arma::colvec uinit_col, arma::colvec vinit_row, arma::colvec vinit_col, arma::sp_mat premat_row, arma::sp_mat premat_col, arma::umat IndMat_row, arma::umat IndMat_col, arma::umat EOneIndMat_row, arma::umat EOneIndMat_col, arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col, double rho, int max_iter, int burn_in, bool verbose, int keep);
+Rcpp::List BICARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init, double t, arma::colvec weights_row, arma::colvec weights_col, arma::colvec uinit_row, arma::colvec uinit_col, arma::colvec vinit_row, arma::colvec vinit_col, Eigen::SparseMatrix<double> premat_row, Eigen::SparseMatrix<double> premat_col, arma::umat IndMat_row, arma::umat IndMat_col, arma::umat EOneIndMat_row, arma::umat EOneIndMat_col, arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col, double rho, int max_iter, int burn_in, bool verbose, int keep);
 RcppExport SEXP _clustRviz_BICARPL2_NF_FRAC(SEXP xSEXP, SEXP nSEXP, SEXP pSEXP, SEXP lambda_initSEXP, SEXP tSEXP, SEXP weights_rowSEXP, SEXP weights_colSEXP, SEXP uinit_rowSEXP, SEXP uinit_colSEXP, SEXP vinit_rowSEXP, SEXP vinit_colSEXP, SEXP premat_rowSEXP, SEXP premat_colSEXP, SEXP IndMat_rowSEXP, SEXP IndMat_colSEXP, SEXP EOneIndMat_rowSEXP, SEXP EOneIndMat_colSEXP, SEXP ETwoIndMat_rowSEXP, SEXP ETwoIndMat_colSEXP, SEXP rhoSEXP, SEXP max_iterSEXP, SEXP burn_inSEXP, SEXP verboseSEXP, SEXP keepSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -224,8 +224,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::colvec >::type uinit_col(uinit_colSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type vinit_row(vinit_rowSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type vinit_col(vinit_colSEXP);
-    Rcpp::traits::input_parameter< arma::sp_mat >::type premat_row(premat_rowSEXP);
-    Rcpp::traits::input_parameter< arma::sp_mat >::type premat_col(premat_colSEXP);
+    Rcpp::traits::input_parameter< Eigen::SparseMatrix<double> >::type premat_row(premat_rowSEXP);
+    Rcpp::traits::input_parameter< Eigen::SparseMatrix<double> >::type premat_col(premat_colSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type IndMat_row(IndMat_rowSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type IndMat_col(IndMat_colSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type EOneIndMat_row(EOneIndMat_rowSEXP);
@@ -242,7 +242,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // BICARPL1_NF_FRAC
-Rcpp::List BICARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init, double t, arma::colvec weights_row, arma::colvec weights_col, arma::colvec uinit_row, arma::colvec uinit_col, arma::colvec vinit_row, arma::colvec vinit_col, arma::sp_mat premat_row, arma::sp_mat premat_col, arma::umat IndMat_row, arma::umat IndMat_col, arma::umat EOneIndMat_row, arma::umat EOneIndMat_col, arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col, double rho, int max_iter, int burn_in, bool verbose, int keep);
+Rcpp::List BICARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init, double t, arma::colvec weights_row, arma::colvec weights_col, arma::colvec uinit_row, arma::colvec uinit_col, arma::colvec vinit_row, arma::colvec vinit_col, Eigen::SparseMatrix<double> premat_row, Eigen::SparseMatrix<double> premat_col, arma::umat IndMat_row, arma::umat IndMat_col, arma::umat EOneIndMat_row, arma::umat EOneIndMat_col, arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col, double rho, int max_iter, int burn_in, bool verbose, int keep);
 RcppExport SEXP _clustRviz_BICARPL1_NF_FRAC(SEXP xSEXP, SEXP nSEXP, SEXP pSEXP, SEXP lambda_initSEXP, SEXP tSEXP, SEXP weights_rowSEXP, SEXP weights_colSEXP, SEXP uinit_rowSEXP, SEXP uinit_colSEXP, SEXP vinit_rowSEXP, SEXP vinit_colSEXP, SEXP premat_rowSEXP, SEXP premat_colSEXP, SEXP IndMat_rowSEXP, SEXP IndMat_colSEXP, SEXP EOneIndMat_rowSEXP, SEXP EOneIndMat_colSEXP, SEXP ETwoIndMat_rowSEXP, SEXP ETwoIndMat_colSEXP, SEXP rhoSEXP, SEXP max_iterSEXP, SEXP burn_inSEXP, SEXP verboseSEXP, SEXP keepSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -258,8 +258,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::colvec >::type uinit_col(uinit_colSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type vinit_row(vinit_rowSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type vinit_col(vinit_colSEXP);
-    Rcpp::traits::input_parameter< arma::sp_mat >::type premat_row(premat_rowSEXP);
-    Rcpp::traits::input_parameter< arma::sp_mat >::type premat_col(premat_colSEXP);
+    Rcpp::traits::input_parameter< Eigen::SparseMatrix<double> >::type premat_row(premat_rowSEXP);
+    Rcpp::traits::input_parameter< Eigen::SparseMatrix<double> >::type premat_col(premat_colSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type IndMat_row(IndMat_rowSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type IndMat_col(IndMat_colSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type EOneIndMat_row(EOneIndMat_rowSEXP);
