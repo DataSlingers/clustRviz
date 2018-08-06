@@ -37,8 +37,7 @@ Imports:
     RColorBrewer,
     plyr,
     qgraph,
-    zoo,
-    gganimate
+    zoo
 RoxygenNote: 6.0.1
 LinkingTo: Rcpp,RcppArmadillo,RcppEigen
 Suggests: testthat,
