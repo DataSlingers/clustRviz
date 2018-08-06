@@ -12,14 +12,15 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 2.10)
+Remotes:
+    thomasp85/gganimate
 Imports:
-    SuperLUr,
-    RcppArmadillo, 
+    RcppArmadillo,
+    RcppEigen,
     Rcpp, 
     stats,
     graphics,
     animation,
-    gganimate,
     dplyr,
     ggplot2,
     tidyr,
