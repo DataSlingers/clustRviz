@@ -318,18 +318,13 @@ Rcpp::List CARPL2_VIS_FRAC(const arma::colvec& x,
 
     lambda = lambda*t;
 
-
-
-
-
-
-
-
   }
+
   ret["u.path"] = UPath;
   ret["v.path"] = VPath;
   ret["v.zero.inds"]= vZeroInds_Path;
   ret["lambda.path"] = lambda_path;
+
   return(ret);
 }
 
@@ -429,19 +424,17 @@ Rcpp::List CARPL2_NF_FRAC(const arma::colvec& x,
       vZeroInds_Path.col(path_iter) = vZeroIndsnew;
     }
 
-
-
-
     if(iter >= burn_in){
       lambda = lambda*t;
     }
 
-
   }
+
   ret["u.path"] = UPath;
   ret["v.path"] = VPath;
   ret["v.zero.inds"]= vZeroInds_Path;
   ret["lambda.path"] = lambda_path;
+
   return(ret);
 }
 
@@ -540,19 +533,18 @@ Rcpp::List CARPL1_NF_FRAC(const arma::colvec& x,
       vZeroInds_Path.col(path_iter) = vZeroIndsnew;
     }
 
-
-
-
     if(iter >= burn_in){
       lambda = lambda*t;
     }
 
 
   }
+
   ret["u.path"] = UPath;
   ret["v.path"] = VPath;
   ret["v.zero.inds"]= vZeroInds_Path;
   ret["lambda.path"] = lambda_path;
+
   return(ret);
 }
 
@@ -710,18 +702,13 @@ Rcpp::List CARPL1_VIS_FRAC(const arma::colvec& x,
 
     lambda = lambda*t;
 
-
-
-
-
-
-
-
   }
+
   ret["u.path"] = UPath;
   ret["v.path"] = VPath;
   ret["v.zero.inds"]= vZeroInds_Path;
   ret["lambda.path"] = lambda_path;
+
   return(ret);
 }
 
@@ -797,8 +784,6 @@ Rcpp::List BICARPL2_VIS(const arma::colvec& x,
   int nzerosold_col = 0;
   int nzerosnew_col = 0;
 
-
-
   arma::uword path_iter = 0;
   arma::uword iter = 0;
   arma::mat UPath(n*p,1);
@@ -810,7 +795,6 @@ Rcpp::List BICARPL2_VIS(const arma::colvec& x,
   arma::colvec lambda_path(1);
   lambda_path(path_iter) = lambda_init;
 
-
   arma::colvec vZeroIndsnew_row(cardE_row,arma::fill::zeros);
   arma::colvec vZeroIndsold_row(cardE_row);
   arma::ucolvec vIdx_row(n);
@@ -820,7 +804,6 @@ Rcpp::List BICARPL2_VIS(const arma::colvec& x,
 
   arma::mat vZeroIndsPath_row(cardE_row,1,arma::fill::zeros);
   arma::mat vZeroIndsPath_col(cardE_col,1,arma::fill::zeros);
-
 
   arma::colvec arma_sparse_solver_input_row(n*p);
   arma::colvec arma_sparse_solver_input_col(n*p);
@@ -952,12 +935,14 @@ Rcpp::List BICARPL2_VIS(const arma::colvec& x,
     lambda = lambda*t;
 
   }
+
   ret["u.path"] = UPath;
   ret["v.row.path"] = VPath_row;
   ret["v.col.path"] = VPath_col;
   ret["v.row.zero.inds"] = vZeroIndsPath_row;
   ret["v.col.zero.inds"] = vZeroIndsPath_col;
   ret["lambda.path"] = lambda_path;
+
   return(ret);
 }
 
@@ -1033,8 +1018,6 @@ Rcpp::List BICARPL1_VIS(const arma::colvec& x,
   int nzerosold_col = 0;
   int nzerosnew_col = 0;
 
-
-
   arma::uword path_iter = 0;
   arma::uword iter = 0;
   arma::mat UPath(n*p,1);
@@ -1045,7 +1028,6 @@ Rcpp::List BICARPL1_VIS(const arma::colvec& x,
   VPath_col.col(path_iter)= vinit_col;
   arma::colvec lambda_path(1);
   lambda_path(path_iter) = lambda_init;
-
 
   arma::colvec vZeroIndsnew_row(cardE_row,arma::fill::zeros);
   arma::colvec vZeroIndsold_row(cardE_row);
@@ -1062,6 +1044,7 @@ Rcpp::List BICARPL1_VIS(const arma::colvec& x,
 
   Rcpp::List ret;
   bool rep_iter;
+
   while( ((nzerosnew_row < cardE_row) | (nzerosnew_col < cardE_col)) & (iter < max_iter)){
     iter = iter + 1;
     uold = unew;
@@ -1166,8 +1149,6 @@ Rcpp::List BICARPL1_VIS(const arma::colvec& x,
       t = t_switch;
     }
 
-
-
     if((nzerosnew_row!=nzerosold_row) | (nzerosnew_col!=nzerosold_col)){
       path_iter = path_iter + 1;
       UPath.insert_cols(path_iter,1);
@@ -1185,15 +1166,18 @@ Rcpp::List BICARPL1_VIS(const arma::colvec& x,
       vZeroIndsPath_col.insert_cols(path_iter,1);
       vZeroIndsPath_col.col(path_iter) = vZeroIndsnew_col;
     }
+
     lambda = lambda*t;
 
   }
+
   ret["u.path"] = UPath;
   ret["v.row.path"] = VPath_row;
   ret["v.col.path"] = VPath_col;
   ret["v.row.zero.inds"] = vZeroIndsPath_row;
   ret["v.col.zero.inds"] = vZeroIndsPath_col;
   ret["lambda.path"] = lambda_path;
+
   return(ret);
 }
 
@@ -1272,7 +1256,6 @@ Rcpp::List BICARPL2_NF_FRAC(const arma::colvec& x,
   arma::colvec vZeroIndsnew_col(cardE_col,arma::fill::zeros);
   arma::colvec vZeroIndsold_col(cardE_col,arma::fill::zeros);
 
-
   arma::ucolvec vIdx_row(n);
   arma::ucolvec vIdx_col(p);
 
@@ -1304,8 +1287,6 @@ Rcpp::List BICARPL2_NF_FRAC(const arma::colvec& x,
     nzerosold_row = nzerosnew_row;
     nzerosold_col = nzerosnew_col;
 
-
-
     pt = arma::vectorise(UnVec(pold,p,n).t());
     ut = arma::vectorise(UnVec(uold,p,n).t());
 
@@ -1336,7 +1317,6 @@ Rcpp::List BICARPL2_NF_FRAC(const arma::colvec& x,
     ////////////// End Solve col problem
     qnew = y + qold - unew;
 
-
     for(int l = 0; l<cardE_row; l++){
       vIdx_row = IndMat_row.row(l).t();
       if(sum(vnew_row.elem(vIdx_row)) == 0){
@@ -1352,7 +1332,6 @@ Rcpp::List BICARPL2_NF_FRAC(const arma::colvec& x,
 
     nzerosnew_row = sum(vZeroIndsnew_row);
     nzerosnew_col = sum(vZeroIndsnew_col);
-
 
     if((nzerosnew_row!=nzerosold_row) | (nzerosnew_col!=nzerosold_col)){
       path_iter = path_iter + 1;
@@ -1374,16 +1353,16 @@ Rcpp::List BICARPL2_NF_FRAC(const arma::colvec& x,
     if(iter >= burn_in){
       lambda = lambda*t;
     }
-
   }
+
   ret["u.path"] = UPath;
   ret["v.row.path"] = VPath_row;
   ret["v.col.path"] = VPath_col;
   ret["v.row.zero.inds"] = vZeroIndsPath_row;
   ret["v.col.zero.inds"] = vZeroIndsPath_col;
   ret["lambda.path"] = lambda_path;
-  return(ret);
 
+  return(ret);
 }
 
 
@@ -1460,7 +1439,6 @@ Rcpp::List BICARPL1_NF_FRAC(const arma::colvec& x,
   arma::colvec vZeroIndsnew_col(cardE_col,arma::fill::zeros);
   arma::colvec vZeroIndsold_col(cardE_col,arma::fill::zeros);
 
-
   arma::ucolvec vIdx_row(n);
   arma::ucolvec vIdx_col(p);
 
@@ -1493,8 +1471,6 @@ Rcpp::List BICARPL1_NF_FRAC(const arma::colvec& x,
     nzerosold_row = nzerosnew_row;
     nzerosold_col = nzerosnew_col;
 
-
-
     pt = arma::vectorise(UnVec(pold,p,n).t());
     ut = arma::vectorise(UnVec(uold,p,n).t());
 
@@ -1512,6 +1488,7 @@ Rcpp::List BICARPL1_NF_FRAC(const arma::colvec& x,
 
     y = arma::vectorise(UnVec(yt,n,p).t());
     pnew = uold + pold - y;
+
     ////////////// Solve col problem
     // u update
     // unew = arma::spsolve(premat_col, (1/rho)*(y + qold) + (1/rho)*DtMatOpv2(rho*vold_col - lamold_col,n,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col));
@@ -1532,6 +1509,7 @@ Rcpp::List BICARPL1_NF_FRAC(const arma::colvec& x,
         vZeroIndsnew_row(l) = 1;
       }
     }
+
     for(int l = 0; l<cardE_col; l++){
       vIdx_col = IndMat_col.row(l).t();
       if(sum(vnew_col.elem(vIdx_col)) == 0){
@@ -1541,7 +1519,6 @@ Rcpp::List BICARPL1_NF_FRAC(const arma::colvec& x,
 
     nzerosnew_row = sum(vZeroIndsnew_row);
     nzerosnew_col = sum(vZeroIndsnew_col);
-
 
     if((nzerosnew_row!=nzerosold_row) | (nzerosnew_col!=nzerosold_col)){
       path_iter = path_iter + 1;
@@ -1563,14 +1540,14 @@ Rcpp::List BICARPL1_NF_FRAC(const arma::colvec& x,
     if(iter >= burn_in){
       lambda = lambda*t;
     }
-
   }
+
   ret["u.path"] = UPath;
   ret["v.row.path"] = VPath_row;
   ret["v.col.path"] = VPath_col;
   ret["v.row.zero.inds"] = vZeroIndsPath_row;
   ret["v.col.zero.inds"] = vZeroIndsPath_col;
   ret["lambda.path"] = lambda_path;
-  return(ret);
 
+  return(ret);
 }
