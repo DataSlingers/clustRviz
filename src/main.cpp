@@ -1,6 +1,5 @@
 #define ARMA_USE_SUPERLU 0
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::depends(RcppEigen)]]
+
 #include <RcppArmadillo.h>
 #include <RcppEigen.h>
 #define ARMA_64BIT_WORD
