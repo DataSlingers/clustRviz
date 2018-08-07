@@ -49,9 +49,6 @@
       <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
     </li>
     <li>
-      <a href="../articles/Getting_Started.html">Getting Started</a>
-    </li>
-    <li>
       <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
     </li>
   </ul>
@@ -72,7 +69,7 @@
       <h1>clustRviz Details</h1>
                         <h4 class="author">John Nagorski</h4>
             
-            <h4 class="date">2018-07-28</h4>
+            <h4 class="date">2018-08-07</h4>
           </div>
 
     
@@ -86,29 +83,24 @@
 <div id="background" class="section level1">
 <h1 class="hasAnchor">
 <a href="#background" class="anchor"></a>Background</h1>
-<p>The starting point for CARP the Convex Clustering problem.</p>
+<p>The starting point for CARP is the Convex Clustering <span class="citation">(Hocking et al. 2011; Chi and Lange 2015; Tan and Witten 2015)</span> problem :</p>
 <p><span class="math display">\[
 \underset{{\boldsymbol{U}}}{\textrm{minimize}} \;\;
 \frac{1}{2} \| {\boldsymbol{X}} - {\boldsymbol{U}} \|_F^2 + 
 \lambda \sum_{ l &lt; m} 
 w_{l,m} \| {\boldsymbol{u}}_l - {\boldsymbol{u}}_m \|_2
 \]</span></p>
-<p>The above can be solved via ADMM</p>
-<p><span class="math display">\[
-\underset{{\boldsymbol{U}}, {\boldsymbol{V}}}{\text{minimize}}\;\;
-\frac{1}{2} \| {\boldsymbol{X}} - {\boldsymbol{U}} \|_2^2  +  \lambda \sum_{l&lt;m} w_{l,m} \|  {\boldsymbol{v}}_{l,m} \|_2 \\
-\text{subject to}\;\;\;\;\;
-{\boldsymbol{u}}_{l} - {\boldsymbol{u}}_{m} = {\boldsymbol{v}}_{l,m}, \;\; \forall l,m
-\]</span></p>
-<p>Convex clustering is traditionally solved by iteratively applying ADMM updates until convergence. This must be done for each <span class="math inline">\(\lambda_k\)</span> which is computationally expensive.</p>
-<p>To address the computational burden of Convex Clustering, we utilize the framework of Algorithmic Regularization Paths to develop efficient methods for approximating the Convex Clustering and Biclustering solution paths: Convex Clustering via Algorithmic Regularization Paths (CARP) and Convex Biclustering via Algorthmic Regularization with Small Steps (CBASS), respectively. Rather than fully solving the Convex Clustering optimization problem via traditional iterative optimization techniques, we instead employ the iterates themselves as approximations for the true solution path. Remarkably, this approximation not only works well empirically, but can be shown theoretically to well approximate the true Convex Clustering solution path.</p>
+<p>where <span class="math inline">\({\boldsymbol{X}}\)</span> is an <span class="math inline">\(p \times n\)</span> input data matrix, consisting of <span class="math inline">\(p\)</span> measurements on <span class="math inline">\(n\)</span> subjects, <span class="math inline">\(\lambda &gt; 0\)</span> a regularization parameter, and <span class="math inline">\(w_{l,m}&gt;0\)</span> a weight for each pair of observations; here <span class="math inline">\(\| . \|_F\)</span> and <span class="math inline">\(\| . \|_2\)</span> denote the Frobenius norm and <span class="math inline">\(l_2\)</span> norm, respectively.</p>
+<p>Briefly, Convex Clustering seeks to find and estimate,<span class="math inline">\(\hat{{\boldsymbol{U}}} \in \mathbb{R}^{p\times n}\)</span>, such that it is faithful to the original data (Frobenius norm loss term) while also encouraging fusions among observations (<span class="math inline">\(l_2\)</span> regularization between columns of <span class="math inline">\({\boldsymbol{U}}\)</span>, denoted <span class="math inline">\(u_l\)</span>). At small values of regularization, <span class="math inline">\(\lambda \approx 0\)</span>, Convex Clustering returns estimates similar to the original data with little or no fusion among observations. As regularization increases, more fusions occur and Convex Clustering returns estimates such that <span class="math inline">\(\| \hat{{\boldsymbol{u}}}_l - \hat{{\boldsymbol{u}}}_m \| = 0\)</span>. When such fusions occur we say that observations <span class="math inline">\(l\)</span> and <span class="math inline">\(m\)</span> belong to the same cluster. Taken to the extreme, sufficiently large values of <span class="math inline">\(\lambda\)</span> result in all observations belonging to the same cluster.</p>
+<p>When fitting for multiple values of <span class="math inline">\(\lambda\)</span> Convex Clustering results in a continious solution path of clustering solutions. One solution method for the problem above is via the alternatving direction method of multipliers (ADMM) <span class="citation">(Boyd et al. 2011)</span>. For a given <span class="math inline">\(\lambda\)</span>, Convex clustering can be solved by iteratively applying ADMM updates until convergence <span class="citation">(Chi and Lange 2015)</span>. However in order to obtain a full path of clustering solutions, this method must be employed for multiple <span class="math inline">\(\lambda_k\)</span> which is computationally expensive.</p>
+<p>To address the computational burden of Convex Clustering, we utilize the framework of Algorithmic Regularization Paths <span class="citation">(Hu, Chi, and Allen 2016)</span> to develop efficient methods for approximating the Convex Clustering and Biclustering solution paths: Convex Clustering via Algorithmic Regularization Paths (CARP) and Convex Biclustering via Algorthmic Regularization with Small Steps (CBASS), respectively. Rather than fully solving the Convex Clustering optimization problem at each <span class="math inline">\(\lambda_k\)</span>, we instead perform single updates combined with gradual increases in regularization at each step. As regularization increases with each iteration, the column differences of the iterates, <span class="math inline">\(\| {\boldsymbol{u}}^{(k)}_l - {\boldsymbol{u}}^{(k)}_m \|\)</span>, eventally become <span class="math inline">\(0\)</span> for all <span class="math inline">\(l,m\)</span>. In contrast to traditional iterative solution techniques, we instead employ the iterates themselves as approximations for the true solution path. Remarkably, this approximation not only works well empirically, but can be shown theoretically to well approximate the true Convex Clustering solution path.</p>
 </div>
 <div id="preprocessing-and-inputs" class="section level1">
 <h1 class="hasAnchor">
 <a href="#preprocessing-and-inputs" class="anchor"></a>Preprocessing and Inputs</h1>
 <p>While the <code>CARP</code> and <code>CBASS</code> functions provides several reasonable default choices for weights, algorithms, etc, it is important to know their details if one wishes to compute more customized clustering choices. Here we examine several of the inputs to <code>CARP</code> and <code>CBASS</code>, as well as their preprocessing technqiues</p>
-<p>While we will still use the <code>CARP</code> and <code>CBASS</code> functions, we will also encounter serveral other package functions along the way.</p>
-<p>As before, we will use the presidential speech dataset to illustrate the variety of options available. Let’s begin by loading our package and the dataset.</p>
+<p>Here we use a dataset of presidential speechs obtained from <a href="http://www.presidency.ucsb.edu/index_docs.php">The American Presidency Project</a> to illustrate the use of <code>clustRviz</code>. The presidential speech data set contains the top 75 most variable log-transformed word counts of each US president, aggregated over several speeches. Additional text processing such as removing stop words and stemming have been done via the <code>tm</code> package.</p>
+<p>Let’s begin by loading our package and the dataset:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(clustRviz)
 <span class="kw">data</span>(<span class="st">"presidential_speech"</span>)
 Xdat &lt;-<span class="st"> </span>presidential_speech
@@ -127,18 +119,16 @@ Xdat[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>
 <span class="kw">head</span>(var.labels)
 <span class="co">#&gt; [1] "amount"     "appropri"   "british"    "cent"       "commerci"  </span>
 <span class="co">#&gt; [6] "commission"</span></code></pre></div>
-<p>Again our speech data consists of log-transformed word counts from speech found at url.</p>
 <div id="preprocessing" class="section level2">
 <h2 class="hasAnchor">
 <a href="#preprocessing" class="anchor"></a>Preprocessing</h2>
 <div id="normalization" class="section level3">
 <h3 class="hasAnchor">
 <a href="#normalization" class="anchor"></a>Normalization</h3>
-<p>An important first choice before clustering is whether to center and scale our observations.<br>
-Centering is typically appropriate, and is done by default for CARP and CBASS. The choice of scaling is left to the user discression, but should typically be applied if measurements are a vastly different scales. In the case of the presidental speech dataset, all variables are of the same type and so we do not scale our data matrix</p>
+<p>An important first choice before clustering is whether to center and scale our observations. Centering is typically appropriate, and is done by default for CARP and CBASS. The choice of scaling is left to the user discression, but should typically be applied if measurements are a vastly different scales. In the case of the presidental speech dataset, all variables are of the same type and so we do not scale our data matrix.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Centering data before computing the CARP solution path</span>
 Xdat.preprocessed &lt;-<span class="st"> </span><span class="kw">scale</span>(Xdat,<span class="dt">center=</span><span class="ot">TRUE</span>,<span class="dt">scale=</span><span class="ot">FALSE</span>)</code></pre></div>
-<p>In the <code>CARP</code> function this preprocessing is done via the <code>X.center</code> and <code>X.scale</code> arguements. If the data is pre-processed outside of <code>CARP</code>, as is the case here, these options may be set to <code>FALSE</code>.</p>
+<p>In the <code>CARP</code> function this preprocessing is done via the <code>X.center</code> and <code>X.scale</code> arguements. If the data is pre-processed outside of <code>CARP</code>, as is the case here, these options may be set to <code>FALSE</code>; by default, <code>CARP</code> with center but not scale an inputted data matrix.</p>
 <p>Both <code>CARP</code> and <code>CBASS</code> (below) admit several options for computing the (bi)clustering solution path. While we will encounter many options along the way, see the <code>carp.control</code> and <code>cbass.control</code> functions for full details.</p>
 <p>Similarly, the <code>CBASS</code> function also requires that data preprocessed prior usage. Because <code>CBASS</code> clusters both observations and variables, here centering is done by subtracting away the global mean of our data matrix.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Subtracting global mean before computing the CBASS solution path</span>
@@ -157,7 +147,7 @@ may result in more interpretable clusters. We leave the choice of dimensionality
 <h2 class="hasAnchor">
 <a href="#weights" class="anchor"></a>Weights</h2>
 <p>Weights are arguably one of the most important inputs to both <code>CARP</code> and <code>CBASS</code>. As we can see from the optimization probelms above, weights impart apriori preference concerning which observations (and variables in the case of <code>CBASS</code>) should be fused together. This important feature allows us to incorportate domain knowledge, if available. In the absense of domain knowledge, however, weights can easily be constructed via the data itself.</p>
-<p>One might first consider simply using a set of uninformative weights, <span class="math inline">\(w_{l.m} = 1\)</span> While perhaps not appearent at first, such weight choices can also greatly affect the computation time of both <code>CARP</code> and <code>CBASS</code> (and certainly Convex Clustering). To see this note that in the Convex Clustering problem above the regularization term contains <span class="math inline">\(\binom{n}{2}\)</span> summands, drastically increasing computations as <span class="math inline">\(n\)</span> increases. Computations can be reduced by making the majority of weights zero and greatly reducing the number of summands.</p>
+<p>One might first consider simply using a set of uninformative weights, <span class="math inline">\(w_{l.m} = 1\)</span>. While perhaps not appearent at first, such weight choices can also greatly affect the computation time of both <code>CARP</code> and <code>CBASS</code> (and certainly Convex Clustering). To see this note that in the Convex Clustering problem above the regularization term contains <span class="math inline">\(\binom{n}{2}\)</span> summands, drastically increasing computations as <span class="math inline">\(n\)</span> increases. Computations can be reduced by making the majority of weights zero and greatly reducing the number of summands.</p>
 <p>Here we detail <code>clustRviz</code>’s default weight choices, as well as how weights can be constructed manually. By default <code>CARP</code> and <code>CBASS</code> assume no prior domain knowledge and construct distance-based weights via a gaussian kernel:</p>
 <p><span class="math display">\[
 w_{l,m}  = \exp\{ -\phi \|{\boldsymbol{x}}_l - {\boldsymbol{x}}_m \|^2_2 \}
@@ -182,7 +172,7 @@ Dense weights for different choices of phi
 <span class="st">  </span><span class="kw">which.max</span>() <span class="op">%&gt;%</span>
 <span class="st">  </span>phi.vec[.]
 <span class="co">#&gt; [1] 0.01</span></code></pre></div>
-<p>Additionally, <code>DenseWeights</code> allows for the specification of alternative distance measures Depending on the dataset, alternative metrics to traditional euclidean distance may result in more informative clustering solutions.</p>
+<p>Additionally, <code>DenseWeights</code> allows for the specification of alternative distance measures. Depending on the dataset, alternative metrics to traditional euclidean distance may result in more informative clustering solutions.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dense.weights.can &lt;-<span class="st"> </span>clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/DenseWeights.html">DenseWeights</a></span>(<span class="dt">X =</span> Xdat.preprocessed,<span class="dt">phi=</span><span class="fl">1e-5</span>,<span class="dt">method =</span> <span class="st">'canberra'</span>)</code></pre></div>
 <div class="figure" style="text-align: center">
 <img src="clusRvizDetails_files/figure-html/unnamed-chunk-9-1.png" alt="Dense weights with Canberra distance" width="672"><p class="caption">
@@ -218,7 +208,7 @@ clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/Spars
   <span class="dt">label.cex=</span>.<span class="dv">7</span>,
   <span class="dt">repulsion=</span>.<span class="dv">9</span>)</code></pre></div>
 <p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-12-1.png" width="480" style="display: block; margin: auto;"></p>
-<p>Examining the graph above, we note that the number of connected components is strictly greater than one. As such, regardless of the number of <code>CARP</code> iteratations (and the associated regularization increases) it will not be possible fuse all observations into a single cluster. Such extreme weight choices should typically be avoided as they not only hinder the agglomorative nature of <code>CARP</code> and <code>CBASS</code>, but also lead to biased and less interpretable solution paths. result in.</p>
+<p>Examining the graph above, we note that the number of connected components is strictly greater than one. As such, regardless of the number of <code>CARP</code> iteratations (and the associated regularization increases) it will not be possible fuse all observations into a single cluster. Such extreme weight choices should typically be avoided as they not only hinder the agglomorative nature of <code>CARP</code> and <code>CBASS</code>, but also lead to biased and less interpretable solution paths.</p>
 <p>At the other extreme, large values of <span class="math inline">\(k\)</span> again result in long computation time and bring little to no improvement on the resulting solution sequence; an example of such an overly dense graph can be seen below.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
   <span class="dt">weights =</span> clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/SparseWeights.html">SparseWeights</a></span>(
@@ -264,12 +254,9 @@ k.min
 <h1 class="hasAnchor">
 <a href="#fitting" class="anchor"></a>Fitting</h1>
 <p><code>clustRviz</code> aims to make it easy to compute the CARP and CBASS solution paths, and to quickly begin exploring the results. To this end, many reasonable choices regarding both preprocessing and inputs disucussed above are made by default, allowing for solution path to be computed from the raw data alone. In the case of CARP, for example, we may fit the compute the solution path for the presidents data via the <code>CARP</code> function:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/CARP.html">CARP</a></span>(
-  <span class="dt">X=</span>Xdat,
-  <span class="dt">obs.labels =</span> obs.labels
-) -&gt;<span class="st"> </span>carp.fit</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.fit &lt;-<span class="st"> </span><span class="kw"><a href="../reference/CARP.html">CARP</a></span>(<span class="dt">X=</span>Xdat)</code></pre></div>
 <p>Once completed, we can examine a brief summary of the fitted object</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>(carp.fit)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.fit
 <span class="co">#&gt; CARP Fit Summary</span>
 <span class="co">#&gt; Number of Observations: 44</span>
 <span class="co">#&gt; Number of Variables: 75</span>
@@ -284,37 +271,66 @@ k.min
 <span class="co">#&gt; Andrew Johnson    4.025352 3.091042 2.833213 3.332205 2.772589</span>
 <span class="co">#&gt; Barack Obama      1.386294 0.000000 0.000000 1.386294 0.000000</span>
 <span class="co">#&gt; Benjamin Harrison 4.060443 4.174387 2.302585 4.304065 3.663562</span></code></pre></div>
-<p>The output above displays characteristics of our data, such as sample size and number of variables, and also gives a preview of the raw input. Additionally, the summary provides information regarding both data pre-processing and weight computations. From the above we see that <code>CARP</code> has by default: (i) centered our data, (ii) computed distance-based weights using a gaussian kernel with <span class="math inline">\(\phi=.001\)</span>, and (iii) created a sparse set of weights using <span class="math inline">\(k=4\)</span> nearest neighbors. Finally, the summary also provides information about the algorithm, here CARP-VIZ, as well as the available visualizations.</p>
-<p>While <code>CARP</code>’s default choices work well in most scenarios, customized inputs can also be provided. For example, choices regrarding preprocessing and weight computations discussed above can quickly be incorporated:</p>
+<p>The output above displays characteristics of our data, such as sample size and number of variables, and also gives a preview of the raw input. Additionally, the summary provides information regarding both data pre-processing and weight computations. From the above we see that <code>CARP</code> has by default: (i) centered our data, (ii) computed distance-based weights using a gaussian kernel with <span class="math inline">\(\phi=.01\)</span>, and (iii) created a sparse set of weights using <span class="math inline">\(k=4\)</span> nearest neighbors. Finally, the summary also provides information about the algorithm, here CARP-VIZ, as well as the available visualizations.</p>
+<p>While <code>CARP</code>’s default choices work well in most scenarios, customized inputs can also be provided via the <code>control</code> arguement. For example, choices regrarding preprocessing and weight computations discussed above can quickly be incorporated:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/CARP.html">CARP</a></span>(
   <span class="dt">X=</span>Xdat,
-  <span class="dt">obs.labels =</span> obs.labels,
-  <span class="dt">X.center=</span><span class="ot">TRUE</span>,
-  <span class="dt">X.scale=</span><span class="ot">TRUE</span>,
-  <span class="dt">phi =</span> <span class="fl">1e-5</span>,
-  <span class="dt">weight.dist =</span> <span class="st">'canberra'</span>,
-  <span class="dt">k =</span> <span class="dv">5</span>
+  <span class="dt">control =</span> <span class="kw">list</span>(
+    <span class="dt">X.center=</span><span class="ot">TRUE</span>,
+    <span class="dt">X.scale=</span><span class="ot">TRUE</span>,
+    <span class="dt">phi =</span> <span class="fl">1e-5</span>,
+    <span class="dt">weight.dist =</span> <span class="st">'canberra'</span>,
+    <span class="dt">k =</span> <span class="dv">5</span>
+  )
 ) -&gt;<span class="st"> </span>carp.fit.custom</code></pre></div>
-<p>Indeed, in the case strong apriori information concerning clusters is available, distance-based weight computations may be avoided altogether and user-specified weights given directly via the <code>weights</code> arguement.</p>
+<p>Indeed, in the case where strong apriori information concerning clusters is available, distance-based weight computations may be avoided altogether and user-specified weights given directly via the <code>weights</code> in the control list; see <code><a href="../reference/carp.control.html">?carp.control</a></code> for details.</p>
 <p><code>CBASS</code> solutions can be fit in a similar manner:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/CBASS.html">CBASS</a></span>(
-  <span class="dt">X=</span>Xdat,
-  <span class="dt">obs.labels =</span> obs.labels,
-  <span class="dt">var.labels =</span> var.labels
-) -&gt;<span class="st"> </span>cbass.fit</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/CBASS.html">CBASS</a></span>(<span class="dt">X=</span>Xdat) -&gt;<span class="st"> </span>cbass.fit</code></pre></div>
 <p>And display its output:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cbass.fit
+<span class="co">#&gt; CBASS Fit Summary</span>
+<span class="co">#&gt; Number of Observations: 44</span>
+<span class="co">#&gt; Number of Variables: 75</span>
+<span class="co">#&gt; Pre-processing: global-center</span>
+<span class="co">#&gt; Obs. Weights: RBF Kernel, phi = 0.000133333333333333, k = 4</span>
+<span class="co">#&gt; Var. Weights: RBF Kernel, phi = 0.000227272727272727, k = 2</span>
+<span class="co">#&gt; Algorithm: CBASS VIZ</span>
+<span class="co">#&gt; Visualizations: Static DendStatic HeatmapInteractive Heatmap</span>
+<span class="co">#&gt; Raw Data:</span>
+<span class="co">#&gt;          [,1]     [,2]     [,3]     [,4]     [,5]</span>
+<span class="co">#&gt; [1,] 3.433987 2.397895 1.791759 2.564949 2.708050</span>
+<span class="co">#&gt; [2,] 4.248495 4.663439 2.995732 1.945910 3.828641</span>
+<span class="co">#&gt; [3,] 4.025352 3.091042 2.833213 3.332205 2.772589</span>
+<span class="co">#&gt; [4,] 1.386294 0.000000 0.000000 1.386294 0.000000</span>
+<span class="co">#&gt; [5,] 4.060443 4.174387 2.302585 4.304065 3.663562</span></code></pre></div>
+<div id="algorithm-types" class="section level2">
+<h2 class="hasAnchor">
+<a href="#algorithm-types" class="anchor"></a>Algorithm Types</h2>
+<p>Another input into the fitting procedure is the algorithm type. By default both <code>CARP</code> and <code>CBASS</code> use <code>VIZ</code>-type extentions of Algorithmic Regularization to ensure dendrogram existence. However, for larger datasets (<span class="math inline">\(n.obs &gt; 300\)</span>) this default procedure can be computationally burdensome. To ameloriate this difficulty, traditional Algorithmic Regularization can be used, and it computation time controlled via the multiplicitive step-size parameter, <span class="math inline">\(t &gt; 1\)</span>.</p>
+<p>In the example below we again fit the presidental speech dataset using the <code>carp</code> algorithim with step size <span class="math inline">\(t=1.1\)</span></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/CARP.html">CARP</a></span>(
+  <span class="dt">X=</span>Xdat,
+  <span class="dt">control=</span>
+    <span class="kw">list</span>(
+      <span class="dt">alg.type=</span><span class="st">'carp'</span>,
+      <span class="dt">t=</span><span class="fl">1.1</span>
+    )
+) -&gt;<span class="st"> </span>carp.fit.t
+carp.fit.t
 <span class="co">#&gt;                     amount appropri  british     cent commerci</span>
 <span class="co">#&gt; Abraham Lincoln   3.433987 2.397895 1.791759 2.564949 2.708050</span>
 <span class="co">#&gt; Andrew Jackson    4.248495 4.663439 2.995732 1.945910 3.828641</span>
 <span class="co">#&gt; Andrew Johnson    4.025352 3.091042 2.833213 3.332205 2.772589</span>
 <span class="co">#&gt; Barack Obama      1.386294 0.000000 0.000000 1.386294 0.000000</span>
 <span class="co">#&gt; Benjamin Harrison 4.060443 4.174387 2.302585 4.304065 3.663562</span></code></pre></div>
+<p><code>CBASS</code> also allows for the use of pure Algorithmic Regularization based approaches in a similar manner. Passing <code>alg.type=cbass</code> along with an associated <span class="math inline">\(t\)</span> value, will produce much faster computations for larger datasets.</p>
+<p>By default both <code>CARP</code> and <code>CBASS</code> perform <span class="math inline">\(l_2\)</span> regularization between observation pairs to encourage fusions, and hence cluster formation. <span class="math inline">\(l_1\)</span> regularization may also be used again by passing the algorithm string to the control arguement; see <code>alg.type</code> in <code><a href="../reference/carp.control.html">?carp.control</a></code> and <code><a href="../reference/cbass.control.html">?cbass.control</a></code> for details.</p>
+</div>
 </div>
 <div id="solutions" class="section level1">
 <h1 class="hasAnchor">
 <a href="#solutions" class="anchor"></a>Solutions</h1>
-<p>Once fit, both the clustering solution of both CARP and CBASS may be examined via the <code>Clustering</code> function. Using our <code>carp.fit</code> object from above, we can extract the solution along the path which gives <span class="math inline">\(k=2\)</span> clusters.</p>
+<p>Once fit, the clustering solution of both CARP and CBASS may be examined via the <code>Clustering</code> function. Using our <code>carp.fit</code> object from above, we can extract the solution along the path which gives <span class="math inline">\(k=2\)</span> clusters.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.clustering &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(carp.fit,<span class="dt">k =</span> <span class="dv">2</span>)</code></pre></div>
 <p>Once extracted we may examine the clustering assignment. In the table below we see of count of the cluster membership. Additionally we consider the cluster assignment in relation to our original weight graph. We can see that the cluster membership respect our original weights.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">table</span>(carp.clustering<span class="op">$</span>clustering.assignment)
@@ -331,7 +347,7 @@ k.min
   <span class="dt">label.scale=</span><span class="ot">FALSE</span>,
   <span class="dt">label.cex=</span>.<span class="dv">7</span>,
   <span class="dt">repulsion=</span>.<span class="dv">9</span>)</code></pre></div>
-<p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-24-1.png" width="480" style="display: block; margin: auto;"></p>
+<p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-25-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>Additionally, we can extract the cluster means associated with <span class="math inline">\(k=2\)</span> solution. The object <code>cluster.means</code> below gives the CARP iterate <span class="math inline">\({\boldsymbol{U}}^{(k)}\)</span> along the path. We note that the columns of the respective clusters have fused together as desired.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(carp.clustering<span class="op">$</span>cluster.means)
 <span class="co">#&gt;           cl1       cl2</span>
@@ -341,29 +357,39 @@ k.min
 <span class="co">#&gt; [4,] 2.055121 0.7925161</span>
 <span class="co">#&gt; [5,] 2.743924 0.9780746</span>
 <span class="co">#&gt; [6,] 2.380273 0.1980421</span></code></pre></div>
-<p>Along with specifying the number of clusters <span class="math inline">\(k\)</span>, we may also specify the percent of regulariziation. In the example below, we extract the clustering solution at <span class="math inline">\(25\)</span>% along the regularization path; we plot the new cluster labels along with the original weight graph.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.clustering &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(carp.fit,<span class="dt">percent =</span> .<span class="dv">25</span>)
-
-clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
-  <span class="dt">weights =</span> sparse.weights,
-  <span class="dt">nobs =</span> <span class="kw">nrow</span>(Xdat.preprocessed),
-  <span class="dt">edge.labels =</span> <span class="ot">FALSE</span>,
-  <span class="dt">obs.labels =</span> obs.labels,
-  <span class="dt">vsize=</span><span class="dv">3</span>,
-  <span class="dt">color=</span><span class="kw">rainbow</span>(<span class="kw">ncol</span>(carp.clustering<span class="op">$</span>cluster.means))[
-    <span class="kw">as.numeric</span>(<span class="kw">str_extract</span>(carp.clustering<span class="op">$</span>clustering.assignment,<span class="st">"(</span><span class="ch">\\</span><span class="st">d)+"</span>))
-    ],
-  <span class="dt">label.scale=</span><span class="ot">FALSE</span>,
-  <span class="dt">label.cex=</span>.<span class="dv">7</span>,
-  <span class="dt">repulsion=</span>.<span class="dv">9</span>)</code></pre></div>
-<p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-26-1.png" width="480" style="display: block; margin: auto;"></p>
-<p>Simiarly to CARP objects, CBASS clustering solutions may also be extracted via the <code>Clustering</code> function. In the example below we extract the biclustering solution at the level of <span class="math inline">\(85\)</span>% regularization.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cbass.clustering &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(cbass.fit,<span class="dt">percent =</span> .<span class="dv">8</span>)</code></pre></div>
+<p>Along with specifying the number of clusters <span class="math inline">\(k\)</span>, we may also specify the percent of regulariziation. In the example below, we extract the clustering solution at <span class="math inline">\(25\)</span>% along the regularization path.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.clustering &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(carp.fit,<span class="dt">percent =</span> .<span class="dv">25</span>)</code></pre></div>
+<p>Simiarly to CARP objects, CBASS clustering solutions may also be extracted via the <code>Clustering</code> function. The desired clustering solution is returned by specifying either the number of observation clusters (<code>k.obs</code>), the number of variable clusters (<code>k.var</code>), or the percent of regularization (<code>percent</code>). In any case, <code>Clustering</code> returns the observation and variable clustering assignments, as well as the matrix of cluster means. In the example below we extract the biclustering solution at the level of <span class="math inline">\(85\)</span>% regularization.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cbass.clustering &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(cbass.fit,<span class="dt">percent =</span> .<span class="dv">85</span>)
+<span class="co"># observation clusters</span>
+<span class="kw">table</span>(cbass.clustering<span class="op">$</span>clustering.assignment.obs)
+<span class="co">#&gt; </span>
+<span class="co">#&gt; cl1 cl2 cl3 </span>
+<span class="co">#&gt;  29  14   1</span>
+<span class="co"># variable clusters</span>
+<span class="kw">table</span>(cbass.clustering<span class="op">$</span>clustering.assignment.var)
+<span class="co">#&gt; </span>
+<span class="co">#&gt; cl1 </span>
+<span class="co">#&gt;  75</span>
+<span class="co"># mean matrix</span>
+cbass.clustering<span class="op">$</span>cluster.mean.matrix[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]
+<span class="co">#&gt;          Abraham Lincoln Andrew Jackson Andrew Johnson Barack Obama</span>
+<span class="co">#&gt; amount        -0.1969111     -0.1969111     -0.1969111    0.4546688</span>
+<span class="co">#&gt; appropri      -0.1969111     -0.1969111     -0.1969111    0.4546688</span>
+<span class="co">#&gt; british       -0.1969111     -0.1969111     -0.1969111    0.4546688</span>
+<span class="co">#&gt; cent          -0.1969111     -0.1969111     -0.1969111    0.4546688</span>
+<span class="co">#&gt; commerci      -0.1969111     -0.1969111     -0.1969111    0.4546688</span>
+<span class="co">#&gt;          Benjamin Harrison</span>
+<span class="co">#&gt; amount          -0.1969111</span>
+<span class="co">#&gt; appropri        -0.1969111</span>
+<span class="co">#&gt; british         -0.1969111</span>
+<span class="co">#&gt; cent            -0.1969111</span>
+<span class="co">#&gt; commerci        -0.1969111</span></code></pre></div>
 </div>
 <div id="visualizations" class="section level1">
 <h1 class="hasAnchor">
 <a href="#visualizations" class="anchor"></a>Visualizations</h1>
-<p>An important feature of both CARP and CBASS fits, is the ability to visualize an entire path of solutions. Unlike traditional clustering methods, CARP and CBASS allow for dynamic visualization of cluster formation, giving a more wholistic view of the underlying data.</p>
+<p>An important feature of both CARP and CBASS fits is the ability to visualize an entire path of solutions. Unlike traditional clustering methods, CARP and CBASS allow for dynamic visualization of cluster formation, giving a more wholistic view of the underlying data.</p>
 <p>In this section we examine both static and dynamic visualizations for CARP and CBASS.</p>
 <div id="static" class="section level2">
 <h2 class="hasAnchor">
@@ -371,10 +397,10 @@ clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotW
 <p>Static visualizations allow the user to view snapshots along the cluster solution path. In the plot below the first two principal components of the original observations (US presidents) are plotted (black dots) along with the CARP solution path (red curves). Following along the CARP solution path, we can watch<br>
 the fusions between observations as regulaization increases. To obtain a snapshot we again specify the percent of regularization.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(carp.fit,<span class="dt">type =</span> <span class="st">'path'</span>,<span class="dt">percent=</span>.<span class="dv">5</span>)</code></pre></div>
-<p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-28-1.png" width="480" style="display: block; margin: auto;"></p>
+<p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-29-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>Owing to the CARP-VIZ algorithm, we are also ensured a dendrogram representation for the resulting path. In the figure below we display the dendrogram of CARP-VIZ:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(carp.fit,<span class="dt">type =</span> <span class="st">'dendrogram'</span>)</code></pre></div>
-<p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-29-1.png" width="480" style="display: block; margin: auto;"></p>
+<p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-30-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>Additional static visualization are available for CBASS objects, allowing both static heatmaps and dendrograms for observations and variables.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(cbass.fit,<span class="dt">type=</span><span class="st">'var.dendrogram'</span>)</code></pre></div>
 </div>
@@ -383,10 +409,10 @@ the fusions between observations as regulaization increases. To obtain a snapsho
 <a href="#dynamic" class="anchor"></a>Dynamic</h2>
 <p>The dynamic visualization of both CARP and CBASS give a wholistic view of cluster formation. Via the use of Shiny applications, dynamic displays of dendrograms, clustering solution paths, and biclustering heatmaps may be easily obtained.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(carp.fit,<span class="dt">type=</span><span class="st">'interactive'</span>)</code></pre></div>
-<p>Also for CBASS:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(cbass.fit,<span class="dt">type=</span><span class="st">'interactive'</span>)</code></pre></div>
 <iframe src="https://clustrviz.shinyapps.io/PathShiny/" width="100%" height="850px">
 </iframe>
+<p>Also for CBASS:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(cbass.fit,<span class="dt">type=</span><span class="st">'interactive'</span>)</code></pre></div>
 </div>
 <div id="saving" class="section level2">
 <h2 class="hasAnchor">
@@ -428,6 +454,27 @@ the fusions between observations as regulaization increases. To obtain a snapsho
 <a href="#discussion" class="anchor"></a>Discussion</h1>
 <p><code>clustRviz</code> provides a integrated framework for fitting and visualizing the CARP and CBASS solution paths. <code>clustRviz</code> delivers fast computation relative to traditional Convex Clustering solution techniques, and brings traditional and modern clustering visualization techniques together in a unified framework.</p>
 </div>
+<div id="references" class="section level1 unnumbered">
+<h1 class="hasAnchor">
+<a href="#references" class="anchor"></a>References</h1>
+<div id="refs" class="references">
+<div id="ref-boyd2011distributed">
+<p>Boyd, Stephen, Neal Parikh, Eric Chu, Borja Peleato, and Jonathan Eckstein. 2011. “Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers.” <em>Foundations and Trends in Machine Learning</em> 3 (1). Now Publishers Inc.: 1–122.</p>
+</div>
+<div id="ref-chi2015splitting">
+<p>Chi, Eric C, and Kenneth Lange. 2015. “Splitting Methods for Convex Clustering.” <em>Journal of Computational and Graphical Statistics</em> 24 (4). Taylor &amp; Francis: 994–1013.</p>
+</div>
+<div id="ref-hocking2011clusterpath">
+<p>Hocking, Toby Dylan, Armand Joulin, Francis Bach, and Jean-Philippe Vert. 2011. “Clusterpath an Algorithm for Clustering Using Convex Fusion Penalties.” In <em>28th International Conference on Machine Learning</em>, 1.</p>
+</div>
+<div id="ref-hu2016admm">
+<p>Hu, Yue, Eric C Chi, and Genevera I Allen. 2016. “ADMM Algorithmic Regularization Paths for Sparse Statistical Machine Learning.” In <em>Splitting Methods in Communication, Imaging, Science, and Engineering</em>, 433–59. Springer.</p>
+</div>
+<div id="ref-tan2015statistical">
+<p>Tan, Kean Ming, and Daniela Witten. 2015. “Statistical Properties of Convex Clustering.” <em>Electronic Journal of Statistics</em> 9 (2). NIH Public Access: 2324.</p>
+</div>
+</div>
+</div>
 </div>
   </div>
 
@@ -444,7 +491,11 @@ the fusions between observations as regulaization increases. To obtain a snapsho
       <li><a href="#weights">Weights</a></li>
       </ul>
 </li>
-      <li><a href="#fitting">Fitting</a></li>
+      <li>
+<a href="#fitting">Fitting</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#algorithm-types">Algorithm Types</a></li>
+      </ul>
+</li>
       <li><a href="#solutions">Solutions</a></li>
       <li>
 <a href="#visualizations">Visualizations</a><ul class="nav nav-pills nav-stacked">
@@ -454,6 +505,7 @@ the fusions between observations as regulaization increases. To obtain a snapsho
       </ul>
 </li>
       <li><a href="#discussion">Discussion</a></li>
+      <li><a href="#references">References</a></li>
       </ul>
 </div>
       </div>

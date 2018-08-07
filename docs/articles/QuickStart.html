@@ -49,9 +49,6 @@
       <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
     </li>
     <li>
-      <a href="../articles/Getting_Started.html">Getting Started</a>
-    </li>
-    <li>
       <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
     </li>
   </ul>
@@ -72,7 +69,7 @@
       <h1>clustRviz Quick Start</h1>
                         <h4 class="author">John Nagorski</h4>
             
-            <h4 class="date">2018-07-28</h4>
+            <h4 class="date">2018-08-07</h4>
           </div>
 
     
@@ -111,6 +108,9 @@ Xdat &lt;-<span class="st"> </span><span class="kw">as.matrix</span>(petrol[,<sp
 <span class="co">#&gt; 4 50.8 8.6 190 407</span>
 <span class="co">#&gt; 5 40.8 3.5 210 218</span>
 <span class="co">#&gt; 6 40.8 3.5 210 273</span></code></pre></div>
+<div id="fitting-with-carp" class="section level3">
+<h3 class="hasAnchor">
+<a href="#fitting-with-carp" class="anchor"></a>Fitting with CARP</h3>
 <p>Clustering is done via a simple call to the <code>CARP</code> function below.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(clustRviz)
 carp.fit &lt;-<span class="st"> </span><span class="kw"><a href="../reference/CARP.html">CARP</a></span>(
@@ -119,7 +119,7 @@ carp.fit &lt;-<span class="st"> </span><span class="kw"><a href="../reference/CA
     <span class="dt">obs.labels =</span> petrol<span class="op">$</span>No,
     <span class="dt">X.scale=</span><span class="ot">TRUE</span>)
 )</code></pre></div>
-<p>Here we specify the sample number (<code>No</code>) as the labels for our observations. This is done by providing <code>obs.labels</code> to the <code>control</code> argument. While not necessary, providing labels adds clarity to many visualizations. Additionally, since our variable are measured on different scales, we set the <code>X.scale</code> option to <code>TRUE</code> as well; see <code><a href="../reference/carp.control.html">?carp.control</a></code> for additional fitting options as well as examples in the <a href="clustRvizDetails.html">clustRviz Details Vignette</a></p>
+<p>Here we specify the sample number (<code>No</code>) as the labels for our observations. This is done by providing <code>obs.labels</code> to the <code>control</code> argument. While not necessary, providing labels adds clarity to many visualizations. Additionally, since our variables are measured on different scales, we set the <code>X.scale</code> option to <code>TRUE</code> as well; see <code><a href="../reference/carp.control.html">?carp.control</a></code> for additional fitting options as well as examples in the <a href="clustRvizDetails.html">clustRviz Details Vignette</a></p>
 <p>Once fitted, a brief description of the fit and parameter choices may be shown</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.fit
 <span class="co">#&gt; CARP Fit Summary</span>
@@ -142,10 +142,10 @@ carp.fit &lt;-<span class="st"> </span><span class="kw"><a href="../reference/CA
 <p>A more detailed visualization of the solution path can be obtained by plotting the principal components of the cluster means:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(carp.fit,<span class="dt">type =</span> <span class="st">'path'</span>,<span class="dt">percent =</span> .<span class="dv">10</span>)</code></pre></div>
 <p><img src="QuickStart_files/figure-html/unnamed-chunk-5-1.png" width="480" style="display: block; margin: auto;"></p>
-<p>In the plot above displays the first two principal components of the data, with black points representing the original data, and red curves illustrating movement along the solution path. As curves join together, observations are fused together and clusters are formed. The <code>percent</code> argument tells plot to display a snapshot of the clustering solution path at <span class="math inline">\(`10\%`\)</span> regularization.</p>
+<p>The plot above displays the first two principal components of the data, with black points representing the original data, and red curves illustrating movement along the solution path. As curves join together, observations are fused, and clusters formed. The <code>percent</code> argument tells <code>plot</code> to display a snapshot of the clustering solution path at <span class="math inline">\(10\%\)</span> of total regularization.</p>
 <p>Both the dendrogram and the clustering solution path may be viewed together interactively via the use of <code>shiny</code> applications:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(carp.fit,<span class="dt">type =</span> <span class="st">'interactive'</span>)</code></pre></div>
-<p><code>CARP</code>’s interactive visualizations allow one to view cluster solution path and dendrogram as the Algorithmic Regularization iterates vary.</p>
+<p>These interactive visualizations allow one to view the cluster solution path and dendrogram as the Algorithmic Regularization iterates vary.</p>
 <p>In addition to visualizations, cluster solutions may be obtained via the <code>Clustering</code> function:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># get the 3 cluster solution along the path</span>
 carp.clusters &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(carp.fit,<span class="dt">k =</span> <span class="dv">3</span>)
@@ -180,24 +180,29 @@ carp.clusters &lt;-<span class="st"> </span><span class="kw"><a href="../referen
   <span class="dt">percent=</span>.<span class="dv">10</span>)</code></pre></div>
 <p>The above saves a static snapshot of the cluster solution path at <span class="math inline">\(10\%\)</span> regularization; the number of clusters <code>k</code> may also be specified instead of <code>percent</code>. Interactive visualization may be saved as <code>.gif</code> files by specifiying <code>image.type='dynamic'</code>; see <code><a href="../reference/saveviz.CARP.html">?saveviz.CARP</a></code> for details.</p>
 </div>
+</div>
 <div id="a-biclustering-example" class="section level1">
 <h1 class="hasAnchor">
 <a href="#a-biclustering-example" class="anchor"></a>A Biclustering Example</h1>
 <p>Clustering may also be done simultaneously on both observations and variables. <code>clustRviz</code> obtains such biclustering solutions by approximating the Convex Biclustering solution path, again via Algorithmic Regularization. The <code>CBASS</code> function is used to obtain biclustering solutions, and its usage is similar to <code>CARP</code>.</p>
 <p>We fit the biclustering solution path as follows:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cbass.fit &lt;-<span class="st"> </span><span class="kw"><a href="../reference/CBASS.html">CBASS</a></span>(Xdat)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/CBASS.html">CBASS</a></span>(
+  <span class="dt">X=</span>Xdat,
+  <span class="dt">control=</span><span class="kw">list</span>(
+    <span class="dt">obs.labels =</span> petrol<span class="op">$</span>No
+  )) -&gt;<span class="st"> </span>cbass.fit</code></pre></div>
 <p>Once fitted, vizualizations are displayed again via the <code>plot</code> function. For CBASS fits, the default visualization is again the cluster dendrogram of the observations induced by the CBASS solution path.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(cbass.fit)</code></pre></div>
 <p><img src="QuickStart_files/figure-html/unnamed-chunk-11-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>Since both observations and variables are clustered simultaneously, a cluster dendrogram for the variables may also be plotted:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(cbass.fit,<span class="dt">type=</span><span class="st">'var.dendrogram'</span>)</code></pre></div>
-<p><img src="QuickStart_files/figure-html/unnamed-chunk-12-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>Additionally both dendrograms and the associated cluster heatmap can be viewed by passing the <code>heatmap</code> arguement.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(cbass.fit,<span class="dt">type=</span><span class="st">'heatmap'</span>)</code></pre></div>
 <p><img src="QuickStart_files/figure-html/unnamed-chunk-13-1.png" width="960" style="display: block; margin: auto;"></p>
 <p>As was the case of <code>CARP</code>, interactive visualizations may also be displayed:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(cbass.fit,<span class="dt">type=</span><span class="st">'interactive'</span>)</code></pre></div>
-<p><code>CBASS</code>’s interactive visualizations allows one to view dynamic changes in the cluster heatmap and dendrogram solutions along the path. As was the case with <code>CARP</code>, clustering solutions are obtained via the <code>Clustering</code> function. The desired clustering solution is returned by specifying either the number of observation clusters (<code>k.obs</code>), the number of variable clusters (<code>k.var</code>), or the percent of regularization (<code>percent</code>). In any case, <code>Clustering</code> returns the observation and variable clustering assignments, as well as the matrix of cluster means.</p>
+<p><code>CBASS</code>’s interactive visualizations allows one to view dynamic changes in the cluster heatmap and dendrogram solutions along the path.</p>
+<p>As was the case with <code>CARP</code>, clustering solutions are obtained via the <code>Clustering</code> function. The desired clustering solution is returned by specifying either the number of observation clusters (<code>k.obs</code>), the number of variable clusters (<code>k.var</code>), or the percent of regularization (<code>percent</code>). In any case, <code>Clustering</code> returns the observation and variable clustering assignments, as well as the matrix of cluster means.</p>
 <p>In the example below we obtain the biclustering solution which obtains <span class="math inline">\(3\)</span> observation clusters:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># obtain the desired clustering solution along the path</span>
 cbass.clusters &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(cbass.fit,<span class="dt">k.obs =</span> <span class="dv">3</span>)
@@ -213,7 +218,7 @@ cbass.clusters &lt;-<span class="st"> </span><span class="kw"><a href="../refere
 <span class="co">#&gt;   2   1   1</span>
 <span class="co"># mean matrix</span>
 cbass.clusters<span class="op">$</span>cluster.mean.matrix[,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]
-<span class="co">#&gt;             1         2          3          4         5</span>
+<span class="co">#&gt;             A         A          A          A         B</span>
 <span class="co">#&gt; SG  -131.3101 -131.3101 -133.44716 -133.29375 -131.3101</span>
 <span class="co">#&gt; VP  -131.3101 -131.3101 -133.44716 -133.29375 -131.3101</span>
 <span class="co">#&gt; V10   72.5899   72.5899   96.74375   97.99375   72.5899</span>
