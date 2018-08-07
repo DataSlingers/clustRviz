@@ -5,24 +5,27 @@
 #define ARMA_64BIT_WORD
 
 //' @useDynLib clustRviz
-arma::mat UnVec(arma::colvec x, int nrows, int ncols){
+arma::mat UnVec(const arma::colvec& x,
+                int nrows,
+                int ncols){
+
   arma::mat ret(nrows,ncols,arma::fill::zeros);
   arma::uword startidx;
   arma::uword stopidx;
   arma::ucolvec idx;
+
   for(arma::uword coliter = 0; coliter < ncols; coliter++){
     startidx = nrows*coliter;
     stopidx = startidx + nrows - 1;
-    idx = arma::linspace<arma::ucolvec>(startidx,stopidx,nrows);
+    idx = arma::linspace<arma::ucolvec>(startidx, stopidx, nrows);
+
     ret.col(coliter) = x.elem(idx);
   }
   return(ret);
 }
 
 double TwoNorm(arma::colvec x){
-
   return(std::pow(sum(x % x),0.5));
-
 }
 
 Eigen::VectorXd cv_sparse_solve(const Eigen::SparseMatrix<double>& A,
@@ -52,22 +55,36 @@ arma::vec cv_sparse_solve(const Eigen::SparseMatrix<double>& A,
   return solution_arma.col(0);
 }
 
-arma::colvec DMatOpv2(arma::colvec u, int p, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat ){
+arma::colvec DMatOpv2(const arma::colvec& u,
+                      int p,
+                      const arma::umat& IndMat,
+                      const arma::umat& EOneIndMat,
+                      const arma::umat& ETwoIndMat){
+
   int cardE = EOneIndMat.n_rows;
   arma::ucolvec retIdx(p);
   arma::ucolvec EOneIdx(p);
   arma::ucolvec ETwoIdx(p);
   arma::colvec ret(cardE*p);
+
   for(int l = 0; l < cardE; l++){
     retIdx = IndMat.row(l).t();
     EOneIdx = EOneIndMat.row(l).t();
     ETwoIdx = ETwoIndMat.row(l).t();
+
     ret.elem(retIdx) = u.elem(EOneIdx) - u.elem(ETwoIdx);
   }
+
   return(ret);
 }
 
-arma::colvec DtMatOpv2(arma::colvec v, int n, int p, arma::umat IndMat,arma::umat EOneIndMat, arma::umat ETwoIndMat){
+arma::colvec DtMatOpv2(const arma::colvec& v,
+                       int n,
+                       int p,
+                       const arma::umat& IndMat,
+                       const arma::umat& EOneIndMat,
+                       const arma::umat& ETwoIndMat){
+
   arma::colvec out(n*p,arma::fill::zeros);
   arma::ucolvec vIdx(p);
   arma::ucolvec EOneIdx(p);
@@ -78,9 +95,11 @@ arma::colvec DtMatOpv2(arma::colvec v, int n, int p, arma::umat IndMat,arma::uma
     vIdx = IndMat.row(l).t();
     EOneIdx = EOneIndMat.row(l).t();
     ETwoIdx = ETwoIndMat.row(l).t();
+
     out.elem(EOneIdx) = out.elem(EOneIdx) + v.elem(vIdx);
     out.elem(ETwoIdx) = out.elem(ETwoIdx) - v.elem(vIdx);
   }
+
   return(out);
 }
 
@@ -94,7 +113,11 @@ int sgn(double x){
   return(ret);
 }
 
-arma::colvec ProxL2(arma::colvec delta, int p, arma::colvec scalars, arma::umat IndMat){
+arma::colvec ProxL2(const arma::colvec& delta,
+                    int p,
+                    const arma::colvec& scalars,
+                    const arma::umat& IndMat){
+
   int cardE = IndMat.n_rows;
   arma::ucolvec retIdx(p);
 
@@ -106,11 +129,13 @@ arma::colvec ProxL2(arma::colvec delta, int p, arma::colvec scalars, arma::umat 
   for(int l = 0; l<cardE;l++){
     retIdx = IndMat.row(l).t();
     valvec(1) = 1 - scalars(l)/TwoNorm(delta.elem(retIdx));
+
     if(valvec.has_nan()){
       ret.elem(retIdx) = delta.elem(retIdx);
     } else{
       ret.elem(retIdx) = valvec.max()*delta.elem(retIdx);
     }
+
   }
 
   return(ret);
@@ -118,7 +143,11 @@ arma::colvec ProxL2(arma::colvec delta, int p, arma::colvec scalars, arma::umat 
 
 
 // [[Rcpp::export]]
-arma::colvec ProxL1(arma::colvec delta, int p, double lambda, arma::colvec weights){
+arma::colvec ProxL1(const arma::colvec& delta,
+                    int p,
+                    double lambda,
+                    const arma::colvec& weights){
+
   int cardE = weights.n_rows;
   arma::colvec theta(cardE*p);
   arma::colvec ret(cardE*p);
@@ -137,7 +166,26 @@ arma::colvec ProxL1(arma::colvec delta, int p, double lambda, arma::colvec weigh
 }
 
 // [[Rcpp::export]]
-Rcpp::List CARPL2_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights,arma::colvec uinit, arma::colvec vinit,Eigen::SparseMatrix<double> premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,double back = 0.5, double try_tol = 1e-3,int ti = 15, double t_switch = 1.01,int keep=10){
+Rcpp::List CARPL2_VIS_FRAC(const arma::colvec& x,
+                           int n,
+                           int p,
+                           double lambda_init,
+                           const arma::colvec& weights,
+                           const arma::colvec& uinit,
+                           const arma::colvec& vinit,
+                           const Eigen::SparseMatrix<double>& premat,
+                           const arma::umat& IndMat,
+                           const arma::umat& EOneIndMat,
+                           const arma::umat& ETwoIndMat,
+                           double rho = 1,
+                           int max_iter = 1e4,
+                           int burn_in = 50,
+                           bool verbose=false,
+                           double back = 0.5,
+                           double try_tol = 1e-3,
+                           int ti = 15,
+                           double t_switch = 1.01,
+                           int keep=10){
 
   double t = 1.1;
   int try_iter;
@@ -286,7 +334,23 @@ Rcpp::List CARPL2_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arm
 }
 
 // [[Rcpp::export]]
-Rcpp::List CARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,double t, arma::colvec weights,arma::colvec uinit, arma::colvec vinit,Eigen::SparseMatrix<double> premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,int keep=10){
+Rcpp::List CARPL2_NF_FRAC(const arma::colvec& x,
+                          int n,
+                          int p,
+                          double lambda_init,
+                          double t,
+                          const arma::colvec& weights,
+                          const arma::colvec& uinit,
+                          const arma::colvec& vinit,
+                          const Eigen::SparseMatrix<double>& premat,
+                          const arma::umat& IndMat,
+                          const arma::umat& EOneIndMat,
+                          const arma::umat& ETwoIndMat,
+                          double rho = 1,
+                          int max_iter = 1e4,
+                          int burn_in = 50,
+                          bool verbose=false,
+                          int keep=10){
 
 
   int cardE = EOneIndMat.n_rows;
@@ -382,7 +446,23 @@ Rcpp::List CARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,doubl
 }
 
 // [[Rcpp::export]]
-Rcpp::List CARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,double t, arma::colvec weights,arma::colvec uinit, arma::colvec vinit,Eigen::SparseMatrix<double> premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,int keep=10){
+Rcpp::List CARPL1_NF_FRAC(const arma::colvec& x,
+                          int n,
+                          int p,
+                          double lambda_init,
+                          double t,
+                          const arma::colvec& weights,
+                          const arma::colvec& uinit,
+                          const arma::colvec& vinit,
+                          const Eigen::SparseMatrix<double>& premat,
+                          const arma::umat& IndMat,
+                          const arma::umat& EOneIndMat,
+                          const arma::umat& ETwoIndMat,
+                          double rho = 1,
+                          int max_iter = 1e4,
+                          int burn_in = 50,
+                          bool verbose=false,
+                          int keep=10){
 
 
   int cardE = EOneIndMat.n_rows;
@@ -477,7 +557,26 @@ Rcpp::List CARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,doubl
 }
 
 // [[Rcpp::export]]
-Rcpp::List CARPL1_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arma::colvec weights,arma::colvec uinit, arma::colvec vinit,Eigen::SparseMatrix<double> premat, arma::umat IndMat, arma::umat EOneIndMat, arma::umat ETwoIndMat, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,double back = 0.5, double try_tol = 1e-3,int ti = 15, double t_switch = 1.01,int keep=10){
+Rcpp::List CARPL1_VIS_FRAC(const arma::colvec& x,
+                           int n,
+                           int p,
+                           double lambda_init,
+                           const arma::colvec& weights,
+                           const arma::colvec& uinit,
+                           const arma::colvec& vinit,
+                           const Eigen::SparseMatrix<double>& premat,
+                           const arma::umat& IndMat,
+                           const arma::umat& EOneIndMat,
+                           const arma::umat& ETwoIndMat,
+                           double rho = 1,
+                           int max_iter = 1e4,
+                           int burn_in = 50,
+                           bool verbose=false,
+                           double back = 0.5,
+                           double try_tol = 1e-3,
+                           int ti = 15,
+                           double t_switch = 1.01,
+                           int keep=10){
 
   double t = 1.1;
   int try_iter;
@@ -627,7 +726,32 @@ Rcpp::List CARPL1_VIS_FRAC(arma::colvec x, int n, int p, double lambda_init, arm
 }
 
 // [[Rcpp::export]]
-Rcpp::List BICARPL2_VIS(arma::colvec x, int n, int p, double lambda_init,arma::colvec weights_col, arma::colvec weights_row, arma::colvec uinit_row, arma::colvec uinit_col,arma::colvec vinit_row, arma::colvec vinit_col,Eigen::SparseMatrix<double> premat_row,Eigen::SparseMatrix<double> premat_col, arma::umat IndMat_row, arma::umat IndMat_col,arma::umat EOneIndMat_row, arma::umat EOneIndMat_col, arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col,double rho = 1, int max_iter = 1e4, int burn_in =50, bool verbose=false,bool verbose_inner=false, double try_tol = 1e-3,int ti = 15, double t_switch = 1.01){
+Rcpp::List BICARPL2_VIS(const arma::colvec& x,
+                        int n,
+                        int p,
+                        double lambda_init,
+                        const arma::colvec& weights_col,
+                        const arma::colvec& weights_row,
+                        const arma::colvec& uinit_row,
+                        const arma::colvec& uinit_col,
+                        const arma::colvec& vinit_row,
+                        const arma::colvec& vinit_col,
+                        const Eigen::SparseMatrix<double>& premat_row,
+                        const Eigen::SparseMatrix<double>& premat_col,
+                        const arma::umat& IndMat_row,
+                        const arma::umat& IndMat_col,
+                        const arma::umat& EOneIndMat_row,
+                        const arma::umat& EOneIndMat_col,
+                        const arma::umat& ETwoIndMat_row,
+                        const arma::umat& ETwoIndMat_col,
+                        double rho = 1,
+                        int max_iter = 1e4,
+                        int burn_in =50,
+                        bool verbose=false,
+                        bool verbose_inner=false,
+                        double try_tol = 1e-3,
+                        int ti = 15,
+                        double t_switch = 1.01){
 
   double t = 1.1;
   int try_iter;
@@ -838,7 +962,32 @@ Rcpp::List BICARPL2_VIS(arma::colvec x, int n, int p, double lambda_init,arma::c
 }
 
 // [[Rcpp::export]]
-Rcpp::List BICARPL1_VIS(arma::colvec x, int n, int p, double lambda_init,arma::colvec weights_col, arma::colvec weights_row, arma::colvec uinit_row, arma::colvec uinit_col,arma::colvec vinit_row, arma::colvec vinit_col,Eigen::SparseMatrix<double> premat_row,Eigen::SparseMatrix<double> premat_col, arma::umat IndMat_row, arma::umat IndMat_col,arma::umat EOneIndMat_row, arma::umat EOneIndMat_col, arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col,double rho = 1, int max_iter = 1e4, int burn_in =50, bool verbose=false,bool verbose_inner=false, double try_tol = 1e-3,int ti = 15, double t_switch = 1.01){
+Rcpp::List BICARPL1_VIS(const arma::colvec& x,
+                        int n,
+                        int p,
+                        double lambda_init,
+                        const arma::colvec& weights_col,
+                        const arma::colvec& weights_row,
+                        const arma::colvec& uinit_row,
+                        const arma::colvec& uinit_col,
+                        const arma::colvec& vinit_row,
+                        const arma::colvec& vinit_col,
+                        const Eigen::SparseMatrix<double>& premat_row,
+                        const Eigen::SparseMatrix<double>& premat_col,
+                        const arma::umat& IndMat_row,
+                        const arma::umat& IndMat_col,
+                        const arma::umat& EOneIndMat_row,
+                        const arma::umat& EOneIndMat_col,
+                        const arma::umat& ETwoIndMat_row,
+                        const arma::umat& ETwoIndMat_col,
+                        double rho = 1,
+                        int max_iter = 1e4,
+                        int burn_in = 50,
+                        bool verbose = false,
+                        bool verbose_inner = false,
+                        double try_tol = 1e-3,
+                        int ti = 15,
+                        double t_switch = 1.01){
 
   double t = 1.1;
   int try_iter;
@@ -1051,7 +1200,30 @@ Rcpp::List BICARPL1_VIS(arma::colvec x, int n, int p, double lambda_init,arma::c
 
 
 // [[Rcpp::export]]
-Rcpp::List BICARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,double t, arma::colvec weights_row,arma::colvec weights_col,arma::colvec uinit_row, arma::colvec uinit_col,arma::colvec vinit_row,arma::colvec vinit_col,Eigen::SparseMatrix<double> premat_row, Eigen::SparseMatrix<double> premat_col,arma::umat IndMat_row, arma::umat IndMat_col,arma::umat EOneIndMat_row, arma::umat EOneIndMat_col,arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,int keep=10){
+Rcpp::List BICARPL2_NF_FRAC(const arma::colvec& x,
+                            int n,
+                            int p,
+                            double lambda_init,
+                            double t,
+                            const arma::colvec& weights_row,
+                            const arma::colvec& weights_col,
+                            const arma::colvec& uinit_row,
+                            const arma::colvec& uinit_col,
+                            const arma::colvec& vinit_row,
+                            const arma::colvec& vinit_col,
+                            const Eigen::SparseMatrix<double>& premat_row,
+                            const Eigen::SparseMatrix<double>& premat_col,
+                            const arma::umat& IndMat_row,
+                            const arma::umat& IndMat_col,
+                            const arma::umat& EOneIndMat_row,
+                            const arma::umat& EOneIndMat_col,
+                            const arma::umat& ETwoIndMat_row,
+                            const arma::umat& ETwoIndMat_col,
+                            double rho = 1,
+                            int max_iter = 1e4,
+                            int burn_in = 50,
+                            bool verbose=false,
+                            int keep=10){
 
   int cardE_row = EOneIndMat_row.n_rows;
   int cardE_col = EOneIndMat_col.n_rows;
@@ -1216,7 +1388,30 @@ Rcpp::List BICARPL2_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,dou
 
 
 // [[Rcpp::export]]
-Rcpp::List BICARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,double t, arma::colvec weights_row,arma::colvec weights_col,arma::colvec uinit_row, arma::colvec uinit_col,arma::colvec vinit_row,arma::colvec vinit_col,Eigen::SparseMatrix<double> premat_row, Eigen::SparseMatrix<double> premat_col,arma::umat IndMat_row, arma::umat IndMat_col,arma::umat EOneIndMat_row, arma::umat EOneIndMat_col,arma::umat ETwoIndMat_row, arma::umat ETwoIndMat_col, double rho = 1, int max_iter = 1e4,int burn_in = 50,bool verbose=false,int keep=10){
+Rcpp::List BICARPL1_NF_FRAC(const arma::colvec& x,
+                            int n,
+                            int p,
+                            double lambda_init,
+                            double t,
+                            const arma::colvec& weights_row,
+                            const arma::colvec& weights_col,
+                            const arma::colvec& uinit_row,
+                            const arma::colvec& uinit_col,
+                            const arma::colvec& vinit_row,
+                            const arma::colvec& vinit_col,
+                            const Eigen::SparseMatrix<double>& premat_row,
+                            const Eigen::SparseMatrix<double>& premat_col,
+                            const arma::umat& IndMat_row,
+                            const arma::umat& IndMat_col,
+                            const arma::umat& EOneIndMat_row,
+                            const arma::umat& EOneIndMat_col,
+                            const arma::umat& ETwoIndMat_row,
+                            const arma::umat& ETwoIndMat_col,
+                            double rho = 1,
+                            int max_iter = 1e4,
+                            int burn_in = 50,
+                            bool verbose=false,
+                            int keep=10){
 
   int cardE_row = EOneIndMat_row.n_rows;
   int cardE_col = EOneIndMat_col.n_rows;
@@ -1379,9 +1574,3 @@ Rcpp::List BICARPL1_NF_FRAC(arma::colvec x, int n, int p, double lambda_init,dou
   return(ret);
 
 }
-
-
-
-
-
-
