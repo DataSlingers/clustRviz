@@ -51,8 +51,28 @@ CARP <- function(X,
                  static = TRUE,
                  control = NULL,
                  ...) {
+
+  if (!is.matrix(X)) {
+    warning(sQuote("X"), " should be a matrix, not a " , class(X)[1],
+            ". Converting with as.matrix().")
+    X <- as.matrix(X)
+  }
+
+  if (!is.numeric(X)) {
+    stop(sQuote("X"), " must be numeric.")
+  }
+
   n.obs <- NROW(X)
   p.var <- NCOL(X)
+
+  if (anyNA(X)) {
+    stop(sQuote("CARP"), " cannot handle missing data.")
+  }
+
+  if (!all(is.finite(X))) {
+    stop("All elements of ", sQuote("X"), " must be finite.")
+  }
+
   Iter <- Cluster <- Lambda <- NULL
   if (is.logical(verbose)) {
     verbose.basic <- TRUE
