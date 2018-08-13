@@ -14,8 +14,10 @@
 #' @param interactive A logical. Should an interactive heatmap be returned?
 #' @param static A logical. Should observation and variable dendrograms
 #' be returned?
-#' @param control a list of CBASS control arguements; see \code{cbass.control}
-#' @param ... additional arguments passed to \code{cbass.control}
+#' @param control A list containing advanced parameters for the \code{CBASS} algorithm,
+#'                typically created by \code{\link{cbass.control}}.
+#' @param ... Additional arguments used to control the behavior of \code{CBASS}; see
+#'            \code{\link{cbass.control}} for details.
 #' @return X the original data matrix
 #' @return cbass.cluster.path.obs the CBASS observation solution path
 #' @return cbass.cluster.path.var the CBASS variable solution path
@@ -54,8 +56,8 @@ CBASS <- function(X,
                   verbose = 1,
                   interactive = TRUE,
                   static = TRUE,
-                  control = NULL,
-                  ...) {
+                  ...,
+                  control = NULL) {
 
   if (!is.matrix(X)) {
     warning(sQuote("X"), " should be a matrix, not a " , class(X)[1],
@@ -92,18 +94,11 @@ CBASS <- function(X,
     verbose.deep <- FALSE
   }
 
-  extra.args <- list(...)
-  if (length(extra.args)) {
-    control.args <- names(formals(cbass.control))
-    indx <- match(names(extra.args), control.args, nomatch = 0L)
-    if (any(indx == 0L)) {
-      stop(gettextf("Argument %s not matched", names(extra.args)[indx == 0L]), domain = NA)
-    }
-  }
   internal.control <- cbass.control(...)
   if (!is.null(control)) {
-    internal.control[names(control)] <- control
+    internal.control <- modifyList(internal.control, control)
   }
+
   obs.labels <- internal.control$obs.labels
   var.labels <- internal.control$var.labels
   X.center.global <- internal.control$X.center.global
@@ -123,8 +118,6 @@ CBASS <- function(X,
   alg.type <- internal.control$alg.type
   t <- internal.control$t
   npcs <- internal.control$npcs
-
-
 
   # get labels
   if (is.null(obs.labels)) {
@@ -428,48 +421,56 @@ CBASS <- function(X,
   return(cbass.fit)
 }
 
-#' Control for CBASS fits
+#' Control for \code{CBASS} fits
 #'
-#' Parameters for various CBASS fitting options
+#' Set \code{CBASS} algorithm parameters
 #'
+#' This function constructs a list containing additional arguments to control
+#' the behavior of the \code{CBASS} algorithm. It is typically only used internally
+#' by \code{\link{CBASS}}, but may be useful to advanced users who wish to
+#' construct the \code{control} argument directly.
 #'
-#' @param obs.labels a vector of length n.obs containing observations (row) labels
-#' @param var.labels a vector of length p.var containing variable (column) labels
-#' @param X.center.global a logical. If TRUE, the global mean of X is removed.
-#' @param rho A positive number for augmented lagrangian. Not advisable to change.
-#' @param phi A positive numner used for scaling in RBF kernel
-#' @param weights.obs A vector of positive number of length choose(n.obs,2).
-#' Determines observation pair fusions weight.
-#' @param weights.var A vector of positive number of length choose(p.var,2).
-#' Determines variable pair fusions weight.
-#' @param obs.weight.dist a string indicating the distance metric used to calculate
-#' observation weights
-#' @param obs.weight.dist.p The power of the Minkowski distance, if used for
-#' observation weights.
-#' @param var.weight.dist a string indicating the distance metric used to calculate
-#' variable weights
-#' @param var.weight.dist.p The power of the Minkowski distance, if used for
-#' variable weights.
-#' @param k.obs an integer >= 1. The number of neighbors used to create sparse
-#' observation weights
-#' @param k.var an integer >= 1. The number of neighbors used to create sparse
-#' variable weights
-#' @param ncores an integer >= 1. The number of cores to use.
-#' @param max.iter an integer. The maximum number of CARP iterations.
-#' @param burn.in an integer. The number of initial iterations at a fixed
-#' value of (small) lambda_k
-#' @param alg.type Which CARP algorithm to perform. Choices are 'cbassviz'
-#' and 'cbass';
-#' @param t a number greater than 1. The size of the multiplicitive
-#' regularization parameter update. Typical values are: 1.1, 1.05, 1.01, 1.005.
-#' Not used CBASS-VIZ algorithms.
-#' @param npcs A integer >= 2. The number of principal components to compute
-#' for path visualization.
-#' @param ... unused additional arguements
-#' @return a list of CBASS parameters
+#' @param obs.labels A character vector of length \eqn{n}: observations (row) labels
+#' @param var.labels A character vector of length \eqn{p}: variable (column) labels
+#' @param X.center.global A logical: Should \code{X} be centered globally?
+#'                        \emph{I.e.}, should the global mean of \code{X} be subtracted?
+#' @param rho For advanced users only (not advisable to change): the penalty
+#'            parameter used for the augmented Lagrangian.
+#' @param phi A positive real number: the scale factor used in the RBF kernel
+
+#' @param weights.obs A vector of positive number of length \code{choose(n,2)}.
+#' @param k.obs An positive integer: the number of neighbors used to create sparse weights
+#' @param obs.weight.dist A string indicating the distance metric used to calculate weights.
+#'                        See \code{\link[stats]{distance}} for details.
+#' @param obs.weight.dist.p The exponent used to calculate the Minkowski distance if
+#'                          \code{weight.dist = "minkowski"}.
+#'                          See \code{\link[stats]{distance}} for details.
+#' @param weights.var A vector of positive number of length \code{choose(n,2)}.
+#' @param k.var An positive integer: the number of neighbors used to create sparse weights
+#' @param var.weight.dist A string indicating the distance metric used to calculate weights.
+#'                        See \code{\link[stats]{distance}} for details.
+#' @param var.weight.dist.p The exponent used to calculate the Minkowski distance if
+#'                          \code{weight.dist = "minkowski"}.
+#'                          See \code{\link[stats]{distance}} for details.
+#' @param ncores An positive integer: the number of cores to use.
+#' @param max.iter An integer: the maximum number of CARP iterations.
+#' @param burn.in An integer: the number of initial iterations at a fixed
+#'                (small) value of \eqn{\lambda}
+#' @param alg.type Which \code{CBASS} variant to use. Allowed values are \itemize{
+#'        \item \code{"cbass"} - The standard \code{CBASS} algorithm with \eqn{L2} penalty;
+#'        \item \code{"cbassviz"} - The back-tracking \code{CBASS} algorithm with \eqn{L2} penalty;
+#'        \item \code{"cbassl1"} - The standard \code{CBASS} algorithm with \eqn{L1} penalty; and
+#'        \item \code{"cbassvizl1"} - The back-tracking \code{CBASS} algorithm with \eqn{L1} penalty.}
+#' @param t A number greater than 1: the size of the multiplicative update to
+#'          the cluster fusion regularization parameter (not used by
+#'          back-tracking variants). Typically on the scale of \code{1.005} to \code{1.1}.
+#' @param npcs An integer >= 2. The number of principal components to compute
+#'             for path visualization.
+#' @param ... Unused arguements. An error will be thrown if any unrecognized
+#'            arguments as given.
+#' @return A list containing the \code{CBASS} algorithm parameters.
 #' @export
-cbass.control <- function(
-                          obs.labels = NULL,
+cbass.control <- function(obs.labels = NULL,
                           var.labels = NULL,
                           X.center.global = TRUE,
                           rho = 1,
@@ -487,53 +488,95 @@ cbass.control <- function(
                           max.iter = as.integer(1e6),
                           burn.in = as.integer(50),
                           alg.type = "cbassviz",
-                          npcs = as.integer(4)) {
-  if (!is.logical(X.center.global)) {
-    stop("X.global should be either TRUE or FALSE")
+                          npcs = as.integer(4),
+                          ...) {
+
+  dots <- list(...)
+
+  if (length(dots) != 0L) {
+    if (!is.null(names(dots))) {
+      stop("Unknown argument ", sQuote(names(dots)[1L]), " passed to ", sQuote("CARP."))
+    } else {
+      stop("Unknown ", sQuote("..."), " arguments passed to ", sQuote("CARP."))
+    }
   }
-  if (rho < 0) {
-    stop("rho should be non-negative")
+
+  if (!is.logical(X.center.global) || is.na(X.center.global) || (length(X.center.global) != 1L)) {
+    stop(sQuote("X.center.global"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
   }
-  if (!(obs.weight.dist %in% c("euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski"))) {
-    stop("unrecognized obs.weight.dist argument; see method arguement of stats::dist for options.")
+
+  if ((rho < 0) || is.na(rho) || (length(rho) != 1L)) {
+    stop(sQuote("rho"), "must a be non-negative scalar.")
   }
-  if (obs.weight.dist.p <= 0) {
-    stop("obs.weight.dist.p should be > 0; see p argument of stats::dist for details.")
+
+  if (obs.weight.dist %not.in% SUPPORTED_DISTANCES) {
+    stop("Unsupported choice of ",
+         sQuote("obs.weight.dist;"),
+         " see the ", sQuote("method"),
+         " argument of ",
+         sQuote("stats::dist"),
+         " for supported distances.")
   }
-  if (!(var.weight.dist %in% c("euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski"))) {
-    stop("unrecognized var.weight.dist argument; see method arguement of stats::dist for options.")
+
+  if ((obs.weight.dist.p <= 0) || (length(obs.weight.dist.p) != 1L)) {
+    stop(sQuote("obs.weight.dist.p"),
+         " must be a positive scalar; see the ", sQuote("p"),
+         " argument of ", sQuote("stats::dist"), " for details.")
   }
-  if (var.weight.dist.p <= 0) {
-    stop("var.weight.dist.p should be > 0; see p argument of stats::dist for details.")
+
+  if (var.weight.dist %not.in% SUPPORTED_DISTANCES) {
+    stop("Unsupported choice of ",
+         sQuote("var.weight.dist;"),
+         " see the ", sQuote("method"),
+         " argument of ",
+         sQuote("stats::dist"),
+         " for supported distances.")
   }
+
+  if ((var.weight.dist.p <= 0) || (length(var.weight.dist.p) != 1L)) {
+    stop(sQuote("var.weight.dist.p"),
+         " must be a positive scalar; see the ", sQuote("p"),
+         " argument of ", sQuote("stats::dist"), " for details.")
+  }
+
   if (!is.null(k.obs)) {
-    if (!is.integer(k.obs) | k.obs >= 0) {
-      stop("k should be a positive integer.")
+    if (!is.integer(k.obs) || k.obs <= 0) {
+      stop("If not NULL, ", sQuote("k.obs"), " must be a positive integer.")
     }
   }
+
   if (!is.null(k.var)) {
-    if (!is.integer(k.var) | k.var >= 0) {
-      stop("k should be a positive integer.")
+    if (!is.integer(k.var) || k.obs <= 0) {
+      stop("If not NULL, ", sQuote("k.var"), " must be a positive integer.")
     }
   }
-  if (!is.integer(ncores) | ncores <= 0) {
-    stop("ncores should be a positive integer.")
+
+  if (!is.integer(ncores) || ncores <= 0L) {
+    stop(sQuote("ncores"), " must be a positive integer.")
   }
-  if (!is.integer(max.iter) | max.iter <= 0) {
-    stop("max.iter should be a positive integer.")
+
+  if (!is.null(npcs)) {
+    if (!is.integer(npcs) || npcs <= 1L) {
+      stop(sQuote("npcs"), " must be at least 2.")
+    }
   }
-  if (!is.integer(burn.in) | burn.in <= 0 | burn.in >= max.iter) {
-    stop("burn.in should be a positive integer greater than max.iter.")
+
+  if (!is.integer(max.iter) || (max.iter <= 0) || (length(max.iter) != 1L)) {
+    stop(sQuote("max.iter"), " must be a positive integer.")
   }
-  if (!(alg.type %in% c("cbassviz", "cbass", "cbassl1", "cbassvizl1"))) {
-    stop("unrecognized alg.type. see help for details.")
+
+  if (!is.integer(burn.in) || (burn.in <= 0) || (burn.in >= max.iter)) {
+    stop(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
   }
-  if (t <= 1) {
-    stop("t should be greater than 1.")
+
+  if (alg.type %not.in% c("cbassviz", "cbass", "cbassl1", "cbassvizl1")) {
+    stop("Unrecognized value of ", sQuote("alg.type;"), " see help for allowed values.")
   }
-  if (!is.integer(npcs) | npcs < 2) {
-    stop("npcs should be an integer greater than or equal to 2.")
+
+  if ((t <= 1) || is.na(t) || (length(t) != 1L)) {
+    stop(sQuote("t"), " must be a scalar greater than 1.")
   }
+
   list(
     obs.labels = obs.labels,
     var.labels = var.labels,
@@ -578,7 +621,7 @@ print.CBASS <- function(x, ...) {
 
   cat("CBASS Fit Summary\n")
   cat("====================\n\n")
-  cat("Algorithm: ", alg.string, "\n\n")
+  cat("Algorithm: ", alg_string, "\n\n")
 
   cat("Available Visualizations:\n")
   cat(" - Static Dendrogram:   ", x$static, "\n")

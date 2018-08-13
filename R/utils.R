@@ -1423,3 +1423,14 @@ WeightAdjacency <- function(weights, nobs, weighted = FALSE, upper = TRUE) {
   }
   adj
 }
+
+#' Distances supported by \code{\link[stats]{dist}}
+#' @noRd
+SUPPORTED_DISTANCES <- c("euclidean",
+                         "maximum",
+                         "manhattan",
+                         "canberra",
+                         "binary",
+                         "minkowski")
+
+`%not.in%` <- Negate(`%in%`)

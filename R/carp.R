@@ -15,8 +15,10 @@
 #' @param interactive A logical. Should interactive paths and dendrograms be
 #' returned?
 #' @param static A logical. Should static paths and dendrograms be returned?
-#' @param control A list. list of parameters for CARP fitting. see carp.control.
-#' @param ... arguements to carp.control
+#' @param control A list containing advanced parameters for the \code{CARP} algorithm,
+#'                typically created by \code{\link{carp.control}}.
+#' @param ... Additional arguments used to control the behavior of \code{CARP}; see
+#'            \code{\link{carp.control}} for details.
 #' @return X the original data matrix
 #' @return carp.dend if static==TRUE, a dendrogam representation of the clustering solution path
 #' @return carp.cluster.path.vis the CARP solution path
@@ -38,6 +40,7 @@
 #' @importFrom dplyr group_by
 #' @importFrom dplyr ungroup
 #' @importFrom stats var
+#' @importFrom utils modifyList
 #' @export
 #' @examples
 #' library(clustRviz)
@@ -49,8 +52,8 @@ CARP <- function(X,
                  verbose = 1,
                  interactive = TRUE,
                  static = TRUE,
-                 control = NULL,
-                 ...) {
+                 ...,
+                 control = NULL) {
 
   if (!is.matrix(X)) {
     warning(sQuote("X"), " should be a matrix, not a " , class(X)[1],
@@ -87,18 +90,12 @@ CARP <- function(X,
     verbose.basic <- FALSE
     verbose.deep <- FALSE
   }
-  extra.args <- list(...)
-  if (length(extra.args)) {
-    control.args <- names(formals(carp.control))
-    indx <- match(names(extra.args), control.args, nomatch = 0L)
-    if (any(indx == 0L)) {
-      stop(gettextf("Argument %s not matched", names(extra.args)[indx == 0L]), domain = NA)
-    }
-  }
+
   internal.control <- carp.control(...)
   if (!is.null(control)) {
-    internal.control[names(control)] <- control
+    internal.control <- modifyList(internal.control, control)
   }
+
   obs.labels <- internal.control$obs.labels
   var.labels <- internal.control$var.labels
   X.center <- internal.control$X.center
@@ -116,8 +113,6 @@ CARP <- function(X,
   t <- internal.control$t
   npcs <- internal.control$npcs
   dendrogram.scale <- internal.control$dendrogram.scale
-
-
 
   # get labels
   if (is.null(obs.labels)) {
@@ -388,40 +383,51 @@ CARP <- function(X,
   return(carp.fit)
 }
 
-#' Control for CARP fits
+#' Control for \code{CARP} fits
 #'
-#' Parameters for various CARP fitting options
+#' Set \code{CARP} algorithm parameters
 #'
+#' This function constructs a list containing additional arguments to control
+#' the behavior of the \code{CARP} algorithm. It is typically only used internally
+#' by \code{\link{CARP}}, but may be useful to advanced users who wish to
+#' construct the \code{control} argument directly.
 #'
-#' @param obs.labels a vector of length n containing observations (row) labels
-#' @param var.labels a vector of length p containing variable (column) labels
-#' @param X.center A logical. Should X be centered?
-#' @param X.scale A logical. Should X be scaled?
-#' @param rho A positive number for augmented lagrangian. Not advisable to change.
-#' @param weights A vector of positive number of length choose(n,2).
-#' @param k an integer >= 1. The number of neighbors used to create sparse weights
-#' @param weight.dist a string indicating the distance metric used to calculate weights.
-#' @param weight.dist.p The power of the Minkowski distance, if used.
-#' @param phi A positive numner used for scaling in RBF kernel
-#' @param ncores an integer >= 1. The number of cores to use.
-#' @param max.iter an integer. The maximum number of CARP iterations.
-#' @param burn.in an integer. The number of initial iterations at a fixed
-#' value of (small) lambda_k
-#' @param alg.type Which CARP algorithm to perform. Choices are 'carpviz'
-#' and 'carp;
-#' @param t a number greater than 1. The size of the multiplicitive
-#' regularization parameter update. Typical values are: 1.1, 1.05, 1.01, 1.005
-#' Determines observation pairs' fusion amount.
-#' @param npcs A integer >= 2. The number of principal components to compute
-#' for path visualization.
-#' @param dendrogram.scale a character string denoting how the scale of dendrogram
-#' regularization proportions should be visualized. Choices are 'original'
-#' or 'log'; if not provided, a choice is made based on the data provided.
-#' @param ... unused generic arguements.
-#' @return a list containing the CARP options.
+#' @param obs.labels A character vector of length \eqn{n}: observations (row) labels
+#' @param var.labels A character vector of length \eqn{p}: variable (column) labels
+#' @param X.center A logical: Should \code{X} be centered columnwise?
+#' @param X.scale A logical: Should \code{X} be scaled columnwise?
+#' @param rho For advanced users only (not advisable to change): the penalty
+#'            parameter used for the augmented Lagrangian.
+#' @param weights A vector of positive number of length \code{choose(n,2)}.
+#' @param k An positive integer: the number of neighbors used to create sparse weights
+#' @param weight.dist A string indicating the distance metric used to calculate weights.
+#'                    See \code{\link[stats]{distance}} for details.
+#' @param weight.dist.p The exponent used to calculate the Minkowski distance if
+#'                      \code{weight.dist = "minkowski"}.
+#'                      See \code{\link[stats]{distance}} for details.
+#' @param phi A positive real number: the scale factor used in the RBF kernel
+#' @param ncores An positive integer: the number of cores to use.
+#' @param max.iter An integer: the maximum number of CARP iterations.
+#' @param burn.in An integer: the number of initial iterations at a fixed
+#'                (small) value of \eqn{\lambda}
+#' @param alg.type Which \code{CARP} variant to use. Allowed values are \itemize{
+#'        \item \code{"carp"} - The standard \code{CARP} algorithm with \eqn{L2} penalty;
+#'        \item \code{"carpviz"} - The back-tracking \code{CARP} algorithm with \eqn{L2} penalty;
+#'        \item \code{"carpl1"} - The standard \code{CARP} algorithm with \eqn{L1} penalty; and
+#'        \item \code{"carpvizl1"} - The back-tracking \code{CARP} algorithm with \eqn{L1} penalty.}
+#' @param t A number greater than 1: the size of the multiplicative update to
+#'          the cluster fusion regularization parameter (not used by
+#'          back-tracking variants). Typically on the scale of \code{1.005} to \code{1.1}.
+#' @param npcs An integer >= 2. The number of principal components to compute
+#'             for path visualization.
+#' @param dendrogram.scale A character string denoting how the scale of dendrogram
+#' regularization proportions should be visualized. Choices are \code{'original'}
+#' or \code{'log'}; if not provided, a data-driven heuristic choice is used.
+#' @param ... Unused arguements. An error will be thrown if any unrecognized
+#'            arguments as given.
+#' @return A list containing the \code{CARP} algorithm parameters.
 #' @export
-carp.control <- function(
-                         obs.labels = NULL,
+carp.control <- function(obs.labels = NULL,
                          var.labels = NULL,
                          X.center = TRUE,
                          X.scale = FALSE,
@@ -431,54 +437,90 @@ carp.control <- function(
                          k = NULL,
                          weight.dist = "euclidean",
                          weight.dist.p = 2,
-                         ncores = as.integer(1),
-                         max.iter = as.integer(1e6),
-                         burn.in = as.integer(50),
+                         ncores = 1L,
+                         max.iter = 1000000L,
+                         burn.in = 50L,
                          alg.type = "carpviz",
                          t = 1.05,
                          npcs = NULL,
                          dendrogram.scale = NULL,
                          ...) {
-  if (!is.logical(X.center)) {
-    stop("X.center should be either TRUE or FALSE")
+
+  dots <- list(...)
+
+  if (length(dots) != 0L) {
+    if (!is.null(names(dots))) {
+      stop("Unknown argument ", sQuote(names(dots)[1L]), " passed to ", sQuote("CARP."))
+    } else {
+      stop("Unknown ", sQuote("..."), " arguments passed to ", sQuote("CARP."))
+    }
   }
-  if (!is.logical(X.scale)) {
-    stop("X.scale should be either TRUE or FALSE")
+
+  if (!is.logical(X.center) || is.na(X.center) || (length(X.center) != 1L)) {
+    stop(sQuote("X.center"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
   }
-  if (rho < 0) {
-    stop("rho should be non-negative")
+
+  if (!is.logical(X.scale) || is.na(X.scale) || (length(X.scale) != 1L)) {
+    stop(sQuote("X.scale"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
   }
-  if (!(weight.dist %in% c("euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski"))) {
-    stop("unrecognized weight.dist argument; see method arguement of stats::dist for options.")
+
+  if ((rho < 0) || is.na(rho) || (length(rho) != 1L)) {
+    stop(sQuote("rho"), "must a be non-negative scalar.")
   }
-  if (weight.dist.p <= 0) {
-    stop("weight.dist.p should be > 0; see p argument of stats::dist for details.")
+
+  if (weight.dist %not.in% SUPPORTED_DISTANCES) {
+    stop("Unsupported choice of ",
+         sQuote("weight.dist;"),
+         " see the ", sQuote("method"),
+         " argument of ",
+         sQuote("stats::dist"),
+         " for supported distances.")
   }
-  if (!is.integer(ncores) | ncores <= 0) {
-    stop("ncores should be a positive integer.")
+
+  if ((weight.dist.p <= 0) || (length(weight.dist.p) != 1L)) {
+    stop(sQuote("weight.dist.p"),
+         " must be a positive scalar; see the ", sQuote("p"),
+         " argument of ", sQuote("stats::dist"), " for details.")
   }
+
+  if (!is.integer(ncores) || ncores <= 0L) {
+    stop(sQuote("ncores"), " must be a positive integer.")
+  }
+
+  if (!is.null(npcs)) {
+    if (!is.integer(npcs) || npcs <= 1L) {
+      stop(sQuote("npcs"), " must be at least 2.")
+    }
+  }
+
   if (!is.null(k)) {
-    if (!is.integer(k) | k >= 0) {
-      stop("k should be a positive integer.")
+    if (!is.integer(k) || k <= 0) {
+      stop("If not NULL, ", sQuote("k"), " must be a positive integer.")
     }
   }
-  if (!is.integer(max.iter) | max.iter <= 0) {
-    stop("max.iter should be a positive integer.")
+
+  if (!is.integer(max.iter) || (max.iter <= 0) || (length(max.iter) != 1L)) {
+    stop(sQuote("max.iter"), " must be a positive integer.")
   }
-  if (!is.integer(burn.in) | burn.in <= 0 | burn.in >= max.iter) {
-    stop("burn.in should be a positive integer greater than max.iter.")
+
+  if (!is.integer(burn.in) || (burn.in <= 0) || (burn.in >= max.iter)) {
+    stop(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
   }
-  if (!(alg.type %in% c("carpviz", "carp", "carpl1", "carpvizl1"))) {
-    stop("unrecognized alg.type. see help for details.")
+
+  if (alg.type %not.in% c("carpviz", "carp", "carpl1", "carpvizl1")) {
+    stop("Unrecognized value of ", sQuote("alg.type;"), " see help for allowed values.")
   }
-  if (t <= 1) {
-    stop("t should be greater than 1.")
+
+  if ((t <= 1) || is.na(t) || (length(t) != 1L)) {
+    stop(sQuote("t"), " must be a scalar greater than 1.")
   }
+
   if (!is.null(dendrogram.scale)) {
-    if (!(dendrogram.scale %in% c("original", "log"))) {
-      stop("dendrogram.scale should be one of 'original' or 'log'")
+    if (dendrogram.scale %not.in% c("original", "log")) {
+      stop("If not NULL, ", sQuote("dendrogram.scale"), " must be either ", sQuote("original"), " or ", sQuote("log."))
     }
   }
+
   list(
     obs.labels = obs.labels,
     var.labels = var.labels,
@@ -523,7 +565,7 @@ print.CARP <- function(x, ...) {
 
   cat("CARP Fit Summary\n")
   cat("====================\n\n")
-  cat("Algorithm: ", alg.string, "\n\n")
+  cat("Algorithm: ", alg_string, "\n\n")
 
   cat("Available Visualizations:\n")
   cat(" - Static Dendrogram:         ", x$static, "\n")
