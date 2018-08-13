@@ -56,8 +56,8 @@ CBASS <- function(X,
                   static = TRUE,
                   control = NULL,
                   ...) {
-  n.obs <- nrow(X)
-  p.var <- ncol(X)
+  n.obs <- NROW(X)
+  p.var <- NCOL(X)
   if (is.logical(verbose)) {
     verbose.basic <- TRUE
     verbose.deep <- FALSE
@@ -111,26 +111,26 @@ CBASS <- function(X,
     if (!is.null(rownames(X))) {
       n.labels <- rownames(X)
     } else {
-      n.labels <- 1:nrow(X)
+      n.labels <- 1:NROW(X)
     }
   } else {
     if (length(obs.labels) == n.obs) {
       n.labels <- obs.labels
     } else {
-      stop("obs.labels should be length nrow(X)")
+      stop("obs.labels should be length NROW(X)")
     }
   }
   if (is.null(var.labels)) {
     if (!is.null(colnames(X))) {
       p.labels <- colnames(X)
     } else {
-      p.labels <- 1:ncol(X)
+      p.labels <- 1:NCOL(X)
     }
   } else {
     if (length(var.labels) == p.var) {
       p.labels <- var.labels
     } else {
-      stop("var.labels should be length ncol(X)")
+      stop("var.labels should be length NCOL(X)")
     }
   }
   if (!is.null(phi)) {
@@ -155,7 +155,7 @@ CBASS <- function(X,
     if (length(weights.var) == choose(p.var, 2)) {
       weights.row <- weights.var
     } else {
-      stop("weights.var should be length choose(ncol(X),2)")
+      stop("weights.var should be length choose(NCOL(X),2)")
     }
   } else {
     if (is.null(phi)) {
@@ -185,13 +185,13 @@ CBASS <- function(X,
       ncores = ncores, rho = rho
     )
   )
-  cardE.row <- nrow(PreCompList.row$E)
+  cardE.row <- NROW(PreCompList.row$E)
 
   if (!is.null(weights.obs)) {
     if (length(weights.obs) == choose(n.obs, 2)) {
       weights.cols <- weights.obs
     } else {
-      stop("weights.obs should have length choose(nrow(X),2)")
+      stop("weights.obs should have length choose(NROW(X),2)")
     }
   } else {
     phi.col <- phi / p.var
@@ -213,7 +213,7 @@ CBASS <- function(X,
       ncores = ncores, rho = rho
     )
   )
-  cardE.col <- nrow(PreCompList.col$E)
+  cardE.col <- NROW(PreCompList.col$E)
 
 
 

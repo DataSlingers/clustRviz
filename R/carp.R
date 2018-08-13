@@ -51,8 +51,8 @@ CARP <- function(X,
                  static = TRUE,
                  control = NULL,
                  ...) {
-  n.obs <- nrow(X)
-  p.var <- ncol(X)
+  n.obs <- NROW(X)
+  p.var <- NCOL(X)
   Iter <- Cluster <- Lambda <- NULL
   if (is.logical(verbose)) {
     verbose.basic <- TRUE
@@ -104,13 +104,13 @@ CARP <- function(X,
     if (!is.null(rownames(X))) {
       n.labels <- rownames(X)
     } else {
-      n.labels <- 1:nrow(X)
+      n.labels <- 1:NROW(X)
     }
   } else {
     if (length(obs.labels) == n.obs) {
       n.labels <- obs.labels
     } else {
-      stop("obs.labels should hve length nrow(X)")
+      stop("obs.labels should hve length NROW(X)")
     }
   }
 
@@ -118,13 +118,13 @@ CARP <- function(X,
     if (!is.null(colnames(X))) {
       p.labels <- colnames(X)
     } else {
-      p.labels <- 1:ncol(X)
+      p.labels <- 1:NCOL(X)
     }
   } else {
     if (length(var.labels) == p.var) {
       p.labels <- var.labels
     } else {
-      stop("var.labels should be have length ncol(X)")
+      stop("var.labels should be have length NCOL(X)")
     }
   }
 
@@ -137,7 +137,7 @@ CARP <- function(X,
       stop("npcs should be an integer greater than or equal to 2.")
     }
     if (npcs > p.var) {
-      stop("npcs should be less than or equal to ncol(X)")
+      stop("npcs should be less than or equal to NCOL(X)")
     }
   }
   if (!is.null(phi)) {
@@ -196,7 +196,7 @@ CARP <- function(X,
     ncores = ncores,
     rho = rho
   ))
-  cardE <- nrow(PreCompList$E)
+  cardE <- NROW(PreCompList$E)
 
   if (verbose.basic) message("Computing CARP Path")
   switch(
