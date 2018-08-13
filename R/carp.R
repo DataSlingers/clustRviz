@@ -46,32 +46,32 @@
 #' carp.fit <- CARP(X=Xdat)
 #' carp.fit
 CARP <- function(X,
-                 verbose=1,
-                 interactive=TRUE,
-                 static=TRUE,
-                 control=NULL,
-                 ...){
+                 verbose = 1,
+                 interactive = TRUE,
+                 static = TRUE,
+                 control = NULL,
+                 ...) {
   n.obs <- nrow(X)
   p.var <- ncol(X)
   Iter <- Cluster <- Lambda <- NULL
-  if(is.logical(verbose)){
-    verbose.basic = TRUE
-    verbose.deep=FALSE
-  }else if(verbose == 1) {
-    verbose.basic = TRUE
-    verbose.deep = FALSE
-  }else if(verbose == 2){
-    verbose.basic = TRUE
-    verbose.deep = TRUE
-  }else{
-    verbose.basic=FALSE
-    verbose.deep=FALSE
+  if (is.logical(verbose)) {
+    verbose.basic <- TRUE
+    verbose.deep <- FALSE
+  } else if (verbose == 1) {
+    verbose.basic <- TRUE
+    verbose.deep <- FALSE
+  } else if (verbose == 2) {
+    verbose.basic <- TRUE
+    verbose.deep <- TRUE
+  } else {
+    verbose.basic <- FALSE
+    verbose.deep <- FALSE
   }
   extra.args <- list(...)
   if (length(extra.args)) {
     control.args <- names(formals(carp.control))
     indx <- match(names(extra.args), control.args, nomatch = 0L)
-    if (any(indx == 0L)){
+    if (any(indx == 0L)) {
       stop(gettextf("Argument %s not matched", names(extra.args)[indx == 0L]), domain = NA)
     }
   }
@@ -80,211 +80,218 @@ CARP <- function(X,
     internal.control[names(control)] <- control
   }
   obs.labels <- internal.control$obs.labels
-  var.labels = internal.control$var.labels
-  X.center = internal.control$X.center
-  X.scale = internal.control$X.scale
-  k = internal.control$k
-  phi = internal.control$phi
-  rho = internal.control$rho
-  weights = internal.control$weights
-  weight.dist = internal.control$weight.dist
-  weight.dist.p = internal.control$weight.dist.p
-  ncores = internal.control$ncores
-  max.iter = internal.control$max.iter
-  burn.in = internal.control$burn.in
-  alg.type = internal.control$alg.type
-  t = internal.control$t
-  npcs = internal.control$npcs
-  dendrogram.scale = internal.control$dendrogram.scale
+  var.labels <- internal.control$var.labels
+  X.center <- internal.control$X.center
+  X.scale <- internal.control$X.scale
+  k <- internal.control$k
+  phi <- internal.control$phi
+  rho <- internal.control$rho
+  weights <- internal.control$weights
+  weight.dist <- internal.control$weight.dist
+  weight.dist.p <- internal.control$weight.dist.p
+  ncores <- internal.control$ncores
+  max.iter <- internal.control$max.iter
+  burn.in <- internal.control$burn.in
+  alg.type <- internal.control$alg.type
+  t <- internal.control$t
+  npcs <- internal.control$npcs
+  dendrogram.scale <- internal.control$dendrogram.scale
 
 
 
   # get labels
-  if(is.null(obs.labels)){
-    if(!is.null(rownames(X))){
+  if (is.null(obs.labels)) {
+    if (!is.null(rownames(X))) {
       n.labels <- rownames(X)
     } else {
       n.labels <- 1:nrow(X)
     }
-  } else{
-    if(length(obs.labels) == n.obs){
+  } else {
+    if (length(obs.labels) == n.obs) {
       n.labels <- obs.labels
-    } else{
-      stop('obs.labels should hve length nrow(X)')
+    } else {
+      stop("obs.labels should hve length nrow(X)")
     }
   }
 
-  if(is.null(var.labels)){
-    if(!is.null(colnames(X))){
+  if (is.null(var.labels)) {
+    if (!is.null(colnames(X))) {
       p.labels <- colnames(X)
-    } else{
+    } else {
       p.labels <- 1:ncol(X)
     }
-  } else{
-    if(length(var.labels) == p.var){
+  } else {
+    if (length(var.labels) == p.var) {
       p.labels <- var.labels
-    } else{
-      stop('var.labels should be have length ncol(X)')
+    } else {
+      stop("var.labels should be have length ncol(X)")
     }
   }
 
-  if(is.null(npcs)){
-    npcs = min(4,p.var)
-    npcs = as.integer(npcs)
-  } else{
-    npcs = as.integer(npcs)
-    if(!is.integer(npcs) | npcs < 2){
-      stop('npcs should be an integer greater than or equal to 2.')
+  if (is.null(npcs)) {
+    npcs <- min(4, p.var)
+    npcs <- as.integer(npcs)
+  } else {
+    npcs <- as.integer(npcs)
+    if (!is.integer(npcs) | npcs < 2) {
+      stop("npcs should be an integer greater than or equal to 2.")
     }
-    if(npcs > p.var){
-      stop('npcs should be less than or equal to ncol(X)')
+    if (npcs > p.var) {
+      stop("npcs should be less than or equal to ncol(X)")
     }
   }
-  if(!is.null(phi)){
-    if(phi <= 0){
-      stop('phi should be positive.')
+  if (!is.null(phi)) {
+    if (phi <= 0) {
+      stop("phi should be positive.")
     }
   }
 
-  if(length(unique(p.labels)!=length(p.labels))){
-    colnames(X) <- make.names(p.labels,unique=TRUE)
-  } else{
+  if (length(unique(p.labels) != length(p.labels))) {
+    colnames(X) <- make.names(p.labels, unique = TRUE)
+  } else {
     colnames(X) <- p.labels
   }
-  if(length(unique(n.labels))!=length(n.labels)){
-    rownames(X) <- make.names(n.labels,unique=TRUE)
-  } else{
+  if (length(unique(n.labels)) != length(n.labels)) {
+    rownames(X) <- make.names(n.labels, unique = TRUE)
+  } else {
     rownames(X) <- n.labels
   }
 
   # center and scale
   X.orig <- X
-  if(X.center|X.scale){
+  if (X.center | X.scale) {
     X %>%
-      scale(center=X.center,scale=X.scale) %>%
+      scale(center = X.center, scale = X.scale) %>%
       t() -> X
-  } else{
+  } else {
     X <- t(X)
   }
 
   # get weights
-  if(is.null(weights)){
-    if(is.null(phi)){
+  if (is.null(weights)) {
+    if (is.null(phi)) {
       phi.vec <- 10^(-10:10)
-      sapply(phi.vec,function(phi){
-        stats::var(DenseWeights(X=t(X),phi = phi,method=weight.dist,p=weight.dist.p))
+      sapply(phi.vec, function(phi) {
+        stats::var(DenseWeights(X = t(X), phi = phi, method = weight.dist, p = weight.dist.p))
       }) %>%
         which.max() %>%
         phi.vec[.] -> phi
     }
-    weights <- DenseWeights(t(X),phi=phi,method=weight.dist,p=weight.dist.p)
-    if(is.null(k)){
-      k <- MinKNN(t(X),weights)
+    weights <- DenseWeights(t(X), phi = phi, method = weight.dist, p = weight.dist.p)
+    if (is.null(k)) {
+      k <- MinKNN(t(X), weights)
     }
-    weights <- SparseWeights(X=t(X),dense.weights = weights,k = k)
-  } else{
-    if(length(weights) != choose(n.obs,2)){
-      stop('Incorrect weight length')
+    weights <- SparseWeights(X = t(X), dense.weights = weights, k = k)
+  } else {
+    if (length(weights) != choose(n.obs, 2)) {
+      stop("Incorrect weight length")
     }
   }
 
 
-  if(verbose.basic) message("Pre-computing weight-based edge sets")
+  if (verbose.basic) message("Pre-computing weight-based edge sets")
   PreCompList <- suppressMessages(ConvexClusteringPreCompute(
-    X=X,
+    X = X,
     weights = weights,
     ncores = ncores,
-    rho=rho
+    rho = rho
   ))
   cardE <- nrow(PreCompList$E)
 
-  if(verbose.basic) message('Computing CARP Path')
+  if (verbose.basic) message("Computing CARP Path")
   switch(
     alg.type,
-    carpviz={
-      CARPL2_VIS_FRAC(x=X[TRUE],
-                      n= as.integer(n.obs),
-                      p = as.integer(p.var),
-                      lambda_init = 1e-8,
-                      weights = weights[weights!=0],
-                      uinit = as.matrix(PreCompList$uinit),
-                      vinit = as.matrix(PreCompList$vinit),
-                      premat = PreCompList$PreMat,
-                      IndMat = PreCompList$ind.mat,
-                      EOneIndMat = PreCompList$E1.ind.mat,
-                      ETwoIndMat = PreCompList$E2.ind.mat,
-                      rho = rho,
-                      max_iter = as.integer(max.iter),
-                      burn_in = as.integer(burn.in),
-                      verbose = verbose.deep,
-                      try_tol=1e-5,
-                      ti=10,
-                      t_switch=1.01,
-                      keep=1) -> carp.sol.path
+    carpviz = {
+      CARPL2_VIS_FRAC(
+        x = X[TRUE],
+        n = as.integer(n.obs),
+        p = as.integer(p.var),
+        lambda_init = 1e-8,
+        weights = weights[weights != 0],
+        uinit = as.matrix(PreCompList$uinit),
+        vinit = as.matrix(PreCompList$vinit),
+        premat = PreCompList$PreMat,
+        IndMat = PreCompList$ind.mat,
+        EOneIndMat = PreCompList$E1.ind.mat,
+        ETwoIndMat = PreCompList$E2.ind.mat,
+        rho = rho,
+        max_iter = as.integer(max.iter),
+        burn_in = as.integer(burn.in),
+        verbose = verbose.deep,
+        try_tol = 1e-5,
+        ti = 10,
+        t_switch = 1.01,
+        keep = 1
+      ) -> carp.sol.path
     },
-    carp={
-      CARPL2_NF_FRAC(x=X[TRUE],
-                     n=as.integer(n.obs),
-                     p = as.integer(p.var),
-                     lambda_init = 1e-8,
-                     t = t,
-                     weights = weights[weights!=0],
-                     uinit = as.matrix(PreCompList$uinit),
-                     vinit = as.matrix(PreCompList$vinit),
-                     premat = PreCompList$PreMat,
-                     IndMat = PreCompList$ind.mat,
-                     EOneIndMat = PreCompList$E1.ind.mat,
-                     ETwoIndMat = PreCompList$E2.ind.mat,
-                     rho = rho,
-                     max_iter = as.integer(max.iter),
-                     burn_in = as.integer(burn.in),
-                     verbose=verbose.deep,
-                     keep=1) -> carp.sol.path
+    carp = {
+      CARPL2_NF_FRAC(
+        x = X[TRUE],
+        n = as.integer(n.obs),
+        p = as.integer(p.var),
+        lambda_init = 1e-8,
+        t = t,
+        weights = weights[weights != 0],
+        uinit = as.matrix(PreCompList$uinit),
+        vinit = as.matrix(PreCompList$vinit),
+        premat = PreCompList$PreMat,
+        IndMat = PreCompList$ind.mat,
+        EOneIndMat = PreCompList$E1.ind.mat,
+        ETwoIndMat = PreCompList$E2.ind.mat,
+        rho = rho,
+        max_iter = as.integer(max.iter),
+        burn_in = as.integer(burn.in),
+        verbose = verbose.deep,
+        keep = 1
+      ) -> carp.sol.path
     },
-    carpl1={
-      CARPL1_NF_FRAC(x=X[TRUE],
-                     n=as.integer(n.obs),
-                     p = as.integer(p.var),
-                     lambda_init = 1e-8,
-                     t = t,
-                     weights = weights[weights!=0],
-                     uinit = as.matrix(PreCompList$uinit),
-                     vinit = as.matrix(PreCompList$vinit),
-                     premat = PreCompList$PreMat,
-                     IndMat = PreCompList$ind.mat,
-                     EOneIndMat = PreCompList$E1.ind.mat,
-                     ETwoIndMat = PreCompList$E2.ind.mat,
-                     rho = rho,
-                     max_iter = as.integer(max.iter),
-                     burn_in = as.integer(burn.in),
-                     verbose=verbose.deep,
-                     keep=1) -> carp.sol.path
+    carpl1 = {
+      CARPL1_NF_FRAC(
+        x = X[TRUE],
+        n = as.integer(n.obs),
+        p = as.integer(p.var),
+        lambda_init = 1e-8,
+        t = t,
+        weights = weights[weights != 0],
+        uinit = as.matrix(PreCompList$uinit),
+        vinit = as.matrix(PreCompList$vinit),
+        premat = PreCompList$PreMat,
+        IndMat = PreCompList$ind.mat,
+        EOneIndMat = PreCompList$E1.ind.mat,
+        ETwoIndMat = PreCompList$E2.ind.mat,
+        rho = rho,
+        max_iter = as.integer(max.iter),
+        burn_in = as.integer(burn.in),
+        verbose = verbose.deep,
+        keep = 1
+      ) -> carp.sol.path
     },
-    carpvizl1={
-      CARPL1_VIS_FRAC(x=X[TRUE],
-                      n= as.integer(n.obs),
-                      p = as.integer(p.var),
-                      lambda_init = 1e-8,
-                      weights = weights[weights!=0],
-                      uinit = as.matrix(PreCompList$uinit),
-                      vinit = as.matrix(PreCompList$vinit),
-                      premat = PreCompList$PreMat,
-                      IndMat = PreCompList$ind.mat,
-                      EOneIndMat = PreCompList$E1.ind.mat,
-                      ETwoIndMat = PreCompList$E2.ind.mat,
-                      rho = rho,
-                      max_iter = as.integer(max.iter),
-                      burn_in = as.integer(burn.in),
-                      verbose = verbose.deep,
-                      try_tol=1e-5,
-                      ti=10,
-                      t_switch=1.01,
-                      keep=1) -> carp.sol.path
+    carpvizl1 = {
+      CARPL1_VIS_FRAC(
+        x = X[TRUE],
+        n = as.integer(n.obs),
+        p = as.integer(p.var),
+        lambda_init = 1e-8,
+        weights = weights[weights != 0],
+        uinit = as.matrix(PreCompList$uinit),
+        vinit = as.matrix(PreCompList$vinit),
+        premat = PreCompList$PreMat,
+        IndMat = PreCompList$ind.mat,
+        EOneIndMat = PreCompList$E1.ind.mat,
+        ETwoIndMat = PreCompList$E2.ind.mat,
+        rho = rho,
+        max_iter = as.integer(max.iter),
+        burn_in = as.integer(burn.in),
+        verbose = verbose.deep,
+        try_tol = 1e-5,
+        ti = 10,
+        t_switch = 1.01,
+        keep = 1
+      ) -> carp.sol.path
     }
-
   )
 
-  if(verbose.basic) message('Post-processing')
+  if (verbose.basic) message("Post-processing")
   ISP(
     sp.path = carp.sol.path$v.zero.inds %>% t(),
     v.path = carp.sol.path$v.path,
@@ -292,29 +299,29 @@ CARP <- function(X,
     lambda.path = carp.sol.path$lambda.path,
     cardE = cardE
   ) -> carp.cluster.path
-  carp.cluster.path$sp.path.inter %>% duplicated(fromLast=FALSE) -> sp.path.dups
-  adj.path <- CreateAdjacencyPath(PreCompList$E,sp.path = carp.cluster.path$sp.path.inter,n.obs)
+  carp.cluster.path$sp.path.inter %>% duplicated(fromLast = FALSE) -> sp.path.dups
+  adj.path <- CreateAdjacencyPath(PreCompList$E, sp.path = carp.cluster.path$sp.path.inter, n.obs)
   clust.graph.path <- CreateClusterGraphPath(adj.path)
   clust.path <- GetClustersPath(clust.graph.path)
-  clust.path.dups <- duplicated(clust.path,fromLast = FALSE)
+  clust.path.dups <- duplicated(clust.path, fromLast = FALSE)
 
-  carp.cluster.path[['sp.path.dups']] <- sp.path.dups
-  carp.cluster.path[['adj.path']] <- adj.path
-  carp.cluster.path[['clust.graph.path']] <- clust.graph.path
-  carp.cluster.path[['clust.path']] <- clust.path
-  carp.cluster.path[['clust.path.dups']] <- clust.path.dups
+  carp.cluster.path[["sp.path.dups"]] <- sp.path.dups
+  carp.cluster.path[["adj.path"]] <- adj.path
+  carp.cluster.path[["clust.graph.path"]] <- clust.graph.path
+  carp.cluster.path[["clust.path"]] <- clust.path
+  carp.cluster.path[["clust.path.dups"]] <- clust.path.dups
 
-  if(static|interactive){
-    carp.dend <- CreateDendrogram(carp.cluster.path,n.labels,dendrogram.scale)
-  } else{
+  if (static | interactive) {
+    carp.dend <- CreateDendrogram(carp.cluster.path, n.labels, dendrogram.scale)
+  } else {
     carp.dend <- NULL
   }
-  if(interactive){
-    X.pca <- stats::prcomp(t(X),scale. = FALSE,center = FALSE)
-    X.pca.rot <- X.pca$rotation[,1:npcs]
-    lapply(1:length(carp.cluster.path$clust.path),function(iter){
-      U <- t(matrix(carp.cluster.path$u.path.inter[,iter],ncol=n.obs))%*%X.pca.rot
-      names(U) <- paste('PC',1:npcs)
+  if (interactive) {
+    X.pca <- stats::prcomp(t(X), scale. = FALSE, center = FALSE)
+    X.pca.rot <- X.pca$rotation[, 1:npcs]
+    lapply(1:length(carp.cluster.path$clust.path), function(iter) {
+      U <- t(matrix(carp.cluster.path$u.path.inter[, iter], ncol = n.obs)) %*% X.pca.rot
+      names(U) <- paste("PC", 1:npcs)
       U %>%
         as.data.frame() %>%
         dplyr::tbl_df() %>%
@@ -326,7 +333,7 @@ CARP <- function(X,
           ObsLabel = n.labels
         )
     }) %>%
-      do.call(rbind.data.frame,.) %>%
+      do.call(rbind.data.frame, .) %>%
       dplyr::tbl_df() %>%
       dplyr::group_by(Iter) %>%
       dplyr::mutate(
@@ -336,7 +343,7 @@ CARP <- function(X,
       dplyr::mutate(
         LambdaPercent = Lambda / max(Lambda)
       ) -> carp.cluster.path.vis
-  } else{
+  } else {
     carp.cluster.path.vis <- NULL
   }
   carp.fit <- list(
@@ -352,12 +359,12 @@ CARP <- function(X,
     burn.in = burn.in,
     alg.type = alg.type,
     t = t,
-    X.center=X.center,
-    X.scale=X.scale,
-    static=static,
-    interactive=interactive
+    X.center = X.center,
+    X.scale = X.scale,
+    static = static,
+    interactive = interactive
   )
-  class(carp.fit) <- 'CARP'
+  class(carp.fit) <- "CARP"
   return(carp.fit)
 }
 
@@ -394,62 +401,61 @@ CARP <- function(X,
 #' @return a list containing the CARP options.
 #' @export
 carp.control <- function(
-  obs.labels=NULL,
-  var.labels=NULL,
-  X.center=TRUE,
-  X.scale=FALSE,
-  phi=NULL,
-  rho=1,
-  weights=NULL,
-  k=NULL,
-  weight.dist='euclidean',
-  weight.dist.p = 2,
-  ncores=as.integer(1),
-  max.iter=as.integer(1e6),
-  burn.in=as.integer(50),
-  alg.type='carpviz',
-  t = 1.05,
-  npcs=NULL,
-  dendrogram.scale = NULL,
-  ...
-) {
-  if(!is.logical(X.center)){
-    stop('X.center should be either TRUE or FALSE')
+                         obs.labels = NULL,
+                         var.labels = NULL,
+                         X.center = TRUE,
+                         X.scale = FALSE,
+                         phi = NULL,
+                         rho = 1,
+                         weights = NULL,
+                         k = NULL,
+                         weight.dist = "euclidean",
+                         weight.dist.p = 2,
+                         ncores = as.integer(1),
+                         max.iter = as.integer(1e6),
+                         burn.in = as.integer(50),
+                         alg.type = "carpviz",
+                         t = 1.05,
+                         npcs = NULL,
+                         dendrogram.scale = NULL,
+                         ...) {
+  if (!is.logical(X.center)) {
+    stop("X.center should be either TRUE or FALSE")
   }
-  if(!is.logical(X.scale)){
-    stop('X.scale should be either TRUE or FALSE')
+  if (!is.logical(X.scale)) {
+    stop("X.scale should be either TRUE or FALSE")
   }
-  if(rho < 0){
-    stop('rho should be non-negative')
+  if (rho < 0) {
+    stop("rho should be non-negative")
   }
-  if(!(weight.dist %in% c('euclidean','maximum','manhattan','canberra','binary','minkowski'))){
-    stop('unrecognized weight.dist argument; see method arguement of stats::dist for options.')
+  if (!(weight.dist %in% c("euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski"))) {
+    stop("unrecognized weight.dist argument; see method arguement of stats::dist for options.")
   }
-  if(weight.dist.p<=0){
-    stop('weight.dist.p should be > 0; see p argument of stats::dist for details.')
+  if (weight.dist.p <= 0) {
+    stop("weight.dist.p should be > 0; see p argument of stats::dist for details.")
   }
-  if(!is.integer(ncores) | ncores <= 0){
-    stop('ncores should be a positive integer.')
+  if (!is.integer(ncores) | ncores <= 0) {
+    stop("ncores should be a positive integer.")
   }
-  if(!is.null(k)){
-    if(!is.integer(k) | k >= 0){
-      stop('k should be a positive integer.')
+  if (!is.null(k)) {
+    if (!is.integer(k) | k >= 0) {
+      stop("k should be a positive integer.")
     }
   }
-  if(!is.integer(max.iter) | max.iter <= 0){
-    stop('max.iter should be a positive integer.')
+  if (!is.integer(max.iter) | max.iter <= 0) {
+    stop("max.iter should be a positive integer.")
   }
-  if(!is.integer(burn.in) | burn.in <= 0 | burn.in >= max.iter){
-    stop('burn.in should be a positive integer greater than max.iter.')
+  if (!is.integer(burn.in) | burn.in <= 0 | burn.in >= max.iter) {
+    stop("burn.in should be a positive integer greater than max.iter.")
   }
-  if(!(alg.type %in% c('carpviz','carp','carpl1','carpvizl1'))){
-    stop('unrecognized alg.type. see help for details.')
+  if (!(alg.type %in% c("carpviz", "carp", "carpl1", "carpvizl1"))) {
+    stop("unrecognized alg.type. see help for details.")
   }
-  if(t <= 1){
-    stop('t should be greater than 1.')
+  if (t <= 1) {
+    stop("t should be greater than 1.")
   }
-  if(!is.null(dendrogram.scale)){
-    if( ! (dendrogram.scale %in% c('original','log') ) ){
+  if (!is.null(dendrogram.scale)) {
+    if (!(dendrogram.scale %in% c("original", "log"))) {
       stop("dendrogram.scale should be one of 'original' or 'log'")
     }
   }
@@ -490,34 +496,33 @@ carp.control <- function(
 #' Xdat <- presidential_speech[1:10,1:4]
 #' carp.fit <- CARP(X=Xdat)
 #' print(carp.fit)
-print.CARP <- function(x,...){
-  preprocess.string <- c('center','scale')
+print.CARP <- function(x, ...) {
+  preprocess.string <- c("center", "scale")
 
   switch(
     x$alg.type,
-    carpviz={
-      alg.string = 'CARP-VIZ'
+    carpviz = {
+      alg.string <- "CARP-VIZ"
     },
-    carp={
-      alg.string = paste('CARP (t=',x$t,')',sep='' )
+    carp = {
+      alg.string <- paste("CARP (t=", x$t, ")", sep = "")
     },
-    carpl1={
-      alg.string = paste('CARP L1 (t=',x$t,')',sep='' )
+    carpl1 = {
+      alg.string <- paste("CARP L1 (t=", x$t, ")", sep = "")
     },
-    carpvizl1={
-      alg.string = 'CARP-VIZ L1'
+    carpvizl1 = {
+      alg.string <- "CARP-VIZ L1"
     }
   )
-  viz.string <- c('Static Dend', 'Static Path','Interactive Dend/Path')
-  message('CARP Fit Summary')
-  message('Number of Observations: ', x$n.obs,'\n')
-  message('Number of Variables: ', x$p.var,'\n')
-  message('Pre-processing: ',preprocess.string[c(x$X.center,x$X.scale)],'\n')
-  message('Weights: RBF Kernel, phi = ',x$phi, ', k = ',x$k,'\n')
-  message('Algorithm: ',alg.string,'\n')
-  message('Visualizations: ',viz.string[c(x$static,x$static,x$interactive)],'\n')
+  viz.string <- c("Static Dend", "Static Path", "Interactive Dend/Path")
+  message("CARP Fit Summary")
+  message("Number of Observations: ", x$n.obs, "\n")
+  message("Number of Variables: ", x$p.var, "\n")
+  message("Pre-processing: ", preprocess.string[c(x$X.center, x$X.scale)], "\n")
+  message("Weights: RBF Kernel, phi = ", x$phi, ", k = ", x$k, "\n")
+  message("Algorithm: ", alg.string, "\n")
+  message("Visualizations: ", viz.string[c(x$static, x$static, x$interactive)], "\n")
 
-  message('Raw Data:\n')
-  print(x$X[1:min(5,x$n.obs),1:min(5,x$p.var)])
-
+  message("Raw Data:\n")
+  print(x$X[1:min(5, x$n.obs), 1:min(5, x$p.var)])
 }

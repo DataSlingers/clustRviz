@@ -47,104 +47,110 @@
 #' plot(cbass.fit,type='interactive')
 #' }
 plot.CBASS <- function(
-  x,
-  type=c('obs.dendrogram','var.dendrogram','heatmap','interactive'),
-  dend.branch.width=2,
-  dend.labels.cex=.6,
-  heatrow.label.cex=1.5,
-  heatcol.label.cex=1.5,
-  ...){
-  type = match.arg(type)
+                       x,
+                       type = c("obs.dendrogram", "var.dendrogram", "heatmap", "interactive"),
+                       dend.branch.width = 2,
+                       dend.labels.cex = .6,
+                       heatrow.label.cex = 1.5,
+                       heatcol.label.cex = 1.5,
+                       ...) {
+  type <- match.arg(type)
   switch(
     type,
-    obs.dendrogram={
+    obs.dendrogram = {
       x$cbass.dend.obs %>%
         stats::as.dendrogram() %>%
-        dendextend::set("branches_lwd",dend.branch.width) %>%
-        dendextend::set("labels_cex",dend.labels.cex) %>%
-        plot(ylab='Amount of Regularization')
+        dendextend::set("branches_lwd", dend.branch.width) %>%
+        dendextend::set("labels_cex", dend.labels.cex) %>%
+        plot(ylab = "Amount of Regularization")
     },
-    var.dendrogram={
+    var.dendrogram = {
       x$cbass.dend.var %>%
         stats::as.dendrogram() %>%
-        dendextend::set("branches_lwd",dend.branch.width) %>%
-        dendextend::set("labels_cex",dend.labels.cex) %>%
-        plot(ylab='Amount of Regularization')
+        dendextend::set("branches_lwd", dend.branch.width) %>%
+        dendextend::set("labels_cex", dend.labels.cex) %>%
+        plot(ylab = "Amount of Regularization")
     },
-    heatmap={
-      if(x$X.center.global){
+    heatmap = {
+      if (x$X.center.global) {
         X <- x$X
         X <- X - mean(X)
         X <- t(X)
-      }else{
+      } else {
         X <- t(x$X.orig)
       }
       rownames(X) <- x$var.labels
       colnames(X) <- x$obs.labels
       nbreaks <- 50
-      quant.probs <- seq(0,1,length.out = nbreaks)
-      breaks <- unique(stats::quantile(X[TRUE],probs = quant.probs))
+      quant.probs <- seq(0, 1, length.out = nbreaks)
+      breaks <- unique(stats::quantile(X[TRUE], probs = quant.probs))
       nbreaks <- length(breaks)
-      heatcols <- grDevices::colorRampPalette(c("blue","yellow"))(nbreaks - 1)
+      heatcols <- grDevices::colorRampPalette(c("blue", "yellow"))(nbreaks - 1)
 
-      my.cols <- grDevices::adjustcolor(c('black','grey'),alpha.f = .3)
-      my.heatmap.2(x=X,
-                   scale='none',
-                   Colv=stats::as.dendrogram(x$cbass.dend.obs),
-                   Rowv = stats::as.dendrogram(x$cbass.dend.var),
-                   trace='none',
-                   density.info = 'none',
-                   key=FALSE,
-                   breaks = breaks,
-                   col=heatcols,
-                   symkey = F,
-                   Row.hclust = x$cbass.dend.var %>% stats::as.hclust(),
-                   Col.hclust = x$cbass.dend.obs %>% stats::as.hclust(),
-                   k.col=x$n.obs,
-                   k.row=x$p.var,
-                   my.col.vec = my.cols,
-                   cexRow = heatrow.label.cex,
-                   cexCol = heatcol.label.cex,
-                   margins = c(14,8))
+      my.cols <- grDevices::adjustcolor(c("black", "grey"), alpha.f = .3)
+      my.heatmap.2(
+        x = X,
+        scale = "none",
+        Colv = stats::as.dendrogram(x$cbass.dend.obs),
+        Rowv = stats::as.dendrogram(x$cbass.dend.var),
+        trace = "none",
+        density.info = "none",
+        key = FALSE,
+        breaks = breaks,
+        col = heatcols,
+        symkey = F,
+        Row.hclust = x$cbass.dend.var %>% stats::as.hclust(),
+        Col.hclust = x$cbass.dend.obs %>% stats::as.hclust(),
+        k.col = x$n.obs,
+        k.row = x$p.var,
+        my.col.vec = my.cols,
+        cexRow = heatrow.label.cex,
+        cexCol = heatcol.label.cex,
+        margins = c(14, 8)
+      )
     },
-    interactive={
+    interactive = {
       shiny::shinyApp(
-        ui=shiny::fluidPage(
-          shiny::tags$style(type="text/css",
-                            ".recalculating { opacity: 1.0; }"
+        ui = shiny::fluidPage(
+          shiny::tags$style(
+            type = "text/css",
+            ".recalculating { opacity: 1.0; }"
           ),
 
 
           shiny::titlePanel("BiClustering"),
           shiny::tabsetPanel(
-            shiny::tabPanel("Heatmap",
-                            shiny::fluidRow(
-                              shiny::column(3,
-                                            shiny::sliderInput(
-                                              "regcent",
-                                              "Amount of Regularization",
-                                              min = 0,
-                                              max = 1,
-                                              value = .5,
-                                              step=.03,animate = shiny::animationOptions(interval=300,loop=T)
-                                            )
-                              ),
-                              shiny::column(9,
-                                            shiny::plotOutput("heatmap",height = "900px",width = '1200px')
-                              )
-                            )
+            shiny::tabPanel(
+              "Heatmap",
+              shiny::fluidRow(
+                shiny::column(
+                  3,
+                  shiny::sliderInput(
+                    "regcent",
+                    "Amount of Regularization",
+                    min = 0,
+                    max = 1,
+                    value = .5,
+                    step = .03, animate = shiny::animationOptions(interval = 300, loop = T)
+                  )
+                ),
+                shiny::column(
+                  9,
+                  shiny::plotOutput("heatmap", height = "900px", width = "1200px")
+                )
+              )
             )
           )
         ),
         server = function(input, output) {
-          if(x$X.center.global){
+          if (x$X.center.global) {
             X.heat <- x$X
             X.heat <- X.heat - mean(X.heat)
             X.heat <- t(X.heat)
             X <- x$X
             X <- X - mean(X)
             X <- t(X)
-          }else{
+          } else {
             X.heat <- t(x$X)
             X <- t(x$X)
           }
@@ -153,11 +159,11 @@ plot.CBASS <- function(
           x$cbass.sol.path$lambda.path %>% as.vector() -> lam.seq
           lam.prop.seq <- lam.seq / max(lam.seq)
           nbreaks <- 50
-          quant.probs <- seq(0,1,length.out = nbreaks)
-          breaks <- unique(stats::quantile(X[TRUE],probs = quant.probs))
+          quant.probs <- seq(0, 1, length.out = nbreaks)
+          breaks <- unique(stats::quantile(X[TRUE], probs = quant.probs))
           nbreaks <- length(breaks)
-          heatcols <- grDevices::colorRampPalette(c("blue","yellow"))(nbreaks - 1)
-          my.cols <- grDevices::adjustcolor(c('black','grey'),alpha.f = .3)
+          heatcols <- grDevices::colorRampPalette(c("blue", "yellow"))(nbreaks - 1)
+          my.cols <- grDevices::adjustcolor(c("black", "grey"), alpha.f = .3)
           output$heatmap <- shiny::renderPlot({
             plt.iter <- which.min(abs(input$regcent - lam.prop.seq))
             # find lambda at iter
@@ -175,38 +181,37 @@ plot.CBASS <- function(
             cur.row.clust.assignment <- x$cbass.cluster.path.var$clust.path[[cur.row.lam.ind]]$membership
             cur.row.clust.labels <- unique(cur.row.clust.assignment)
             cur.row.nclust <- length(cur.row.clust.labels)
-            for(col.label.ind in seq_along(cur.col.clust.labels)){
+            for (col.label.ind in seq_along(cur.col.clust.labels)) {
               cur.col.label <- cur.col.clust.labels[col.label.ind]
               col.inds <- which(cur.col.clust.assignment == cur.col.label)
-              for(row.label.ind in seq_along(cur.row.clust.labels)){
+              for (row.label.ind in seq_along(cur.row.clust.labels)) {
                 cur.row.label <- cur.row.clust.labels[row.label.ind]
                 row.inds <- which(cur.row.clust.assignment == cur.row.label)
-                mean.value <- mean(X[row.inds,col.inds])
-                X.heat[row.inds,col.inds] <- mean.value
+                mean.value <- mean(X[row.inds, col.inds])
+                X.heat[row.inds, col.inds] <- mean.value
               }
             }
-            my.heatmap.2(x=X.heat,
-                         scale='none',
-                         Colv=stats::as.dendrogram(x$cbass.dend.obs),
-                         Rowv = stats::as.dendrogram(x$cbass.dend.var),
-                         trace='none',
-                         density.info = 'none',
-                         key=FALSE,
-                         breaks = breaks,
-                         col=heatcols,
-                         symkey = F,
-                         Row.hclust = x$cbass.dend.var %>% stats::as.hclust(),
-                         Col.hclust = x$cbass.dend.obs %>% stats::as.hclust(),
-                         k.col=cur.col.nclust,
-                         k.row=cur.row.nclust,
-                         my.col.vec = my.cols,
-                         cexRow = heatrow.label.cex,
-                         cexCol = heatcol.label.cex,
-                         margins = c(10,10))
-
+            my.heatmap.2(
+              x = X.heat,
+              scale = "none",
+              Colv = stats::as.dendrogram(x$cbass.dend.obs),
+              Rowv = stats::as.dendrogram(x$cbass.dend.var),
+              trace = "none",
+              density.info = "none",
+              key = FALSE,
+              breaks = breaks,
+              col = heatcols,
+              symkey = F,
+              Row.hclust = x$cbass.dend.var %>% stats::as.hclust(),
+              Col.hclust = x$cbass.dend.obs %>% stats::as.hclust(),
+              k.col = cur.col.nclust,
+              k.row = cur.row.nclust,
+              my.col.vec = my.cols,
+              cexRow = heatrow.label.cex,
+              cexCol = heatcol.label.cex,
+              margins = c(10, 10)
+            )
           })
-
-
         }
       )
     }

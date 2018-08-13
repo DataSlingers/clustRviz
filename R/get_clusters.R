@@ -7,7 +7,7 @@
 #' \code{clustering.CBASS}
 #' @return CARP clustering solutions or CBASS biclustering solutions
 #' @export
-clustering <- function(x,...) {
+clustering <- function(x, ...) {
   UseMethod("clustering", x)
 }
 
@@ -65,52 +65,49 @@ clustering <- function(x,...) {
 #' carp.clustering.full$clustering.assignment[5,]
 #' # Examine the k=5 means again
 #' head(carp.clustering.full$cluster.means[[5]])
-clustering.CARP <- function(x,k=NULL,percent=NULL,...){
-  if(!is.null(k)){
-    clust.assign <- stats::cutree(x$carp.dend,k=k)
-    lapply(unique(clust.assign),function(cl.lab){
+clustering.CARP <- function(x, k = NULL, percent = NULL, ...) {
+  if (!is.null(k)) {
+    clust.assign <- stats::cutree(x$carp.dend, k = k)
+    lapply(unique(clust.assign), function(cl.lab) {
       apply(
-        matrix(t(x$X)[,clust.assign==cl.lab],nrow=x$p.var),
+        matrix(t(x$X)[, clust.assign == cl.lab], nrow = x$p.var),
         1,
         mean
       )
     }) %>%
-      do.call(cbind,.) -> clust.means
-    clust.assign <- paste('cl',clust.assign,sep='')
+      do.call(cbind, .) -> clust.means
+    clust.assign <- paste("cl", clust.assign, sep = "")
     colnames(clust.means) <- unique(clust.assign)
-
-  } else if(!is.null(percent)){
-    clust.assign <- stats::cutree(x$carp.dend,h=percent)
-    lapply(unique(clust.assign),function(cl.lab){
+  } else if (!is.null(percent)) {
+    clust.assign <- stats::cutree(x$carp.dend, h = percent)
+    lapply(unique(clust.assign), function(cl.lab) {
       apply(
-        matrix(t(x$X)[,clust.assign==cl.lab],nrow=x$p.var),
+        matrix(t(x$X)[, clust.assign == cl.lab], nrow = x$p.var),
         1,
         mean
       )
     }) %>%
-      do.call(cbind,.) -> clust.means
-    clust.assign <- paste('cl',clust.assign,sep='')
+      do.call(cbind, .) -> clust.means
+    clust.assign <- paste("cl", clust.assign, sep = "")
     colnames(clust.means) <- unique(clust.assign)
-
-  } else{
-    lapply(1:x$n.obs,function(k){
-      stats::cutree(x$carp.dend,k)
+  } else {
+    lapply(1:x$n.obs, function(k) {
+      stats::cutree(x$carp.dend, k)
     }) %>%
-      do.call(rbind,.) -> clust.assign
-    apply(clust.assign,1,function(cl.ass){
-      lapply(unique(cl.ass),function(cl.lab){
+      do.call(rbind, .) -> clust.assign
+    apply(clust.assign, 1, function(cl.ass) {
+      lapply(unique(cl.ass), function(cl.lab) {
         apply(
-          matrix(t(x$X)[,cl.ass==cl.lab],nrow=x$p.var),
+          matrix(t(x$X)[, cl.ass == cl.lab], nrow = x$p.var),
           1,
           mean
         )
       }) %>%
-        do.call(cbind,.) -> tmp.means
-      colnames(tmp.means) <- paste('cl',1:length(unique(cl.ass)),sep='')
+        do.call(cbind, .) -> tmp.means
+      colnames(tmp.means) <- paste("cl", 1:length(unique(cl.ass)), sep = "")
       tmp.means
     }) -> clust.means
-    clust.assign <- matrix(paste('cl',clust.assign,sep=''),nrow=x$n.obs)
-
+    clust.assign <- matrix(paste("cl", clust.assign, sep = ""), nrow = x$n.obs)
   }
   list(
     clustering.assignment = clust.assign,
@@ -165,7 +162,7 @@ clustering.CARP <- function(x,k=NULL,percent=NULL,...){
 #' cbass.fit <- CBASS(X=Xdat)
 #' cbass.clustering <- clustering(cbass.fit,percent = .8)
 #' }
-clustering.CBASS <- function(x,k.obs=NULL,k.var=NULL,percent=NULL,...){
+clustering.CBASS <- function(x, k.obs = NULL, k.var = NULL, percent = NULL, ...) {
   Lambda <- NObsCl <- NVarCl <- Percent <- NULL
 
   n.not.null <- sum(
@@ -175,13 +172,13 @@ clustering.CBASS <- function(x,k.obs=NULL,k.var=NULL,percent=NULL,...){
       !is.null(percent)
     )
   )
-  if( n.not.null != 1){
-    stop('Select exactly one of k.obs, k.var, or percent')
+  if (n.not.null != 1) {
+    stop("Select exactly one of k.obs, k.var, or percent")
   }
   lam.vec <- x$cbass.sol.path$lambda.path %>% as.vector()
   max.lam <- max(lam.vec)
   lam.vec %>%
-    purrr::map_dfr(.f=function(cur.lam){
+    purrr::map_dfr(.f = function(cur.lam) {
       # find lambda closest in column path
       cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
       # find clustering solution in column path
@@ -199,34 +196,34 @@ clustering.CBASS <- function(x,k.obs=NULL,k.var=NULL,percent=NULL,...){
         NObsCl = cur.col.nclust,
         NVarCl = cur.row.nclust
       )
-    })  %>%
+    }) %>%
     dplyr::mutate(
       Percent = Lambda / max.lam
     ) -> cut.table
 
-  if(!is.null(k.obs)){
+  if (!is.null(k.obs)) {
     cut.table %>%
       dplyr::filter(NObsCl <= k.obs) %>%
       dplyr::slice(1) %>%
       dplyr::select(Lambda) %>%
       unlist() %>%
       unname() -> cur.lam
-  } else if(!is.null(k.var)){
+  } else if (!is.null(k.var)) {
     cut.table %>%
       dplyr::filter(NVarCl <= k.var) %>%
       dplyr::slice(1) %>%
       dplyr::select(Lambda) %>%
       unlist() %>%
       unname() -> cur.lam
-  } else if(!is.null(percent)){
+  } else if (!is.null(percent)) {
     cut.table %>%
       dplyr::filter(Percent >= percent) %>%
       dplyr::slice(1) %>%
       dplyr::select(Lambda) %>%
       unlist() %>%
       unname() -> cur.lam
-  } else{
-    stop('Select exactly one of k.obs, k.var, or percent')
+  } else {
+    stop("Select exactly one of k.obs, k.var, or percent")
   }
   # find lambda closest in column path
   cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
@@ -241,38 +238,36 @@ clustering.CBASS <- function(x,k.obs=NULL,k.var=NULL,percent=NULL,...){
   cur.row.clust.labels <- unique(cur.row.clust.assignment)
   cur.row.nclust <- length(cur.row.clust.labels)
 
-  if(x$X.center.global){
+  if (x$X.center.global) {
     X.heat <- x$X
     X.heat <- X.heat - mean(X.heat)
     X.heat <- t(X.heat)
     X <- x$X
     X <- X - mean(X)
     X <- t(X)
-  }else{
+  } else {
     X.heat <- t(x$X)
     X <- t(x$X)
   }
   colnames(X.heat) <- x$obs.labels
   rownames(X.heat) <- x$var.labels
-  for(col.label.ind in seq_along(cur.col.clust.labels)){
+  for (col.label.ind in seq_along(cur.col.clust.labels)) {
     cur.col.label <- cur.col.clust.labels[col.label.ind]
     col.inds <- which(cur.col.clust.assignment == cur.col.label)
-    for(row.label.ind in seq_along(cur.row.clust.labels)){
+    for (row.label.ind in seq_along(cur.row.clust.labels)) {
       cur.row.label <- cur.row.clust.labels[row.label.ind]
       row.inds <- which(cur.row.clust.assignment == cur.row.label)
-      mean.value <- mean(X[row.inds,col.inds])
-      X.heat[row.inds,col.inds] <- mean.value
+      mean.value <- mean(X[row.inds, col.inds])
+      X.heat[row.inds, col.inds] <- mean.value
     }
   }
 
 
-  clust.assign.obs <- paste('cl',cur.col.clust.assignment,sep='')
-  clust.assign.var <- paste('cl',cur.row.clust.assignment,sep='')
+  clust.assign.obs <- paste("cl", cur.col.clust.assignment, sep = "")
+  clust.assign.var <- paste("cl", cur.row.clust.assignment, sep = "")
   list(
     clustering.assignment.obs = clust.assign.obs,
     clustering.assignment.var = clust.assign.var,
     cluster.mean.matrix = X.heat
   )
-
-
 }
