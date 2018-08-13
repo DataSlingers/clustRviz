@@ -480,49 +480,49 @@ carp.control <- function(
   )
 }
 
-#' Print CARP Summary
+#' Print \code{CARP} Results
 #'
-#' Prints a brief descripton of a fitted carp object.
+#' Prints a brief descripton of a fitted \code{CARP} object.
 #'
 #' Reports number of observations and variables of dataset, any preprocessing
-#' done by the \code{CARP} function, regularization weight information,
-#' the type of CARP algorithm performed, and the visualizations returned.
-#' @param x a CARP object returned by \code{CARP}
-#' @param ... Unused additional generic arguements
+#' done by the \code{\link{CARP}} function, regularization weight information,
+#' the variant of \code{CARP} used, and the visualizations returned.
+#'
+#' @param x an object of class \code{CARP} as returned by \code{\link{CARP}}
+#' @param ... Additional unused arguments
 #' @export
 #' @examples
-#' library(clustRviz)
-#' data("presidential_speech")
-#' Xdat <- presidential_speech[1:10,1:4]
-#' carp.fit <- CARP(X=Xdat)
-#' print(carp.fit)
+#' carp_fit <- CARP(presidential_speech[1:10,1:4])
+#' print(carp_fit)
 print.CARP <- function(x, ...) {
-  preprocess.string <- c("center", "scale")
+  alg_string <- switch(x$alg.type,
+                       carp      = paste0("CARP (t = ", round(x$t, 3), ")"),
+                       carpl1    = paste0("CARP (t = ", round(x$t, 3), ") [L1]"),
+                       carlviz   = "CARP-VIZ",
+                       carpvizl1 = "CARP-VIZ [L1]")
 
-  switch(
-    x$alg.type,
-    carpviz = {
-      alg.string <- "CARP-VIZ"
-    },
-    carp = {
-      alg.string <- paste("CARP (t=", x$t, ")", sep = "")
-    },
-    carpl1 = {
-      alg.string <- paste("CARP L1 (t=", x$t, ")", sep = "")
-    },
-    carpvizl1 = {
-      alg.string <- "CARP-VIZ L1"
-    }
-  )
-  viz.string <- c("Static Dend", "Static Path", "Interactive Dend/Path")
-  message("CARP Fit Summary")
-  message("Number of Observations: ", x$n.obs, "\n")
-  message("Number of Variables: ", x$p.var, "\n")
-  message("Pre-processing: ", preprocess.string[c(x$X.center, x$X.scale)], "\n")
-  message("Weights: RBF Kernel, phi = ", x$phi, ", k = ", x$k, "\n")
-  message("Algorithm: ", alg.string, "\n")
-  message("Visualizations: ", viz.string[c(x$static, x$static, x$interactive)], "\n")
+  cat("CARP Fit Summary\n")
+  cat("====================\n\n")
+  cat("Algorithm: ", alg.string, "\n\n")
 
-  message("Raw Data:\n")
+  cat("Available Visualizations:\n")
+  cat(" - Static Dendrogram:         ", x$static, "\n")
+  cat(" - Static Cluster Path:       ", x$static, "\n")
+  cat(" - Interactive Visualization: ", x$interactive, "\n\n")
+
+  cat("Number of Observations: ", x$n.obs, "\n")
+  cat("Number of Variables:    ", x$p.var, "\n\n")
+
+  cat("Pre-processing options:\n")
+  cat(" - Columnwise centering: ", x$X.center, "\n")
+  cat(" - Columnwise scaling:   ", x$X.scale, "\n\n")
+
+  cat("RBF Kernel Weights:\n") # TODO: Add descriptions of what these parameters represent
+  cat(" - phi = ", round(x$phi, 3), "\n")
+  cat(" - K   = ", x$k, "\n\n")
+
+  cat("Raw Data:\n")
   print(x$X[1:min(5, x$n.obs), 1:min(5, x$p.var)])
+
+  invisible(x)
 }

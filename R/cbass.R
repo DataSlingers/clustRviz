@@ -536,51 +536,51 @@ cbass.control <- function(
   )
 }
 
-
-#' Print CBASS Summary
+#' Print \code{CBASS} Results
 #'
-#' Prints a brief descripton of a fitted cbass object.
+#' Prints a brief descripton of a fitted \code{CBASS} object.
 #'
 #' Reports number of observations and variables of dataset, any preprocessing
-#' done by the \code{CBASS} function, regularization weight information,
-#' the type of CBASS algorithm performed, and the visualizations returned.
-#' @param x a CBASS object returned by \code{CARP}
-#' @param ... Unused additional generic arguements
+#' done by the \code{\link{CBASS}} function, regularization weight information,
+#' the variant of \code{CBASS} used, and the visualizations returned.
+#' @param x an object of class \code{CBASS} as returned by \code{\link{CBASS}}
+#' @param ... Additional unused arguments
 #' @export
 #' @examples
-#' library(clustRviz)
-#' data("presidential_speech")
-#' Xdat <- presidential_speech[1:10,1:4]
-#' cbass.fit <- CBASS(X=Xdat)
-#' print(cbass.fit)
+#' cbass_fit <- CBASS(X=presidential_speech[1:10,1:4])
+#' print(cbass_fit)
 print.CBASS <- function(x, ...) {
-  preprocess.string <- c("global-center")
+  alg_string <- switch(x$alg.type,
+                       carp      = paste0("CBASS (t = ", round(x$t, 3), ")"),
+                       carpl1    = paste0("CBASS(t = ", round(x$t, 3), ") [L1]"),
+                       carlviz   = "CBASS-VIZ",
+                       carpvizl1 = "CBASS-VIZ [L1]")
 
-  switch(
-    x$alg.type,
-    cbassviz = {
-      alg.string <- "CBASS VIZ"
-    },
-    cbass = {
-      alg.string <- paste("CBASS, (t=", x$t, ")", sep = "")
-    },
-    cbassl1 = {
-      alg.string <- paste("CBASSL1, (t=", x$t, ")", sep = "")
-    },
-    cbassvizl1 = {
-      alg.string <- "CBASS VIZL1"
-    }
-  )
-  viz.string <- c("Static Dend", "Static Heatmap", "Interactive Heatmap")
-  message("CBASS Fit Summary\n")
-  message("Number of Observations: ", x$n.obs, "\n")
-  message("Number of Variables: ", x$p.var, "\n")
-  message("Pre-processing: ", preprocess.string[c(x$X.center.global)], "\n")
-  message("Obs. Weights: RBF Kernel, phi = ", x$phi.obs, ", k = ", x$k.obs, "\n")
-  message("Var. Weights: RBF Kernel, phi = ", x$phi.var, ", k = ", x$k.var, "\n")
-  message("Algorithm: ", alg.string, "\n")
-  message("Visualizations: ", viz.string[c(x$static, x$static, x$interactive)], "\n")
+  cat("CBASS Fit Summary\n")
+  cat("====================\n\n")
+  cat("Algorithm: ", alg.string, "\n\n")
 
-  message("Raw Data:\n")
+  cat("Available Visualizations:\n")
+  cat(" - Static Dendrogram:   ", x$static, "\n")
+  cat(" - Static Heatmap:      ", x$static, "\n")
+  cat(" - Interactive Heatmap: ", x$interactive, "\n\n")
+
+  cat("Number of Observations: ", x$n.obs, "\n")
+  cat("Number of Variables:    ", x$p.var, "\n\n")
+
+  cat("Pre-processing options:\n")
+  cat(" - Global centering: ", x$X.center.global, "\n\n")
+
+  cat("Observation RBF Kernel Weights:\n") # TODO: Add descriptions of what these parameters represent
+  cat(" - phi = ", round(x$phi.obs, 3), "\n")
+  cat(" - K   = ", x$k.obs, "\n\n")
+
+  cat("Variable RBF Kernel Weights:\n") # TODO: Add descriptions of what these parameters represent
+  cat(" - phi = ", round(x$phi.var, 3), "\n")
+  cat(" - K   = ", x$k.var, "\n\n")
+
+  cat("Raw Data:\n")
   print(x$X[1:min(5, x$n.obs), 1:min(5, x$p.var)])
+
+  invisible(x)
 }
