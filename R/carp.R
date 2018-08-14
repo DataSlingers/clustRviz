@@ -1,4 +1,4 @@
-#' Compute CARP solution path
+#' Compute \code{CARP} (Convex Clustering) Solution Path
 #'
 #' \code{CARP} returns a fast approximation to the Convex Clustering
 #' solution path along with visualizations such as dendrograms and
@@ -8,30 +8,40 @@
 #' Algorithmic Regularization Paths. A seqeunce of clustering
 #' solutions is returned along with several visualizations.
 #'
-#'
-#' @param X A n by p matrix with rows the observations and columns the variables
-#' @param verbose either 0,1,or 2. Higher numbers indicate more verbosity while
-#' computing.
+#' @param X The data matrix (\eqn{X \in R^{n \times p}}{X}): rows correspond to
+#'          the observations (to be clustered) and columns to the variables (which
+#'          will not be clustered).
+#' @param verbose Any of the values \code{0}, \code{1}, or \code{2}. Higher values
+#'                correspond to more verbose output while running.
 #' @param interactive A logical. Should interactive paths and dendrograms be
-#' returned?
+#'                    returned?
 #' @param static A logical. Should static paths and dendrograms be returned?
 #' @param control A list containing advanced parameters for the \code{CARP} algorithm,
 #'                typically created by \code{\link{carp.control}}.
 #' @param ... Additional arguments used to control the behavior of \code{CARP}; see
 #'            \code{\link{carp.control}} for details.
-#' @return X the original data matrix
-#' @return carp.dend if static==TRUE, a dendrogam representation of the clustering solution path
-#' @return carp.cluster.path.vis the CARP solution path
-#' @return n.obs the number of observations
-#' @return p.var the number of variables
-#' @return phi A positive numner used for scaling in RBF kernel
-#' @return k an integer >= 1. The number of neighbors used to create sparse weights
-#' @return burn.in an integer. The number of initial iterations at a fixed
-#' value of (small) lambda_k
-#' @return alg.type Which CARP algorithm to perform. Choices are 'carpviz'
-#' and 'carp;
-#' @return X.center A logical. Should X be centered?
-#' @return X.scale A logical. Should X be scaled?
+#' @return An object of class \code{CARP} containing the following elements (among others):
+#'         \itemize{
+#'         \item \code{X}: the original data matrix
+#'         \item \code{n.obs}: the number of observations (rows of \code{X})
+#'         \item \code{p.var}: the number of variables (columns of \code{X})
+#'         \item \code{alg.type}: the \code{CARP} variant used
+#'         \item \code{X.center}: a logical indicating whether \code{X} was centered
+#'                                column-wise before clustering
+#'         \item \code{X.scale}: a logical indicating whether \code{X} was scaled
+#'                               column-wise before centering
+#'         \item \code{burn.in}: an integer indicating the number of "burn-in"
+#'                               iterations performed
+#'         \item \code{k}: the number of neighbors used to create sparse clustering weights
+#'         \item \code{phi}: the scale factor of the RBF kernel used to calculate
+#'                           clustering weights
+#'         \item \code{carp.dend}: If \code{static=TRUE}, an dendrogram (object of
+#'                                 class \code{\link[stats]{hclust}}) containing
+#'                                 the clustering solution path
+#'         \item \code{carp.cluster.path.vis}: The \code{CARP} solution path
+#'         \item \code{static}: a logical indicating whether static visualizations are available for this \code{CARP} object
+#'         \item \code{interactive}: a logical indicating whether interactive visualizations are available for this \code{CARP} object
+#'         }
 #' @importFrom utils data
 #' @importFrom dplyr %>%
 #' @importFrom dplyr n
@@ -43,13 +53,11 @@
 #' @importFrom utils modifyList
 #' @export
 #' @examples
-#' library(clustRviz)
-#' data("presidential_speech")
-#' Xdat <- presidential_speech[1:10,1:4]
-#' carp.fit <- CARP(X=Xdat)
-#' carp.fit
+#' carp_fit <- CARP(presidential_speech[1:10,1:4])
+#' print(carp_fit)
+#' plot(carp_fit)
 CARP <- function(X,
-                 verbose = 1,
+                 verbose = 1L,
                  interactive = TRUE,
                  static = TRUE,
                  ...,

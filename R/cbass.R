@@ -1,4 +1,4 @@
-#' Compute CBASS solution path
+#' Compute \code{CBASS} (Convex BiClustering) Solution Path
 #'
 #' \code{CBASS} returns a fast approximation to the Convex BiClustering
 #' solution path along with visualizations such as dendrograms and
@@ -8,52 +8,65 @@
 #' Algorithmic Regularization Paths. A seqeunce of biclustering
 #' solutions is returned along with several visualizations.
 #'
-#' @param X A n.obs by p.var matrix with rows the observations and columns the variables
-#' @param verbose either 0,1,or 2. Higher numbers indicate more verbosity while
-#' computing.
-#' @param interactive A logical. Should an interactive heatmap be returned?
-#' @param static A logical. Should observation and variable dendrograms
-#' be returned?
+#' @param X The data matrix (\eqn{X \in R^{n \times p}}{X}): rows correspond to
+#'          the observations (to be clustered) and columns to the variables (which
+#'          will not be clustered).
+#' @param verbose Any of the values \code{0}, \code{1}, or \code{2}. Higher values
+#'                correspond to more verbose output while running.
+#' @param interactive A logical. Should interactive paths and dendrograms be
+#'                    returned?
+#' @param static A logical. Should static paths and dendrograms be returned?
 #' @param control A list containing advanced parameters for the \code{CBASS} algorithm,
 #'                typically created by \code{\link{cbass.control}}.
 #' @param ... Additional arguments used to control the behavior of \code{CBASS}; see
 #'            \code{\link{cbass.control}} for details.
-#' @return X the original data matrix
-#' @return cbass.cluster.path.obs the CBASS observation solution path
-#' @return cbass.cluster.path.var the CBASS variable solution path
-#' @return cbass.dend.obs if static==TRUE, a dendrogam representation of the
-#' observation clustering solution path
-#' @return cbass.dend.var if static==TRUE, a dendrogam representation of the
-#' variable clustering solution path
-#' @return phi.obs A positive numner used for scaling in observation RBF kernel
-#' @return phi.var A positive numner used for scaling in variable RBF kernel
-#' @return k.obs an integer >= 1. The number of neighbors used to create sparse
-#' observation weights
-#' @return k.var an integer >= 1. The number of neighbors used to create sparse
-#' variable weights
-#' @return burn.in an integer. The number of initial iterations at a fixed
-#' value of (small) lambda_k
-#' @return alg.type Which CARP algorithm to perform. Choices are 'cbassviz',
-#' 'cbass','cbassl1', and 'cbassvizl1'
-#' @return interactive A logical. Should an interactive heatmap be returned?
-#' @return static A logical. Should observation and variable dendrograms
-#' be returned?
+#' @return An object of class \code{CBASS} containing the following elements (among others):
+#'         \itemize{
+#'         \item \code{X}: the original data matrix
+#'         \item \code{n.obs}: the number of observations (rows of \code{X})
+#'         \item \code{p.var}: the number of variables (columns of \code{X})
+#'         \item \code{alg.type}: the \code{CBASS} variant used
+#'         \item \code{X.center.global}: a logical indicating whether \code{X}
+#'                                       was globally centered before clustering
+#'         \item \code{X.scale}: a logical indicating whether \code{X} was scaled
+#'                               column-wise before centering
+#'         \item \code{burn.in}: an integer indicating the number of "burn-in"
+#'                               iterations performed
+#'         \item \code{k.obs}: the number of neighbors used to create sparse
+#'                             clustering weights for the observations
+#'         \item \code{k.var}: the number of neighbors used to create sparse
+#'                             clustering weights for the variables
+#'         \item \code{phi.obs}: the scale factor of the RBF kernel used to calculate
+#'                               clustering weights for the observations
+#'         \item \code{phi.var}: the scale factor of the RBF kernel used to calculate
+#'                               clustering weights for the variables
+#'         \item \code{carp.dend.obs}: If \code{static=TRUE}, an dendrogram (object of
+#'                                     class \code{\link[stats]{hclust}}) containing
+#'                                     the clustering solution path for the observations
+#'         \item \code{carp.dend.var}: If \code{static=TRUE}, an dendrogram (object of
+#'                                     class \code{\link[stats]{hclust}}) containing
+#'                                     the clustering solution path for the variables
+#'         \item \code{cbass.cluster.path.obs}: The \code{CBASS} solution path for the observations
+#'         \item \code{cbass.cluster.path.var}: The \code{CBASS} solution path for the variables
+#'         \item \code{static}: a logical indicating whether static visualizations are available for this \code{CBASS} object
+#'         \item \code{interactive}: a logical indicating whether interactive visualizations are available for this \code{CBASS} object
+#'         \item \code{obs.labels}: a character vector of length \code{n.obs} containing
+#'                                  observation (row) labels
+#'         \item \code{var.labels}: a character vector of length \code{p.var} containing
+#'                                  variable (column) labels
+#'         }
 #' @return obs.labels a vector of length n.obs containing observations (row) labels
 #' @return var.labels a vector of length p.var containing variable (column) labels
-#' @return X.center.global a logical. If TRUE, the global mean of X is removed.
 #' @importFrom stats var
 #' @export
 #' @examples
 #' \dontrun{
-#' library(clustRviz)
-#' data("presidential_speech")
-#' Xdat <- presidential_speech
-#' CBASS(
-#' X=Xdat
-#' ) -> cbass.fit
+#' cbass_fit <- CBASS(presidential_speech)
+#' print(cbass_fit)
+#' plot(cbass_fit)
 #' }
 CBASS <- function(X,
-                  verbose = 1,
+                  verbose = 1L,
                   interactive = TRUE,
                   static = TRUE,
                   ...,
