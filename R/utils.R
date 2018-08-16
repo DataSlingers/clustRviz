@@ -1294,28 +1294,3 @@ WeightAdjacency <- function(weights,nobs,weighted=FALSE,upper=TRUE){
   }
   adj
 }
-
-#' Plot graph induced by weights
-#'
-#' @param weights a vector of weights such as returned by \code{SparseWeights}
-#' @param nobs the number of observations being clustered
-#' @param edge.labels a logical. Should weight values be displayed along edges?
-#' @param obs.labels a vector of observation labels
-#' @param ... additional parameters passed to qgraph::qgraph
-#' @keywords internal
-#' @import qgraph
-PlotWeightGraph <- function(weights,nobs,edge.labels=TRUE,obs.labels=NULL,...){
-  WeightAdjacency(
-    weights = weights,
-    nobs = nobs,
-    weighted = TRUE,
-    upper=FALSE
-  ) -> wt.adj
-
-  qgraph::qgraph(input = wt.adj,
-         labels=obs.labels,
-         layout = "spring",
-         edge.labels=edge.labels,
-         weighted=FALSE,
-         ...)
-}

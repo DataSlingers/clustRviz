@@ -307,21 +307,6 @@ cluster, given large enough regularization.
 Below we consider the extreme case of $k=1$, which while computationally fast 
 presents an immediate difficulty.
 
-```{r,fig.width=5,fig.height=5,fig.align='center'}
-clustRviz:::PlotWeightGraph(
-  weights = clustRviz:::SparseWeights(
-    X=Xdat.preprocessed,
-    dense.weights = dense.weights,
-    k=1
-  ),
-  nobs = nrow(Xdat.preprocessed),
-  edge.labels = TRUE,
-  obs.labels = obs.labels,
-  vsize=3,
-  label.scale=FALSE,
-  label.cex=.7,
-  repulsion=.9)
-```
 
 Examining the graph above, we note that the number of connected components is strictly greater than one.
 As such, regardless of the number of `CARP` iteratations (and the associated regularization increases) it will 
@@ -332,21 +317,6 @@ At the other extreme, large values of $k$ again result in long computation time 
 bring little to no improvement on the resulting solution sequence; an example of 
 such an overly dense graph can be seen below.
 
-```{r,fig.width=5,fig.height=5,fig.align='center'}
-clustRviz:::PlotWeightGraph(
-  weights = clustRviz:::SparseWeights(
-    X=Xdat.preprocessed,
-    dense.weights = dense.weights,
-    k=15
-  ),
-  nobs = nrow(Xdat.preprocessed),
-  edge.labels = FALSE,
-  obs.labels = obs.labels,
-  vsize=3,
-  label.scale=FALSE,
-  label.cex=.7,
-  repulsion=.9)
-```
 
 In order to provide a reasonable choice regarding weight sparsity, the function `MinKNN` may be used to 
 find a balance between computational efficiency and poor clustering performance. 
@@ -370,17 +340,6 @@ clustRviz:::SparseWeights(
 ) -> sparse.weights
 ```
 
-```{r,fig.width=5,fig.height=5,fig.align='center'}
-clustRviz:::PlotWeightGraph(
-  weights = sparse.weights,
-  nobs = nrow(Xdat.preprocessed),
-  edge.labels = FALSE,
-  obs.labels = obs.labels,
-  vsize=3,
-  label.scale=FALSE,
-  label.cex=.7,
-  repulsion=.9)
-```
 
 We can see that the resulting graph offers a compromise between the two extremes.
 By default both `CARP` and `CBASS` use the value returned by `MinKNN` to produce 
@@ -501,18 +460,6 @@ table(carp.clustering$clustering.assignment)
 ```
 
 
-```{r,fig.width=5,fig.height=5,fig.align='center'}
-clustRviz:::PlotWeightGraph(
-  weights = sparse.weights,
-  nobs = nrow(Xdat.preprocessed),
-  edge.labels = FALSE,
-  obs.labels = obs.labels,
-  vsize=3,
-  color=rainbow(2)[as.numeric(str_extract(carp.clustering$clustering.assignment,"(\\d)+"))],
-  label.scale=FALSE,
-  label.cex=.7,
-  repulsion=.9)
-```
 
 Additionally, we can extract the cluster means associated with $k=2$ solution. The object `cluster.means`
 below gives the CARP iterate $\vec U^{(k)}$ along the path. We note that the columns 
