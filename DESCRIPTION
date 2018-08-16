@@ -21,7 +21,6 @@ Imports:
     stats,
     graphics,
     parallel,
-    lme4,
     dplyr,
     ggplot2,
     tidyr,
