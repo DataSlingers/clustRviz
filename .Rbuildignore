@@ -3,3 +3,5 @@
 ^docs$
 ^_pkgdown\.yml$
 ^pkgdown$
+^README\.Rmd$
+^README-.*\.png$

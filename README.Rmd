@@ -1,0 +1,37 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "README-"
+)
+```
+
+# clustRviz
+
+`clustRviz` aims to enable fast computation and easy visualization of Convex Clustering 
+solution paths.
+
+## Installation
+
+You can install clustRviz from github with:
+
+```{r gh-installation, eval = FALSE}
+# install.packages("devtools")
+devtools::install_github("jjn13/clustRviz")
+```
+
+## Example
+
+Here is a quick example 
+```{r example}
+library(clustRviz)
+presidential_speech[1:5,1:5]
+carp.fit <- CARP(presidential_speech)
+carp.fit
+```
