@@ -49,3 +49,5 @@ carp.fit
 #> Barack Obama      1.386294 0.000000 0.000000 1.386294 0.000000
 #> Benjamin Harrison 4.060443 4.174387 2.302585 4.304065 3.663562
 ```
+
+![Path Gif](./man/figures/path_dyn.gif) ![Dend Gif](./man/figures/dend_dyn.gif)

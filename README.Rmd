@@ -35,3 +35,7 @@ presidential_speech[1:5,1:5]
 carp.fit <- CARP(presidential_speech)
 carp.fit
 ```
+
+
+
+![Path Gif](./man/figures/path_dyn.gif) ![Dend Gif](./man/figures/dend_dyn.gif)
