@@ -66,7 +66,7 @@ When fitting for multiple values of $\lambda$ Convex Clustering results
 in a continious solution path of clustering solutions.
 One solution method for the problem above is via the alternatving 
 direction method of multipliers (ADMM) [@boyd2011distributed].
-For a given $\lambda$, Convex clustering can be solved by iteratively applying ADMM updates until convergence [@chi2015splitting].
+For a given $\lambda$, Convex Clustering can be solved by iteratively applying ADMM updates until convergence [@chi2015splitting].
 However in order to obtain a full path of clustering solutions, this method 
 must be employed for multiple $\lambda_k$ which is computationally expensive.
 
@@ -442,12 +442,12 @@ for details.
 # Solutions
 
 Once fit, the clustering solution of both CARP and CBASS may be examined 
-via the `Clustering` function.
+via the `clustering` function.
 Using our `carp.fit` object from above, we can extract the solution along 
 the path which gives $k=2$ clusters.
 
 ```{r}
-carp.clustering <- Clustering(carp.fit,k = 2)
+carp.clustering <- clustering(carp.fit,k = 2)
 ```
 
 Once extracted we may examine the clustering assignment. In the table 
@@ -472,21 +472,21 @@ regulariziation. In the example below, we extract the clustering solution at $25
 along the regularization path.
 
 ```{r}
-carp.clustering <- Clustering(carp.fit,percent = .25)
+carp.clustering <- clustering(carp.fit,percent = .25)
 ```
 
 Simiarly to CARP objects, CBASS clustering solutions may also be extracted via the 
-`Clustering` function.
+`clustering` function.
 The desired clustering solution is returned by
 specifying either the number of observation clusters (`k.obs`), 
 the number of variable clusters (`k.var`), or the percent of 
-regularization (`percent`). In any case, `Clustering` returns 
+regularization (`percent`). In any case, `clustering` returns 
 the observation and variable clustering assignments, as well as
 the matrix of cluster means.
 In the example below we extract the biclustering solution
 at the level of $85$\% regularization.
 ```{r,eval=TRUE}
-cbass.clustering <- Clustering(cbass.fit,percent = .85)
+cbass.clustering <- clustering(cbass.fit,percent = .85)
 # observation clusters
 table(cbass.clustering$clustering.assignment.obs)
 # variable clusters

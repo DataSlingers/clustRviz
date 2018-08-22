@@ -1759,15 +1759,15 @@ plot.CBASS <- function(
 
 #' Method for returning CARP and CBASS clustering solutions
 #'
-#' See \code{Clustering.CARP} and \code{Clustering.CBASS} for details
+#' See \code{clustering.CARP} and \code{clustering.CBASS} for details
 #'
 #' @param x a CARP or CBASS object
-#' @param ... additional arguements passed to \code{Clustering.CARP} or
-#' \code{Clustering.CBASS}
+#' @param ... additional arguements passed to \code{clustering.CARP} or
+#' \code{clustering.CBASS}
 #' @return CARP clustering solutions or CBASS biclustering solutions
 #' @export
-Clustering <- function(x,...) {
-  UseMethod("Clustering", x)
+clustering <- function(x,...) {
+  UseMethod("clustering", x)
 }
 
 #' Get clustering solution from a CARP object
@@ -1813,18 +1813,18 @@ Clustering <- function(x,...) {
 #' Xdat <- presidential_speech[1:10,1:4]
 #' carp.fit <- CARP(X=Xdat)
 #' # Return the CARP iterate with k=5 clusters
-#' carp.clustering <- Clustering(carp.fit,k=5)
+#' carp.clustering <- clustering(carp.fit,k=5)
 #' # Examine the cluster labels
 #' carp.clustering$clustering.assignment
 #' # Examine the cluster means
 #' head(carp.clustering$cluster.means)
 #' # Return the whole sequence of solutions
-#' carp.clustering.full <- Clustering(carp.fit)
+#' carp.clustering.full <- clustering(carp.fit)
 #' # Examine the k=5 solution again
 #' carp.clustering.full$clustering.assignment[5,]
 #' # Examine the k=5 means again
 #' head(carp.clustering.full$cluster.means[[5]])
-Clustering.CARP <- function(x,k=NULL,percent=NULL,...){
+clustering.CARP <- function(x,k=NULL,percent=NULL,...){
   if(!is.null(k)){
       clust.assign <- stats::cutree(x$carp.dend,k=k)
       lapply(unique(clust.assign),function(cl.lab){
@@ -1922,9 +1922,9 @@ Clustering.CARP <- function(x,k=NULL,percent=NULL,...){
 #' data("presidential_speech")
 #' Xdat <- presidential_speech
 #' cbass.fit <- CBASS(X=Xdat)
-#' cbass.clustering <- Clustering(cbass.fit,percent = .8)
+#' cbass.clustering <- clustering(cbass.fit,percent = .8)
 #' }
-Clustering.CBASS <- function(x,k.obs=NULL,k.var=NULL,percent=NULL,...){
+clustering.CBASS <- function(x,k.obs=NULL,k.var=NULL,percent=NULL,...){
   Lambda <- NObsCl <- NVarCl <- Percent <- NULL
 
   n.not.null <- sum(
@@ -2772,11 +2772,11 @@ saveviz.CBASS <- function(
         static={
           ### START Static Obs Dend
           if(!is.null(k.obs)){
-            cbass.fit.clustering <- Clustering(cbass.fit,k.obs = k.obs)
+            cbass.fit.clustering <- clustering(cbass.fit,k.obs = k.obs)
           } else if(!is.null(k.var)){
-            cbass.fit.clustering <- Clustering(cbass.fit,k.var = k.var)
+            cbass.fit.clustering <- clustering(cbass.fit,k.var = k.var)
           } else if(!is.null(percent)){
-            cbass.fit.clustering <- Clustering(cbass.fit,percent = percent)
+            cbass.fit.clustering <- clustering(cbass.fit,percent = percent)
           } else{
             stop('Select exactly one of k.obs, k.var, or percent')
           }
@@ -2862,11 +2862,11 @@ saveviz.CBASS <- function(
         static={
           ### Static Var Dend
           if(!is.null(k.obs)){
-            cbass.fit.clustering <- Clustering(cbass.fit,k.obs = k.obs)
+            cbass.fit.clustering <- clustering(cbass.fit,k.obs = k.obs)
           } else if(!is.null(k.var)){
-            cbass.fit.clustering <- Clustering(cbass.fit,k.var = k.var)
+            cbass.fit.clustering <- clustering(cbass.fit,k.var = k.var)
           } else if(!is.null(percent)){
-            cbass.fit.clustering <- Clustering(cbass.fit,percent = percent)
+            cbass.fit.clustering <- clustering(cbass.fit,percent = percent)
           } else{
             stop('Select exactly one of k.obs, k.var, or percent')
           }

@@ -81,22 +81,22 @@ test_that("print.CARP Runs",{
 
 
 
-context("CARP Clustering")
-test_that("Clustering.CARP w/ k Runs",{
+context("CARP clustering")
+test_that("clustering.CARP w/ k Runs",{
   expect_error(
-    Clustering(carp.fit,k=4),
+    clustering(carp.fit,k=4),
     NA
   )
 })
-test_that("Clustering.CARP w/ percent Runs",{
+test_that("clustering.CARP w/ percent Runs",{
   expect_error(
-    Clustering(carp.fit,percent=.5),
+    clustering(carp.fit,percent=.5),
     NA
   )
 })
-test_that("Clustering.CARP w/o args Runs",{
+test_that("clustering.CARP w/o args Runs",{
   expect_error(
-    Clustering(carp.fit),
+    clustering(carp.fit),
     NA
   )
 })

@@ -97,28 +97,28 @@ test_that("plot.CBASS interactive Runs",{
 
 
 
-context('CBASS Clustering')
-test_that("Clustering CBASS  Runs k.obs=1",{
+context('CBASS clustering')
+test_that("clustering CBASS  Runs k.obs=1",{
   expect_error(
-    Clustering(cbass.fit,k.obs=1),
+    clustering(cbass.fit,k.obs=1),
     NA
   )
 })
-test_that("Clustering CBASS  Runs k.obs=2",{
+test_that("clustering CBASS  Runs k.obs=2",{
   expect_error(
-    Clustering(cbass.fit,k.obs=2),
+    clustering(cbass.fit,k.obs=2),
     NA
   )
 })
-test_that("Clustering CBASS  Runs k.var=2",{
+test_that("clustering CBASS  Runs k.var=2",{
   expect_error(
-    Clustering(cbass.fit,k.var=2),
+    clustering(cbass.fit,k.var=2),
     NA
   )
 })
-test_that("Clustering CBASS  Runs percent=.3",{
+test_that("clustering CBASS  Runs percent=.3",{
   expect_error(
-    Clustering(cbass.fit,percent=.3),
+    clustering(cbass.fit,percent=.3),
     NA
   )
 })

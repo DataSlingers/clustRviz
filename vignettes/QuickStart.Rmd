@@ -133,18 +133,18 @@ solution path and dendrogram as the Algorithmic Regularization
 iterates vary.
 
 In addition to visualizations, cluster solutions may be obtained 
-via the `Clustering` function:
+via the `clustering` function:
 
 ```{r}
 # get the 3 cluster solution along the path
-carp.clusters <- Clustering(carp.fit,k = 3)
+carp.clusters <- clustering(carp.fit,k = 3)
 # display the labels
 table(carp.clusters$clustering.assignment)
 # display the cluster mean
 head(carp.clusters$cluster.means)
 ```
 
-In the code above, we specify the number of clusters and `Clustering`
+In the code above, we specify the number of clusters and `clustering`
 returns the both the cluster assignment as well as the cluster means 
 for the $k=3$ solution along the path. As an example, we display the 
 yield (`Y`) distribution for each of the clusters: 
@@ -235,10 +235,10 @@ plot(cbass.fit,type='interactive')
 cluster heatmap and dendrogram solutions along the path.
 
 As was the case with `CARP`, clustering solutions are obtained via the 
-`Clustering` function. The desired clustering solution is returned by
+`clustering` function. The desired clustering solution is returned by
 specifying either the number of observation clusters (`k.obs`), 
 the number of variable clusters (`k.var`), or the percent of 
-regularization (`percent`). In any case, `Clustering` returns 
+regularization (`percent`). In any case, `clustering` returns 
 the observation and variable clustering assignments, as well as
 the matrix of cluster means.
 
@@ -247,7 +247,7 @@ which obtains $3$ observation clusters:
 
 ```{r}
 # obtain the desired clustering solution along the path
-cbass.clusters <- Clustering(cbass.fit,k.obs = 3)
+cbass.clusters <- clustering(cbass.fit,k.obs = 3)
 # observation clusters
 table(cbass.clusters$clustering.assignment.obs)
 # variable clusters
