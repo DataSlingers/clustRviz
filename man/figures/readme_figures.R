@@ -1,5 +1,7 @@
 library(clustRviz)
-carp.fit <- CARP(presidential_speech)
+carp.fit <- CARP(
+  presidential_speech
+)
 saveviz(
   carp.fit,
   file.name = 'path_dyn.gif',
@@ -11,5 +13,9 @@ saveviz(
   carp.fit,
   file.name = 'dend_dyn.gif',
   plot.type = 'dendrogram',
-  image.type = 'dynamic'
+  image.type = 'dynamic',
+  dend.labels.cex = 1.5,
+  dend.branch.width = 2
 )
+
+saveviz.CARP

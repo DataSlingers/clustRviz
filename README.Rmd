@@ -38,4 +38,7 @@ carp.fit
 
 
 
-![Path Gif](./man/figures/path_dyn.gif) ![Dend Gif](./man/figures/dend_dyn.gif)
+
+
+<img src="./man/figures/path_dyn.gif" width="70%">
+
