@@ -12,6 +12,8 @@ knitr::opts_chunk$set(
 )
 ```
 
+[![Build Status](https://travis-ci.org/jjn13/clustRviz.svg?branch=master)](https://travis-ci.org/jjn13/clustRviz)
+
 # clustRviz
 
 `clustRviz` aims to enable fast computation and easy visualization of Convex Clustering 
