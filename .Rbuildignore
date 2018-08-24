@@ -6,3 +6,5 @@
 ^README\.Rmd$
 ^README-.*\.png$
 ^\.travis\.yml$
+.gitignore.deploy
+^docs$

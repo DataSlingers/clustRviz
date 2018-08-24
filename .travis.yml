@@ -1,6 +1,48 @@
 # R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
-
 language: R
 sudo: false
 cache: packages
 warnings_are_errors: false
+
+r_packages:
+  - Rcpp
+  - RcppArmadillo
+  - RcppEigen
+  - dplyr
+  - ggplot2
+  - plyr
+  - stringr
+  - covr
+  - ggrepel
+  - FNN
+  - dendextend
+  - zoo
+  - igraph
+  - gtools
+  - tidyr
+  - plyr
+
+before_install:
+  - gcc --version
+  - g++ --version
+  - Rscript -e "source('build_steps.R'); before_install()"
+
+after_success:
+   - Rscript -e "source('build_steps.R'); after_success(); unlink('build_steps.R')"
+
+branches:
+  except:
+    - stable # Don't build "stable" branch or we get in an infinite loop
+
+r_build_args: --no-manual --no-resave-data
+r_check_args: --no-manual
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GITHUB_TOKEN
+  on:
+    branch: master
+  local_dir: .
+  target_branch: stable
+  condition: $TRAVIS_OS_NAME = "linux"

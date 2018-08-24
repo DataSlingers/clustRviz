@@ -34,13 +34,18 @@ Here is a quick example
 ```{r example}
 library(clustRviz)
 presidential_speech[1:5,1:5]
-carp.fit <- CARP(presidential_speech)
-carp.fit
+carp_fit <- CARP(presidential_speech)
+carp_fit
 ```
 
+```{r plot, include=FALSE, results="hide"}
+if (!dir.exists("inst")) {
+  dir.create("inst")
+}
 
-
-
-
-<img src="./man/figures/path_dyn.gif" width="70%">
+saveviz(carp_fit, 
+        file.name  = "inst/path_dyn.gif", 
+        image.type = "dynamic")
+```
+<img src="./inst/path_dyn.gif" width="70%">
 
