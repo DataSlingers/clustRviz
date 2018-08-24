@@ -4,24 +4,48 @@
 #include <RcppEigen.h>
 #define ARMA_64BIT_WORD
 
+// Take a vector of length n * k and re-order it as
+// x(0), x(k), x(2*k), x(n*k), x(1), x(k + 1), x(2*k + 1), etc.
 //' @useDynLib clustRviz
-arma::mat UnVec(const arma::colvec& x,
-                int nrows,
-                int ncols){
+arma::vec restride(const arma::vec& x,
+                   arma::uword k){
+  arma::vec ret(x.n_elem);
 
-  arma::mat ret(nrows,ncols,arma::fill::zeros);
-  arma::uword startidx;
-  arma::uword stopidx;
-  arma::ucolvec idx;
+  arma::uword len = x.n_elem / k;
 
-  for(arma::uword coliter = 0; coliter < ncols; coliter++){
-    startidx = nrows*coliter;
-    stopidx = startidx + nrows - 1;
-    idx = arma::linspace<arma::ucolvec>(startidx, stopidx, nrows);
-
-    ret.col(coliter) = x.elem(idx);
+  if(len * k != x.n_elem){
+    Rcpp::stop("k does not divide the number of elements of x!");
   }
-  return(ret);
+
+  arma::uvec in_ix = arma::regspace<arma::uvec>(0, k, x.n_elem - 1);
+
+  for(arma::uword i = 0; i < k; i++){
+    ret.subvec(len * i, len * (i + 1) - 1) = x(in_ix + i);
+  }
+
+  return ret;
+}
+
+// Take a vector of length n * k and re-order it as
+// x(0), x(k), x(2*k), x(n*k), x(1), x(k + 1), x(2*k + 1), etc.
+Eigen::VectorXd restride(const Eigen::VectorXd& x,
+                         Eigen::Index k){
+  Eigen::VectorXd ret(x.size());
+
+  Eigen::Index len = x.size() / k;
+
+  if(len * k != x.size()){
+    Rcpp::stop("k does not divide the number of elements of x!");
+  }
+
+  // TODO: Optimize this!
+  for(Eigen::Index j = 0; j < k; j++){
+    for(Eigen::Index i = 0; i < len; i++){
+      ret(i + j * len) = x(j + i * k);
+    }
+  }
+
+  return ret;
 }
 
 double TwoNorm(arma::colvec x){
@@ -826,8 +850,8 @@ Rcpp::List BICARPL2_VIS(const arma::colvec& x,
     nzerosold_row = nzerosnew_row;
     nzerosold_col = nzerosnew_col;
 
-    pt = arma::vectorise(UnVec(pold,p,n).t());
-    ut = arma::vectorise(UnVec(uold,p,n).t());
+    pt = restride(pold, p);
+    ut = restride(uold, p);
     rep_iter = true;
     try_iter = 0;
     lambda_upper = lambda;
@@ -847,7 +871,7 @@ Rcpp::List BICARPL2_VIS(const arma::colvec& x,
         lamnew_row = lamold_row + rho*(DMatOpv2(yt,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row)-vnew_row);
       ////////// end solve row problem
 
-      y = arma::vectorise(UnVec(yt,n,p).t());
+      y = restride(yt, n);
       pnew = uold + pold - y;
       ////////////// Solve col problem
         // u update
@@ -1061,8 +1085,8 @@ Rcpp::List BICARPL1_VIS(const arma::colvec& x,
     nzerosold_row = nzerosnew_row;
     nzerosold_col = nzerosnew_col;
 
-    pt = arma::vectorise(UnVec(pold,p,n).t());
-    ut = arma::vectorise(UnVec(uold,p,n).t());
+    pt = restride(pold, p);
+    ut = restride(uold, p);
     rep_iter = true;
     try_iter = 0;
     lambda_upper = lambda;
@@ -1082,7 +1106,7 @@ Rcpp::List BICARPL1_VIS(const arma::colvec& x,
       lamnew_row = lamold_row + rho*(DMatOpv2(yt,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row)-vnew_row);
       ////////// end solve row problem
 
-      y = arma::vectorise(UnVec(yt,n,p).t());
+      y = restride(yt, n);
       pnew = uold + pold - y;
       ////////////// Solve col problem
       // u update
@@ -1287,8 +1311,8 @@ Rcpp::List BICARPL2_NF_FRAC(const arma::colvec& x,
     nzerosold_row = nzerosnew_row;
     nzerosold_col = nzerosnew_col;
 
-    pt = arma::vectorise(UnVec(pold,p,n).t());
-    ut = arma::vectorise(UnVec(uold,p,n).t());
+    pt = restride(pold, p);
+    ut = restride(uold, p);
 
     ////////////// solve row problem
     // u update
@@ -1302,7 +1326,7 @@ Rcpp::List BICARPL2_NF_FRAC(const arma::colvec& x,
     lamnew_row = lamold_row + rho*(DMatOpv2(yt,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row)-vnew_row);
     ////////// end solve row problem
 
-    y = arma::vectorise(UnVec(yt,n,p).t());
+    y = restride(yt, n);
     pnew = uold + pold - y;
     ////////////// Solve col problem
     // u update
@@ -1471,8 +1495,8 @@ Rcpp::List BICARPL1_NF_FRAC(const arma::colvec& x,
     nzerosold_row = nzerosnew_row;
     nzerosold_col = nzerosnew_col;
 
-    pt = arma::vectorise(UnVec(pold,p,n).t());
-    ut = arma::vectorise(UnVec(uold,p,n).t());
+    pt = restride(pold, p);
+    ut = restride(uold, p);
 
     ////////////// solve row problem
     // u update
@@ -1486,7 +1510,7 @@ Rcpp::List BICARPL1_NF_FRAC(const arma::colvec& x,
     lamnew_row = lamold_row + rho*(DMatOpv2(yt,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row)-vnew_row);
     ////////// end solve row problem
 
-    y = arma::vectorise(UnVec(yt,n,p).t());
+    y = restride(yt, n);
     pnew = uold + pold - y;
 
     ////////////// Solve col problem
