@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>(slowly) Compute sparse kNN weight vector from dense weights — SparseWeights_LEGACY • clustRviz</title>
+<title>Get biclustering solution from a CBASS object — clustering.CBASS • clustRviz</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -32,9 +32,10 @@
 
   <link href="../extra.css" rel="stylesheet">
   
-<meta property="og:title" content="(slowly) Compute sparse kNN weight vector from dense weights — SparseWeights_LEGACY" />
+<meta property="og:title" content="Get biclustering solution from a CBASS object — clustering.CBASS" />
 
-<meta property="og:description" content="(slowly) Compute sparse kNN weight vector from dense weights" />
+<meta property="og:description" content="Returns (observation and variable) cluster labels and
+cluster mean matrix at a point along the CBASS path." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -109,42 +110,74 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>(slowly) Compute sparse kNN weight vector from dense weights</h1>
+    <h1>Get biclustering solution from a CBASS object</h1>
     
-    <div class="hidden name"><code>SparseWeights_LEGACY.Rd</code></div>
+    <div class="hidden name"><code>clustering.CBASS.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>(slowly) Compute sparse kNN weight vector from dense weights</p>
+    <p>Returns (observation and variable) cluster labels and
+cluster mean matrix at a point along the CBASS path.</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>SparseWeights_LEGACY</span>(<span class='no'>X</span>, <span class='no'>dense.weights</span>, <span class='no'>k</span>)</pre>
+    <pre class="usage"><span class='co'># S3 method for CBASS</span>
+<span class='fu'><a href='clustering.html'>clustering</a></span>(<span class='no'>x</span>, <span class='kw'>k.obs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>k.var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>percent</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>X</th>
-      <td><p>an n by p matrix with rows the observations and columns the variables.</p></td>
+      <th>x</th>
+      <td><p>A CBASS object returned by <code>CBASS</code></p></td>
     </tr>
     <tr>
-      <th>dense.weights</th>
-      <td><p>a vector dense weights, such as those returned
-by <code>DenseWeights</code></p></td>
+      <th>k.obs</th>
+      <td><p>An interger between 1 and <code>n.obs</code>. The number of unique
+observation clusters.</p></td>
     </tr>
     <tr>
-      <th>k</th>
-      <td><p>a positive integer less than nobs. The number of nearest neighbors.</p></td>
+      <th>k.var</th>
+      <td><p>An interger between 1 and <code>p.var</code>. The number of unique
+variable clusters.</p></td>
+    </tr>
+    <tr>
+      <th>percent</th>
+      <td><p>A number between 0 and 1. The percent of regularization at
+which to cut the path.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Unused additional generic arguements</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>sparse.weights a numeric vector of sparse weights</p>
+    <p>A list with elements</p><dl class='dl-horizontal'>
+<dt><code>clustering.assignment.obs</code></dt><dd><p>A vector of observation cluster labels of length <code>n.obs</code>.</p></dd>
+<dt><code>clustering.assignment.var</code></dt><dd><p>A vector of variable cluster labels of length <code>p.var</code>.</p></dd>
+<dt><code>cluster.mean.matrix</code></dt><dd><p>The cluster mean matrix of size <code>n.obs</code> by <code>p.var</code>.</p></dd>
+</dl>
+
+    
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>Passing either the desired number of clusters (<code>k</code>) or the percent
+regularization (<code>percent</code>) returns the clustering assignment
+and cluster mean matrix at the specific point along the CBASS path.</p>
     
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><span class='co'># NOT RUN {</span>
+<span class='fu'>library</span>(<span class='no'>clustRviz</span>)
+<span class='fu'>data</span>(<span class='st'>"presidential_speech"</span>)
+<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>
+<span class='no'>cbass.fit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='CBASS.html'>CBASS</a></span>(<span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>)
+<span class='no'>cbass.clustering</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='clustering.html'>clustering</a></span>(<span class='no'>cbass.fit</span>,<span class='kw'>percent</span> <span class='kw'>=</span> <span class='fl'>.8</span>)
+<span class='co'># }</span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -152,7 +185,11 @@ by <code>DenseWeights</code></p></td>
       <li><a href="#arguments">Arguments</a></li>
       
       <li><a href="#value">Value</a></li>
-          </ul>
+
+      <li><a href="#details">Details</a></li>
+      
+      <li><a href="#examples">Examples</a></li>
+    </ul>
 
   </div>
 </div>

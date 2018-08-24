@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Compute CARP solution path — CARP • clustRviz</title>
+<title>Compute <code>CARP</code> (Convex Clustering) Solution Path — CARP • clustRviz</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -18,13 +18,29 @@
 <!-- Font Awesome icons -->
 <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
 
+<!-- clipboard.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script>
+
+<!-- sticky kit -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
-<script src="../jquery.sticky-kit.min.js"></script>
 <script src="../pkgdown.js"></script>
+
+
+
   <link href="../extra.css" rel="stylesheet">
   
+<meta property="og:title" content="Compute <code>CARP</code> (Convex Clustering) Solution Path — CARP" />
+
+<meta property="og:description" content="CARP returns a fast approximation to the Convex Clustering
+solution path along with visualizations such as dendrograms and
+cluster paths. Visualizations may be static, interactive, or both." />
+<meta name="twitter:card" content="summary" />
+
+
+
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -47,8 +63,12 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="../index.html">clustRviz</a>
+      <span class="navbar-brand">
+        <a class="navbar-link" href="../index.html">clustRviz</a>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.1.0</span>
+      </span>
     </div>
+
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
@@ -68,10 +88,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
+      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
     </li>
     <li>
-      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
+      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
     </li>
   </ul>
 </li>
@@ -80,6 +100,7 @@
       <ul class="nav navbar-nav navbar-right">
         
       </ul>
+      
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -87,32 +108,38 @@
       
       </header>
 
-      <div class="row">
+<div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Compute CARP solution path</h1>
+    <h1>Compute <code>CARP</code> (Convex Clustering) Solution Path</h1>
+    
+    <div class="hidden name"><code>CARP.Rd</code></div>
     </div>
 
+    <div class="ref-description">
     
     <p><code>CARP</code> returns a fast approximation to the Convex Clustering
 solution path along with visualizations such as dendrograms and
 cluster paths. Visualizations may be static, interactive, or both.</p>
     
+    </div>
 
-    <pre class="usage"><span class='fu'>CARP</span>(<span class='no'>X</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>interactive</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>static</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>control</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>CARP</span>(<span class='no'>X</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>1L</span>, <span class='kw'>interactive</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>static</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>,
+  <span class='kw'>control</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>X</th>
-      <td><p>A n by p matrix with rows the observations and columns the variables</p></td>
+      <td><p>The data matrix (\(X \in R^{n \times p}\)): rows correspond to
+the observations (to be clustered) and columns to the variables (which
+will not be clustered).</p></td>
     </tr>
     <tr>
       <th>verbose</th>
-      <td><p>either 0,1,or 2. Higher numbers indicate more verbosity while
-computing.</p></td>
+      <td><p>Any of the values <code>0</code>, <code>1</code>, or <code>2</code>. Higher values
+correspond to more verbose output while running.</p></td>
     </tr>
     <tr>
       <th>interactive</th>
@@ -124,30 +151,41 @@ returned?</p></td>
       <td><p>A logical. Should static paths and dendrograms be returned?</p></td>
     </tr>
     <tr>
-      <th>control</th>
-      <td><p>A list. list of parameters for CARP fitting. see carp.control.</p></td>
+      <th>...</th>
+      <td><p>Additional arguments used to control the behavior of <code>CARP</code>; see
+<code><a href='carp.control.html'>carp.control</a></code> for details.</p></td>
     </tr>
     <tr>
-      <th>...</th>
-      <td><p>arguements to carp.control</p></td>
+      <th>control</th>
+      <td><p>A list containing advanced parameters for the <code>CARP</code> algorithm,
+typically created by <code><a href='carp.control.html'>carp.control</a></code>.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>X the original data matrix</p>
-<p>carp.dend if static==TRUE, a dendrogam representation of the clustering solution path</p>
-<p>carp.cluster.path.vis the CARP solution path</p>
-<p>n.obs the number of observations</p>
-<p>p.var the number of variables</p>
-<p>phi A positive numner used for scaling in RBF kernel</p>
-<p>k an integer &gt;= 1. The number of neighbors used to create sparse weights</p>
-<p>burn.in an integer. The number of initial iterations at a fixed
-value of (small) lambda_k</p>
-<p>alg.type Which CARP algorithm to perform. Choices are 'carpviz'
-and 'carp;</p>
-<p>X.center A logical. Should X be centered?</p>
-<p>X.scale A logical. Should X be scaled?</p>
+    <p>An object of class <code>CARP</code> containing the following elements (among others):</p><ul>
+<li><p><code>X</code>: the original data matrix</p></li>
+<li><p><code>n.obs</code>: the number of observations (rows of <code>X</code>)</p></li>
+<li><p><code>p.var</code>: the number of variables (columns of <code>X</code>)</p></li>
+<li><p><code>alg.type</code>: the <code>CARP</code> variant used</p></li>
+<li><p><code>X.center</code>: a logical indicating whether <code>X</code> was centered
+                               column-wise before clustering</p></li>
+<li><p><code>X.scale</code>: a logical indicating whether <code>X</code> was scaled
+                              column-wise before centering</p></li>
+<li><p><code>burn.in</code>: an integer indicating the number of "burn-in"
+                              iterations performed</p></li>
+<li><p><code>k</code>: the number of neighbors used to create sparse clustering weights</p></li>
+<li><p><code>phi</code>: the scale factor of the RBF kernel used to calculate
+                          clustering weights</p></li>
+<li><p><code>carp.dend</code>: If <code>static=TRUE</code>, an dendrogram (object of
+                                class <code><a href='http://www.rdocumentation.org/packages/stats/topics/hclust'>hclust</a></code>) containing
+                                the clustering solution path</p></li>
+<li><p><code>carp.cluster.path.vis</code>: The <code>CARP</code> solution path</p></li>
+<li><p><code>static</code>: a logical indicating whether static visualizations are available for this <code>CARP</code> object</p></li>
+<li><p><code>interactive</code>: a logical indicating whether interactive visualizations are available for this <code>CARP</code> object</p></li>
+</ul>
+
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
@@ -157,15 +195,34 @@ solutions is returned along with several visualizations.</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>library</span>(<span class='no'>clustRviz</span>)
-<span class='fu'>data</span>(<span class='st'>"presidential_speech"</span>)
-<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>]
-<span class='no'>carp.fit</span> <span class='kw'>&lt;-</span> <span class='fu'>CARP</span>(<span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>)</div><div class='output co'>#&gt; <span class='message'>Pre-computing weight-based edge sets</span></div><div class='output co'>#&gt; <span class='message'>Computing CARP Path</span></div><div class='output co'>#&gt; <span class='message'>Post-processing</span></div><div class='input'><span class='no'>carp.fit</span></div><div class='output co'>#&gt; <span class='message'>CARP Fit Summary</span></div><div class='output co'>#&gt; <span class='message'>Number of Observations: 10</span></div><div class='output co'>#&gt; <span class='message'>Number of Variables: 4</span></div><div class='output co'>#&gt; <span class='message'>Pre-processing: center</span></div><div class='output co'>#&gt; <span class='message'>Weights: RBF Kernel, phi = 0.1, k = 2</span></div><div class='output co'>#&gt; <span class='message'>Algorithm: CARP-VIZ</span></div><div class='output co'>#&gt; <span class='message'>Visualizations: Static DendStatic PathInteractive Dend/Path</span></div><div class='output co'>#&gt; <span class='message'>Raw Data:</span></div><div class='output co'>#&gt;                     amount appropri  british     cent
+    <pre class="examples"><div class='input'><span class='no'>carp_fit</span> <span class='kw'>&lt;-</span> <span class='fu'>CARP</span>(<span class='no'>presidential_speech</span>[<span class='fl'>1</span>:<span class='fl'>10</span>,<span class='fl'>1</span>:<span class='fl'>4</span>])</div><div class='output co'>#&gt; <span class='message'>Pre-computing weight-based edge sets</span></div><div class='output co'>#&gt; <span class='message'>Computing CARP Path</span></div><div class='output co'>#&gt; <span class='message'>Post-processing</span></div><div class='input'><span class='fu'>print</span>(<span class='no'>carp_fit</span>)</div><div class='output co'>#&gt; CARP Fit Summary
+#&gt; ====================
+#&gt; 
+#&gt; Algorithm:  
+#&gt; 
+#&gt; Available Visualizations:
+#&gt;  - Static Dendrogram:          TRUE 
+#&gt;  - Static Cluster Path:        TRUE 
+#&gt;  - Interactive Visualization:  TRUE 
+#&gt; 
+#&gt; Number of Observations:  10 
+#&gt; Number of Variables:     4 
+#&gt; 
+#&gt; Pre-processing options:
+#&gt;  - Columnwise centering:  TRUE 
+#&gt;  - Columnwise scaling:    FALSE 
+#&gt; 
+#&gt; RBF Kernel Weights:
+#&gt;  - phi =  0.1 
+#&gt;  - K   =  2 
+#&gt; 
+#&gt; Raw Data:
+#&gt;                     amount appropri  british     cent
 #&gt; Abraham Lincoln   3.433987 2.397895 1.791759 2.564949
 #&gt; Andrew Jackson    4.248495 4.663439 2.995732 1.945910
 #&gt; Andrew Johnson    4.025352 3.091042 2.833213 3.332205
 #&gt; Barack Obama      1.386294 0.000000 0.000000 1.386294
-#&gt; Benjamin Harrison 4.060443 4.174387 2.302585 4.304065</div></pre>
+#&gt; Benjamin Harrison 4.060443 4.174387 2.302585 4.304065</div><div class='input'><span class='fu'>plot</span>(<span class='no'>carp_fit</span>)</div><div class='img'><img src='CARP-1.png' alt='' width='700' height='433' /></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -194,5 +251,8 @@ solutions is returned along with several visualizations.</p>
       </footer>
    </div>
 
+  
+
   </body>
 </html>
+

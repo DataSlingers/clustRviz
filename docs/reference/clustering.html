@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>(slowly) Compute sparse kNN weight vector from dense weights — SparseWeights_LEGACY • clustRviz</title>
+<title>Method for returning CARP and CBASS clustering solutions — clustering • clustRviz</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -32,9 +32,9 @@
 
   <link href="../extra.css" rel="stylesheet">
   
-<meta property="og:title" content="(slowly) Compute sparse kNN weight vector from dense weights — SparseWeights_LEGACY" />
+<meta property="og:title" content="Method for returning CARP and CBASS clustering solutions — clustering" />
 
-<meta property="og:description" content="(slowly) Compute sparse kNN weight vector from dense weights" />
+<meta property="og:description" content="See clustering.CARP and clustering.CBASS for details" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -109,40 +109,36 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>(slowly) Compute sparse kNN weight vector from dense weights</h1>
+    <h1>Method for returning CARP and CBASS clustering solutions</h1>
     
-    <div class="hidden name"><code>SparseWeights_LEGACY.Rd</code></div>
+    <div class="hidden name"><code>clustering.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>(slowly) Compute sparse kNN weight vector from dense weights</p>
+    <p>See <code>clustering.CARP</code> and <code>clustering.CBASS</code> for details</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>SparseWeights_LEGACY</span>(<span class='no'>X</span>, <span class='no'>dense.weights</span>, <span class='no'>k</span>)</pre>
+    <pre class="usage"><span class='fu'>clustering</span>(<span class='no'>x</span>, <span class='no'>...</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>X</th>
-      <td><p>an n by p matrix with rows the observations and columns the variables.</p></td>
+      <th>x</th>
+      <td><p>a CARP or CBASS object</p></td>
     </tr>
     <tr>
-      <th>dense.weights</th>
-      <td><p>a vector dense weights, such as those returned
-by <code>DenseWeights</code></p></td>
-    </tr>
-    <tr>
-      <th>k</th>
-      <td><p>a positive integer less than nobs. The number of nearest neighbors.</p></td>
+      <th>...</th>
+      <td><p>additional arguements passed to <code>clustering.CARP</code> or
+<code>clustering.CBASS</code></p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>sparse.weights a numeric vector of sparse weights</p>
+    <p>CARP clustering solutions or CBASS biclustering solutions</p>
     
 
   </div>

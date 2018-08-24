@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Control for CBASS fits — cbass.control • clustRviz</title>
+<title>Control for <code>CBASS</code> fits — cbass.control • clustRviz</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -18,13 +18,27 @@
 <!-- Font Awesome icons -->
 <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
 
+<!-- clipboard.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script>
+
+<!-- sticky kit -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
-<script src="../jquery.sticky-kit.min.js"></script>
 <script src="../pkgdown.js"></script>
+
+
+
   <link href="../extra.css" rel="stylesheet">
   
+<meta property="og:title" content="Control for <code>CBASS</code> fits — cbass.control" />
+
+<meta property="og:description" content="Set CBASS algorithm parameters" />
+<meta name="twitter:card" content="summary" />
+
+
+
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -47,8 +61,12 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="../index.html">clustRviz</a>
+      <span class="navbar-brand">
+        <a class="navbar-link" href="../index.html">clustRviz</a>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.1.0</span>
+      </span>
     </div>
+
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
@@ -68,10 +86,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
+      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
     </li>
     <li>
-      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
+      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
     </li>
   </ul>
 </li>
@@ -80,6 +98,7 @@
       <ul class="nav navbar-nav navbar-right">
         
       </ul>
+      
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -87,15 +106,19 @@
       
       </header>
 
-      <div class="row">
+<div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Control for CBASS fits</h1>
+    <h1>Control for <code>CBASS</code> fits</h1>
+    
+    <div class="hidden name"><code>cbass.control.Rd</code></div>
     </div>
 
+    <div class="ref-description">
     
-    <p>Parameters for various CBASS fitting options</p>
+    <p>Set <code>CBASS</code> algorithm parameters</p>
     
+    </div>
 
     <pre class="usage"><span class='fu'>cbass.control</span>(<span class='kw'>obs.labels</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>var.labels</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>X.center.global</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>rho</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>phi</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>weights.obs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
@@ -103,109 +126,122 @@
   <span class='kw'>obs.weight.dist.p</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>var.weight.dist</span> <span class='kw'>=</span> <span class='st'>"euclidean"</span>,
   <span class='kw'>var.weight.dist.p</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>k.obs</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>k.var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>t</span> <span class='kw'>=</span> <span class='fl'>1.01</span>,
   <span class='kw'>ncores</span> <span class='kw'>=</span> <span class='fu'>as.integer</span>(<span class='fl'>1</span>), <span class='kw'>max.iter</span> <span class='kw'>=</span> <span class='fu'>as.integer</span>(<span class='fl'>1e+06</span>),
-  <span class='kw'>burn.in</span> <span class='kw'>=</span> <span class='fu'>as.integer</span>(<span class='fl'>50</span>), <span class='kw'>alg.type</span> <span class='kw'>=</span> <span class='st'>"cbassviz"</span>, <span class='kw'>npcs</span> <span class='kw'>=</span> <span class='fu'>as.integer</span>(<span class='fl'>4</span>))</pre>
+  <span class='kw'>burn.in</span> <span class='kw'>=</span> <span class='fu'>as.integer</span>(<span class='fl'>50</span>), <span class='kw'>alg.type</span> <span class='kw'>=</span> <span class='st'>"cbassviz"</span>,
+  <span class='kw'>npcs</span> <span class='kw'>=</span> <span class='fu'>as.integer</span>(<span class='fl'>4</span>), <span class='no'>...</span>)</pre>
     
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>obs.labels</th>
-      <td><p>a vector of length n.obs containing observations (row) labels</p></td>
+      <td><p>A character vector of length \(n\): observations (row) labels</p></td>
     </tr>
     <tr>
       <th>var.labels</th>
-      <td><p>a vector of length p.var containing variable (column) labels</p></td>
+      <td><p>A character vector of length \(p\): variable (column) labels</p></td>
     </tr>
     <tr>
       <th>X.center.global</th>
-      <td><p>a logical. If TRUE, the global mean of X is removed.</p></td>
+      <td><p>A logical: Should <code>X</code> be centered globally?
+<em>I.e.</em>, should the global mean of <code>X</code> be subtracted?</p></td>
     </tr>
     <tr>
       <th>rho</th>
-      <td><p>A positive number for augmented lagrangian. Not advisable to change.</p></td>
+      <td><p>For advanced users only (not advisable to change): the penalty
+parameter used for the augmented Lagrangian.</p></td>
     </tr>
     <tr>
       <th>phi</th>
-      <td><p>A positive numner used for scaling in RBF kernel</p></td>
+      <td><p>A positive real number: the scale factor used in the RBF kernel</p></td>
     </tr>
     <tr>
       <th>weights.obs</th>
-      <td><p>A vector of positive number of length choose(n.obs,2).
-Determines observation pair fusions weight.</p></td>
+      <td><p>A vector of positive number of length <code>choose(n,2)</code>.</p></td>
     </tr>
     <tr>
       <th>weights.var</th>
-      <td><p>A vector of positive number of length choose(p.var,2).
-Determines variable pair fusions weight.</p></td>
+      <td><p>A vector of positive number of length <code>choose(n,2)</code>.</p></td>
     </tr>
     <tr>
       <th>obs.weight.dist</th>
-      <td><p>a string indicating the distance metric used to calculate
-observation weights</p></td>
+      <td><p>A string indicating the distance metric used to calculate weights.
+See <code>distance</code> for details.</p></td>
     </tr>
     <tr>
       <th>obs.weight.dist.p</th>
-      <td><p>The power of the Minkowski distance, if used for
-observation weights.</p></td>
+      <td><p>The exponent used to calculate the Minkowski distance if
+<code>weight.dist = "minkowski"</code>.
+See <code>distance</code> for details.</p></td>
     </tr>
     <tr>
       <th>var.weight.dist</th>
-      <td><p>a string indicating the distance metric used to calculate
-variable weights</p></td>
+      <td><p>A string indicating the distance metric used to calculate weights.
+See <code>distance</code> for details.</p></td>
     </tr>
     <tr>
       <th>var.weight.dist.p</th>
-      <td><p>The power of the Minkowski distance, if used for
-variable weights.</p></td>
+      <td><p>The exponent used to calculate the Minkowski distance if
+<code>weight.dist = "minkowski"</code>.
+See <code>distance</code> for details.</p></td>
     </tr>
     <tr>
       <th>k.obs</th>
-      <td><p>an integer &gt;= 1. The number of neighbors used to create sparse
-observation weights</p></td>
+      <td><p>An positive integer: the number of neighbors used to create sparse weights</p></td>
     </tr>
     <tr>
       <th>k.var</th>
-      <td><p>an integer &gt;= 1. The number of neighbors used to create sparse
-variable weights</p></td>
+      <td><p>An positive integer: the number of neighbors used to create sparse weights</p></td>
     </tr>
     <tr>
       <th>t</th>
-      <td><p>a number greater than 1. The size of the multiplicitive
-regularization parameter update. Typical values are: 1.1, 1.05, 1.01, 1.005.
-Not used CBASS-VIZ algorithms.</p></td>
+      <td><p>A number greater than 1: the size of the multiplicative update to
+the cluster fusion regularization parameter (not used by
+back-tracking variants). Typically on the scale of <code>1.005</code> to <code>1.1</code>.</p></td>
     </tr>
     <tr>
       <th>ncores</th>
-      <td><p>an integer &gt;= 1. The number of cores to use.</p></td>
+      <td><p>An positive integer: the number of cores to use.</p></td>
     </tr>
     <tr>
       <th>max.iter</th>
-      <td><p>an integer. The maximum number of CARP iterations.</p></td>
+      <td><p>An integer: the maximum number of CARP iterations.</p></td>
     </tr>
     <tr>
       <th>burn.in</th>
-      <td><p>an integer. The number of initial iterations at a fixed
-value of (small) lambda_k</p></td>
+      <td><p>An integer: the number of initial iterations at a fixed
+(small) value of \(\lambda\)</p></td>
     </tr>
     <tr>
       <th>alg.type</th>
-      <td><p>Which CARP algorithm to perform. Choices are 'cbassviz'
-and 'cbass';</p></td>
+      <td><p>Which <code>CBASS</code> variant to use. Allowed values are</p><ul>
+<li><p><code>"cbass"</code> - The standard <code>CBASS</code> algorithm with \(L2\) penalty;</p></li>
+<li><p><code>"cbassviz"</code> - The back-tracking <code>CBASS</code> algorithm with \(L2\) penalty;</p></li>
+<li><p><code>"cbassl1"</code> - The standard <code>CBASS</code> algorithm with \(L1\) penalty; and</p></li>
+<li><p><code>"cbassvizl1"</code> - The back-tracking <code>CBASS</code> algorithm with \(L1\) penalty.</p></li>
+</ul></td>
     </tr>
     <tr>
       <th>npcs</th>
-      <td><p>A integer &gt;= 2. The number of principal components to compute
+      <td><p>An integer &gt;= 2. The number of principal components to compute
 for path visualization.</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>unused additional arguements</p></td>
+      <td><p>Unused arguements. An error will be thrown if any unrecognized
+arguments as given.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>a list of CBASS parameters</p>
+    <p>A list containing the <code>CBASS</code> algorithm parameters.</p>
+    
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>This function constructs a list containing additional arguments to control
+the behavior of the <code>CBASS</code> algorithm. It is typically only used internally
+by <code><a href='CBASS.html'>CBASS</a></code>, but may be useful to advanced users who wish to
+construct the <code>control</code> argument directly.</p>
     
 
   </div>
@@ -215,6 +251,8 @@ for path visualization.</p></td>
       <li><a href="#arguments">Arguments</a></li>
       
       <li><a href="#value">Value</a></li>
+
+      <li><a href="#details">Details</a></li>
           </ul>
 
   </div>
@@ -232,5 +270,8 @@ for path visualization.</p></td>
       </footer>
    </div>
 
+  
+
   </body>
 </html>
+

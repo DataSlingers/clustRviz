@@ -18,13 +18,24 @@
 <!-- Font Awesome icons -->
 <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
 
+<!-- clipboard.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script>
+
+<!-- sticky kit -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
-<script src="../jquery.sticky-kit.min.js"></script>
 <script src="../pkgdown.js"></script>
+
+
+
   <link href="../extra.css" rel="stylesheet">
   
+<meta property="og:title" content="Function reference" />
+
+
+
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -47,8 +58,12 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="../index.html">clustRviz</a>
+      <span class="navbar-brand">
+        <a class="navbar-link" href="../index.html">clustRviz</a>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.1.0</span>
+      </span>
     </div>
+
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
@@ -68,10 +83,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
+      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
     </li>
     <li>
-      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
+      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
     </li>
   </ul>
 </li>
@@ -80,6 +95,7 @@
       <ul class="nav navbar-nav navbar-right">
         
       </ul>
+      
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -87,124 +103,120 @@
       
       </header>
 
-      <div class="row">
-  <div class="col-md-9">
+<div class="row">
+  <div class="contents col-md-9">
     <div class="page-header">
-      <h1>
-        Reference
-        <small>version&nbsp;0.1.0</small>
-      </h1>
+      <h1>Reference</h1>
     </div>
 
-    <div class="contents">
-      <table class="ref-index">
+    <table class="ref-index">
 
-      <colgroup>
-        <col class="alias" />
-        <col class="title" />
-      </colgroup>
+    <colgroup>
+      
+      <col class="alias" />
+      <col class="title" />
+    </colgroup>
 
-      <tbody>
-        <tr>
-          <th colspan="2">
-            <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
-            <p class="section-desc"></p>
-          </th>
-        </tr>
-        <tr>
-          <!--  -->
-          <td>
-            <p><code><a href="carp.control.html">carp.control</a></code> </p>
-          </td>
-          <td><p>Control for CARP fits</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="CARP.html">CARP</a></code> </p>
-          </td>
-          <td><p>Compute CARP solution path</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="cbass.control.html">cbass.control</a></code> </p>
-          </td>
-          <td><p>Control for CBASS fits</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="CBASS.html">CBASS</a></code> </p>
-          </td>
-          <td><p>Compute CBASS solution path</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="Clustering.CARP.html">Clustering</a></code> </p>
-          </td>
-          <td><p>Get clustering solution from a CARP object</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="Clustering.CBASS.html">Clustering</a></code> </p>
-          </td>
-          <td><p>Get biclustering solution from a CBASS object</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="Clustering.html">Clustering</a></code> </p>
-          </td>
-          <td><p>Method for returning CARP and CBASS clustering solutions</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="plot.CARP.html">plot</a></code> </p>
-          </td>
-          <td><p>Plot function for CARP objects</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="plot.CBASS.html">plot</a></code> </p>
-          </td>
-          <td><p>Plot function for CBASS objects</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="presidential_speech.html">presidential_speech</a></code> </p>
-          </td>
-          <td><p>Log transformed word count of presidential speeches</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="print.CARP.html">print</a></code> </p>
-          </td>
-          <td><p>Print CARP Summary</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="print.CBASS.html">print</a></code> </p>
-          </td>
-          <td><p>Print CBASS Summary</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="saveviz.CARP.html">saveviz</a></code> </p>
-          </td>
-          <td><p>Save CARP visualizations</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="saveviz.CBASS.html">saveviz</a></code> </p>
-          </td>
-          <td><p>Save CBASS visualizations</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="saveviz.html">saveviz</a></code> </p>
-          </td>
-          <td><p>Method for saving CARP and CBASS visualizations</p></td>
-        </tr>
-      </tbody>
-      </table>
-    </div>
+    <tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
+          <p class="section-desc"></p>
+        </th>
+      </tr>
+      <tr>
+        
+        <td>
+          <p><code><a href="CARP.html">CARP()</a></code> </p>
+        </td>
+        <td><p>Compute <code>CARP</code> (Convex Clustering) Solution Path</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="CBASS.html">CBASS()</a></code> </p>
+        </td>
+        <td><p>Compute <code>CBASS</code> (Convex BiClustering) Solution Path</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="carp.control.html">carp.control()</a></code> </p>
+        </td>
+        <td><p>Control for <code>CARP</code> fits</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="cbass.control.html">cbass.control()</a></code> </p>
+        </td>
+        <td><p>Control for <code>CBASS</code> fits</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="clustering.CARP.html">clustering(<i>&lt;CARP&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Get clustering solution from a CARP object</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="clustering.CBASS.html">clustering(<i>&lt;CBASS&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Get biclustering solution from a CBASS object</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="clustering.html">clustering()</a></code> </p>
+        </td>
+        <td><p>Method for returning CARP and CBASS clustering solutions</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plot.CARP.html">plot(<i>&lt;CARP&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Plot function for CARP objects</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plot.CBASS.html">plot(<i>&lt;CBASS&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Plot function for CBASS objects</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="presidential_speech.html">presidential_speech</a></code> </p>
+        </td>
+        <td><p>Log transformed word count of presidential speeches</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="print.CARP.html">print(<i>&lt;CARP&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Print <code>CARP</code> Results</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="print.CBASS.html">print(<i>&lt;CBASS&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Print <code>CARP</code> Results</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="saveviz.CARP.html">saveviz(<i>&lt;CARP&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Save CARP visualizations</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="saveviz.CBASS.html">saveviz(<i>&lt;CBASS&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Save CBASS visualizations</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="saveviz.html">saveviz()</a></code> </p>
+        </td>
+        <td><p>Method for saving CARP and CBASS visualizations</p></td>
+      </tr>
+    </tbody>
+    </table>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -227,5 +239,8 @@
       </footer>
    </div>
 
+  
+
   </body>
 </html>
+

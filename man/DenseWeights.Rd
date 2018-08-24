@@ -4,8 +4,8 @@
 \alias{DenseWeights}
 \title{Compute dense distanced-based gaussian kernel weights for use in CARP or CBASS}
 \usage{
-DenseWeights(X, phi = 1, method = c("euclidean", "maximum", "manhattan",
-  "canberra", "binary", "minkowski"), p = 2)
+DenseWeights(X, phi = 1, method = c("euclidean", "maximum",
+  "manhattan", "canberra", "binary", "minkowski"), p = 2)
 }
 \arguments{
 \item{X}{an n by p matrix with rows the observations and columns the variables.}

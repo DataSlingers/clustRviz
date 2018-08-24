@@ -8,15 +8,18 @@
 <title>clustRviz Quick Start • clustRviz</title>
 <!-- jquery --><script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script><!-- Font Awesome icons --><link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
-<!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../jquery.sticky-kit.min.js"></script><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
+<script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
+<meta property="og:title" content="clustRviz Quick Start">
+<meta property="og:description" content="">
+<meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 </head>
 <body>
-    <div class="container template-vignette">
+    <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
@@ -25,8 +28,12 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="../index.html">clustRviz</a>
+      <span class="navbar-brand">
+        <a class="navbar-link" href="../index.html">clustRviz</a>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.1.0</span>
+      </span>
     </div>
+
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
@@ -46,10 +53,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
+      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
     </li>
     <li>
-      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
+      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
     </li>
   </ul>
 </li>
@@ -64,17 +71,20 @@
 
       
       </header><div class="row">
-  <div class="col-md-9">
+  <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1>clustRviz Quick Start</h1>
                         <h4 class="author">John Nagorski</h4>
             
-            <h4 class="date">2018-08-07</h4>
-          </div>
+            <h4 class="date">2018-08-24</h4>
+      
+      
+      <div class="hidden name"><code>QuickStart.Rmd</code></div>
+
+    </div>
 
     
     
-<div class="contents">
 <div id="introduction" class="section level1">
 <h1 class="hasAnchor">
 <a href="#introduction" class="anchor"></a>Introduction</h1>
@@ -123,12 +133,26 @@ carp.fit &lt;-<span class="st"> </span><span class="kw"><a href="../reference/CA
 <p>Once fitted, a brief description of the fit and parameter choices may be shown</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.fit
 <span class="co">#&gt; CARP Fit Summary</span>
-<span class="co">#&gt; Number of Observations: 32</span>
-<span class="co">#&gt; Number of Variables: 4</span>
-<span class="co">#&gt; Pre-processing: centerscale</span>
-<span class="co">#&gt; Weights: RBF Kernel, phi = 0.1, k = 3</span>
-<span class="co">#&gt; Algorithm: CARP-VIZ</span>
-<span class="co">#&gt; Visualizations: Static DendStatic PathInteractive Dend/Path</span>
+<span class="co">#&gt; ====================</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Algorithm:  </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Available Visualizations:</span>
+<span class="co">#&gt;  - Static Dendrogram:          TRUE </span>
+<span class="co">#&gt;  - Static Cluster Path:        TRUE </span>
+<span class="co">#&gt;  - Interactive Visualization:  TRUE </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Number of Observations:  32 </span>
+<span class="co">#&gt; Number of Variables:     4 </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Pre-processing options:</span>
+<span class="co">#&gt;  - Columnwise centering:  TRUE </span>
+<span class="co">#&gt;  - Columnwise scaling:    TRUE </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; RBF Kernel Weights:</span>
+<span class="co">#&gt;  - phi =  0.1 </span>
+<span class="co">#&gt;  - K   =  3 </span>
+<span class="co">#&gt; </span>
 <span class="co">#&gt; Raw Data:</span>
 <span class="co">#&gt;       SG  VP V10  EP</span>
 <span class="co">#&gt; A   50.8 8.6 190 205</span>
@@ -140,15 +164,15 @@ carp.fit &lt;-<span class="st"> </span><span class="kw"><a href="../reference/CA
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(carp.fit)</code></pre></div>
 <p><img src="QuickStart_files/figure-html/unnamed-chunk-4-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>A more detailed visualization of the solution path can be obtained by plotting the principal components of the cluster means:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(carp.fit,<span class="dt">type =</span> <span class="st">'path'</span>,<span class="dt">percent =</span> .<span class="dv">10</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(carp.fit,<span class="dt">type =</span> <span class="st">'path'</span>,<span class="dt">percent =</span> <span class="fl">.10</span>)</code></pre></div>
 <p><img src="QuickStart_files/figure-html/unnamed-chunk-5-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>The plot above displays the first two principal components of the data, with black points representing the original data, and red curves illustrating movement along the solution path. As curves join together, observations are fused, and clusters formed. The <code>percent</code> argument tells <code>plot</code> to display a snapshot of the clustering solution path at <span class="math inline">\(10\%\)</span> of total regularization.</p>
 <p>Both the dendrogram and the clustering solution path may be viewed together interactively via the use of <code>shiny</code> applications:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(carp.fit,<span class="dt">type =</span> <span class="st">'interactive'</span>)</code></pre></div>
 <p>These interactive visualizations allow one to view the cluster solution path and dendrogram as the Algorithmic Regularization iterates vary.</p>
-<p>In addition to visualizations, cluster solutions may be obtained via the <code>Clustering</code> function:</p>
+<p>In addition to visualizations, cluster solutions may be obtained via the <code>clustering</code> function:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># get the 3 cluster solution along the path</span>
-carp.clusters &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(carp.fit,<span class="dt">k =</span> <span class="dv">3</span>)
+carp.clusters &lt;-<span class="st"> </span><span class="kw"><a href="../reference/clustering.html">clustering</a></span>(carp.fit,<span class="dt">k =</span> <span class="dv">3</span>)
 <span class="co"># display the labels</span>
 <span class="kw">table</span>(carp.clusters<span class="op">$</span>clustering.assignment)
 <span class="co">#&gt; </span>
@@ -161,7 +185,7 @@ carp.clusters &lt;-<span class="st"> </span><span class="kw"><a href="../referen
 <span class="co">#&gt; [2,]   8.6   5.20000   1.35000</span>
 <span class="co">#&gt; [3,] 190.0 222.62500 283.83333</span>
 <span class="co">#&gt; [4,] 308.0 316.87500 360.41667</span></code></pre></div>
-<p>In the code above, we specify the number of clusters and <code>Clustering</code> returns the both the cluster assignment as well as the cluster means for the <span class="math inline">\(k=3\)</span> solution along the path. As an example, we display the yield (<code>Y</code>) distribution for each of the clusters:</p>
+<p>In the code above, we specify the number of clusters and <code>clustering</code> returns the both the cluster assignment as well as the cluster means for the <span class="math inline">\(k=3\)</span> solution along the path. As an example, we display the yield (<code>Y</code>) distribution for each of the clusters:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(ggplot2)
 <span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/ggplot">ggplot</a></span>(
   <span class="kw"><a href="http://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x=</span>cl,<span class="dt">y=</span>yield),
@@ -202,10 +226,10 @@ carp.clusters &lt;-<span class="st"> </span><span class="kw"><a href="../referen
 <p>As was the case of <code>CARP</code>, interactive visualizations may also be displayed:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(cbass.fit,<span class="dt">type=</span><span class="st">'interactive'</span>)</code></pre></div>
 <p><code>CBASS</code>’s interactive visualizations allows one to view dynamic changes in the cluster heatmap and dendrogram solutions along the path.</p>
-<p>As was the case with <code>CARP</code>, clustering solutions are obtained via the <code>Clustering</code> function. The desired clustering solution is returned by specifying either the number of observation clusters (<code>k.obs</code>), the number of variable clusters (<code>k.var</code>), or the percent of regularization (<code>percent</code>). In any case, <code>Clustering</code> returns the observation and variable clustering assignments, as well as the matrix of cluster means.</p>
+<p>As was the case with <code>CARP</code>, clustering solutions are obtained via the <code>clustering</code> function. The desired clustering solution is returned by specifying either the number of observation clusters (<code>k.obs</code>), the number of variable clusters (<code>k.var</code>), or the percent of regularization (<code>percent</code>). In any case, <code>clustering</code> returns the observation and variable clustering assignments, as well as the matrix of cluster means.</p>
 <p>In the example below we obtain the biclustering solution which obtains <span class="math inline">\(3\)</span> observation clusters:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># obtain the desired clustering solution along the path</span>
-cbass.clusters &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(cbass.fit,<span class="dt">k.obs =</span> <span class="dv">3</span>)
+cbass.clusters &lt;-<span class="st"> </span><span class="kw"><a href="../reference/clustering.html">clustering</a></span>(cbass.fit,<span class="dt">k.obs =</span> <span class="dv">3</span>)
 <span class="co"># observation clusters</span>
 <span class="kw">table</span>(cbass.clusters<span class="op">$</span>clustering.assignment.obs)
 <span class="co">#&gt; </span>
@@ -237,7 +261,6 @@ cbass.clusters<span class="op">$</span>cluster.mean.matrix[,<span class="dv">1</
         <span class="dt">k.obs =</span> <span class="dv">4</span>
 )</code></pre></div>
 </div>
-</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -265,6 +288,8 @@ cbass.clusters<span class="op">$</span>cluster.mean.matrix[,<span class="dv">1</
 
       </footer>
 </div>
+
+  
 
   </body>
 </html>

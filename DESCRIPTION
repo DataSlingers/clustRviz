@@ -38,7 +38,7 @@ Imports:
     ggrepel,
     RColorBrewer,
     gganimate
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 LinkingTo: Rcpp,RcppArmadillo,RcppEigen
 Suggests: testthat,
     knitr,

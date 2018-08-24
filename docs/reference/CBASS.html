@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Compute CBASS solution path — CBASS • clustRviz</title>
+<title>Compute <code>CBASS</code> (Convex BiClustering) Solution Path — CBASS • clustRviz</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -18,13 +18,29 @@
 <!-- Font Awesome icons -->
 <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
 
+<!-- clipboard.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script>
+
+<!-- sticky kit -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
-<script src="../jquery.sticky-kit.min.js"></script>
 <script src="../pkgdown.js"></script>
+
+
+
   <link href="../extra.css" rel="stylesheet">
   
+<meta property="og:title" content="Compute <code>CBASS</code> (Convex BiClustering) Solution Path — CBASS" />
+
+<meta property="og:description" content="CBASS returns a fast approximation to the Convex BiClustering
+solution path along with visualizations such as dendrograms and
+heatmaps. Visualizations may be static, interactive, or both." />
+<meta name="twitter:card" content="summary" />
+
+
+
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -47,8 +63,12 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="../index.html">clustRviz</a>
+      <span class="navbar-brand">
+        <a class="navbar-link" href="../index.html">clustRviz</a>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.1.0</span>
+      </span>
     </div>
+
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
@@ -68,10 +88,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
+      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
     </li>
     <li>
-      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
+      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
     </li>
   </ul>
 </li>
@@ -80,6 +100,7 @@
       <ul class="nav navbar-nav navbar-right">
         
       </ul>
+      
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -87,77 +108,99 @@
       
       </header>
 
-      <div class="row">
+<div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Compute CBASS solution path</h1>
+    <h1>Compute <code>CBASS</code> (Convex BiClustering) Solution Path</h1>
+    
+    <div class="hidden name"><code>CBASS.Rd</code></div>
     </div>
 
+    <div class="ref-description">
     
     <p><code>CBASS</code> returns a fast approximation to the Convex BiClustering
 solution path along with visualizations such as dendrograms and
 heatmaps. Visualizations may be static, interactive, or both.</p>
     
+    </div>
 
-    <pre class="usage"><span class='fu'>CBASS</span>(<span class='no'>X</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>interactive</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>static</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>control</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>CBASS</span>(<span class='no'>X</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>1L</span>, <span class='kw'>interactive</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>static</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>,
+  <span class='kw'>control</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>X</th>
-      <td><p>A n.obs by p.var matrix with rows the observations and columns the variables</p></td>
+      <td><p>The data matrix (\(X \in R^{n \times p}\)): rows correspond to
+the observations (to be clustered) and columns to the variables (which
+will not be clustered).</p></td>
     </tr>
     <tr>
       <th>verbose</th>
-      <td><p>either 0,1,or 2. Higher numbers indicate more verbosity while
-computing.</p></td>
+      <td><p>Any of the values <code>0</code>, <code>1</code>, or <code>2</code>. Higher values
+correspond to more verbose output while running.</p></td>
     </tr>
     <tr>
       <th>interactive</th>
-      <td><p>A logical. Should an interactive heatmap be returned?</p></td>
+      <td><p>A logical. Should interactive paths and dendrograms be
+returned?</p></td>
     </tr>
     <tr>
       <th>static</th>
-      <td><p>A logical. Should observation and variable dendrograms
-be returned?</p></td>
-    </tr>
-    <tr>
-      <th>control</th>
-      <td><p>a list of CBASS control arguements; see <code>cbass.control</code></p></td>
+      <td><p>A logical. Should static paths and dendrograms be returned?</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>additional arguments passed to <code>cbass.control</code></p></td>
+      <td><p>Additional arguments used to control the behavior of <code>CBASS</code>; see
+<code><a href='cbass.control.html'>cbass.control</a></code> for details.</p></td>
+    </tr>
+    <tr>
+      <th>control</th>
+      <td><p>A list containing advanced parameters for the <code>CBASS</code> algorithm,
+typically created by <code><a href='cbass.control.html'>cbass.control</a></code>.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>X the original data matrix</p>
-<p>cbass.cluster.path.obs the CBASS observation solution path</p>
-<p>cbass.cluster.path.var the CBASS variable solution path</p>
-<p>cbass.dend.obs if static==TRUE, a dendrogam representation of the
-observation clustering solution path</p>
-<p>cbass.dend.var if static==TRUE, a dendrogam representation of the
-variable clustering solution path</p>
-<p>phi.obs A positive numner used for scaling in observation RBF kernel</p>
-<p>phi.var A positive numner used for scaling in variable RBF kernel</p>
-<p>k.obs an integer &gt;= 1. The number of neighbors used to create sparse
-observation weights</p>
-<p>k.var an integer &gt;= 1. The number of neighbors used to create sparse
-variable weights</p>
-<p>burn.in an integer. The number of initial iterations at a fixed
-value of (small) lambda_k</p>
-<p>alg.type Which CARP algorithm to perform. Choices are 'cbassviz',
-'cbass','cbassl1', and 'cbassvizl1'</p>
-<p>interactive A logical. Should an interactive heatmap be returned?</p>
-<p>static A logical. Should observation and variable dendrograms
-be returned?</p>
+    <p>An object of class <code>CBASS</code> containing the following elements (among others):</p><ul>
+<li><p><code>X</code>: the original data matrix</p></li>
+<li><p><code>n.obs</code>: the number of observations (rows of <code>X</code>)</p></li>
+<li><p><code>p.var</code>: the number of variables (columns of <code>X</code>)</p></li>
+<li><p><code>alg.type</code>: the <code>CBASS</code> variant used</p></li>
+<li><p><code>X.center.global</code>: a logical indicating whether <code>X</code>
+                                      was globally centered before clustering</p></li>
+<li><p><code>X.scale</code>: a logical indicating whether <code>X</code> was scaled
+                              column-wise before centering</p></li>
+<li><p><code>burn.in</code>: an integer indicating the number of "burn-in"
+                              iterations performed</p></li>
+<li><p><code>k.obs</code>: the number of neighbors used to create sparse
+                            clustering weights for the observations</p></li>
+<li><p><code>k.var</code>: the number of neighbors used to create sparse
+                            clustering weights for the variables</p></li>
+<li><p><code>phi.obs</code>: the scale factor of the RBF kernel used to calculate
+                              clustering weights for the observations</p></li>
+<li><p><code>phi.var</code>: the scale factor of the RBF kernel used to calculate
+                              clustering weights for the variables</p></li>
+<li><p><code>carp.dend.obs</code>: If <code>static=TRUE</code>, an dendrogram (object of
+                                    class <code><a href='http://www.rdocumentation.org/packages/stats/topics/hclust'>hclust</a></code>) containing
+                                    the clustering solution path for the observations</p></li>
+<li><p><code>carp.dend.var</code>: If <code>static=TRUE</code>, an dendrogram (object of
+                                    class <code><a href='http://www.rdocumentation.org/packages/stats/topics/hclust'>hclust</a></code>) containing
+                                    the clustering solution path for the variables</p></li>
+<li><p><code>cbass.cluster.path.obs</code>: The <code>CBASS</code> solution path for the observations</p></li>
+<li><p><code>cbass.cluster.path.var</code>: The <code>CBASS</code> solution path for the variables</p></li>
+<li><p><code>static</code>: a logical indicating whether static visualizations are available for this <code>CBASS</code> object</p></li>
+<li><p><code>interactive</code>: a logical indicating whether interactive visualizations are available for this <code>CBASS</code> object</p></li>
+<li><p><code>obs.labels</code>: a character vector of length <code>n.obs</code> containing
+                                 observation (row) labels</p></li>
+<li><p><code>var.labels</code>: a character vector of length <code>p.var</code> containing
+                                 variable (column) labels</p></li>
+</ul>
+
 <p>obs.labels a vector of length n.obs containing observations (row) labels</p>
 <p>var.labels a vector of length p.var containing variable (column) labels</p>
-<p>X.center.global a logical. If TRUE, the global mean of X is removed.</p>
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
@@ -168,12 +211,9 @@ solutions is returned along with several visualizations.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='co'># NOT RUN {</span>
-<span class='fu'>library</span>(<span class='no'>clustRviz</span>)
-<span class='fu'>data</span>(<span class='st'>"presidential_speech"</span>)
-<span class='no'>Xdat</span> <span class='kw'>&lt;-</span> <span class='no'>presidential_speech</span>
-<span class='fu'>CBASS</span>(
-<span class='kw'>X</span><span class='kw'>=</span><span class='no'>Xdat</span>
-) <span class='kw'>-&gt;</span> <span class='no'>cbass.fit</span>
+<span class='no'>cbass_fit</span> <span class='kw'>&lt;-</span> <span class='fu'>CBASS</span>(<span class='no'>presidential_speech</span>)
+<span class='fu'>print</span>(<span class='no'>cbass_fit</span>)
+<span class='fu'>plot</span>(<span class='no'>cbass_fit</span>)
 <span class='co'># }</span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -203,5 +243,8 @@ solutions is returned along with several visualizations.</p>
       </footer>
    </div>
 
+  
+
   </body>
 </html>
+

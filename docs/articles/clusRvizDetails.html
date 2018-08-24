@@ -8,15 +8,18 @@
 <title>clustRviz Details • clustRviz</title>
 <!-- jquery --><script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script><!-- Font Awesome icons --><link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
-<!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../jquery.sticky-kit.min.js"></script><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
+<script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
+<meta property="og:title" content="clustRviz Details">
+<meta property="og:description" content="">
+<meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 </head>
 <body>
-    <div class="container template-vignette">
+    <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
@@ -25,8 +28,12 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="../index.html">clustRviz</a>
+      <span class="navbar-brand">
+        <a class="navbar-link" href="../index.html">clustRviz</a>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.1.0</span>
+      </span>
     </div>
+
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
@@ -46,10 +53,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
+      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
     </li>
     <li>
-      <a href="../articles/QuickStart.html">clustRviz Quick Start</a>
+      <a href="../articles/clusRvizDetails.html">clustRviz Details</a>
     </li>
   </ul>
 </li>
@@ -64,17 +71,20 @@
 
       
       </header><div class="row">
-  <div class="col-md-9">
+  <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1>clustRviz Details</h1>
                         <h4 class="author">John Nagorski</h4>
             
-            <h4 class="date">2018-08-07</h4>
-          </div>
+            <h4 class="date">2018-08-24</h4>
+      
+      
+      <div class="hidden name"><code>clusRvizDetails.Rmd</code></div>
+
+    </div>
 
     
     
-<div class="contents">
 <div id="introduction" class="section level1">
 <h1 class="hasAnchor">
 <a href="#introduction" class="anchor"></a>Introduction</h1>
@@ -92,7 +102,7 @@ w_{l,m} \| {\boldsymbol{u}}_l - {\boldsymbol{u}}_m \|_2
 \]</span></p>
 <p>where <span class="math inline">\({\boldsymbol{X}}\)</span> is an <span class="math inline">\(p \times n\)</span> input data matrix, consisting of <span class="math inline">\(p\)</span> measurements on <span class="math inline">\(n\)</span> subjects, <span class="math inline">\(\lambda &gt; 0\)</span> a regularization parameter, and <span class="math inline">\(w_{l,m}&gt;0\)</span> a weight for each pair of observations; here <span class="math inline">\(\| . \|_F\)</span> and <span class="math inline">\(\| . \|_2\)</span> denote the Frobenius norm and <span class="math inline">\(l_2\)</span> norm, respectively.</p>
 <p>Briefly, Convex Clustering seeks to find and estimate,<span class="math inline">\(\hat{{\boldsymbol{U}}} \in \mathbb{R}^{p\times n}\)</span>, such that it is faithful to the original data (Frobenius norm loss term) while also encouraging fusions among observations (<span class="math inline">\(l_2\)</span> regularization between columns of <span class="math inline">\({\boldsymbol{U}}\)</span>, denoted <span class="math inline">\(u_l\)</span>). At small values of regularization, <span class="math inline">\(\lambda \approx 0\)</span>, Convex Clustering returns estimates similar to the original data with little or no fusion among observations. As regularization increases, more fusions occur and Convex Clustering returns estimates such that <span class="math inline">\(\| \hat{{\boldsymbol{u}}}_l - \hat{{\boldsymbol{u}}}_m \| = 0\)</span>. When such fusions occur we say that observations <span class="math inline">\(l\)</span> and <span class="math inline">\(m\)</span> belong to the same cluster. Taken to the extreme, sufficiently large values of <span class="math inline">\(\lambda\)</span> result in all observations belonging to the same cluster.</p>
-<p>When fitting for multiple values of <span class="math inline">\(\lambda\)</span> Convex Clustering results in a continious solution path of clustering solutions. One solution method for the problem above is via the alternatving direction method of multipliers (ADMM) <span class="citation">(Boyd et al. 2011)</span>. For a given <span class="math inline">\(\lambda\)</span>, Convex clustering can be solved by iteratively applying ADMM updates until convergence <span class="citation">(Chi and Lange 2015)</span>. However in order to obtain a full path of clustering solutions, this method must be employed for multiple <span class="math inline">\(\lambda_k\)</span> which is computationally expensive.</p>
+<p>When fitting for multiple values of <span class="math inline">\(\lambda\)</span> Convex Clustering results in a continious solution path of clustering solutions. One solution method for the problem above is via the alternatving direction method of multipliers (ADMM) <span class="citation">(Boyd et al. 2011)</span>. For a given <span class="math inline">\(\lambda\)</span>, Convex Clustering can be solved by iteratively applying ADMM updates until convergence <span class="citation">(Chi and Lange 2015)</span>. However in order to obtain a full path of clustering solutions, this method must be employed for multiple <span class="math inline">\(\lambda_k\)</span> which is computationally expensive.</p>
 <p>To address the computational burden of Convex Clustering, we utilize the framework of Algorithmic Regularization Paths <span class="citation">(Hu, Chi, and Allen 2016)</span> to develop efficient methods for approximating the Convex Clustering and Biclustering solution paths: Convex Clustering via Algorithmic Regularization Paths (CARP) and Convex Biclustering via Algorthmic Regularization with Small Steps (CBASS), respectively. Rather than fully solving the Convex Clustering optimization problem at each <span class="math inline">\(\lambda_k\)</span>, we instead perform single updates combined with gradual increases in regularization at each step. As regularization increases with each iteration, the column differences of the iterates, <span class="math inline">\(\| {\boldsymbol{u}}^{(k)}_l - {\boldsymbol{u}}^{(k)}_m \|\)</span>, eventally become <span class="math inline">\(0\)</span> for all <span class="math inline">\(l,m\)</span>. In contrast to traditional iterative solution techniques, we instead employ the iterates themselves as approximations for the true solution path. Remarkably, this approximation not only works well empirically, but can be shown theoretically to well approximate the true Convex Clustering solution path.</p>
 </div>
 <div id="preprocessing-and-inputs" class="section level1">
@@ -194,36 +204,8 @@ clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/Spars
 <span class="co">#&gt; [1] 144</span></code></pre></div>
 <p>Computationally, it is tempting to set <span class="math inline">\(k\)</span> small and ensure fast compuatation. Setting <span class="math inline">\(k\)</span> too small, however, can potentially prevent observations from fusing, regardless of the amount of regularization. In order to verify that our sparse set of weights allows for the eventual fusion of all observations we can examine its graphical representation. The function <code>PlotWeightGraph</code> displays the fusion graph of our observations induced by the support of our weight set. The fusion graph displays each observation as a vertex, and connects two observation with an edge if their corresponding weight is non-zero. Such connections between observations indicate their ability fuse into a common cluster, given large enough regularization.</p>
 <p>Below we consider the extreme case of <span class="math inline">\(k=1\)</span>, which while computationally fast presents an immediate difficulty.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
-  <span class="dt">weights =</span> clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/SparseWeights.html">SparseWeights</a></span>(
-    <span class="dt">X=</span>Xdat.preprocessed,
-    <span class="dt">dense.weights =</span> dense.weights,
-    <span class="dt">k=</span><span class="dv">1</span>
-  ),
-  <span class="dt">nobs =</span> <span class="kw">nrow</span>(Xdat.preprocessed),
-  <span class="dt">edge.labels =</span> <span class="ot">TRUE</span>,
-  <span class="dt">obs.labels =</span> obs.labels,
-  <span class="dt">vsize=</span><span class="dv">3</span>,
-  <span class="dt">label.scale=</span><span class="ot">FALSE</span>,
-  <span class="dt">label.cex=</span>.<span class="dv">7</span>,
-  <span class="dt">repulsion=</span>.<span class="dv">9</span>)</code></pre></div>
-<p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-12-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>Examining the graph above, we note that the number of connected components is strictly greater than one. As such, regardless of the number of <code>CARP</code> iteratations (and the associated regularization increases) it will not be possible fuse all observations into a single cluster. Such extreme weight choices should typically be avoided as they not only hinder the agglomorative nature of <code>CARP</code> and <code>CBASS</code>, but also lead to biased and less interpretable solution paths.</p>
 <p>At the other extreme, large values of <span class="math inline">\(k\)</span> again result in long computation time and bring little to no improvement on the resulting solution sequence; an example of such an overly dense graph can be seen below.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
-  <span class="dt">weights =</span> clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/SparseWeights.html">SparseWeights</a></span>(
-    <span class="dt">X=</span>Xdat.preprocessed,
-    <span class="dt">dense.weights =</span> dense.weights,
-    <span class="dt">k=</span><span class="dv">15</span>
-  ),
-  <span class="dt">nobs =</span> <span class="kw">nrow</span>(Xdat.preprocessed),
-  <span class="dt">edge.labels =</span> <span class="ot">FALSE</span>,
-  <span class="dt">obs.labels =</span> obs.labels,
-  <span class="dt">vsize=</span><span class="dv">3</span>,
-  <span class="dt">label.scale=</span><span class="ot">FALSE</span>,
-  <span class="dt">label.cex=</span>.<span class="dv">7</span>,
-  <span class="dt">repulsion=</span>.<span class="dv">9</span>)</code></pre></div>
-<p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-13-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>In order to provide a reasonable choice regarding weight sparsity, the function <code>MinKNN</code> may be used to find a balance between computational efficiency and poor clustering performance. <code>MinKNN</code> takes as its arguement an initial set of dense weights and returns the smallest <span class="math inline">\(k\)</span> such the graph induced by the support of the resulting set of sparse weights contains exactly one connected component. For our current vector of weights we have:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/MinKNN.html">MinKNN</a></span>(
   <span class="dt">X =</span> Xdat.preprocessed,
@@ -237,16 +219,6 @@ k.min
   <span class="dt">dense.weights =</span> dense.weights,
   <span class="dt">k =</span> k.min
 ) -&gt;<span class="st"> </span>sparse.weights</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
-  <span class="dt">weights =</span> sparse.weights,
-  <span class="dt">nobs =</span> <span class="kw">nrow</span>(Xdat.preprocessed),
-  <span class="dt">edge.labels =</span> <span class="ot">FALSE</span>,
-  <span class="dt">obs.labels =</span> obs.labels,
-  <span class="dt">vsize=</span><span class="dv">3</span>,
-  <span class="dt">label.scale=</span><span class="ot">FALSE</span>,
-  <span class="dt">label.cex=</span>.<span class="dv">7</span>,
-  <span class="dt">repulsion=</span>.<span class="dv">9</span>)</code></pre></div>
-<p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-16-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>We can see that the resulting graph offers a compromise between the two extremes. By default both <code>CARP</code> and <code>CBASS</code> use the value returned by <code>MinKNN</code> to produce sparse sets of weights. While slightly larger values of <span class="math inline">\(k\)</span> can be used, it is not recommended to pass below this threshold for the reasons stated above.</p>
 </div>
 </div>
@@ -258,12 +230,26 @@ k.min
 <p>Once completed, we can examine a brief summary of the fitted object</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.fit
 <span class="co">#&gt; CARP Fit Summary</span>
-<span class="co">#&gt; Number of Observations: 44</span>
-<span class="co">#&gt; Number of Variables: 75</span>
-<span class="co">#&gt; Pre-processing: center</span>
-<span class="co">#&gt; Weights: RBF Kernel, phi = 0.01, k = 4</span>
-<span class="co">#&gt; Algorithm: CARP-VIZ</span>
-<span class="co">#&gt; Visualizations: Static DendStatic PathInteractive Dend/Path</span>
+<span class="co">#&gt; ====================</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Algorithm:  </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Available Visualizations:</span>
+<span class="co">#&gt;  - Static Dendrogram:          TRUE </span>
+<span class="co">#&gt;  - Static Cluster Path:        TRUE </span>
+<span class="co">#&gt;  - Interactive Visualization:  TRUE </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Number of Observations:  44 </span>
+<span class="co">#&gt; Number of Variables:     75 </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Pre-processing options:</span>
+<span class="co">#&gt;  - Columnwise centering:  TRUE </span>
+<span class="co">#&gt;  - Columnwise scaling:    FALSE </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; RBF Kernel Weights:</span>
+<span class="co">#&gt;  - phi =  0.01 </span>
+<span class="co">#&gt;  - K   =  4 </span>
+<span class="co">#&gt; </span>
 <span class="co">#&gt; Raw Data:</span>
 <span class="co">#&gt;                     amount appropri  british     cent commerci</span>
 <span class="co">#&gt; Abraham Lincoln   3.433987 2.397895 1.791759 2.564949 2.708050</span>
@@ -289,13 +275,29 @@ k.min
 <p>And display its output:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cbass.fit
 <span class="co">#&gt; CBASS Fit Summary</span>
-<span class="co">#&gt; Number of Observations: 44</span>
-<span class="co">#&gt; Number of Variables: 75</span>
-<span class="co">#&gt; Pre-processing: global-center</span>
-<span class="co">#&gt; Obs. Weights: RBF Kernel, phi = 0.000133333333333333, k = 4</span>
-<span class="co">#&gt; Var. Weights: RBF Kernel, phi = 0.000227272727272727, k = 2</span>
-<span class="co">#&gt; Algorithm: CBASS VIZ</span>
-<span class="co">#&gt; Visualizations: Static DendStatic HeatmapInteractive Heatmap</span>
+<span class="co">#&gt; ====================</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Algorithm:  </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Available Visualizations:</span>
+<span class="co">#&gt;  - Static Dendrogram:    TRUE </span>
+<span class="co">#&gt;  - Static Heatmap:       TRUE </span>
+<span class="co">#&gt;  - Interactive Heatmap:  TRUE </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Number of Observations:  44 </span>
+<span class="co">#&gt; Number of Variables:     75 </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Pre-processing options:</span>
+<span class="co">#&gt;  - Global centering:  TRUE </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Observation RBF Kernel Weights:</span>
+<span class="co">#&gt;  - phi =  0 </span>
+<span class="co">#&gt;  - K   =  4 </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Variable RBF Kernel Weights:</span>
+<span class="co">#&gt;  - phi =  0 </span>
+<span class="co">#&gt;  - K   =  2 </span>
+<span class="co">#&gt; </span>
 <span class="co">#&gt; Raw Data:</span>
 <span class="co">#&gt;          [,1]     [,2]     [,3]     [,4]     [,5]</span>
 <span class="co">#&gt; [1,] 3.433987 2.397895 1.791759 2.564949 2.708050</span>
@@ -317,6 +319,28 @@ k.min
     )
 ) -&gt;<span class="st"> </span>carp.fit.t
 carp.fit.t
+<span class="co">#&gt; CARP Fit Summary</span>
+<span class="co">#&gt; ====================</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Algorithm:  CARP (t = 1.1) </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Available Visualizations:</span>
+<span class="co">#&gt;  - Static Dendrogram:          TRUE </span>
+<span class="co">#&gt;  - Static Cluster Path:        TRUE </span>
+<span class="co">#&gt;  - Interactive Visualization:  TRUE </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Number of Observations:  44 </span>
+<span class="co">#&gt; Number of Variables:     75 </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Pre-processing options:</span>
+<span class="co">#&gt;  - Columnwise centering:  TRUE </span>
+<span class="co">#&gt;  - Columnwise scaling:    FALSE </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; RBF Kernel Weights:</span>
+<span class="co">#&gt;  - phi =  0.01 </span>
+<span class="co">#&gt;  - K   =  4 </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Raw Data:</span>
 <span class="co">#&gt;                     amount appropri  british     cent commerci</span>
 <span class="co">#&gt; Abraham Lincoln   3.433987 2.397895 1.791759 2.564949 2.708050</span>
 <span class="co">#&gt; Andrew Jackson    4.248495 4.663439 2.995732 1.945910 3.828641</span>
@@ -330,24 +354,13 @@ carp.fit.t
 <div id="solutions" class="section level1">
 <h1 class="hasAnchor">
 <a href="#solutions" class="anchor"></a>Solutions</h1>
-<p>Once fit, the clustering solution of both CARP and CBASS may be examined via the <code>Clustering</code> function. Using our <code>carp.fit</code> object from above, we can extract the solution along the path which gives <span class="math inline">\(k=2\)</span> clusters.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.clustering &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(carp.fit,<span class="dt">k =</span> <span class="dv">2</span>)</code></pre></div>
+<p>Once fit, the clustering solution of both CARP and CBASS may be examined via the <code>clustering</code> function. Using our <code>carp.fit</code> object from above, we can extract the solution along the path which gives <span class="math inline">\(k=2\)</span> clusters.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.clustering &lt;-<span class="st"> </span><span class="kw"><a href="../reference/clustering.html">clustering</a></span>(carp.fit,<span class="dt">k =</span> <span class="dv">2</span>)</code></pre></div>
 <p>Once extracted we may examine the clustering assignment. In the table below we see of count of the cluster membership. Additionally we consider the cluster assignment in relation to our original weight graph. We can see that the cluster membership respect our original weights.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">table</span>(carp.clustering<span class="op">$</span>clustering.assignment)
 <span class="co">#&gt; </span>
 <span class="co">#&gt; cl1 cl2 </span>
 <span class="co">#&gt;  30  14</span></code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">clustRviz<span class="op">:::</span><span class="kw"><a href="../reference/PlotWeightGraph.html">PlotWeightGraph</a></span>(
-  <span class="dt">weights =</span> sparse.weights,
-  <span class="dt">nobs =</span> <span class="kw">nrow</span>(Xdat.preprocessed),
-  <span class="dt">edge.labels =</span> <span class="ot">FALSE</span>,
-  <span class="dt">obs.labels =</span> obs.labels,
-  <span class="dt">vsize=</span><span class="dv">3</span>,
-  <span class="dt">color=</span><span class="kw">rainbow</span>(<span class="dv">2</span>)[<span class="kw">as.numeric</span>(<span class="kw">str_extract</span>(carp.clustering<span class="op">$</span>clustering.assignment,<span class="st">"(</span><span class="ch">\\</span><span class="st">d)+"</span>))],
-  <span class="dt">label.scale=</span><span class="ot">FALSE</span>,
-  <span class="dt">label.cex=</span>.<span class="dv">7</span>,
-  <span class="dt">repulsion=</span>.<span class="dv">9</span>)</code></pre></div>
-<p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-25-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>Additionally, we can extract the cluster means associated with <span class="math inline">\(k=2\)</span> solution. The object <code>cluster.means</code> below gives the CARP iterate <span class="math inline">\({\boldsymbol{U}}^{(k)}\)</span> along the path. We note that the columns of the respective clusters have fused together as desired.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(carp.clustering<span class="op">$</span>cluster.means)
 <span class="co">#&gt;           cl1       cl2</span>
@@ -358,9 +371,9 @@ carp.fit.t
 <span class="co">#&gt; [5,] 2.743924 0.9780746</span>
 <span class="co">#&gt; [6,] 2.380273 0.1980421</span></code></pre></div>
 <p>Along with specifying the number of clusters <span class="math inline">\(k\)</span>, we may also specify the percent of regulariziation. In the example below, we extract the clustering solution at <span class="math inline">\(25\)</span>% along the regularization path.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.clustering &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(carp.fit,<span class="dt">percent =</span> .<span class="dv">25</span>)</code></pre></div>
-<p>Simiarly to CARP objects, CBASS clustering solutions may also be extracted via the <code>Clustering</code> function. The desired clustering solution is returned by specifying either the number of observation clusters (<code>k.obs</code>), the number of variable clusters (<code>k.var</code>), or the percent of regularization (<code>percent</code>). In any case, <code>Clustering</code> returns the observation and variable clustering assignments, as well as the matrix of cluster means. In the example below we extract the biclustering solution at the level of <span class="math inline">\(85\)</span>% regularization.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cbass.clustering &lt;-<span class="st"> </span><span class="kw"><a href="../reference/Clustering.html">Clustering</a></span>(cbass.fit,<span class="dt">percent =</span> .<span class="dv">85</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">carp.clustering &lt;-<span class="st"> </span><span class="kw"><a href="../reference/clustering.html">clustering</a></span>(carp.fit,<span class="dt">percent =</span> <span class="fl">.25</span>)</code></pre></div>
+<p>Simiarly to CARP objects, CBASS clustering solutions may also be extracted via the <code>clustering</code> function. The desired clustering solution is returned by specifying either the number of observation clusters (<code>k.obs</code>), the number of variable clusters (<code>k.var</code>), or the percent of regularization (<code>percent</code>). In any case, <code>clustering</code> returns the observation and variable clustering assignments, as well as the matrix of cluster means. In the example below we extract the biclustering solution at the level of <span class="math inline">\(85\)</span>% regularization.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cbass.clustering &lt;-<span class="st"> </span><span class="kw"><a href="../reference/clustering.html">clustering</a></span>(cbass.fit,<span class="dt">percent =</span> <span class="fl">.85</span>)
 <span class="co"># observation clusters</span>
 <span class="kw">table</span>(cbass.clustering<span class="op">$</span>clustering.assignment.obs)
 <span class="co">#&gt; </span>
@@ -397,10 +410,10 @@ cbass.clustering<span class="op">$</span>cluster.mean.matrix[<span class="dv">1<
 <p>Static visualizations allow the user to view snapshots along the cluster solution path. In the plot below the first two principal components of the original observations (US presidents) are plotted (black dots) along with the CARP solution path (red curves). Following along the CARP solution path, we can watch<br>
 the fusions between observations as regulaization increases. To obtain a snapshot we again specify the percent of regularization.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(carp.fit,<span class="dt">type =</span> <span class="st">'path'</span>,<span class="dt">percent=</span>.<span class="dv">5</span>)</code></pre></div>
-<p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-29-1.png" width="480" style="display: block; margin: auto;"></p>
+<p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-25-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>Owing to the CARP-VIZ algorithm, we are also ensured a dendrogram representation for the resulting path. In the figure below we display the dendrogram of CARP-VIZ:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(carp.fit,<span class="dt">type =</span> <span class="st">'dendrogram'</span>)</code></pre></div>
-<p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-30-1.png" width="480" style="display: block; margin: auto;"></p>
+<p><img src="clusRvizDetails_files/figure-html/unnamed-chunk-26-1.png" width="480" style="display: block; margin: auto;"></p>
 <p>Additional static visualization are available for CBASS objects, allowing both static heatmaps and dendrograms for observations and variables.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(cbass.fit,<span class="dt">type=</span><span class="st">'var.dendrogram'</span>)</code></pre></div>
 </div>
@@ -475,7 +488,6 @@ the fusions between observations as regulaization increases. To obtain a snapsho
 </div>
 </div>
 </div>
-</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -523,6 +535,8 @@ the fusions between observations as regulaization increases. To obtain a snapsho
 
       </footer>
 </div>
+
+  
 
   </body>
 </html>
