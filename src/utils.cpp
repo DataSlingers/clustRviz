@@ -44,8 +44,12 @@ Eigen::VectorXd restride(const Eigen::VectorXd& x,
   return ret;
 }
 
-double TwoNorm(arma::colvec x){
-  return(std::pow(sum(x % x),0.5));
+double TwoNorm(const arma::colvec& x){
+  return std::pow(sum(x % x), 0.5);
+}
+
+double TwoNorm(const Eigen::VectorXd x){
+  return x.norm();
 }
 
 Eigen::VectorXd cv_sparse_solve(const Eigen::SparseMatrix<double>& A,
@@ -123,6 +127,10 @@ arma::colvec DtMatOpv2(const arma::colvec& v,
   return(out);
 }
 
+bool is_nan(double x){
+  return x != x;
+}
+
 int sgn(double x){
   int ret;
   if(x == 0){
@@ -161,6 +169,53 @@ arma::colvec ProxL2(const arma::colvec& delta,
   return(ret);
 }
 
+// TODO -- Document me!
+Eigen::VectorXd ProxL2(const Eigen::VectorXd& delta,
+                       int p,
+                       const Eigen::VectorXd& scalars,
+                       const Eigen::MatrixXi& IndMat){
+
+  Eigen::Index num_edges = scalars.size();
+  Eigen::VectorXd ret(num_edges * p);
+
+  if(p * num_edges != delta.size()){
+    Rcpp::stop("p * num_edges != delta in ProxL2");
+  }
+
+  if(num_edges != IndMat.rows()){
+    Rcpp::stop("Penalty weights not of same length as number of groups");
+  }
+
+  if(IndMat.size()!= delta.size()){
+    Rcpp::stop("Do not have a group assignment for each data point.");
+  }
+
+
+  // TODO - Optimize this!
+  for(Eigen::Index i = 0; i < num_edges; i++){
+    Eigen::VectorXi index_vec = IndMat.row(i);
+
+    Eigen::VectorXd this_delta = extract(delta, index_vec);
+    double scale_factor = 1 - scalars(i) / TwoNorm(this_delta);
+
+    if(is_nan(scale_factor)){
+      for(Eigen::Index j = 0; j < this_delta.size(); j ++){
+        ret(index_vec(j)) = this_delta(j);
+      }
+    } else if(scale_factor < 0){
+      for(Eigen::Index j = 0; j < this_delta.size(); j ++){
+        ret(index_vec(j)) = 0;
+      }
+    } else {
+      for(Eigen::Index j = 0; j < this_delta.size(); j++){
+        ret(index_vec(j)) = scale_factor * this_delta(j);
+      }
+    }
+  }
+
+  return ret;
+}
+
 arma::colvec ProxL1(const arma::colvec& delta,
                     int p,
                     double lambda,
@@ -181,4 +236,36 @@ arma::colvec ProxL1(const arma::colvec& delta,
     ret(l) = theta(l)/weights(widx);
   }
   return(ret);
+}
+
+double soft_thresh(double x, double lambda){
+  if(std::abs(x) < lambda){
+    return 0;
+  } else if (x > 0){
+    return x - lambda;
+  } else {
+    return x + lambda;
+  }
+}
+
+// TODO - Document me!
+Eigen::VectorXd ProxL1(const Eigen::VectorXd& delta,
+                       int p,
+                       double lambda,
+                       const Eigen::VectorXd& weights){
+
+  Eigen::Index num_edges = weights.size();
+  Eigen::VectorXd ret(num_edges * p);
+
+  // TODO - Optimize this!
+  for(Eigen::Index i = 0; i < num_edges; i++){
+    double weight = weights(i);
+
+    for(Eigen::Index j = 0; j < p; j++){
+      Eigen::Index elem_index = i * p + j;
+      ret(elem_index) = soft_thresh(delta(elem_index), weight * lambda);
+    }
+  }
+
+  return ret;
 }
