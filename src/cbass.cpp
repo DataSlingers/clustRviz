@@ -1,30 +1,31 @@
 #include "clustRviz.h"
 
 // [[Rcpp::export]]
-Rcpp::List BICARPL1_NF_FRAC(const arma::colvec& x,
-                            int n,
-                            int p,
-                            double lambda_init,
-                            double t,
-                            const arma::colvec& weights_row,
-                            const arma::colvec& weights_col,
-                            const arma::colvec& uinit_row,
-                            const arma::colvec& uinit_col,
-                            const arma::colvec& vinit_row,
-                            const arma::colvec& vinit_col,
-                            const Eigen::SparseMatrix<double>& premat_row,
-                            const Eigen::SparseMatrix<double>& premat_col,
-                            const arma::umat& IndMat_row,
-                            const arma::umat& IndMat_col,
-                            const arma::umat& EOneIndMat_row,
-                            const arma::umat& EOneIndMat_col,
-                            const arma::umat& ETwoIndMat_row,
-                            const arma::umat& ETwoIndMat_col,
-                            double rho = 1,
-                            int max_iter = 1e4,
-                            int burn_in = 50,
-                            bool verbose=false,
-                            int keep=10){
+Rcpp::List CBASS(const arma::colvec& x,
+                 int n,
+                 int p,
+                 double lambda_init,
+                 double t,
+                 const arma::colvec& weights_row,
+                 const arma::colvec& weights_col,
+                 const arma::colvec& uinit_row,
+                 const arma::colvec& uinit_col,
+                 const arma::colvec& vinit_row,
+                 const arma::colvec& vinit_col,
+                 const Eigen::SparseMatrix<double>& premat_row,
+                 const Eigen::SparseMatrix<double>& premat_col,
+                 const arma::umat& IndMat_row,
+                 const arma::umat& IndMat_col,
+                 const arma::umat& EOneIndMat_row,
+                 const arma::umat& EOneIndMat_col,
+                 const arma::umat& ETwoIndMat_row,
+                 const arma::umat& ETwoIndMat_col,
+                 double rho   = 1,
+                 int max_iter = 1e4,
+                 int burn_in  = 50,
+                 bool verbose = false,
+                 int keep     = 10,
+                 bool l1      = false){
 
   int cardE_row = EOneIndMat_row.n_rows;
   int cardE_col = EOneIndMat_col.n_rows;
@@ -115,7 +116,12 @@ Rcpp::List BICARPL1_NF_FRAC(const arma::colvec& x,
     yt = cv_sparse_solve(premat_row, arma_sparse_solver_input_row);
     // v update
     proxin_row = DMatOpv2(yt,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row) + (1/rho)*lamold_row;
-    vnew_row = ProxL1(proxin_row,n,(1/rho)*lambda, weights_row);
+    if(l1){
+      vnew_row = ProxL1(proxin_row, n, (1/rho) * lambda, weights_row);
+    } else {
+      vnew_row = ProxL2(proxin_row, n, (1/rho) * weights_row * lambda, IndMat_row);
+    }
+
     // lambda update
     lamnew_row = lamold_row + rho*(DMatOpv2(yt,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row)-vnew_row);
     ////////// end solve row problem
@@ -130,7 +136,12 @@ Rcpp::List BICARPL1_NF_FRAC(const arma::colvec& x,
     unew = cv_sparse_solve(premat_col, arma_sparse_solver_input_col);
     // v update
     proxin_col = DMatOpv2(unew,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col) + (1/rho)*lamold_col;
-    vnew_col = ProxL1(proxin_col,p,(1/rho)*lambda,weights_col);
+    if(l1){
+      vnew_col = ProxL1(proxin_col, p, (1/rho) * lambda, weights_col);
+    } else {
+      vnew_col = ProxL2(proxin_col, p, (1/rho) * weights_col * lambda, IndMat_col);
+    }
+
     // lambda update
     lamnew_col = lamold_col + rho*(DMatOpv2(unew,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col)-vnew_col);
     ////////////// End Solve col problem

@@ -1,39 +1,39 @@
 #include "clustRviz.h"
 
 // [[Rcpp::export]]
-Rcpp::List BICARPL2_VIS(const arma::colvec& x,
-                        int n,
-                        int p,
-                        double lambda_init,
-                        const arma::colvec& weights_col,
-                        const arma::colvec& weights_row,
-                        const arma::colvec& uinit_row,
-                        const arma::colvec& uinit_col,
-                        const arma::colvec& vinit_row,
-                        const arma::colvec& vinit_col,
-                        const Eigen::SparseMatrix<double>& premat_row,
-                        const Eigen::SparseMatrix<double>& premat_col,
-                        const arma::umat& IndMat_row,
-                        const arma::umat& IndMat_col,
-                        const arma::umat& EOneIndMat_row,
-                        const arma::umat& EOneIndMat_col,
-                        const arma::umat& ETwoIndMat_row,
-                        const arma::umat& ETwoIndMat_col,
-                        double rho = 1,
-                        int max_iter = 1e4,
-                        int burn_in =50,
-                        bool verbose=false,
-                        bool verbose_inner=false,
-                        double try_tol = 1e-3,
-                        int ti = 15,
-                        double t_switch = 1.01){
+Rcpp::List CBASS_VIS(const arma::colvec& x,
+                     int n,
+                     int p,
+                     double lambda_init,
+                     const arma::colvec& weights_col,
+                     const arma::colvec& weights_row,
+                     const arma::colvec& uinit_row,
+                     const arma::colvec& uinit_col,
+                     const arma::colvec& vinit_row,
+                     const arma::colvec& vinit_col,
+                     const Eigen::SparseMatrix<double>& premat_row,
+                     const Eigen::SparseMatrix<double>& premat_col,
+                     const arma::umat& IndMat_row,
+                     const arma::umat& IndMat_col,
+                     const arma::umat& EOneIndMat_row,
+                     const arma::umat& EOneIndMat_col,
+                     const arma::umat& ETwoIndMat_row,
+                     const arma::umat& ETwoIndMat_col,
+                     double rho         = 1,
+                     int max_iter       = 10000,
+                     int burn_in        = 50,
+                     bool verbose       = false,
+                     bool verbose_inner = false,
+                     double try_tol     = 1e-3,
+                     int ti             = 15,
+                     double t_switch    = 1.01,
+                     bool l1            = false){
 
   double t = 1.1;
   int try_iter;
 
   int cardE_row = EOneIndMat_row.n_rows;
   int cardE_col = EOneIndMat_col.n_rows;
-
 
   arma::colvec unew = x;
   arma::colvec uold(n*p);
@@ -98,6 +98,7 @@ Rcpp::List BICARPL2_VIS(const arma::colvec& x,
 
   Rcpp::List ret;
   bool rep_iter;
+
   while( ((nzerosnew_row < cardE_row) | (nzerosnew_col < cardE_col)) & (iter < max_iter)){
     iter = iter + 1;
     uold = unew;
@@ -130,7 +131,12 @@ Rcpp::List BICARPL2_VIS(const arma::colvec& x,
       yt = cv_sparse_solve(premat_row, arma_sparse_solver_input_row);
       // v update
       proxin_row = DMatOpv2(yt,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row) + (1/rho)*lamold_row;
-      vnew_row = ProxL2(proxin_row,n,(1/rho)*weights_row*lambda, IndMat_row);
+      if(l1){
+        vnew_row = ProxL1(proxin_row, n, (1/rho) * lambda, weights_row);
+      } else {
+        vnew_row = ProxL2(proxin_row, n, (1/rho) * weights_row * lambda, IndMat_row);
+      }
+
       // lambda update
       lamnew_row = lamold_row + rho*(DMatOpv2(yt,n,IndMat_row,EOneIndMat_row,ETwoIndMat_row)-vnew_row);
       ////////// end solve row problem
@@ -140,11 +146,17 @@ Rcpp::List BICARPL2_VIS(const arma::colvec& x,
       ////////////// Solve col problem
       // u update
       // unew = arma::spsolve(premat_col, (1/rho)*(y + qold) + (1/rho)*DtMatOpv2(rho*vold_col - lamold_col,n,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col));
+
       arma_sparse_solver_input_col = (1/rho)*(y + qold) + (1/rho)*DtMatOpv2(rho*vold_col - lamold_col,n,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col);
       unew = cv_sparse_solve(premat_col, arma_sparse_solver_input_col);
       // v update
       proxin_col = DMatOpv2(unew,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col) + (1/rho)*lamold_col;
-      vnew_col = ProxL2(proxin_col,p,(1/rho)*weights_col*lambda, IndMat_col);
+      if(l1){
+        vnew_col = ProxL1(proxin_col, p, (1/rho) * lambda, weights_col);
+      } else {
+        vnew_col = ProxL2(proxin_col, p, (1/rho) * lambda * weights_col, IndMat_col);
+      }
+
       // lambda update
       lamnew_col = lamold_col + rho*(DMatOpv2(unew,p,IndMat_col,EOneIndMat_col,ETwoIndMat_col)-vnew_col);
       ////////////// End Solve col problem
@@ -201,8 +213,6 @@ Rcpp::List BICARPL2_VIS(const arma::colvec& x,
       t = t_switch;
     }
 
-
-
     if((nzerosnew_row!=nzerosold_row) | (nzerosnew_col!=nzerosold_col)){
       path_iter = path_iter + 1;
       UPath.insert_cols(path_iter,1);
@@ -220,6 +230,7 @@ Rcpp::List BICARPL2_VIS(const arma::colvec& x,
       vZeroIndsPath_col.insert_cols(path_iter,1);
       vZeroIndsPath_col.col(path_iter) = vZeroIndsnew_col;
     }
+
     lambda = lambda*t;
 
   }
