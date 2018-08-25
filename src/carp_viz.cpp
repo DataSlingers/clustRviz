@@ -1,26 +1,27 @@
 #include "clustRviz.h"
 
 // [[Rcpp::export]]
-Rcpp::List CARPL2_VIS_FRAC(const arma::colvec& x,
-                           int n,
-                           int p,
-                           double lambda_init,
-                           const arma::colvec& weights,
-                           const arma::colvec& uinit,
-                           const arma::colvec& vinit,
-                           const Eigen::SparseMatrix<double>& premat,
-                           const arma::umat& IndMat,
-                           const arma::umat& EOneIndMat,
-                           const arma::umat& ETwoIndMat,
-                           double rho = 1,
-                           int max_iter = 1e4,
-                           int burn_in = 50,
-                           bool verbose=false,
-                           double back = 0.5,
-                           double try_tol = 1e-3,
-                           int ti = 15,
-                           double t_switch = 1.01,
-                           int keep=10){
+Rcpp::List CARP_VIS(const arma::colvec& x,
+                    int n,
+                    int p,
+                    double lambda_init,
+                    const arma::colvec& weights,
+                    const arma::colvec& uinit,
+                    const arma::colvec& vinit,
+                    const Eigen::SparseMatrix<double>& premat,
+                    const arma::umat& IndMat,
+                    const arma::umat& EOneIndMat,
+                    const arma::umat& ETwoIndMat,
+                    double rho      = 1,
+                    int max_iter    = 10000,
+                    int burn_in     = 50,
+                    bool verbose    = false,
+                    double back     = 0.5,
+                    double try_tol  = 1e-3,
+                    int ti          = 15,
+                    double t_switch = 1.01,
+                    int keep        = 10,
+                    bool l1         = false){
 
   double t = 1.1;
   int try_iter;
@@ -85,11 +86,18 @@ Rcpp::List CARPL2_VIS_FRAC(const arma::colvec& x,
       // Do update
       // u update
       // unew = arma::spsolve(premat, (1/rho)*x + (1/rho)*DtMatOpv2(rho*vold - lamold,n,p,IndMat,EOneIndMat,ETwoIndMat));
+
       arma_sparse_solver_input = (1/rho)*x + (1/rho)*DtMatOpv2(rho*vold - lamold,n,p,IndMat,EOneIndMat,ETwoIndMat);
       unew = cv_sparse_solve(premat, arma_sparse_solver_input);
       // v update
       proxin = DMatOpv2(unew,p,IndMat,EOneIndMat,ETwoIndMat) + (1/rho)*lamold;
-      vnew = ProxL2(proxin,p,(1/rho)*weights*lambda, IndMat);
+
+      if(l1){
+        vnew = ProxL1(proxin, p, (1/rho) * lambda, weights);
+      } else {
+        vnew = ProxL2(proxin, p, (1/rho) * weights * lambda, IndMat);
+      }
+
 
       // lambda update
       lamnew = lamold + rho*(DMatOpv2(unew,p,IndMat,EOneIndMat,ETwoIndMat)-vnew);
@@ -162,4 +170,3 @@ Rcpp::List CARPL2_VIS_FRAC(const arma::colvec& x,
 
   return(ret);
 }
-

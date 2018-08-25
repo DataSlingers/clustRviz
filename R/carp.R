@@ -222,97 +222,48 @@ CARP <- function(X,
   cardE <- NROW(PreCompList$E)
 
   if (verbose.basic) message("Computing CARP Path")
-  switch(
-    alg.type,
-    carpviz = {
-      CARPL2_VIS_FRAC(
-        x = X[TRUE],
-        n = as.integer(n.obs),
-        p = as.integer(p.var),
-        lambda_init = 1e-8,
-        weights = weights[weights != 0],
-        uinit = as.matrix(PreCompList$uinit),
-        vinit = as.matrix(PreCompList$vinit),
-        premat = PreCompList$PreMat,
-        IndMat = PreCompList$ind.mat,
-        EOneIndMat = PreCompList$E1.ind.mat,
-        ETwoIndMat = PreCompList$E2.ind.mat,
-        rho = rho,
-        max_iter = as.integer(max.iter),
-        burn_in = as.integer(burn.in),
-        verbose = verbose.deep,
-        try_tol = 1e-5,
-        ti = 10,
-        t_switch = 1.01,
-        keep = 1
-      ) -> carp.sol.path
-    },
-    carp = {
-      CARPL2_NF_FRAC(
-        x = X[TRUE],
-        n = as.integer(n.obs),
-        p = as.integer(p.var),
-        lambda_init = 1e-8,
-        t = t,
-        weights = weights[weights != 0],
-        uinit = as.matrix(PreCompList$uinit),
-        vinit = as.matrix(PreCompList$vinit),
-        premat = PreCompList$PreMat,
-        IndMat = PreCompList$ind.mat,
-        EOneIndMat = PreCompList$E1.ind.mat,
-        ETwoIndMat = PreCompList$E2.ind.mat,
-        rho = rho,
-        max_iter = as.integer(max.iter),
-        burn_in = as.integer(burn.in),
-        verbose = verbose.deep,
-        keep = 1
-      ) -> carp.sol.path
-    },
-    carpl1 = {
-      CARPL1_NF_FRAC(
-        x = X[TRUE],
-        n = as.integer(n.obs),
-        p = as.integer(p.var),
-        lambda_init = 1e-8,
-        t = t,
-        weights = weights[weights != 0],
-        uinit = as.matrix(PreCompList$uinit),
-        vinit = as.matrix(PreCompList$vinit),
-        premat = PreCompList$PreMat,
-        IndMat = PreCompList$ind.mat,
-        EOneIndMat = PreCompList$E1.ind.mat,
-        ETwoIndMat = PreCompList$E2.ind.mat,
-        rho = rho,
-        max_iter = as.integer(max.iter),
-        burn_in = as.integer(burn.in),
-        verbose = verbose.deep,
-        keep = 1
-      ) -> carp.sol.path
-    },
-    carpvizl1 = {
-      CARPL1_VIS_FRAC(
-        x = X[TRUE],
-        n = as.integer(n.obs),
-        p = as.integer(p.var),
-        lambda_init = 1e-8,
-        weights = weights[weights != 0],
-        uinit = as.matrix(PreCompList$uinit),
-        vinit = as.matrix(PreCompList$vinit),
-        premat = PreCompList$PreMat,
-        IndMat = PreCompList$ind.mat,
-        EOneIndMat = PreCompList$E1.ind.mat,
-        ETwoIndMat = PreCompList$E2.ind.mat,
-        rho = rho,
-        max_iter = as.integer(max.iter),
-        burn_in = as.integer(burn.in),
-        verbose = verbose.deep,
-        try_tol = 1e-5,
-        ti = 10,
-        t_switch = 1.01,
-        keep = 1
-      ) -> carp.sol.path
+
+  if (alg.type %in% c("carpvizl1", "carpviz")) {
+    carp.sol.path <- CARP_VIS(x = X[TRUE],
+                              n = as.integer(n.obs),
+                              p = as.integer(p.var),
+                              lambda_init = 1e-8,
+                              weights = weights[weights != 0],
+                              uinit = as.matrix(PreCompList$uinit),
+                              vinit = as.matrix(PreCompList$vinit),
+                              premat = PreCompList$PreMat,
+                              IndMat = PreCompList$ind.mat,
+                              EOneIndMat = PreCompList$E1.ind.mat,
+                              ETwoIndMat = PreCompList$E2.ind.mat,
+                              rho = rho,
+                              max_iter = as.integer(max.iter),
+                              burn_in = as.integer(burn.in),
+                              verbose = verbose.deep,
+                              try_tol = 1e-5,
+                              ti = 10,
+                              t_switch = 1.01,
+                              keep = 1,
+                              l1 = (alg.type == "carpvizl1"))
+  } else {
+    carp.sol.path <- CARP(x = X[TRUE],
+                          n = as.integer(n.obs),
+                          p = as.integer(p.var),
+                          lambda_init = 1e-8,
+                          t = t,
+                          weights = weights[weights != 0],
+                          uinit = as.matrix(PreCompList$uinit),
+                          vinit = as.matrix(PreCompList$vinit),
+                          premat = PreCompList$PreMat,
+                          IndMat = PreCompList$ind.mat,
+                          EOneIndMat = PreCompList$E1.ind.mat,
+                          ETwoIndMat = PreCompList$E2.ind.mat,
+                          rho = rho,
+                          max_iter = as.integer(max.iter),
+                          burn_in = as.integer(burn.in),
+                          verbose = verbose.deep,
+                          keep = 1,
+                          l1 = (alg.type == "carpl1"))
     }
-  )
 
   if (verbose.basic) message("Post-processing")
   ISP(

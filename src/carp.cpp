@@ -1,23 +1,24 @@
 #include "clustRviz.h"
 
 // [[Rcpp::export]]
-Rcpp::List CARPL2_NF_FRAC(const arma::colvec& x,
-                          int n,
-                          int p,
-                          double lambda_init,
-                          double t,
-                          const arma::colvec& weights,
-                          const arma::colvec& uinit,
-                          const arma::colvec& vinit,
-                          const Eigen::SparseMatrix<double>& premat,
-                          const arma::umat& IndMat,
-                          const arma::umat& EOneIndMat,
-                          const arma::umat& ETwoIndMat,
-                          double rho = 1,
-                          int max_iter = 1e4,
-                          int burn_in = 50,
-                          bool verbose=false,
-                          int keep=10){
+Rcpp::List CARP(const arma::colvec& x,
+                int n,
+                int p,
+                double lambda_init,
+                double t,
+                const arma::colvec& weights,
+                const arma::colvec& uinit,
+                const arma::colvec& vinit,
+                const Eigen::SparseMatrix<double>& premat,
+                const arma::umat& IndMat,
+                const arma::umat& EOneIndMat,
+                const arma::umat& ETwoIndMat,
+                double rho   = 1,
+                int max_iter = 10000,
+                int burn_in  = 50,
+                bool verbose = false,
+                int keep     = 10,
+                bool l1      = false){
 
 
   int cardE = EOneIndMat.n_rows;
@@ -51,7 +52,6 @@ Rcpp::List CARPL2_NF_FRAC(const arma::colvec& x,
   arma::mat vZeroInds_Path(cardE,1,arma::fill::zeros);
 
   arma::colvec arma_sparse_solver_input(n*p);
-
   int nzeros_old = 0;
   int nzeros_new = 0;
   Rcpp::List ret;
@@ -71,9 +71,14 @@ Rcpp::List CARPL2_NF_FRAC(const arma::colvec& x,
     unew = cv_sparse_solve(premat, arma_sparse_solver_input);
     // v update
     proxin = DMatOpv2(unew,p,IndMat,EOneIndMat,ETwoIndMat) + (1/rho)*lamold;
-    vnew = ProxL2(proxin,p,(1/rho)*weights*lambda, IndMat);
 
-    // // lambda update
+    if(l1){
+      vnew = ProxL1(proxin, p, (1/rho)*lambda, weights);
+    } else {
+      vnew = ProxL2(proxin, p, (1/rho) * weights * lambda, IndMat);
+    }
+
+    // lambda update
     lamnew = lamold + rho*(DMatOpv2(unew,p,IndMat,EOneIndMat,ETwoIndMat)-vnew);
 
     for(int l = 0; l<cardE; l++){
@@ -99,6 +104,7 @@ Rcpp::List CARPL2_NF_FRAC(const arma::colvec& x,
     if(iter >= burn_in){
       lambda = lambda*t;
     }
+
 
   }
 
