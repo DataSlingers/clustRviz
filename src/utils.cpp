@@ -102,6 +102,29 @@ arma::colvec DMatOpv2(const arma::colvec& u,
   return(ret);
 }
 
+// TODO - Document me!
+Eigen::VectorXd DMatOpv2(const Eigen::VectorXd& u,
+                         int p,
+                         const Eigen::MatrixXi& IndMat,
+                         const Eigen::MatrixXi& EOneIndMat,
+                         const Eigen::MatrixXi& ETwoIndMat){
+
+  Eigen::VectorXd out(EOneIndMat.rows() * p);
+
+  // TODO - Optimize me!
+  for(Eigen::Index i = 0; i < EOneIndMat.rows(); i++){
+    Eigen::VectorXi out_index   = IndMat.row(i);
+    Eigen::VectorXi e_one_index = EOneIndMat.row(i);
+    Eigen::VectorXi e_two_index = ETwoIndMat.row(i);
+
+    for(Eigen::Index j = 0; j < p; j++){
+      out(out_index(j)) = u(e_one_index(j)) - u(e_two_index(j));
+    }
+  }
+
+  return out;
+}
+
 arma::colvec DtMatOpv2(const arma::colvec& v,
                        int n,
                        int p,
@@ -125,6 +148,34 @@ arma::colvec DtMatOpv2(const arma::colvec& v,
   }
 
   return(out);
+}
+
+// TODO -- Document me!
+Eigen::VectorXd DtMatOpv2(const Eigen::VectorXd& v,
+                          int n,
+                          int p,
+                          const Eigen::MatrixXi& IndMat,
+                          const Eigen::MatrixXi& EOneIndMat,
+                          const Eigen::MatrixXi& ETwoIndMat){
+
+  Eigen::VectorXd out = Eigen::VectorXd::Zero(n * p);
+  Eigen::VectorXi v_index(p);
+  Eigen::VectorXi e_one_index(p);
+  Eigen::VectorXi e_two_index;
+
+  // TODO - Optimize me!
+  for(Eigen::Index i = 0; i < IndMat.rows(); i++){
+    v_index     = IndMat.row(i);
+    e_one_index = EOneIndMat.row(i);
+    e_two_index = ETwoIndMat.row(i);
+
+    for(Eigen::Index j = 0; j < p; j++){
+      out(e_one_index(j)) += v(v_index(j));
+      out(e_two_index(j)) -= v(v_index(j));
+    }
+  }
+
+  return out;
 }
 
 bool is_nan(double x){
