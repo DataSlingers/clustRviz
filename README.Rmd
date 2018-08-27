@@ -21,12 +21,17 @@ solution paths.
 
 ## Installation
 
-You can install clustRviz from github with:
+You can install `clustRviz` from github with:
 
 ```{r gh-installation, eval = FALSE}
 # install.packages("devtools")
 devtools::install_github("jjn13/clustRviz")
 ```
+
+Note that `RcppEigen` (which `clustRviz` internally) triggers many compiler warnings
+(which cannot be suppressed per [CRAN policies](http://cran.r-project.org/web/packages/policies.html#Source-packages)).
+Many of these warnings can be locally suppressed by adding the line `CXX11FLAGS+=-Wno-ignored-attributes`
+to your `~/.R/Makevars` file.
 
 ## Example
 
