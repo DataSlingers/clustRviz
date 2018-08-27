@@ -1,18 +1,18 @@
 #include "clustRviz.h"
 
 // [[Rcpp::export]]
-Rcpp::List CARP(const arma::colvec& x,
+Rcpp::List CARP(const Eigen::VectorXd& x,
                 int n,
                 int p,
-                double lambda_init,
+                double lambda_init, // TODO: Change to gamma_init
                 double t,
-                const arma::colvec& weights,
-                const arma::colvec& uinit,
-                const arma::colvec& vinit,
+                const Eigen::VectorXd& weights,
+                const Eigen::VectorXd& uinit, // TODO: Change to u_init
+                const Eigen::VectorXd& vinit, // TODO: Change to v_init
                 const Eigen::SparseMatrix<double>& premat,
-                const arma::umat& IndMat,
-                const arma::umat& EOneIndMat,
-                const arma::umat& ETwoIndMat,
+                const Eigen::MatrixXi& IndMat,
+                const Eigen::MatrixXi& EOneIndMat,
+                const Eigen::MatrixXi& ETwoIndMat,
                 double rho   = 1,
                 int max_iter = 10000,
                 int burn_in  = 50,
@@ -20,98 +20,144 @@ Rcpp::List CARP(const arma::colvec& x,
                 int keep     = 10,
                 bool l1      = false){
 
+  // Typically, our weights are "sparse" (i.e., mostly zeros) because we
+  // drop small weights to achieve performance.
+  Eigen::Index num_edges = EOneIndMat.rows();
 
-  int cardE = EOneIndMat.n_rows;
-  arma::colvec unew(n*p);
-  arma::colvec uold(n*p);
-  unew = uinit;
+  /// Set-up storage for CARP iterates
 
-  arma::colvec vnew(p*cardE);
-  arma::colvec vold(p*cardE);
-  vnew = vinit;
+  // In order to pre-allocate storage arrays, we need to estimate the number of
+  // steps with fusions we will encounter. Dendrograms are the common case and
+  // we are only clustering observations, so we expect O(n) fusions. It's a bit
+  // cheaper to drop observations than to extend the internal buffers of our
+  // storage objects, so we use 1.5n for now
+  Eigen::Index buffer_size = 1.5 * n;
 
-  arma::colvec lamnew(p*cardE);
-  arma::colvec lamold(p*cardE);
-  lamnew = vnew;
+  // Primal variable (corresponds to u in the notation of Chi & Lange (JCGS, 2015))
+  Eigen::VectorXd u_new(n * p);              // Working copies
+  Eigen::VectorXd u_old(n * p);
+  u_new = uinit;
+  Eigen::MatrixXd UPath(n * p, buffer_size); // Storage (for values to return to R)
+  UPath.col(0) = uinit;
 
-  arma::colvec proxin(p*cardE);
-  double lambda = lambda_init;
+  // 'Split' variable (corresponds to v in the notation of Chi & Lange (JCGS, 2015))
+  Eigen::VectorXd v_new(p * num_edges);              // Working copies
+  Eigen::VectorXd v_old(p * num_edges);
+  v_new = vinit;
+  Eigen::MatrixXd VPath(p * num_edges, buffer_size); // Storage (for values to return to R)
+  VPath.col(0) = vinit;
 
-  arma::uword path_iter = 0;
-  arma::uword iter = 0;
-  arma::mat UPath(n*p,1);
-  UPath.col(iter)= uinit;
-  arma::mat VPath(p*cardE,1);
-  VPath.col(iter)= vinit;
-  arma::colvec lambda_path(1);
-  lambda_path(iter) = lambda_init;
+  // (Scaled) dual variable (corresponds to lambda in the notation of Chi and Lange (JCGS, 2015))
+  Eigen::VectorXd z_new(p * num_edges); // Working copy
+  Eigen::VectorXd z_old(p * num_edges); // No storage needed since these aren't of direct interest
+  z_new = v_new;
 
-  arma::colvec vZeroIndsnew(cardE,arma::fill::zeros);
-  arma::colvec vZeroIndsold(cardE);
-  arma::ucolvec vIdx(p);
-  arma::mat vZeroInds_Path(cardE,1,arma::fill::zeros);
+  // Regularization level
+  double gamma = lambda_init;              // Working copy
+  Eigen::VectorXd gamma_path(buffer_size); // Storage (to be returned to R)
+  gamma_path(0) = lambda_init;
 
-  arma::colvec arma_sparse_solver_input(n*p);
-  int nzeros_old = 0;
-  int nzeros_new = 0;
-  Rcpp::List ret;
+  // Fusions -- TODO: Confirm the semantics of these objects with JN
+  Eigen::VectorXd vZeroIndsnew = Eigen::VectorXd::Zero(num_edges);          // Working copies
+  Eigen::VectorXd vZeroIndsold(num_edges);                                  // (we begin with no fusions)
+  Eigen::MatrixXd vZeroInds_Path = Eigen::MatrixXd(num_edges, buffer_size); // Storage (to be returned to R)
 
+  /// END Preallocations
 
-  while( (iter < max_iter) & (nzeros_new < cardE) ){
-    iter += 1;
-    uold = unew;
-    vold = vnew;
-    lamold = lamnew;
+  // At each iteration, we need to calculate A^{-1}B_k for some (sparse) A
+  // This is a relatively expensive iteration, but the core cost is a sparse LU
+  // factorization of A which can be amortized over iterations so we pre-compute it here
+  Eigen::SparseLU<Eigen::SparseMatrix<double> > premat_solver;
+  premat_solver.compute(premat);
+
+  // Book-keeping variables
+  // Number of iterations stored, total iteration count, number of fusions
+  Eigen::Index path_iter  = 0;
+  Eigen::Index iter       = 0;
+  Eigen::Index nzeros_old = 0;
+  Eigen::Index nzeros_new = 0;
+
+  while( (iter < max_iter) & (nzeros_new < num_edges) ){
+    // Begin iteration - move updated values to "_old" values
+    //
+    // TODO -- Confirm that these use "move semantics" to avoid full copies
+    u_old        = u_new;
+    v_old        = v_new;
+    z_old        = z_new;
     vZeroIndsold = vZeroIndsnew;
-    nzeros_old = nzeros_new;
+    nzeros_old   = nzeros_new;
 
-    // u update
-    // unew = arma::spsolve(premat, (1/rho)*x + (1/rho)*DtMatOpv2(rho*vold - lamold,n,p,IndMat,EOneIndMat,ETwoIndMat));
-    arma_sparse_solver_input = (1/rho)*x + (1/rho)*DtMatOpv2(rho*vold - lamold,n,p,IndMat,EOneIndMat,ETwoIndMat);
-    unew = cv_sparse_solve(premat, arma_sparse_solver_input);
-    // v update
-    proxin = DMatOpv2(unew,p,IndMat,EOneIndMat,ETwoIndMat) + (1/rho)*lamold;
+    // U-update
+    // TODO - Document what is happening here
+    Eigen::VectorXd solver_input = DtMatOpv2(rho * v_old - z_old, n, p, IndMat, EOneIndMat, ETwoIndMat);
+    solver_input += x;
+    solver_input /= rho;
+    u_new = premat_solver.solve(solver_input);
+
+    // V-update
+    // TODO - Document what is happening here
+    Eigen::VectorXd prox_argument = DMatOpv2(u_new, p, IndMat, EOneIndMat, ETwoIndMat) + (1/rho)*z_old;
 
     if(l1){
-      vnew = ProxL1(proxin, p, (1/rho)*lambda, weights);
+      v_new = ProxL1(prox_argument, p, (1/rho) * gamma, weights);
     } else {
-      vnew = ProxL2(proxin, p, (1/rho) * weights * lambda, IndMat);
+      v_new = ProxL2(prox_argument, p, (1/rho) * weights * gamma, IndMat);
     }
 
-    // lambda update
-    lamnew = lamold + rho*(DMatOpv2(unew,p,IndMat,EOneIndMat,ETwoIndMat)-vnew);
+    // Z-update
+    // TODO - Document what is happening here
+    z_new = z_old + rho*(DMatOpv2(u_new, p, IndMat, EOneIndMat, ETwoIndMat) - v_new);
 
-    for(int l = 0; l<cardE; l++){
-      vIdx = IndMat.row(l).t();
-      if(sum(vnew.elem(vIdx)) == 0){
+    // TODO- Document this check: what are we trying to do here?
+    for(int l = 0; l < num_edges; l++){
+      Eigen::VectorXi v_index = IndMat.row(l);
+      if(extract(v_new, v_index).sum() == 0){
         vZeroIndsnew(l) = 1;
       }
     }
-    nzeros_new = sum(vZeroIndsnew);
-    if( (nzeros_new!=nzeros_old) | (iter % keep == 0)) {
-      path_iter = path_iter + 1;
-      UPath.insert_cols(path_iter,1);
-      UPath.col(path_iter) = unew;
-      VPath.insert_cols(path_iter,1);
-      VPath.col(path_iter) = vnew;
-      lambda_path.insert_rows(path_iter,1);
-      lambda_path(path_iter) = lambda;
+    nzeros_new = vZeroIndsnew.sum();
 
-      vZeroInds_Path.insert_cols(path_iter,1);
+    // If we have seen a fusion or are otherwise interested in keeping this iteration,
+    // add values to our storage buffers
+    if( (nzeros_new != nzeros_old) | (iter % keep == 0) ) {
+
+      // Before we can store values, we need to make sure we have enough buffer space
+      if(path_iter >= buffer_size){
+        buffer_size *= 2; // Double our buffer sizes
+        UPath.conservativeResize(UPath.rows(), buffer_size);
+        VPath.conservativeResize(VPath.rows(), buffer_size);
+        gamma_path.conservativeResize(buffer_size);
+        vZeroInds_Path.conservativeResize(vZeroInds_Path.rows(), buffer_size);
+      }
+
+      // Store values
+      UPath.col(path_iter)          = u_new;
+      VPath.col(path_iter)          = v_new;
+      gamma_path(path_iter)         = gamma;
       vZeroInds_Path.col(path_iter) = vZeroIndsnew;
+
+      path_iter++;
     }
 
+    iter++;
     if(iter >= burn_in){
-      lambda = lambda*t;
+      gamma *= t;
     }
 
-
+    if((iter % CLUSTRVIZ_CHECK_USER_INTERRUPT_RATE) == 0){
+      Rcpp::checkUserInterrupt();
+    }
   }
 
-  ret["u.path"] = UPath;
-  ret["v.path"] = VPath;
-  ret["v.zero.inds"]= vZeroInds_Path;
-  ret["lambda.path"] = lambda_path;
+  // Now that we are done, we can "drop" unused buffer space before returning to R
+  UPath.conservativeResize(UPath.rows(), path_iter - 1);
+  VPath.conservativeResize(VPath.rows(), path_iter - 1);
+  gamma_path.conservativeResize(path_iter - 1);
+  vZeroInds_Path.conservativeResize(vZeroInds_Path.rows(), path_iter - 1);
 
-  return(ret);
+  // Wrap up our results and pass them to R
+  return Rcpp::List::create(Rcpp::Named("u.path")      = UPath,
+                            Rcpp::Named("v.path")      = VPath,
+                            Rcpp::Named("v.zero.inds") = vZeroInds_Path,
+                            Rcpp::Named("lambda.path")  = gamma_path); // TODO - Change lambda -> gamma in R code
 }

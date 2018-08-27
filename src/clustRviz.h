@@ -4,6 +4,7 @@
 #include <RcppEigen.h>
 #define ARMA_64BIT_WORD
 
+#define CLUSTRVIZ_CHECK_USER_INTERRUPT_RATE 50
 
 // From https://stackoverflow.com/a/26268017
 template <typename T_full, typename T_ind>
