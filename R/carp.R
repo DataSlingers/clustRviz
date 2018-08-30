@@ -224,7 +224,7 @@ CARP <- function(X,
   if (verbose.basic) message("Computing CARP Path")
 
   if (alg.type %in% c("carpvizl1", "carpviz")) {
-    carp.sol.path <- CARP_VIS(x = X[TRUE],
+    carp.sol.path <- CARP_VIZ(x = X[TRUE],
                               n = as.integer(n.obs),
                               p = as.integer(p.var),
                               lambda_init = 1e-8,
@@ -239,7 +239,6 @@ CARP <- function(X,
                               max_iter = as.integer(max.iter),
                               burn_in = as.integer(burn.in),
                               verbose = verbose.deep,
-                              try_tol = 1e-5,
                               ti = 10,
                               t_switch = 1.01,
                               keep = 1,
