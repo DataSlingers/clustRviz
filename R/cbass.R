@@ -244,7 +244,7 @@ CBASS <- function(X,
   if (verbose.basic) message("Computing CBASS Path\n")
 
   if (alg.type %in% c("cbassviz", "cbassvizl1")) {
-    bicarp.sol.path <- CBASS_VIS(x = X[TRUE],
+    bicarp.sol.path <- CBASS_VIZ(x = X[TRUE],
                                  n = as.integer(n.obs),
                                  p = as.integer(p.var),
                                  lambda_init = 1e-6,
@@ -266,10 +266,9 @@ CBASS <- function(X,
                                  max_iter = as.integer(max.iter),
                                  burn_in = burn.in,
                                  verbose = verbose.deep,
-                                 verbose_inner = verbose.deep,
-                                 try_tol = 1e-3,
                                  ti = 10,
                                  t_switch = 1.01,
+                                 keep = 10,
                                  l1 = (alg.type == "cbassvizl1"))
   } else {
     bicarp.sol.path <- CBASS(x = X[TRUE],
