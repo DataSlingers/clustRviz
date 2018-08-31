@@ -4,26 +4,26 @@
 // Most of the internal logic is the same (modulo back-tracking vs fixed step size)
 
 // [[Rcpp::export]]
-Rcpp::List CARP_VIZ(const Eigen::VectorXd& x,
-                    int n,
-                    int p,
-                    double lambda_init, // TODO: Change to gamma_init
-                    const Eigen::VectorXd& weights,
-                    const Eigen::VectorXd& uinit, // TODO: Change to u_init
-                    const Eigen::VectorXd& vinit, // TODO: Change to v_init
-                    const Eigen::SparseMatrix<double>& premat,
-                    const Eigen::MatrixXi& IndMat,
-                    const Eigen::MatrixXi& EOneIndMat,
-                    const Eigen::MatrixXi& ETwoIndMat,
-                    double rho      = 1,
-                    int max_iter    = 10000,
-                    int burn_in     = 50,
-                    bool verbose    = false,
-                    double back     = 0.5,
-                    int ti          = 15,
-                    double t_switch = 1.01,
-                    int keep        = 10,
-                    bool l1         = false){
+Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
+                       int n,
+                       int p,
+                       double lambda_init, // TODO: Change to gamma_init
+                       const Eigen::VectorXd& weights,
+                       const Eigen::VectorXd& uinit, // TODO: Change to u_init
+                       const Eigen::VectorXd& vinit, // TODO: Change to v_init
+                       const Eigen::SparseMatrix<double>& premat,
+                       const Eigen::MatrixXi& IndMat,
+                       const Eigen::MatrixXi& EOneIndMat,
+                       const Eigen::MatrixXi& ETwoIndMat,
+                       double rho      = 1,
+                       int max_iter    = 10000,
+                       int burn_in     = 50,
+                       bool verbose    = false,
+                       double back     = 0.5,
+                       int ti          = 15,
+                       double t_switch = 1.01,
+                       int keep        = 10,
+                       bool l1         = false){
 
   // Typically, our weights are "sparse" (i.e., mostly zeros) because we
   // drop small weights to achieve performance.

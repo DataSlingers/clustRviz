@@ -1,31 +1,31 @@
 #include "clustRviz.h"
 
 // [[Rcpp::export]]
-Rcpp::List CBASS(const Eigen::VectorXd& x,
-                 int n,
-                 int p,
-                 double lambda_init, // TODO: Change to gamma_init
-                 double t,
-                 const Eigen::VectorXd& weights_row,
-                 const Eigen::VectorXd& weights_col,
-                 const Eigen::VectorXd& uinit_row, // TODO: Change to u_init_row
-                 const Eigen::VectorXd& uinit_col, // TODO: Change to u_init_col
-                 const Eigen::VectorXd& vinit_row, // TODO: Change to v_init_row
-                 const Eigen::VectorXd& vinit_col, // TODO: Change to v_init_col
-                 const Eigen::SparseMatrix<double>& premat_row,
-                 const Eigen::SparseMatrix<double>& premat_col,
-                 const Eigen::MatrixXi& IndMat_row,
-                 const Eigen::MatrixXi& IndMat_col,
-                 const Eigen::MatrixXi& EOneIndMat_row,
-                 const Eigen::MatrixXi& EOneIndMat_col,
-                 const Eigen::MatrixXi& ETwoIndMat_row,
-                 const Eigen::MatrixXi& ETwoIndMat_col,
-                 double rho   = 1,
-                 int max_iter = 1e4,
-                 int burn_in  = 50,
-                 bool verbose = false,
-                 int keep     = 10,
-                 bool l1      = false){
+Rcpp::List CBASScpp(const Eigen::VectorXd& x,
+                    int n,
+                    int p,
+                    double lambda_init, // TODO: Change to gamma_init
+                    double t,
+                    const Eigen::VectorXd& weights_row,
+                    const Eigen::VectorXd& weights_col,
+                    const Eigen::VectorXd& uinit_row, // TODO: Change to u_init_row
+                    const Eigen::VectorXd& uinit_col, // TODO: Change to u_init_col
+                    const Eigen::VectorXd& vinit_row, // TODO: Change to v_init_row
+                    const Eigen::VectorXd& vinit_col, // TODO: Change to v_init_col
+                    const Eigen::SparseMatrix<double>& premat_row,
+                    const Eigen::SparseMatrix<double>& premat_col,
+                    const Eigen::MatrixXi& IndMat_row,
+                    const Eigen::MatrixXi& IndMat_col,
+                    const Eigen::MatrixXi& EOneIndMat_row,
+                    const Eigen::MatrixXi& EOneIndMat_col,
+                    const Eigen::MatrixXi& ETwoIndMat_row,
+                    const Eigen::MatrixXi& ETwoIndMat_col,
+                    double rho   = 1,
+                    int max_iter = 1e4,
+                    int burn_in  = 50,
+                    bool verbose = false,
+                    int keep     = 10,
+                    bool l1      = false){
 
   // Typically, our weights are "sparse" (i.e., mostly zeros) because we
   // drop small weights to achieve performance.

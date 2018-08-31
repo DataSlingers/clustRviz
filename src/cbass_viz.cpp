@@ -4,32 +4,32 @@
 // Most of the internal logic is the same (modulo back-tracking vs fixed step size)
 
 // [[Rcpp::export]]
-Rcpp::List CBASS_VIZ(const Eigen::VectorXd& x,
-                     int n,
-                     int p,
-                     double lambda_init, // TODO: Change to gamma_init
-                     const Eigen::VectorXd& weights_col,
-                     const Eigen::VectorXd& weights_row,
-                     const Eigen::VectorXd& uinit_row, // TODO: Change to u_init_row
-                     const Eigen::VectorXd& uinit_col, // TODO: Change to u_init_col
-                     const Eigen::VectorXd& vinit_row, // TODO: Change to v_init_row
-                     const Eigen::VectorXd& vinit_col, // TODO: Change to v_init_col
-                     const Eigen::SparseMatrix<double>& premat_row,
-                     const Eigen::SparseMatrix<double>& premat_col,
-                     const Eigen::MatrixXi& IndMat_row,
-                     const Eigen::MatrixXi& IndMat_col,
-                     const Eigen::MatrixXi& EOneIndMat_row,
-                     const Eigen::MatrixXi& EOneIndMat_col,
-                     const Eigen::MatrixXi& ETwoIndMat_row,
-                     const Eigen::MatrixXi& ETwoIndMat_col,
-                     double rho         = 1,
-                     int max_iter       = 10000,
-                     int burn_in        = 50,
-                     bool verbose       = false,
-                     int ti             = 15,
-                     double t_switch    = 1.01,
-                     int keep           = 10,
-                     bool l1            = false){
+Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
+                        int n,
+                        int p,
+                        double lambda_init, // TODO: Change to gamma_init
+                        const Eigen::VectorXd& weights_col,
+                        const Eigen::VectorXd& weights_row,
+                        const Eigen::VectorXd& uinit_row, // TODO: Change to u_init_row
+                        const Eigen::VectorXd& uinit_col, // TODO: Change to u_init_col
+                        const Eigen::VectorXd& vinit_row, // TODO: Change to v_init_row
+                        const Eigen::VectorXd& vinit_col, // TODO: Change to v_init_col
+                        const Eigen::SparseMatrix<double>& premat_row,
+                        const Eigen::SparseMatrix<double>& premat_col,
+                        const Eigen::MatrixXi& IndMat_row,
+                        const Eigen::MatrixXi& IndMat_col,
+                        const Eigen::MatrixXi& EOneIndMat_row,
+                        const Eigen::MatrixXi& EOneIndMat_col,
+                        const Eigen::MatrixXi& ETwoIndMat_row,
+                        const Eigen::MatrixXi& ETwoIndMat_col,
+                        double rho         = 1,
+                        int max_iter       = 10000,
+                        int burn_in        = 50,
+                        bool verbose       = false,
+                        int ti             = 15,
+                        double t_switch    = 1.01,
+                        int keep           = 10,
+                        bool l1            = false){
 
   // Typically, our weights are "sparse" (i.e., mostly zeros) because we
   // drop small weights to achieve performance.

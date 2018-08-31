@@ -224,45 +224,52 @@ CARP <- function(X,
   if (verbose.basic) message("Computing CARP Path")
 
   if (alg.type %in% c("carpvizl1", "carpviz")) {
-    carp.sol.path <- CARP_VIZ(x = X[TRUE],
-                              n = as.integer(n.obs),
-                              p = as.integer(p.var),
-                              lambda_init = 1e-8,
-                              weights = weights[weights != 0],
-                              uinit = as.matrix(PreCompList$uinit),
-                              vinit = as.matrix(PreCompList$vinit),
-                              premat = PreCompList$PreMat,
-                              IndMat = PreCompList$ind.mat,
-                              EOneIndMat = PreCompList$E1.ind.mat,
-                              ETwoIndMat = PreCompList$E2.ind.mat,
-                              rho = rho,
-                              max_iter = as.integer(max.iter),
-                              burn_in = as.integer(burn.in),
-                              verbose = verbose.deep,
-                              ti = 10,
-                              t_switch = 1.01,
-                              keep = 1,
-                              l1 = (alg.type == "carpvizl1"))
+      carp.sol.path <- CARP_VIZcpp(x = X[TRUE],
+                                   n = as.integer(n.obs),
+                                   p = as.integer(p.var),
+                                   lambda_init = 1e-8,
+                                   weights = weights[weights != 0],
+                                   uinit = as.matrix(PreCompList$uinit),
+                                   vinit = as.matrix(PreCompList$vinit),
+                                   premat = PreCompList$PreMat,
+                                   IndMat = PreCompList$ind.mat,
+                                   EOneIndMat = PreCompList$E1.ind.mat,
+                                   ETwoIndMat = PreCompList$E2.ind.mat,
+                                   rho = rho,
+                                   max_iter = as.integer(max.iter),
+                                   burn_in = as.integer(burn.in),
+                                   verbose = verbose.deep,
+                                   ti = 10,
+                                   t_switch = 1.01,
+                                   keep = 1,
+                                   l1 = (alg.type == "carpvizl1"))
   } else {
-    carp.sol.path <- CARP(x = X[TRUE],
-                          n = as.integer(n.obs),
-                          p = as.integer(p.var),
-                          lambda_init = 1e-8,
-                          t = t,
-                          weights = weights[weights != 0],
-                          uinit = as.matrix(PreCompList$uinit),
-                          vinit = as.matrix(PreCompList$vinit),
-                          premat = PreCompList$PreMat,
-                          IndMat = PreCompList$ind.mat,
-                          EOneIndMat = PreCompList$E1.ind.mat,
-                          ETwoIndMat = PreCompList$E2.ind.mat,
-                          rho = rho,
-                          max_iter = as.integer(max.iter),
-                          burn_in = as.integer(burn.in),
-                          verbose = verbose.deep,
-                          keep = 1,
-                          l1 = (alg.type == "carpl1"))
-    }
+      carp.sol.path <- CARPcpp(x = X[TRUE],
+                               n = as.integer(n.obs),
+                               p = as.integer(p.var),
+                               lambda_init = 1e-8,
+                               t = t,
+                               weights = weights[weights != 0],
+                               uinit = as.matrix(PreCompList$uinit),
+                               vinit = as.matrix(PreCompList$vinit),
+                               premat = PreCompList$PreMat,
+                               IndMat = PreCompList$ind.mat,
+                               EOneIndMat = PreCompList$E1.ind.mat,
+                               ETwoIndMat = PreCompList$E2.ind.mat,
+                               rho = rho,
+                               max_iter = as.integer(max.iter),
+                               burn_in = as.integer(burn.in),
+                               verbose = verbose.deep,
+                               keep = 1,
+                               l1 = (alg.type == "carpl1"))
+  }
+
+  ## FIXME - Convert lambda.path to a single column matrix instead of a vector
+  ##         RcppArmadillo returns a arma::vec as a n-by-1 matrix
+  ##         RcppEigen returns an Eigen::VectorXd as a n-length vector
+  ##         Something downstream cares about the difference, so just change
+  ##         the type here for now
+  carp.sol.path$lambda.path <- matrix(carp.sol.path$lambda.path, ncol=1)
 
   if (verbose.basic) message("Post-processing")
   ISP(

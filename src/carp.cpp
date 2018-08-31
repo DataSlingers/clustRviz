@@ -1,24 +1,24 @@
 #include "clustRviz.h"
 
 // [[Rcpp::export]]
-Rcpp::List CARP(const Eigen::VectorXd& x,
-                int n,
-                int p,
-                double lambda_init, // TODO: Change to gamma_init
-                double t,
-                const Eigen::VectorXd& weights,
-                const Eigen::VectorXd& uinit, // TODO: Change to u_init
-                const Eigen::VectorXd& vinit, // TODO: Change to v_init
-                const Eigen::SparseMatrix<double>& premat,
-                const Eigen::MatrixXi& IndMat,
-                const Eigen::MatrixXi& EOneIndMat,
-                const Eigen::MatrixXi& ETwoIndMat,
-                double rho   = 1,
-                int max_iter = 10000,
-                int burn_in  = 50,
-                bool verbose = false,
-                int keep     = 10,
-                bool l1      = false){
+Rcpp::List CARPcpp(const Eigen::VectorXd& x,
+                   int n,
+                   int p,
+                   double lambda_init, // TODO: Change to gamma_init
+                   double t,
+                   const Eigen::VectorXd& weights,
+                   const Eigen::VectorXd& uinit, // TODO: Change to u_init
+                   const Eigen::VectorXd& vinit, // TODO: Change to v_init
+                   const Eigen::SparseMatrix<double>& premat,
+                   const Eigen::MatrixXi& IndMat,
+                   const Eigen::MatrixXi& EOneIndMat,
+                   const Eigen::MatrixXi& ETwoIndMat,
+                   double rho   = 1,
+                   int max_iter = 10000,
+                   int burn_in  = 50,
+                   bool verbose = false,
+                   int keep     = 10,
+                   bool l1      = false){
 
   // Typically, our weights are "sparse" (i.e., mostly zeros) because we
   // drop small weights to achieve performance.
