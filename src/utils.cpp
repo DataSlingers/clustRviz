@@ -2,7 +2,6 @@
 
 // Take a vector of length n * k and re-order it as
 // x(0), x(k), x(2*k), x(n*k), x(1), x(k + 1), x(2*k + 1), etc.
-//' @useDynLib clustRviz
 Eigen::VectorXd restride(const Eigen::VectorXd& x,
                          Eigen::Index k){
   Eigen::VectorXd ret(x.size());
