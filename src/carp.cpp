@@ -150,10 +150,12 @@ Rcpp::List CARPcpp(const Eigen::VectorXd& x,
   }
 
   // Now that we are done, we can "drop" unused buffer space before returning to R
-  UPath.conservativeResize(UPath.rows(), path_iter - 1);
-  VPath.conservativeResize(VPath.rows(), path_iter - 1);
-  gamma_path.conservativeResize(path_iter - 1);
-  vZeroInds_Path.conservativeResize(vZeroInds_Path.rows(), path_iter - 1);
+  //
+  // See explanatory comment in carp_viz.cpp
+  UPath.conservativeResize(UPath.rows(), path_iter);
+  VPath.conservativeResize(VPath.rows(), path_iter);
+  gamma_path.conservativeResize(path_iter);
+  vZeroInds_Path.conservativeResize(vZeroInds_Path.rows(), path_iter);
 
   // Wrap up our results and pass them to R
   return Rcpp::List::create(Rcpp::Named("u.path")      = UPath,
