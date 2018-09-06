@@ -53,10 +53,10 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
   UPath.col(0) = uinit_col;
 
   // 'Split' variable for row fusions
-  Eigen::VectorXd v_new_row(p * num_edges_row);              // Working copies
-  Eigen::VectorXd v_old_row(p * num_edges_row);
+  Eigen::VectorXd v_new_row(n * num_edges_row);              // Working copies
+  Eigen::VectorXd v_old_row(n * num_edges_row);
   v_new_row = vinit_row;
-  Eigen::MatrixXd VPath_row(p * num_edges_row, buffer_size); // Storage (for values to return to R)
+  Eigen::MatrixXd VPath_row(n * num_edges_row, buffer_size); // Storage (for values to return to R)
   VPath_row.col(0) = vinit_row;
 
   // 'Split' variable for column fusions
