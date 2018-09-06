@@ -86,11 +86,13 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
   Eigen::VectorXd vZeroIndsnew_row = Eigen::VectorXd::Zero(num_edges_row);         // Working copies
   Eigen::VectorXd vZeroIndsold_row(num_edges_row);                                 // (we begin with no fusions)
   Eigen::MatrixXd vZeroIndsPath_row = Eigen::MatrixXd(num_edges_row, buffer_size); // Storage (to be returned to R)
+  vZeroIndsPath_row.col(0) = vZeroIndsnew_row;
 
   // Column Fusions -- TODO: Confirm the semantics of these objects with JN
   Eigen::VectorXd vZeroIndsnew_col = Eigen::VectorXd::Zero(num_edges_col);         // Working copies
   Eigen::VectorXd vZeroIndsold_col(num_edges_col);                                 // (we begin with no fusions)
   Eigen::MatrixXd vZeroIndsPath_col = Eigen::MatrixXd(num_edges_col, buffer_size); // Storage (to be returned to R)
+  vZeroIndsPath_col.col(0) = vZeroIndsnew_col;
 
   // The COBRA algorithm for Convex Bi-Clustering (on which CBASS is based)
   // introduces extra variables Y, P, Q which are necessary to keep the row-
@@ -124,8 +126,8 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
 
   // Book-keeping variables
   // Number of iterations stored, total iteration count, number of column fusions, number of row fusions
-  Eigen::Index path_iter      = 0;
-  Eigen::Index iter           = 0;
+  Eigen::Index path_iter  = 1; // path_iter is next column to put something in,
+  Eigen::Index iter       = 0; // so we start at 1 since we put data in column 0 above
   Eigen::Index nzeros_old_row = 0;
   Eigen::Index nzeros_new_row = 0;
   Eigen::Index nzeros_old_col = 0;

@@ -68,6 +68,7 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
   Eigen::VectorXd vZeroIndsnew = Eigen::VectorXd::Zero(num_edges);          // Working copies
   Eigen::VectorXd vZeroIndsold(num_edges);                                  // (we begin with no fusions)
   Eigen::MatrixXd vZeroInds_Path = Eigen::MatrixXd(num_edges, buffer_size); // Storage (to be returned to R)
+  vZeroInds_Path.col(0) = vZeroIndsnew;
 
   /// END Preallocations
 
@@ -79,8 +80,8 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
 
   // Book-keeping variables
   // Number of iterations stored, total iteration count, number of fusions
-  Eigen::Index path_iter  = 0;
-  Eigen::Index iter       = 0;
+  Eigen::Index path_iter  = 1; // path_iter is next column to put something in,
+  Eigen::Index iter       = 0; // so we start at 1 since we put data in column 0 above
   Eigen::Index nzeros_old = 0;
   Eigen::Index nzeros_new = 0;
 
