@@ -525,7 +525,7 @@ print.CARP <- function(x, ...) {
   alg_string <- switch(x$alg.type,
                        carp      = paste0("CARP (t = ", round(x$t, 3), ")"),
                        carpl1    = paste0("CARP (t = ", round(x$t, 3), ") [L1]"),
-                       carlviz   = "CARP-VIZ",
+                       carpviz   = "CARP-VIZ",
                        carpvizl1 = "CARP-VIZ [L1]")
 
   cat("CARP Fit Summary\n")
