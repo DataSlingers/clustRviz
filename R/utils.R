@@ -418,3 +418,12 @@ is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) 
 
 is_numeric_scalar <- function(x) {is.numeric(x) && (length(x) == 1)}
 is_integer_scalar <- function(x) {is.wholenumber(x) && (length(x) == 1)}
+
+is_square <- function(x) {is.matrix(x) && (NROW(x) == NCOL(x))}
+
+capitalize_string <- function(x){
+  x <- gsub("_", " ", x)
+  vapply(strsplit(x, " "),
+         function(x) paste(paste0(toupper(substring(x, 1, 1)), substring(x, 2)), collapse = " "),
+         character(1))
+}

@@ -169,39 +169,109 @@ SUPPORTED_DISTANCES <- c("euclidean",
                          "binary",
                          "minkowski")
 
+RBFWeights <- function(phi = phi,
+                       user_phi = user_phi,
+                       dist.method = dist.method,
+                       p = p){
+
+  obj <- list(phi         = phi,
+              user_phi    = user_phi,
+              dist.method = dist.method,
+              p           = p,
+              name        = "RBF Kernel")
+
+  class(obj) <- c("RBFWeights", "ClusteringWeights")
+
+  obj
+}
+
+UserFunction <- function(){
+  obj <- list(name = "User-Provided Function")
+  class(obj) <- "ClusteringWeights"
+  obj
+}
+
+UserMatrix <- function(){
+  obj <- list(name = "User-Provided Matrix")
+  class(obj) <- "ClusteringWeights"
+  obj
+}
+
+add_sparse_weights <- function(fit_type, user_k, k){
+  fit_type$k      <- k
+  fit_type$user_k <- user_k
+  class(fit_type) <- c(class(fit_type), "SparseClusteringWeights")
+
+  fit_type
+}
+
+#' @export
+print.RBFWeights <- function(x, indent = 2, ...){
+  cat(" - Source: Radial Basis Function Kernel Weights\n")
+  cat(" - Distance Metric: ", capitalize_string(x$dist.method), sep = "")
+  if (x$dist.method == "minkowski") {
+    cat(" (p = ", round(x$p, 3), ")")
+  }
+  cat("\n")
+  cat(" - Scale parameter (phi): ", round(x$phi, 3), " [",
+      if (x$user_phi) "User-Supplied" else "Data-Driven", "]\n", sep = "")
+
+  if (inherits(x, "SparseClusteringWeights")) {
+    cat(" - Sparsified: ", x$k, " Nearest Neighbors [",
+        if (x$user_phi) "User-Supplied" else "Data-Driven", "]\n", sep = "")
+  }
+
+  cat("\n")
+}
+
+#' @export
+print.ClusteringWeights <- function(x, indent = 2, ...){
+  cat(" - Source: ", x$name, "\n", sep = "")
+  if (inherits(x, "SparseClusteringWeights")) {
+    cat(" - Sparsified: ", x$k, " Nearest Neighbors [",
+        if (x$user_phi) "User-Supplied" else "Data-Driven", "]\n", sep = "")
+  }
+  cat("\n")
+}
+
 #' Factory function - this takes a weight function and wraps it up in some
 #' sparsification code. Not intended to be exposed to users, but useful to
 #' create sparse analogues of various weight schemes
 #' @noRd
+#' @importFrom utils modifyList
 make_sparse_weights_func <- function(weight_func){
 
   function(..., k = "auto"){
     dense_weight_func <- weight_func(...)
 
     function(X){
-      dense_weights <- dense_weight_func(X)
+      dense_fit     <- dense_weight_func(X)
+      dense_weights <- dense_fit$weight_mat
+      fit_type      <- dense_fit$type
 
-      if(k == "auto"){
+      user_k <- (k != "auto")
+
+      if (k == "auto") {
+        user_k <- FALSE
         k <- 1
 
-        while(TRUE){
-          adjacency_matrix <- take_k_neighbors(dense_weights, k=k)
+        while (TRUE) {
+          adjacency_matrix <- take_k_neighbors(dense_weights, k = k)
           connected <- is_connected_adj_mat(adjacency_matrix)
 
-          if(connected){
+          if (connected) {
             break
           } else {
             k <- k + 1
           }
         }
-
       }
 
-      if(!is_integer_scalar(k)){
+      if (!is_integer_scalar(k)) {
         stop("If not `auto,` ", sQuote("k"), " must be an integer scalar (vector of length 1).")
       }
 
-      if(k <= 0){
+      if (k <= 0) {
         stop(sQuote("k"), " must be positive.")
       }
 
@@ -209,11 +279,14 @@ make_sparse_weights_func <- function(weight_func){
 
       connected <- is_connected_adj_mat(sparse_weights)
 
-      if(!connected){
+      if (!connected) {
         stop("k = ", k, " does not give a fully connected graph. Convex (bi)clustering will not converge.")
       }
 
-      sparse_weights
+      list(weight_mat = sparse_weights,
+           type = add_sparse_weights(fit_type,
+                                     user_k = user_k,
+                                     k      = k))
     }
   }
 }
@@ -271,7 +344,7 @@ dense_gaussian_kernel_weights <- function(phi = "auto",
                                           p = 2){
 
   tryCatch(dist.method <- match.arg(dist.method),
-           error=function(e){
+           error = function(e){
              stop("Unsupported choice of ", sQuote("weight.dist;"),
                   " see the ", sQuote("method"), " argument of ",
                   sQuote("stats::dist"), " for supported distances.")
@@ -284,10 +357,12 @@ dense_gaussian_kernel_weights <- function(phi = "auto",
   }
 
   function(X){
-    if(phi == "auto"){
+    user_phi <- (phi != "auto")
+
+    if (phi == "auto") {
       ## FIXME - This leads to calling dist() one more time than strictly
       ##         necessary...
-      phi_range <- 10^(seq(-10, 10, length.out=21))
+      phi_range <- 10^(seq(-10, 10, length.out = 21))
       weight_vars <- vapply(phi_range,
                             function(phi) var(exp((-1) * phi * (dist(X, method = dist.method, p = p)[TRUE])^2)),
                             numeric(1))
@@ -295,11 +370,11 @@ dense_gaussian_kernel_weights <- function(phi = "auto",
       phi <- phi_range[which.max(weight_vars)]
     }
 
-    if(!is_numeric_scalar(phi)){
+    if (!is_numeric_scalar(phi)) {
       stop("If not `auto,` ", sQuote("phi"), " must be a numeric scalar (vector of length 1).")
     }
 
-    if(phi <= 0){
+    if (phi <= 0) {
       stop(sQuote("phi"), " must be positive.")
     }
 
@@ -308,7 +383,11 @@ dense_gaussian_kernel_weights <- function(phi = "auto",
 
     diag(dist_mat) <- 0
 
-    dist_mat
+    list(weight_mat = dist_mat,
+         type = RBFWeights(phi = phi,
+                           user_phi = user_phi,
+                           dist.method = dist.method,
+                           p = p))
   }
 }
 
