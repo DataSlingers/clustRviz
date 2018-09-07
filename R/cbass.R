@@ -241,128 +241,69 @@ CBASS <- function(X,
   )
   cardE.col <- NROW(PreCompList.col$E)
 
-
-
   if (verbose.basic) message("Computing CBASS Path\n")
-  switch(
-    alg.type,
-    cbassviz = {
-      BICARPL2_VIS(
-        x = X[TRUE],
-        n = as.integer(n.obs),
-        p = as.integer(p.var),
-        lambda_init = 1e-6,
-        weights_row = weights.row[weights.row != 0],
-        weights_col = weights.col[weights.col != 0],
-        uinit_row = as.matrix(PreCompList.row$uinit),
-        uinit_col = as.matrix(PreCompList.col$uinit),
-        vinit_row = as.matrix(PreCompList.row$vinit),
-        vinit_col = as.matrix(PreCompList.col$vinit),
-        premat_row = PreCompList.row$PreMat,
-        premat_col = PreCompList.col$PreMat,
-        IndMat_row = PreCompList.row$ind.mat,
-        IndMat_col = PreCompList.col$ind.mat,
-        EOneIndMat_row = PreCompList.row$E1.ind.mat,
-        EOneIndMat_col = PreCompList.col$E1.ind.mat,
-        ETwoIndMat_row = PreCompList.row$E2.ind.mat,
-        ETwoIndMat_col = PreCompList.col$E2.ind.mat,
-        rho = rho,
-        max_iter = as.integer(max.iter),
-        burn_in = burn.in,
-        verbose = verbose.deep,
-        verbose_inner = verbose.deep,
-        try_tol = 1e-3,
-        ti = 10,
-        t_switch = 1.01
-      ) -> bicarp.sol.path
-    },
-    cbassvizl1 = {
-      BICARPL1_VIS(
-        x = X[TRUE],
-        n = as.integer(n.obs),
-        p = as.integer(p.var),
-        lambda_init = 1e-6,
-        weights_row = weights.row[weights.row != 0],
-        weights_col = weights.col[weights.col != 0],
-        uinit_row = as.matrix(PreCompList.row$uinit),
-        uinit_col = as.matrix(PreCompList.col$uinit),
-        vinit_row = as.matrix(PreCompList.row$vinit),
-        vinit_col = as.matrix(PreCompList.col$vinit),
-        premat_row = PreCompList.row$PreMat,
-        premat_col = PreCompList.col$PreMat,
-        IndMat_row = PreCompList.row$ind.mat,
-        IndMat_col = PreCompList.col$ind.mat,
-        EOneIndMat_row = PreCompList.row$E1.ind.mat,
-        EOneIndMat_col = PreCompList.col$E1.ind.mat,
-        ETwoIndMat_row = PreCompList.row$E2.ind.mat,
-        ETwoIndMat_col = PreCompList.col$E2.ind.mat,
-        rho = rho,
-        max_iter = as.integer(max.iter),
-        burn_in = burn.in,
-        verbose = verbose.deep,
-        verbose_inner = verbose.deep,
-        try_tol = 1e-3,
-        ti = 10,
-        t_switch = 1.01
-      ) -> bicarp.sol.path
-    },
-    cbass = {
-      BICARPL2_NF_FRAC(
-        x = X[TRUE],
-        n = as.integer(n.obs),
-        p = as.integer(p.var),
-        lambda_init = 1e-6,
-        t = t,
-        weights_row = weights.row[weights.row != 0],
-        weights_col = weights.col[weights.col != 0],
-        uinit_row = as.matrix(PreCompList.row$uinit),
-        uinit_col = as.matrix(PreCompList.col$uinit),
-        vinit_row = as.matrix(PreCompList.row$vinit),
-        vinit_col = as.matrix(PreCompList.col$vinit),
-        premat_row = PreCompList.row$PreMat,
-        premat_col = PreCompList.col$PreMat,
-        IndMat_row = PreCompList.row$ind.mat,
-        IndMat_col = PreCompList.col$ind.mat,
-        EOneIndMat_row = PreCompList.row$E1.ind.mat,
-        EOneIndMat_col = PreCompList.col$E1.ind.mat,
-        ETwoIndMat_row = PreCompList.row$E2.ind.mat,
-        ETwoIndMat_col = PreCompList.col$E2.ind.mat,
-        rho = rho,
-        max_iter = as.integer(max.iter),
-        burn_in = burn.in,
-        verbose = verbose.deep,
-        keep = 10
-      ) -> bicarp.sol.path
-    },
-    cbassl1 = {
-      BICARPL1_NF_FRAC(
-        x = X[TRUE],
-        n = as.integer(n.obs),
-        p = as.integer(p.var),
-        lambda_init = 1e-6,
-        t = t,
-        weights_row = weights.row[weights.row != 0],
-        weights_col = weights.col[weights.col != 0],
-        uinit_row = as.matrix(PreCompList.row$uinit),
-        uinit_col = as.matrix(PreCompList.col$uinit),
-        vinit_row = as.matrix(PreCompList.row$vinit),
-        vinit_col = as.matrix(PreCompList.col$vinit),
-        premat_row = PreCompList.row$PreMat,
-        premat_col = PreCompList.col$PreMat,
-        IndMat_row = PreCompList.row$ind.mat,
-        IndMat_col = PreCompList.col$ind.mat,
-        EOneIndMat_row = PreCompList.row$E1.ind.mat,
-        EOneIndMat_col = PreCompList.col$E1.ind.mat,
-        ETwoIndMat_row = PreCompList.row$E2.ind.mat,
-        ETwoIndMat_col = PreCompList.col$E2.ind.mat,
-        rho = rho,
-        max_iter = as.integer(max.iter),
-        burn_in = burn.in,
-        verbose = verbose.deep,
-        keep = 10
-      ) -> bicarp.sol.path
-    }
-  )
+
+  if (alg.type %in% c("cbassviz", "cbassvizl1")) {
+    bicarp.sol.path <- CBASS_VIZcpp(x = X[TRUE],
+                                    n = as.integer(n.obs),
+                                    p = as.integer(p.var),
+                                    lambda_init = 1e-6,
+                                    weights_row = weights.row[weights.row != 0],
+                                    weights_col = weights.col[weights.col != 0],
+                                    uinit_row = as.matrix(PreCompList.row$uinit),
+                                    uinit_col = as.matrix(PreCompList.col$uinit),
+                                    vinit_row = as.matrix(PreCompList.row$vinit),
+                                    vinit_col = as.matrix(PreCompList.col$vinit),
+                                    premat_row = PreCompList.row$PreMat,
+                                    premat_col = PreCompList.col$PreMat,
+                                    IndMat_row = PreCompList.row$ind.mat,
+                                    IndMat_col = PreCompList.col$ind.mat,
+                                    EOneIndMat_row = PreCompList.row$E1.ind.mat,
+                                    EOneIndMat_col = PreCompList.col$E1.ind.mat,
+                                    ETwoIndMat_row = PreCompList.row$E2.ind.mat,
+                                    ETwoIndMat_col = PreCompList.col$E2.ind.mat,
+                                    rho = rho,
+                                    max_iter = as.integer(max.iter),
+                                    burn_in = burn.in,
+                                    verbose = verbose.deep,
+                                    ti = 10,
+                                    t_switch = 1.01,
+                                    keep = 10,
+                                    l1 = (alg.type == "cbassvizl1"))
+  } else {
+    bicarp.sol.path <- CBASScpp(x = X[TRUE],
+                                n = as.integer(n.obs),
+                                p = as.integer(p.var),
+                                lambda_init = 1e-6,
+                                t = t,
+                                weights_row = weights.row[weights.row != 0],
+                                weights_col = weights.col[weights.col != 0],
+                                uinit_row = as.matrix(PreCompList.row$uinit),
+                                uinit_col = as.matrix(PreCompList.col$uinit),
+                                vinit_row = as.matrix(PreCompList.row$vinit),
+                                vinit_col = as.matrix(PreCompList.col$vinit),
+                                premat_row = PreCompList.row$PreMat,
+                                premat_col = PreCompList.col$PreMat,
+                                IndMat_row = PreCompList.row$ind.mat,
+                                IndMat_col = PreCompList.col$ind.mat,
+                                EOneIndMat_row = PreCompList.row$E1.ind.mat,
+                                EOneIndMat_col = PreCompList.col$E1.ind.mat,
+                                ETwoIndMat_row = PreCompList.row$E2.ind.mat,
+                                ETwoIndMat_col = PreCompList.col$E2.ind.mat,
+                                rho = rho,
+                                max_iter = as.integer(max.iter),
+                                burn_in = burn.in,
+                                verbose = verbose.deep,
+                                keep = 10,
+                                l1 = (alg.type == "cbassl1"))
+  }
+
+  ## FIXME - Convert lambda.path to a single column matrix instead of a vector
+  ##         RcppArmadillo returns a arma::vec as a n-by-1 matrix
+  ##         RcppEigen returns an Eigen::VectorXd as a n-length vector
+  ##         Something downstream cares about the difference, so just change
+  ##         the type here for now
+  bicarp.sol.path$lambda.path <- matrix(bicarp.sol.path$lambda.path, ncol=1)
 
   if (verbose.basic) message("Post-processing\n")
   ISP(
@@ -454,17 +395,17 @@ CBASS <- function(X,
 #' @param weights.obs A vector of positive number of length \code{choose(n,2)}.
 #' @param k.obs An positive integer: the number of neighbors used to create sparse weights
 #' @param obs.weight.dist A string indicating the distance metric used to calculate weights.
-#'                        See \code{\link[stats]{distance}} for details.
+#'                        See \code{\link[stats]{dist}} for details.
 #' @param obs.weight.dist.p The exponent used to calculate the Minkowski distance if
 #'                          \code{weight.dist = "minkowski"}.
-#'                          See \code{\link[stats]{distance}} for details.
+#'                          See \code{\link[stats]{dist}} for details.
 #' @param weights.var A vector of positive number of length \code{choose(n,2)}.
 #' @param k.var An positive integer: the number of neighbors used to create sparse weights
 #' @param var.weight.dist A string indicating the distance metric used to calculate weights.
-#'                        See \code{\link[stats]{distance}} for details.
+#'                        See \code{\link[stats]{dist}} for details.
 #' @param var.weight.dist.p The exponent used to calculate the Minkowski distance if
 #'                          \code{weight.dist = "minkowski"}.
-#'                          See \code{\link[stats]{distance}} for details.
+#'                          See \code{\link[stats]{dist}} for details.
 #' @param ncores An positive integer: the number of cores to use.
 #' @param max.iter An integer: the maximum number of CARP iterations.
 #' @param burn.in An integer: the number of initial iterations at a fixed

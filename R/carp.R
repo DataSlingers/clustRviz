@@ -222,97 +222,54 @@ CARP <- function(X,
   cardE <- NROW(PreCompList$E)
 
   if (verbose.basic) message("Computing CARP Path")
-  switch(
-    alg.type,
-    carpviz = {
-      CARPL2_VIS_FRAC(
-        x = X[TRUE],
-        n = as.integer(n.obs),
-        p = as.integer(p.var),
-        lambda_init = 1e-8,
-        weights = weights[weights != 0],
-        uinit = as.matrix(PreCompList$uinit),
-        vinit = as.matrix(PreCompList$vinit),
-        premat = PreCompList$PreMat,
-        IndMat = PreCompList$ind.mat,
-        EOneIndMat = PreCompList$E1.ind.mat,
-        ETwoIndMat = PreCompList$E2.ind.mat,
-        rho = rho,
-        max_iter = as.integer(max.iter),
-        burn_in = as.integer(burn.in),
-        verbose = verbose.deep,
-        try_tol = 1e-5,
-        ti = 10,
-        t_switch = 1.01,
-        keep = 1
-      ) -> carp.sol.path
-    },
-    carp = {
-      CARPL2_NF_FRAC(
-        x = X[TRUE],
-        n = as.integer(n.obs),
-        p = as.integer(p.var),
-        lambda_init = 1e-8,
-        t = t,
-        weights = weights[weights != 0],
-        uinit = as.matrix(PreCompList$uinit),
-        vinit = as.matrix(PreCompList$vinit),
-        premat = PreCompList$PreMat,
-        IndMat = PreCompList$ind.mat,
-        EOneIndMat = PreCompList$E1.ind.mat,
-        ETwoIndMat = PreCompList$E2.ind.mat,
-        rho = rho,
-        max_iter = as.integer(max.iter),
-        burn_in = as.integer(burn.in),
-        verbose = verbose.deep,
-        keep = 1
-      ) -> carp.sol.path
-    },
-    carpl1 = {
-      CARPL1_NF_FRAC(
-        x = X[TRUE],
-        n = as.integer(n.obs),
-        p = as.integer(p.var),
-        lambda_init = 1e-8,
-        t = t,
-        weights = weights[weights != 0],
-        uinit = as.matrix(PreCompList$uinit),
-        vinit = as.matrix(PreCompList$vinit),
-        premat = PreCompList$PreMat,
-        IndMat = PreCompList$ind.mat,
-        EOneIndMat = PreCompList$E1.ind.mat,
-        ETwoIndMat = PreCompList$E2.ind.mat,
-        rho = rho,
-        max_iter = as.integer(max.iter),
-        burn_in = as.integer(burn.in),
-        verbose = verbose.deep,
-        keep = 1
-      ) -> carp.sol.path
-    },
-    carpvizl1 = {
-      CARPL1_VIS_FRAC(
-        x = X[TRUE],
-        n = as.integer(n.obs),
-        p = as.integer(p.var),
-        lambda_init = 1e-8,
-        weights = weights[weights != 0],
-        uinit = as.matrix(PreCompList$uinit),
-        vinit = as.matrix(PreCompList$vinit),
-        premat = PreCompList$PreMat,
-        IndMat = PreCompList$ind.mat,
-        EOneIndMat = PreCompList$E1.ind.mat,
-        ETwoIndMat = PreCompList$E2.ind.mat,
-        rho = rho,
-        max_iter = as.integer(max.iter),
-        burn_in = as.integer(burn.in),
-        verbose = verbose.deep,
-        try_tol = 1e-5,
-        ti = 10,
-        t_switch = 1.01,
-        keep = 1
-      ) -> carp.sol.path
-    }
-  )
+
+  if (alg.type %in% c("carpvizl1", "carpviz")) {
+      carp.sol.path <- CARP_VIZcpp(x = X[TRUE],
+                                   n = as.integer(n.obs),
+                                   p = as.integer(p.var),
+                                   lambda_init = 1e-8,
+                                   weights = weights[weights != 0],
+                                   uinit = as.matrix(PreCompList$uinit),
+                                   vinit = as.matrix(PreCompList$vinit),
+                                   premat = PreCompList$PreMat,
+                                   IndMat = PreCompList$ind.mat,
+                                   EOneIndMat = PreCompList$E1.ind.mat,
+                                   ETwoIndMat = PreCompList$E2.ind.mat,
+                                   rho = rho,
+                                   max_iter = as.integer(max.iter),
+                                   burn_in = as.integer(burn.in),
+                                   verbose = verbose.deep,
+                                   ti = 10,
+                                   t_switch = 1.01,
+                                   keep = 1,
+                                   l1 = (alg.type == "carpvizl1"))
+  } else {
+      carp.sol.path <- CARPcpp(x = X[TRUE],
+                               n = as.integer(n.obs),
+                               p = as.integer(p.var),
+                               lambda_init = 1e-8,
+                               t = t,
+                               weights = weights[weights != 0],
+                               uinit = as.matrix(PreCompList$uinit),
+                               vinit = as.matrix(PreCompList$vinit),
+                               premat = PreCompList$PreMat,
+                               IndMat = PreCompList$ind.mat,
+                               EOneIndMat = PreCompList$E1.ind.mat,
+                               ETwoIndMat = PreCompList$E2.ind.mat,
+                               rho = rho,
+                               max_iter = as.integer(max.iter),
+                               burn_in = as.integer(burn.in),
+                               verbose = verbose.deep,
+                               keep = 1,
+                               l1 = (alg.type == "carpl1"))
+  }
+
+  ## FIXME - Convert lambda.path to a single column matrix instead of a vector
+  ##         RcppArmadillo returns a arma::vec as a n-by-1 matrix
+  ##         RcppEigen returns an Eigen::VectorXd as a n-length vector
+  ##         Something downstream cares about the difference, so just change
+  ##         the type here for now
+  carp.sol.path$lambda.path <- matrix(carp.sol.path$lambda.path, ncol=1)
 
   if (verbose.basic) message("Post-processing")
   ISP(
@@ -409,10 +366,10 @@ CARP <- function(X,
 #' @param weights A vector of positive number of length \code{choose(n,2)}.
 #' @param k An positive integer: the number of neighbors used to create sparse weights
 #' @param weight.dist A string indicating the distance metric used to calculate weights.
-#'                    See \code{\link[stats]{distance}} for details.
+#'                    See \code{\link[stats]{dist}} for details.
 #' @param weight.dist.p The exponent used to calculate the Minkowski distance if
 #'                      \code{weight.dist = "minkowski"}.
-#'                      See \code{\link[stats]{distance}} for details.
+#'                      See \code{\link[stats]{dist}} for details.
 #' @param phi A positive real number: the scale factor used in the RBF kernel
 #' @param ncores An positive integer: the number of cores to use.
 #' @param max.iter An integer: the maximum number of CARP iterations.
@@ -568,7 +525,7 @@ print.CARP <- function(x, ...) {
   alg_string <- switch(x$alg.type,
                        carp      = paste0("CARP (t = ", round(x$t, 3), ")"),
                        carpl1    = paste0("CARP (t = ", round(x$t, 3), ") [L1]"),
-                       carlviz   = "CARP-VIZ",
+                       carpviz   = "CARP-VIZ",
                        carpvizl1 = "CARP-VIZ [L1]")
 
   cat("CARP Fit Summary\n")

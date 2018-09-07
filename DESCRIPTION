@@ -15,7 +15,6 @@ Depends: R (>= 2.10)
 Remotes:
     thomasp85/gganimate@v0.1.1
 Imports:
-    RcppArmadillo,
     RcppEigen,
     Rcpp, 
     stats,
@@ -39,7 +38,7 @@ Imports:
     RColorBrewer,
     gganimate
 RoxygenNote: 6.1.0
-LinkingTo: Rcpp,RcppArmadillo,RcppEigen
+LinkingTo: Rcpp, RcppEigen
 Suggests: testthat,
     knitr,
     rmarkdown,
