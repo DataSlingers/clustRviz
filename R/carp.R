@@ -366,10 +366,10 @@ CARP <- function(X,
 #' @param weights A vector of positive number of length \code{choose(n,2)}.
 #' @param k An positive integer: the number of neighbors used to create sparse weights
 #' @param weight.dist A string indicating the distance metric used to calculate weights.
-#'                    See \code{\link[stats]{distance}} for details.
+#'                    See \code{\link[stats]{dist}} for details.
 #' @param weight.dist.p The exponent used to calculate the Minkowski distance if
 #'                      \code{weight.dist = "minkowski"}.
-#'                      See \code{\link[stats]{distance}} for details.
+#'                      See \code{\link[stats]{dist}} for details.
 #' @param phi A positive real number: the scale factor used in the RBF kernel
 #' @param ncores An positive integer: the number of cores to use.
 #' @param max.iter An integer: the maximum number of CARP iterations.

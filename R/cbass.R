@@ -395,17 +395,17 @@ CBASS <- function(X,
 #' @param weights.obs A vector of positive number of length \code{choose(n,2)}.
 #' @param k.obs An positive integer: the number of neighbors used to create sparse weights
 #' @param obs.weight.dist A string indicating the distance metric used to calculate weights.
-#'                        See \code{\link[stats]{distance}} for details.
+#'                        See \code{\link[stats]{dist}} for details.
 #' @param obs.weight.dist.p The exponent used to calculate the Minkowski distance if
 #'                          \code{weight.dist = "minkowski"}.
-#'                          See \code{\link[stats]{distance}} for details.
+#'                          See \code{\link[stats]{dist}} for details.
 #' @param weights.var A vector of positive number of length \code{choose(n,2)}.
 #' @param k.var An positive integer: the number of neighbors used to create sparse weights
 #' @param var.weight.dist A string indicating the distance metric used to calculate weights.
-#'                        See \code{\link[stats]{distance}} for details.
+#'                        See \code{\link[stats]{dist}} for details.
 #' @param var.weight.dist.p The exponent used to calculate the Minkowski distance if
 #'                          \code{weight.dist = "minkowski"}.
-#'                          See \code{\link[stats]{distance}} for details.
+#'                          See \code{\link[stats]{dist}} for details.
 #' @param ncores An positive integer: the number of cores to use.
 #' @param max.iter An integer: the maximum number of CARP iterations.
 #' @param burn.in An integer: the number of initial iterations at a fixed
