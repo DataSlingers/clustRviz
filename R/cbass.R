@@ -258,58 +258,58 @@ CBASS <- function(X,
   if (verbose.basic) message("Computing CBASS Path")
 
   if (alg.type %in% c("cbassviz", "cbassvizl1")) {
-    bicarp.sol.path <- CBASS_VIZcpp(x = X[TRUE],
-                                    n = as.integer(n.obs),
-                                    p = as.integer(p.var),
-                                    lambda_init = 1e-6,
-                                    weights_row = row_weights[row_weights != 0],
-                                    weights_col = col_weights[col_weights != 0],
-                                    uinit_row = as.matrix(PreCompList.row$uinit),
-                                    uinit_col = as.matrix(PreCompList.col$uinit),
-                                    vinit_row = as.matrix(PreCompList.row$vinit),
-                                    vinit_col = as.matrix(PreCompList.col$vinit),
-                                    premat_row = PreCompList.row$PreMat,
-                                    premat_col = PreCompList.col$PreMat,
-                                    IndMat_row = PreCompList.row$ind.mat,
-                                    IndMat_col = PreCompList.col$ind.mat,
-                                    EOneIndMat_row = PreCompList.row$E1.ind.mat,
-                                    EOneIndMat_col = PreCompList.col$E1.ind.mat,
-                                    ETwoIndMat_row = PreCompList.row$E2.ind.mat,
-                                    ETwoIndMat_col = PreCompList.col$E2.ind.mat,
-                                    rho = rho,
-                                    max_iter = as.integer(max.iter),
-                                    burn_in = burn.in,
-                                    verbose = verbose.deep,
-                                    ti = 10,
-                                    t_switch = 1.01,
-                                    keep = 10,
-                                    l1 = (alg.type == "cbassvizl1"))
+    cbass.sol.path <- CBASS_VIZcpp(x = X[TRUE],
+                                   n = as.integer(n.obs),
+                                   p = as.integer(p.var),
+                                   lambda_init = 1e-6,
+                                   weights_row = row_weights[row_weights != 0],
+                                   weights_col = col_weights[col_weights != 0],
+                                   uinit_row = as.matrix(PreCompList.row$uinit),
+                                   uinit_col = as.matrix(PreCompList.col$uinit),
+                                   vinit_row = as.matrix(PreCompList.row$vinit),
+                                   vinit_col = as.matrix(PreCompList.col$vinit),
+                                   premat_row = PreCompList.row$PreMat,
+                                   premat_col = PreCompList.col$PreMat,
+                                   IndMat_row = PreCompList.row$ind.mat,
+                                   IndMat_col = PreCompList.col$ind.mat,
+                                   EOneIndMat_row = PreCompList.row$E1.ind.mat,
+                                   EOneIndMat_col = PreCompList.col$E1.ind.mat,
+                                   ETwoIndMat_row = PreCompList.row$E2.ind.mat,
+                                   ETwoIndMat_col = PreCompList.col$E2.ind.mat,
+                                   rho = rho,
+                                   max_iter = as.integer(max.iter),
+                                   burn_in = burn.in,
+                                   verbose = verbose.deep,
+                                   ti = 10,
+                                   t_switch = 1.01,
+                                   keep = 10,
+                                   l1 = (alg.type == "cbassvizl1"))
   } else {
-    bicarp.sol.path <- CBASScpp(x = X[TRUE],
-                                n = as.integer(n.obs),
-                                p = as.integer(p.var),
-                                lambda_init = 1e-6,
-                                t = t,
-                                weights_row = row_weights[row_weights != 0],
-                                weights_col = col_weights[col_weights != 0],
-                                uinit_row = as.matrix(PreCompList.row$uinit),
-                                uinit_col = as.matrix(PreCompList.col$uinit),
-                                vinit_row = as.matrix(PreCompList.row$vinit),
-                                vinit_col = as.matrix(PreCompList.col$vinit),
-                                premat_row = PreCompList.row$PreMat,
-                                premat_col = PreCompList.col$PreMat,
-                                IndMat_row = PreCompList.row$ind.mat,
-                                IndMat_col = PreCompList.col$ind.mat,
-                                EOneIndMat_row = PreCompList.row$E1.ind.mat,
-                                EOneIndMat_col = PreCompList.col$E1.ind.mat,
-                                ETwoIndMat_row = PreCompList.row$E2.ind.mat,
-                                ETwoIndMat_col = PreCompList.col$E2.ind.mat,
-                                rho = rho,
-                                max_iter = as.integer(max.iter),
-                                burn_in = burn.in,
-                                verbose = verbose.deep,
-                                keep = 10,
-                                l1 = (alg.type == "cbassl1"))
+    cbass.sol.path <- CBASScpp(x = X[TRUE],
+                               n = as.integer(n.obs),
+                               p = as.integer(p.var),
+                               lambda_init = 1e-6,
+                               t = t,
+                               weights_row = row_weights[row_weights != 0],
+                               weights_col = col_weights[col_weights != 0],
+                               uinit_row = as.matrix(PreCompList.row$uinit),
+                               uinit_col = as.matrix(PreCompList.col$uinit),
+                               vinit_row = as.matrix(PreCompList.row$vinit),
+                               vinit_col = as.matrix(PreCompList.col$vinit),
+                               premat_row = PreCompList.row$PreMat,
+                               premat_col = PreCompList.col$PreMat,
+                               IndMat_row = PreCompList.row$ind.mat,
+                               IndMat_col = PreCompList.col$ind.mat,
+                               EOneIndMat_row = PreCompList.row$E1.ind.mat,
+                               EOneIndMat_col = PreCompList.col$E1.ind.mat,
+                               ETwoIndMat_row = PreCompList.row$E2.ind.mat,
+                               ETwoIndMat_col = PreCompList.col$E2.ind.mat,
+                               rho = rho,
+                               max_iter = as.integer(max.iter),
+                               burn_in = burn.in,
+                               verbose = verbose.deep,
+                               keep = 10,
+                               l1 = (alg.type == "cbassl1"))
   }
 
   ## FIXME - Convert lambda.path to a single column matrix instead of a vector
@@ -317,49 +317,49 @@ CBASS <- function(X,
   ##         RcppEigen returns an Eigen::VectorXd as a n-length vector
   ##         Something downstream cares about the difference, so just change
   ##         the type here for now
-  bicarp.sol.path$lambda.path <- matrix(bicarp.sol.path$lambda.path, ncol=1)
+  cbass.sol.path$lambda.path <- matrix(cbass.sol.path$lambda.path, ncol=1)
 
   if (verbose.basic) message("Post-processing")
 
   ISP(
-    sp.path = bicarp.sol.path$v.row.zero.inds %>% t(),
-    v.path = bicarp.sol.path$v.row.path,
-    u.path = bicarp.sol.path$u.path,
-    lambda.path = bicarp.sol.path$lambda.path,
+    sp.path = cbass.sol.path$v.row.zero.inds %>% t(),
+    v.path = cbass.sol.path$v.row.path,
+    u.path = cbass.sol.path$u.path,
+    lambda.path = cbass.sol.path$lambda.path,
     cardE = sum(row_weights != 0)
-  ) -> bicarp.cluster.path.row
+  ) -> cbass.cluster.path.row
 
-  clust.path.row <- get_cluster_assignments(PreCompList.row$E, bicarp.cluster.path.row$sp.path.inter, p.var)
+  clust.path.row <- get_cluster_assignments(PreCompList.row$E, cbass.cluster.path.row$sp.path.inter, p.var)
   clust.path.dups.row <- duplicated(clust.path.row, fromLast = FALSE)
 
-  bicarp.cluster.path.row[["clust.path"]] <- clust.path.row
-  bicarp.cluster.path.row[["clust.path.dups"]] <- clust.path.dups.row
+  cbass.cluster.path.row[["clust.path"]] <- clust.path.row
+  cbass.cluster.path.row[["clust.path.dups"]] <- clust.path.dups.row
 
-  bicarp.dend.row <- CreateDendrogram(bicarp.cluster.path.row, p.labels)
+  cbass.dend.row <- CreateDendrogram(cbass.cluster.path.row, p.labels)
 
   ISP(
-    sp.path = bicarp.sol.path$v.col.zero.inds %>% t(),
-    v.path = bicarp.sol.path$v.col.path,
-    u.path = bicarp.sol.path$u.path,
-    lambda.path = bicarp.sol.path$lambda.path,
+    sp.path = cbass.sol.path$v.col.zero.inds %>% t(),
+    v.path = cbass.sol.path$v.col.path,
+    u.path = cbass.sol.path$u.path,
+    lambda.path = cbass.sol.path$lambda.path,
     cardE = sum(col_weights != 0)
-  ) -> bicarp.cluster.path.col
+  ) -> cbass.cluster.path.col
 
-  clust.path.col <- get_cluster_assignments(PreCompList.col$E, bicarp.cluster.path.col$sp.path.inter, n.obs)
+  clust.path.col <- get_cluster_assignments(PreCompList.col$E, cbass.cluster.path.col$sp.path.inter, n.obs)
   clust.path.dups.col <- duplicated(clust.path.col, fromLast = FALSE)
 
-  bicarp.cluster.path.col[["clust.path"]] <- clust.path.col
-  bicarp.cluster.path.col[["clust.path.dups"]] <- clust.path.dups.col
+  cbass.cluster.path.col[["clust.path"]] <- clust.path.col
+  cbass.cluster.path.col[["clust.path.dups"]] <- clust.path.dups.col
 
-  bicarp.dend.col <- CreateDendrogram(bicarp.cluster.path.col, n.labels)
+  cbass.dend.col <- CreateDendrogram(cbass.cluster.path.col, n.labels)
 
   cbass.fit <- list(
     X = X.orig,
-    cbass.sol.path = bicarp.sol.path,
-    cbass.cluster.path.obs = bicarp.cluster.path.col,
-    cbass.cluster.path.var = bicarp.cluster.path.row,
-    cbass.dend.var = bicarp.dend.row,
-    cbass.dend.obs = bicarp.dend.col,
+    cbass.sol.path = cbass.sol.path,
+    cbass.cluster.path.obs = cbass.cluster.path.col,
+    cbass.cluster.path.var = cbass.cluster.path.row,
+    cbass.dend.var = cbass.dend.row,
+    cbass.dend.obs = cbass.dend.col,
     n.obs = n.obs,
     p.var = p.var,
     var_weight_type = var_weight_type,
