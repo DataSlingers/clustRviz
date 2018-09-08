@@ -13,6 +13,21 @@
 #'                correspond to more verbose output while running.
 #' @param control A list containing advanced parameters for the \code{CBASS} algorithm,
 #'                typically created by \code{\link{cbass.control}}.
+#' @param obs_weights One of the following: \itemize{
+#'                    \item A function which, when called with argument \code{X},
+#'                          returns a n-by-n matrix of fusion weights.
+#'                    \item A matrix of size n-by-ncontaining fusion weights
+#'                    }
+#'                    Note that the weights will be renormalized to sum to
+#'                    \eqn{1/\sqrt{n}} internally.
+#' @param var_weights One of the following: \itemize{
+#'                    \item A function which, when called with argument \code{t(X)},
+#'                          returns a p-by-p matrix of fusion weights. (Note the
+#'                          transpose.)
+#'                    \item A matrix of size p-by-p containing fusion weights
+#'                    }
+#'                    Note that the weights will be renormalized to sum to
+#'                    \eqn{1/\sqrt{p}} internally.
 #' @param ... Additional arguments used to control the behavior of \code{CBASS}; see
 #'            \code{\link{cbass.control}} for details.
 #' @return An object of class \code{CBASS} containing the following elements (among others):
@@ -23,18 +38,12 @@
 #'         \item \code{alg.type}: the \code{CBASS} variant used
 #'         \item \code{X.center.global}: a logical indicating whether \code{X}
 #'                                       was globally centered before clustering
-#'         \item \code{X.scale}: a logical indicating whether \code{X} was scaled
-#'                               column-wise before centering
+#'         \item \code{var_weight_type}: a record of the scheme used to create
+#'                                       fusion weights for the variables
+#'         \item \code{obs_weight_type}: a record of the scheme used to create
+#'                                       fusion weights for the observations
 #'         \item \code{burn.in}: an integer indicating the number of "burn-in"
 #'                               iterations performed
-#'         \item \code{k.obs}: the number of neighbors used to create sparse
-#'                             clustering weights for the observations
-#'         \item \code{k.var}: the number of neighbors used to create sparse
-#'                             clustering weights for the variables
-#'         \item \code{phi.obs}: the scale factor of the RBF kernel used to calculate
-#'                               clustering weights for the observations
-#'         \item \code{phi.var}: the scale factor of the RBF kernel used to calculate
-#'                               clustering weights for the variables
 #'         \item \code{carp.dend.obs}: a dendrogram (object of class
 #'                                     \code{\link[stats]{hclust}}) containing
 #'                                     the clustering solution path for the observations
@@ -58,6 +67,14 @@
 #' }
 CBASS <- function(X,
                   verbose = 1L,
+                  var_weights = sparse_gaussian_kernel_weights(k = "auto",
+                                                               phi = "auto",
+                                                               dist.method = "euclidean",
+                                                               p = 2),
+                  obs_weights = sparse_gaussian_kernel_weights(k = "auto",
+                                                               phi = "auto",
+                                                               dist.method = "euclidean",
+                                                               p = 2),
                   ...,
                   control = NULL) {
 
@@ -104,16 +121,7 @@ CBASS <- function(X,
   obs.labels <- internal.control$obs.labels
   var.labels <- internal.control$var.labels
   X.center.global <- internal.control$X.center.global
-  k.obs <- internal.control$k.obs
-  k.var <- internal.control$k.var
-  phi <- internal.control$phi
   rho <- internal.control$rho
-  weights.obs <- internal.control$weights.obs
-  weights.var <- internal.control$weights.var
-  obs.weight.dist <- internal.control$obs.weight.dist
-  var.weight.dist <- internal.control$var.weight.dist
-  obs.weight.dist.p <- internal.control$obs.weight.dist.p
-  var.weight.dist.p <- internal.control$var.weight.dist.p
   max.iter <- internal.control$max.iter
   burn.in <- internal.control$burn.in
   alg.type <- internal.control$alg.type
@@ -147,83 +155,101 @@ CBASS <- function(X,
       stop("var.labels should be length NCOL(X)")
     }
   }
-  if (!is.null(phi)) {
-    if (phi <= 0) {
-      stop("phi should be positive.")
-    }
-  }
-
 
   # center and scale
   colnames(X) <- var.labels
   rownames(X) <- obs.labels
   X.orig <- X
+
   if (X.center.global) {
     X <- X - mean(X)
-    X <- t(X)
-  } else {
-    X <- t(X)
   }
 
-  if (!is.null(weights.var)) {
-    if (length(weights.var) == choose(p.var, 2)) {
-      weights.row <- weights.var
+  ## Transform to a form suitable for down-stream computation
+  X <- t(X) ## TODO: Ask JN why we keep this. (It matches the convention in Chi, Allen, Baraniuk)
+
+  # Calculate variable/feature (row)-clustering weights
+  if (is.function(var_weights)) { # Usual case, `var_weights` is a function which calculates the weight matrix
+    var_weight_result <- var_weights(X)
+
+    if (is.matrix(var_weight_result)) {
+      var_weight_matrix <- var_weight_result
+      var_weight_type   <- UserFunction()
     } else {
-      stop("weights.var should be length choose(NCOL(X),2)")
+      var_weight_matrix <- var_weight_result$weight_mat
+      var_weight_type   <- var_weight_result$type
     }
+  } else if (is.matrix(var_weights)) {
+
+    if (!is_square(var_weights)) {
+      stop(sQuote("var_weights"), " must be a square matrix.")
+    }
+
+    if (NROW(var_weights) != NROW(X)) {
+      stop(sQuote("NROW(var_weights)"), " must be equal to ", sQuote("NROW(X)."))
+    }
+
+    var_weight_matrix <- var_weights
+    var_weight_type   <- UserMatrix()
   } else {
-    if (is.null(phi)) {
-      phi.vec <- 10^(-10:10)
-      sapply(phi.vec, function(phi) {
-        stats::var(DenseWeights(X = X, phi = phi, method = var.weight.dist, p = var.weight.dist.p))
-      }) %>%
-        which.max() %>%
-        phi.vec[.] -> phi
-    }
-    phi.row <- phi / n.obs
-    weights.row <- DenseWeights(X = X, phi = phi.row, method = var.weight.dist, p = var.weight.dist.p)
-    if (is.null(k.var)) {
-      k.row <- MinKNN(X = X, dense.weights = weights.row)
-    } else {
-      k.row <- k.var
-    }
-    weights.row <- SparseWeights(X = X, dense.weights = weights.row, k = k.row)
+    stop(sQuote("CARP"), " does not know how to handle ", sQuote("var_weights"),
+         " of class ", class(var_weights)[1], ".")
   }
-  weights.row <- weights.row / sum(weights.row)
-  weights.row <- weights.row / sqrt(n.obs)
+
+  # Calculate observation (column)-clustering weights
+  if (is.function(obs_weights)) { # Usual case, `obs_weights` is a function which calculates the weight matrix
+    obs_weight_result <- obs_weights(t(X))
+
+    if (is.matrix(obs_weight_result)) {
+      obs_weight_matrix <- obs_weight_result
+      obs_weight_type   <- UserFunction()
+    } else {
+      obs_weight_matrix <- obs_weight_result$weight_mat
+      obs_weight_type   <- obs_weight_result$type
+    }
+  } else if (is.matrix(obs_weights)) {
+
+    if (!is_square(obs_weights)) {
+      stop(sQuote("obs_weights"), " must be a square matrix.")
+    }
+
+    if (NROW(obs_weights) != NCOL(X)) {
+      stop(sQuote("NROW(obs_weights)"), " must be equal to ", sQuote("NCOL(X)."))
+    }
+
+    obs_weight_matrix <- obs_weights
+    obs_weight_type   <- UserMatrix()
+  } else {
+    stop(sQuote("CARP"), " does not know how to handle ", sQuote("obs_weights"),
+         " of class ", class(obs_weights)[1], ".")
+  }
+
+  ## NB: We are following Chi, Allen, and Baraniuk so "row" here refers to
+  ##     features (variables) instead of the more typical observations
+  ##     and vice versa for columns
+  row_weights <- weight_mat_to_vec(var_weight_matrix)
+  col_weights <- weight_mat_to_vec(obs_weight_matrix)
+
+  ## Rescale to ensure coordinated fusions
+  ##
+  ## It is important that the observation (col) weights sum to 1/sqrt(p)
+  ## and the feature/variable (row) weights sum to 1/sqrt(n).
+  row_weights <- row_weights / (sum(row_weights) * sqrt(n.obs))
+  col_weights <- col_weights / (sum(col_weights) * sqrt(p.var))
 
   PreCompList.row <- suppressMessages(
     ConvexClusteringPreCompute(
       X = t(X),
-      weights = weights.row,
+      weights = row_weights,
       rho = rho
     )
   )
   cardE.row <- NROW(PreCompList.row$E)
 
-  if (!is.null(weights.obs)) {
-    if (length(weights.obs) == choose(n.obs, 2)) {
-      weights.cols <- weights.obs
-    } else {
-      stop("weights.obs should have length choose(NROW(X),2)")
-    }
-  } else {
-    phi.col <- phi / p.var
-    weights.col <- DenseWeights(X = t(X), phi = phi.col, method = obs.weight.dist, p = obs.weight.dist.p)
-    if (is.null(k.obs)) {
-      k.col <- MinKNN(X = t(X), dense.weights = weights.col)
-    } else {
-      k.col <- k.obs
-    }
-    weights.col <- SparseWeights(X = t(X), dense.weights = weights.col, k = k.col)
-  }
-  weights.col <- weights.col / sum(weights.col)
-  weights.col <- weights.col / sqrt(p.var)
-
   PreCompList.col <- suppressMessages(
     ConvexClusteringPreCompute(
       X = X,
-      weights = weights.col,
+      weights = col_weights,
       rho = rho
     )
   )
@@ -236,8 +262,8 @@ CBASS <- function(X,
                                     n = as.integer(n.obs),
                                     p = as.integer(p.var),
                                     lambda_init = 1e-6,
-                                    weights_row = weights.row[weights.row != 0],
-                                    weights_col = weights.col[weights.col != 0],
+                                    weights_row = row_weights[row_weights != 0],
+                                    weights_col = col_weights[col_weights != 0],
                                     uinit_row = as.matrix(PreCompList.row$uinit),
                                     uinit_col = as.matrix(PreCompList.col$uinit),
                                     vinit_row = as.matrix(PreCompList.row$vinit),
@@ -264,8 +290,8 @@ CBASS <- function(X,
                                 p = as.integer(p.var),
                                 lambda_init = 1e-6,
                                 t = t,
-                                weights_row = weights.row[weights.row != 0],
-                                weights_col = weights.col[weights.col != 0],
+                                weights_row = row_weights[row_weights != 0],
+                                weights_col = col_weights[col_weights != 0],
                                 uinit_row = as.matrix(PreCompList.row$uinit),
                                 uinit_col = as.matrix(PreCompList.col$uinit),
                                 vinit_row = as.matrix(PreCompList.row$vinit),
@@ -300,7 +326,7 @@ CBASS <- function(X,
     v.path = bicarp.sol.path$v.row.path,
     u.path = bicarp.sol.path$u.path,
     lambda.path = bicarp.sol.path$lambda.path,
-    cardE = sum(weights.row != 0)
+    cardE = sum(row_weights != 0)
   ) -> bicarp.cluster.path.row
 
   clust.path.row <- get_cluster_assignments(PreCompList.row$E, bicarp.cluster.path.row$sp.path.inter, p.var)
@@ -316,7 +342,7 @@ CBASS <- function(X,
     v.path = bicarp.sol.path$v.col.path,
     u.path = bicarp.sol.path$u.path,
     lambda.path = bicarp.sol.path$lambda.path,
-    cardE = sum(weights.col != 0)
+    cardE = sum(col_weights != 0)
   ) -> bicarp.cluster.path.col
 
   clust.path.col <- get_cluster_assignments(PreCompList.col$E, bicarp.cluster.path.col$sp.path.inter, n.obs)
@@ -336,10 +362,8 @@ CBASS <- function(X,
     cbass.dend.obs = bicarp.dend.col,
     n.obs = n.obs,
     p.var = p.var,
-    phi.var = phi.row,
-    phi.obs = phi.col,
-    k.obs = k.col,
-    k.var = k.row,
+    var_weight_type = var_weight_type,
+    obs_weight_type = obs_weight_type,
     burn.in = burn.in,
     alg.type = alg.type,
     t = t,
@@ -368,22 +392,6 @@ CBASS <- function(X,
 #'                        \emph{I.e.}, should the global mean of \code{X} be subtracted?
 #' @param rho For advanced users only (not advisable to change): the penalty
 #'            parameter used for the augmented Lagrangian.
-#' @param phi A positive real number: the scale factor used in the RBF kernel
-
-#' @param weights.obs A vector of positive number of length \code{choose(n,2)}.
-#' @param k.obs An positive integer: the number of neighbors used to create sparse weights
-#' @param obs.weight.dist A string indicating the distance metric used to calculate weights.
-#'                        See \code{\link[stats]{dist}} for details.
-#' @param obs.weight.dist.p The exponent used to calculate the Minkowski distance if
-#'                          \code{weight.dist = "minkowski"}.
-#'                          See \code{\link[stats]{dist}} for details.
-#' @param weights.var A vector of positive number of length \code{choose(n,2)}.
-#' @param k.var An positive integer: the number of neighbors used to create sparse weights
-#' @param var.weight.dist A string indicating the distance metric used to calculate weights.
-#'                        See \code{\link[stats]{dist}} for details.
-#' @param var.weight.dist.p The exponent used to calculate the Minkowski distance if
-#'                          \code{weight.dist = "minkowski"}.
-#'                          See \code{\link[stats]{dist}} for details.
 #' @param max.iter An integer: the maximum number of CARP iterations.
 #' @param burn.in An integer: the number of initial iterations at a fixed
 #'                (small) value of \eqn{\lambda}
@@ -405,15 +413,6 @@ cbass.control <- function(obs.labels = NULL,
                           var.labels = NULL,
                           X.center.global = TRUE,
                           rho = 1,
-                          phi = NULL,
-                          weights.obs = NULL,
-                          weights.var = NULL,
-                          obs.weight.dist = "euclidean",
-                          obs.weight.dist.p = 2,
-                          var.weight.dist = "euclidean",
-                          var.weight.dist.p = 2,
-                          k.obs = NULL,
-                          k.var = NULL,
                           t = 1.01,
                           max.iter = as.integer(1e6),
                           burn.in = as.integer(50),
@@ -437,48 +436,6 @@ cbass.control <- function(obs.labels = NULL,
 
   if ((rho < 0) || is.na(rho) || (length(rho) != 1L)) {
     stop(sQuote("rho"), "must a be non-negative scalar.")
-  }
-
-  if (obs.weight.dist %not.in% SUPPORTED_DISTANCES) {
-    stop("Unsupported choice of ",
-         sQuote("obs.weight.dist;"),
-         " see the ", sQuote("method"),
-         " argument of ",
-         sQuote("stats::dist"),
-         " for supported distances.")
-  }
-
-  if ((obs.weight.dist.p <= 0) || (length(obs.weight.dist.p) != 1L)) {
-    stop(sQuote("obs.weight.dist.p"),
-         " must be a positive scalar; see the ", sQuote("p"),
-         " argument of ", sQuote("stats::dist"), " for details.")
-  }
-
-  if (var.weight.dist %not.in% SUPPORTED_DISTANCES) {
-    stop("Unsupported choice of ",
-         sQuote("var.weight.dist;"),
-         " see the ", sQuote("method"),
-         " argument of ",
-         sQuote("stats::dist"),
-         " for supported distances.")
-  }
-
-  if ((var.weight.dist.p <= 0) || (length(var.weight.dist.p) != 1L)) {
-    stop(sQuote("var.weight.dist.p"),
-         " must be a positive scalar; see the ", sQuote("p"),
-         " argument of ", sQuote("stats::dist"), " for details.")
-  }
-
-  if (!is.null(k.obs)) {
-    if (!is.integer(k.obs) || k.obs <= 0) {
-      stop("If not NULL, ", sQuote("k.obs"), " must be a positive integer.")
-    }
-  }
-
-  if (!is.null(k.var)) {
-    if (!is.integer(k.var) || k.obs <= 0) {
-      stop("If not NULL, ", sQuote("k.var"), " must be a positive integer.")
-    }
   }
 
   if (!is.null(npcs)) {
@@ -508,15 +465,6 @@ cbass.control <- function(obs.labels = NULL,
     var.labels = var.labels,
     X.center.global = X.center.global,
     rho = rho,
-    phi = phi,
-    weights.obs = weights.obs,
-    weights.var = weights.var,
-    obs.weight.dist = obs.weight.dist,
-    obs.weight.dist.p = obs.weight.dist.p,
-    var.weight.dist = var.weight.dist,
-    var.weight.dist.p = var.weight.dist.p,
-    k.obs = k.obs,
-    k.var = k.var,
     t = t,
     max.iter = max.iter,
     burn.in = burn.in,
@@ -555,13 +503,11 @@ print.CBASS <- function(x, ...) {
   cat("Pre-processing options:\n")
   cat(" - Global centering: ", x$X.center.global, "\n\n")
 
-  cat("Observation RBF Kernel Weights:\n") # TODO: Add descriptions of what these parameters represent
-  cat(" - phi = ", round(x$phi.obs, 3), "\n")
-  cat(" - K   = ", x$k.obs, "\n\n")
+  cat("Observation Weights:\n")
+  print(x$obs_weight_type)
 
-  cat("Variable RBF Kernel Weights:\n") # TODO: Add descriptions of what these parameters represent
-  cat(" - phi = ", round(x$phi.var, 3), "\n")
-  cat(" - K   = ", x$k.var, "\n\n")
+  cat("Feature Weights:\n")
+  print(x$var_weight_type)
 
   cat("Raw Data:\n")
   print(x$X[1:min(5, x$n.obs), 1:min(5, x$p.var)])
