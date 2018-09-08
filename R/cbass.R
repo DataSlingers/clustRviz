@@ -540,10 +540,10 @@ cbass.control <- function(obs.labels = NULL,
 #' print(cbass_fit)
 print.CBASS <- function(x, ...) {
   alg_string <- switch(x$alg.type,
-                       carp      = paste0("CBASS (t = ", round(x$t, 3), ")"),
-                       carpl1    = paste0("CBASS(t = ", round(x$t, 3), ") [L1]"),
-                       carlviz   = "CBASS-VIZ",
-                       carpvizl1 = "CBASS-VIZ [L1]")
+                       cbass      = paste0("CBASS (t = ", round(x$t, 3), ")"),
+                       cbassl1    = paste0("CBASS (t = ", round(x$t, 3), ") [L1]"),
+                       cbassviz   = "CBASS-VIZ",
+                       cbassvizl1 = "CBASS-VIZ [L1]")
 
   cat("CBASS Fit Summary\n")
   cat("====================\n\n")
