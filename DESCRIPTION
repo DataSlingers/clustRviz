@@ -31,7 +31,6 @@ Imports:
     stringr,
     zoo,
     animation,
-    FNN,
     igraph,
     dendextend,
     gtools,
