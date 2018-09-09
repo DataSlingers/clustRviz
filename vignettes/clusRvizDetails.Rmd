@@ -46,12 +46,12 @@ $$
 where $\vec X$ is an $p \times n$ input data matrix, consisting of $p$ measurements on $n$ subjects,
 $\lambda > 0$ a regularization parameter, and 
 $w_{l,m}>0$ a weight for each pair of observations; here $\| . \|_F$ and $\| . \|_2$ denote 
-the Frobenius norm and $l_2$ norm, respectively. 
+the Frobenius norm and $\ell_2$ norm, respectively. 
 
 Briefly, Convex Clustering seeks to find and estimate,$\hat{\vec{U}} \in \mathbb{R}^{p\times n}$, such 
 that it is faithful to the original data (Frobenius norm loss term) while 
 also encouraging fusions among observations 
-($l_2$ regularization between columns of $\vec U$, denoted $u_l$).
+($\ell_2$ regularization between columns of $\vec U$, denoted $u_l$).
 At small values of regularization, $\lambda \approx 0$, Convex Clustering 
 returns estimates similar to the original data with little or no fusion among 
 observations. As regularization increases, more fusions occur and Convex Clustering
@@ -135,8 +135,8 @@ may be set to `FALSE`; by default, `CARP` with center but not scale an inputted
 data matrix.
 
 Both `CARP` and `CBASS` (below) admit several options for computing the (bi)clustering 
-solution path. While we will encounter many options along the way, see the `carp.control` and `cbass.control` 
-functions for full details. 
+solution path. While we will encounter many options along the way, see the relevant
+documentation for full details. 
 
 Similarly, the `CBASS` function also requires that data preprocessed prior usage.
 Because `CBASS` clusters both observations and variables, here centering is done 
@@ -197,30 +197,28 @@ distance-based weights using a gaussian kernel with $\phi=.01$, and
 Finally, the summary also provides information about the algorithm, here 
 CARP-VIZ, as well as the available visualizations.
 
-While `CARP`'s default choices work well in most scenarios, customized inputs 
-can also be provided via the `control` arguement. For example, choices 
-regrarding preprocessing and weight computations discussed above can quickly be incorporated:
+While `CARP`'s default choices work well in most scenarios, the user can change
+almost all aspects of the algorithm. For example, if we wish to alter the default
+pre-processing and weight choices: 
+
 ```{r,eval=FALSE}
-CARP(
-  X=Xdat,
-  control = list(
-    X.center=TRUE,
-    X.scale=TRUE,
-    phi = 1e-5,
-    weight.dist = 'canberra',
-    k = 5
-  )
-) -> carp.fit.custom
+CARP(Xdat, 
+     X.center = TRUE, 
+     X.scale = TRUE, 
+     weights = sparse_rbf_kernel_weights(phi = 1e-5, 
+                                         dist.method = "canberra", 
+                                         k = 5))
 ```
-Indeed, in the case where strong apriori information concerning clusters is 
+
+Indeed, in the case where strong *a priori* information concerning clusters is 
 available, distance-based weight computations may be avoided altogether and 
-user-specified weights given directly via the `weights` in the control list;
-see `?carp.control` for details.
+user-specified weights given directly via the `weights` argument. See the 
+accompaning [weights vignette](ClustRVizWeights.html) for details. 
 
 `CBASS` solutions can be fit in a similar manner:
 
 ```{r}
-CBASS(X=Xdat) -> cbass.fit
+cbass.fit <- CBASS(X=Xdat)
 ```
 
 And display its output:
@@ -242,15 +240,8 @@ In the example below we again fit the presidental speech dataset using the
 `carp` algorithim with step size $t=1.1$
 
 ```{r}
-CARP(
-  X=Xdat,
-  control=
-    list(
-      alg.type='carp',
-      t=1.1
-    )
-) -> carp.fit.t
-carp.fit.t
+carp_fit_fixed_t <- CARP(Xdat, alg.type = "carp", t = 1.1)
+carp_fit_fixed_t
 ```
 
 `CBASS` also allows for the use of pure Algorithmic Regularization 
@@ -258,11 +249,11 @@ based approaches in a similar manner. Passing `alg.type=cbass` along
 with an associated $t$ value, will produce much faster computations for 
 larger datasets.
 
-By default both `CARP` and `CBASS` perform $l_2$ regularization between 
-observation pairs to encourage fusions, and hence cluster formation. $l_1$
-regularization may also be used again by passing the algorithm string 
-to the control arguement; see `alg.type` in `?carp.control` and `?cbass.control`
-for details.
+By default both `CARP` and `CBASS` perform $\ell_2$ regularization between 
+observation pairs to encourage fusions, and hence cluster formation. If $\ell_1$
+regularization is preferred for whatever reason, the `alg.type` argument to 
+`CARP` can also be `carpvizl1`, for a back-tracking $\ell_1$ algorithm, or 
+`carpl1` for a fixed-step-size $\ell_1$ algorithm. 
 
 # Solutions
 

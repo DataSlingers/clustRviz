@@ -72,19 +72,15 @@ Clustering is done via a simple call to the `CARP` function below.
 
 ```{r}
 library(clustRviz)
-carp.fit <- CARP(
-  Xdat,
-  control=list(
-    obs.labels = petrol$No,
-    X.scale=TRUE)
-)
+carp.fit <- CARP(Xdat, labels = petrol$No, X.scale = TRUE)
 ```
 
 Here we specify the sample number (`No`) as the labels for our observations.
-This is done by providing `obs.labels` to the `control` argument. 
-While not necessary, providing labels adds clarity to many visualizations. 
+This is done by providing the `labels`. If no `labels` were provided, `CARP` would
+attempt to use the rownames of the data matrix, and if no rownames were found, would
+automatically generate names. 
 Additionally, since our variables are measured on different scales, we 
-set the `X.scale` option to `TRUE` as well; see `?carp.control` for additional 
+set the `X.scale` option to `TRUE` as well; see `?carp` for additional 
 fitting options as well as examples in the 
 [clustRviz Details Vignette](clustRvizDetails.html)
 
@@ -187,11 +183,7 @@ biclustering solutions, and its usage is similar to `CARP`.
 We fit the biclustering solution path as follows:
 
 ```{r}
-CBASS(
-  X=Xdat,
-  control=list(
-    obs.labels = petrol$No
-  )) -> cbass.fit
+cbass.fit <- CBASS(X=Xdat, obs_labels = petrol$No)
 ```
 
 Once fitted, vizualizations are displayed again via the `plot` function. 
