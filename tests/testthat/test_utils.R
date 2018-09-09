@@ -36,8 +36,8 @@ test_that("Validators work", {
   expect_false(is_integer_scalar("a"))
 
   is_square <- clustRviz:::is_square
-  expect_true(matrix(1, 5, 5))
-  expect_false(matrix(1, 5, 3))
+  expect_true(is_square(matrix(1, 5, 5)))
+  expect_false(is_square(matrix(1, 5, 3)))
 })
 
 test_that("Capitalization works", {

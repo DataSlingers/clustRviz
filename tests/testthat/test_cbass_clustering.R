@@ -11,8 +11,8 @@ test_that("Works with user `k.obs`", {
   expect_error(clustering(cbass_fit, k.obs = 0))
   expect_error(clustering(cbass_fit, k.obs = NROW(presidential_speech) + 1))
 
-  expect_equal(length(clustering_result$cluster.assignment.obs, NROW(presidential_speech)))
-  expect_equal(length(clustering_result$cluster.assignment.var, NCOL(presidential_speech)))
+  expect_equal(length(clustering_result$clustering.assignment.obs), NROW(presidential_speech))
+  expect_equal(length(clustering_result$clustering.assignment.var), NCOL(presidential_speech))
 })
 
 test_that("Works with user `k.var`", {
@@ -26,8 +26,8 @@ test_that("Works with user `k.var`", {
   expect_error(clustering(cbass_fit, k.var = 0))
   expect_error(clustering(cbass_fit, k.var = NCOL(presidential_speech) + 1))
 
-  expect_equal(length(clustering_result$cluster.assignment.obs, NROW(presidential_speech)))
-  expect_equal(length(clustering_result$cluster.assignment.var, NCOL(presidential_speech)))
+  expect_equal(length(clustering_result$clustering.assignment.obs), NROW(presidential_speech))
+  expect_equal(length(clustering_result$clustering.assignment.var), NCOL(presidential_speech))
 })
 
 test_that("Works with user `percent`", {

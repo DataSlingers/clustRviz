@@ -7,11 +7,11 @@ test_that("No additional arguments gives the whole path", {
 
   ## The number of unique elements in clustering.assignment should increase uniformly
   expect_equal(apply(clustering_result$clustering.assignment, 1, num_unique),
-               1:NCOL(presidential_speech))
+               1:NROW(presidential_speech))
 
   ## The number of unique means in cluster.means should increase uniformly
   expect_equal(vapply(clustering_result$cluster.means, NCOL, integer(1)),
-               1:NCOL(presidential_speech))
+               1:NROW(presidential_speech))
 })
 
 test_that("Works with user `k`", {
@@ -23,10 +23,14 @@ test_that("Works with user `k`", {
   expect_equal(NCOL(clustering_result$cluster.means), 5)
 
   clustering_result <- clustering(carp_fit, k = NROW(presidential_speech))
-  expect_equal(clustering_results$cluster.means, presidential_speech)
+  expect_equal(clustering_result$cluster.means,
+               t(presidential_speech),
+               check.attributes=FALSE)
 
   clustering_result <- clustering(carp_fit, k = 1)
-  expect_equal(clustering_results$cluster.means, matrix(colMeans(presidential_speech)))
+  expect_equal(clustering_result$cluster.means,
+               matrix(colMeans(presidential_speech)),
+               check.attributes=FALSE)
 
   expect_error(clustering(carp_fit, k = 0))
   expect_error(clustering(carp_fit, k = NROW(presidential_speech) + 1))
@@ -41,10 +45,14 @@ test_that("Works with user `percent`", {
   expect_equal(NCOL(clustering_result$cluster.means), n_clusters)
 
   clustering_result <- clustering(carp_fit, percent = 0)
-  expect_equal(clustering_result$cluster.means, presidential_speech)
+  expect_equal(clustering_result$cluster.means,
+               t(presidential_speech),
+               check.attributes=FALSE)
 
   clustering_result <- clustering(carp_fit, percent = 1)
-  expect_equal(clustering_result$cluster.means, matrix(colMeans(presidential_speech)))
+  expect_equal(clustering_result$cluster.means,
+               matrix(colMeans(presidential_speech)),
+               check.attributes=FALSE)
 
   expect_error(clustering(carp_fit, percent = +1.2))
   expect_error(clustering(carp_fit, percent = -0.2))
