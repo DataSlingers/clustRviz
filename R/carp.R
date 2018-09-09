@@ -197,6 +197,14 @@ CARP <- function(X,
          " of class ", class(weights)[1], ".")
   }
 
+  if (any(weight_matrix < 0) || anyNA(weight_matrix)) {
+    stop("All fusion weights must be positive or zero.")
+  }
+
+  if (!is_connected_adj_mat(weight_matrix != 0)) {
+    stop("Weights do not imply a connected graph. Clustering will not succeed.")
+  }
+
   ## Transform to a form suitable for down-stream computation
   X <- t(X) ## TODO: Ask JN why we did this
   weight_vec <- weight_mat_to_vec(weight_matrix)

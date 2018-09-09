@@ -196,6 +196,14 @@ CBASS <- function(X,
          " of class ", class(var_weights)[1], ".")
   }
 
+  if (any(var_weight_matrix < 0) || anyNA(var_weight_matrix)) {
+    stop("All fusion weights for variables must be positive or zero.")
+  }
+
+  if (!is_connected_adj_mat(var_weight_matrix != 0)) {
+    stop("Weights for variables do not imply a connected graph. Biclustering will not succeed.")
+  }
+
   # Calculate observation (column)-clustering weights
   if (is.function(obs_weights)) { # Usual case, `obs_weights` is a function which calculates the weight matrix
     obs_weight_result <- obs_weights(t(X))
@@ -222,6 +230,14 @@ CBASS <- function(X,
   } else {
     stop(sQuote("CBASS"), " does not know how to handle ", sQuote("obs_weights"),
          " of class ", class(obs_weights)[1], ".")
+  }
+
+  if (any(obs_weight_matrix < 0) || anyNA(obs_weight_matrix)) {
+    stop("All fusion weights for observations must be positive or zero.")
+  }
+
+  if (!is_connected_adj_mat(obs_weight_matrix != 0)) {
+    stop("Weights for observations do not imply a connected graph. Clustering will not succeed.")
   }
 
   ## NB: We are following Chi, Allen, and Baraniuk so "row" here refers to
