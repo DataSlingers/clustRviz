@@ -2,7 +2,7 @@
 title: "clustRviz Details"
 author: "John Nagorski"
 date: "`r Sys.Date()`"
-bibliography: vignette.bib
+bibliography: vignettes.bib
 output: 
   rmarkdown::html_vignette:
     css: style.css
@@ -31,12 +31,10 @@ vignettee we provide a quick start guide for basic usage, fitting,
 and plotting. In this vignette, we build on the basics and provide a more 
 detailed explanation for the variety of options available in `clustRviz`.
 
-
-
 # Background
 
 The starting point for CARP is the Convex Clustering 
-[@hocking2011clusterpath;@chi2015splitting;@tan2015statistical] problem :
+[@Hocking:2011; @Chi:2015; @Tan:2015] problem :
 
 $$
 \underset{\vec U}{\textrm{minimize}} \;\;
@@ -65,13 +63,13 @@ observations belonging to the same cluster.
 When fitting for multiple values of $\lambda$ Convex Clustering results
 in a continious solution path of clustering solutions.
 One solution method for the problem above is via the alternatving 
-direction method of multipliers (ADMM) [@boyd2011distributed].
-For a given $\lambda$, Convex Clustering can be solved by iteratively applying ADMM updates until convergence [@chi2015splitting].
+direction method of multipliers (ADMM) [@Boyd:2011].
+For a given $\lambda$, Convex Clustering can be solved by iteratively applying ADMM updates until convergence [@Chi:2015].
 However in order to obtain a full path of clustering solutions, this method 
 must be employed for multiple $\lambda_k$ which is computationally expensive.
 
 To address the computational burden of Convex Clustering,
-we utilize the framework of Algorithmic Regularization Paths [@hu2016admm]
+we utilize the framework of Algorithmic Regularization Paths [@Hu:2016]
 to develop efficient methods for approximating the Convex 
 Clustering and Biclustering solution paths: Convex Clustering via 
 Algorithmic Regularization Paths (CARP) and Convex Biclustering via 
@@ -87,8 +85,6 @@ for the true solution path.
 Remarkably, this approximation not only works well empirically, but
 can be shown theoretically to well approximate the true Convex 
 Clustering solution path.
-
-
 
 # Preprocessing and Inputs
 
@@ -116,8 +112,6 @@ Xdat[1:5,1:5]
 head(obs.labels)
 head(var.labels)
 ```
-
-
 
 ## Preprocessing 
 
@@ -169,7 +163,6 @@ as described above.
 For the purpose of visualuization, `CARP` addresses the problem 
 of high dimenstionality by visualizing the principal components 
 of the data by default.
-
 
 ## Weights
 
@@ -307,16 +300,16 @@ cluster, given large enough regularization.
 Below we consider the extreme case of $k=1$, which while computationally fast 
 presents an immediate difficulty.
 
-
-Examining the graph above, we note that the number of connected components is strictly greater than one.
-As such, regardless of the number of `CARP` iteratations (and the associated regularization increases) it will 
-not be possible fuse all observations into a single cluster.
-Such extreme weight choices should typically be avoided as they not only hinder the agglomorative nature of `CARP` and `CBASS`, but also lead to biased and less interpretable solution paths. 
+Examining the graph above, we note that the number of connected components is
+strictly greater than one. As such, regardless of the number of `CARP`
+iteratations (and the associated regularization increases) it will not be
+possible fuse all observations into a single cluster. Such extreme weight choices
+should typically be avoided as they not only hinder the agglomorative nature of
+`CARP` and `CBASS`, but also lead to biased and less interpretable solution paths. 
 
 At the other extreme, large values of $k$ again result in long computation time and 
 bring little to no improvement on the resulting solution sequence; an example of 
 such an overly dense graph can be seen below.
-
 
 In order to provide a reasonable choice regarding weight sparsity, the function `MinKNN` may be used to 
 find a balance between computational efficiency and poor clustering performance. 
@@ -391,7 +384,6 @@ available, distance-based weight computations may be avoided altogether and
 user-specified weights given directly via the `weights` in the control list;
 see `?carp.control` for details.
 
-
 `CBASS` solutions can be fit in a similar manner:
 
 ```{r}
@@ -459,8 +451,6 @@ weights.
 table(carp.clustering$clustering.assignment)
 ```
 
-
-
 Additionally, we can extract the cluster means associated with $k=2$ solution. The object `cluster.means`
 below gives the CARP iterate $\vec U^{(k)}$ along the path. We note that the columns 
 of the respective clusters have fused together as desired.
@@ -485,6 +475,7 @@ the observation and variable clustering assignments, as well as
 the matrix of cluster means.
 In the example below we extract the biclustering solution
 at the level of $85$\% regularization.
+
 ```{r,eval=TRUE}
 cbass.clustering <- clustering(cbass.fit,percent = .85)
 # observation clusters
@@ -494,9 +485,6 @@ table(cbass.clustering$clustering.assignment.var)
 # mean matrix
 cbass.clustering$cluster.mean.matrix[1:5,1:5]
 ```
-
-
-
 
 # Visualizations
 
@@ -596,8 +584,6 @@ saveviz(
 )
 ```
 
-
-
 Dynamic visualizations can also be saved for viewing outside of Shiny applications.
 In the case of dynamic visuals, `saveviz` will output a `.gif` demonstrating 
 cluster formation.
@@ -610,7 +596,6 @@ saveviz(
   image.type = 'dynamic'
 )
 ```
-
 
 `saveviz` may be used for CBASS objects as well, outputing dendrograms 
 for observation or variables, as well as heatmaps. In the example 
@@ -626,17 +611,13 @@ saveviz(
 
 ```
 
-
 # Discussion
-
 
 `clustRviz` provides a integrated framework for fitting and visualizing 
 the CARP and CBASS solution paths. 
 `clustRviz` delivers fast computation relative to traditional Convex Clustering 
 solution techniques, and brings traditional and modern clustering 
 visualization techniques together in a unified framework.
-
-
 
 # References
 

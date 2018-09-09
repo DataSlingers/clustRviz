@@ -32,7 +32,6 @@ While many details and customizations are discussed in the
 for now we show how to quickly fit, visualize, and 
 save in `clustRviz`. 
 
-
 # A Clustering Example
 
 `clustRviz` may be used for clustering together observations based on 
@@ -44,7 +43,6 @@ The resulting algorithm, Convex Clustering via Algorithmic Regularization Paths
 be visualized and interactively explored.
 
 For our first example we use the `petrol` data set from the `MASS` package.
-
 
 ```{r, headdat}
 # optionally install MASS package
@@ -68,8 +66,6 @@ Xdat <- as.matrix(petrol[,c('SG','VP','V10','EP')])
 head(Xdat)
 ```
 
-
-
 ### Fitting with CARP
 
 Clustering is done via a simple call to the `CARP` function below.
@@ -91,7 +87,6 @@ Additionally, since our variables are measured on different scales, we
 set the `X.scale` option to `TRUE` as well; see `?carp.control` for additional 
 fitting options as well as examples in the 
 [clustRviz Details Vignette](clustRvizDetails.html)
-
 
 Once fitted, a brief description of the fit and parameter choices 
 may be shown
@@ -160,12 +155,10 @@ ggplot(
 ) + geom_boxplot()
 ```
 
-
 After exploring visualizations and cluster solutions interactively, 
 the visualization results can easily be exported via the `saveviz`
 function. For example, saving the cluster solution path plotted 
 above may be done as follows:
-
 
 ```{r,eval=FALSE}
 saveviz(
@@ -182,8 +175,6 @@ also be specified instead of `percent`.
 Interactive visualization may be saved as `.gif` files by 
 specifiying `image.type='dynamic'`; see `?saveviz.CARP` for 
 details.
-
-
 
 # A Biclustering Example
 
@@ -256,7 +247,6 @@ table(cbass.clusters$clustering.assignment.var)
 cbass.clusters$cluster.mean.matrix[1:5,]
 ```
 
-
 Finally we demonstrate how to save the visualizations 
 produced by `CBASS`. Similar to `CARP` visualizations 
 can be saved via the `saveviz` function which allows for saving 
@@ -283,5 +273,3 @@ saveviz(x=cbass.fit,
         k.obs = 4
 )
 ```
-
-
