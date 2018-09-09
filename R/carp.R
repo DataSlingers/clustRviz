@@ -11,10 +11,31 @@
 #'          will not be clustered).
 #' @param verbose Any of the values \code{0}, \code{1}, or \code{2}. Higher values
 #'                correspond to more verbose output while running.
-#' @param control A list containing advanced parameters for the \code{CARP} algorithm,
-#'                typically created by \code{\link{carp.control}}.
-#' @param ... Additional arguments used to control the behavior of \code{CARP}; see
-#'            \code{\link{carp.control}} for details.
+#' @param labels A character vector of length \eqn{n}: observations (row) labels
+#' @param X.center A logical: Should \code{X} be centered columnwise?
+#' @param X.scale A logical: Should \code{X} be scaled columnwise?
+#' @param rho For advanced users only (not advisable to change): the penalty
+#'            parameter used for the augmented Lagrangian.
+#' @param max.iter An integer: the maximum number of \code{CARP} iterations.
+#' @param burn.in An integer: the number of initial iterations at a fixed
+#'                (small) value of \eqn{\lambda}
+#' @param alg.type Which \code{CARP} variant to use. Allowed values are \itemize{
+#'        \item \code{"carp"} - The standard \code{CARP} algorithm with \eqn{L2} penalty;
+#'        \item \code{"carpviz"} - The back-tracking \code{CARP} algorithm with \eqn{L2} penalty;
+#'        \item \code{"carpl1"} - The standard \code{CARP} algorithm with \eqn{L1} penalty; and
+#'        \item \code{"carpvizl1"} - The back-tracking \code{CARP} algorithm with \eqn{L1} penalty.}
+#' @param t A number greater than 1: the size of the multiplicative update to
+#'          the cluster fusion regularization parameter (not used by
+#'          back-tracking variants). Typically on the scale of \code{1.005} to \code{1.1}.
+#' @param npcs An integer >= 2. The number of principal components to compute
+#'             for path visualization.
+#' @param dendrogram.scale A character string denoting how the scale of dendrogram
+#'                         regularization proportions should be visualized.
+#'                         Choices are \code{'original'} or \code{'log'}; if not
+#'                         provided, a data-driven heuristic choice is used.
+#' @param ... Unused arguements. An error will be thrown if any unrecognized
+#'            arguments as given. All arguments other than \code{X} must be given
+#'            by name.
 #' @param weights One of the following: \itemize{
 #'                \item A function which, when called with argument \code{X},
 #'                      returns an b-by-n matrix of fusion weights.
@@ -42,7 +63,6 @@
 #' @importFrom utils data
 #' @importFrom dplyr %>% mutate group_by ungroup as_tibble n_distinct
 #' @importFrom stats var
-#' @importFrom utils modifyList
 #' @export
 #' @examples
 #' carp_fit <- CARP(presidential_speech[1:10,1:4])
@@ -55,7 +75,32 @@ CARP <- function(X,
                                                      phi = "auto",
                                                      dist.method = "euclidean",
                                                      p = 2),
-                 control = NULL) {
+                 labels = rownames(X),
+                 X.center = TRUE,
+                 X.scale = FALSE,
+                 rho = 1.0,
+                 max.iter = 1000000L,
+                 burn.in = 50L,
+                 alg.type = c("carpviz", "carpvizl1", "carp", "carpl1"),
+                 t = 1.05,
+                 npcs = min(4L, NCOL(X)),
+                 dendrogram.scale = NULL) {
+
+  ####################
+  ##
+  ## Input validation
+  ##
+  ####################
+
+  dots <- list(...)
+
+  if (length(dots) != 0L) {
+    if (!is.null(names(dots))) {
+      stop("Unknown argument ", sQuote(names(dots)[1L]), " passed to ", sQuote("CARP."))
+    } else {
+      stop("Unknown ", sQuote("..."), " arguments passed to ", sQuote("CARP."))
+    }
+  }
 
   if (!is.matrix(X)) {
     warning(sQuote("X"), " should be a matrix, not a " , class(X)[1],
@@ -67,9 +112,6 @@ CARP <- function(X,
     stop(sQuote("X"), " must be numeric.")
   }
 
-  n.obs <- NROW(X)
-  p.var <- NCOL(X)
-
   if (anyNA(X)) {
     stop(sQuote("CARP"), " cannot handle missing data.")
   }
@@ -77,6 +119,56 @@ CARP <- function(X,
   if (!all(is.finite(X))) {
     stop("All elements of ", sQuote("X"), " must be finite.")
   }
+
+  if (!is_logical_scalar(X.center)) {
+    stop(sQuote("X.center"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
+  }
+
+  if (!is_logical_scalar(X.scale)) {
+    stop(sQuote("X.scale"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
+  }
+
+  if ( (!is_numeric_scalar(rho)) || (rho <= 0)) {
+    stop(sQuote("rho"), "must be a positive scalar (vector of length 1).")
+  }
+
+  if ( (!is_integer_scalar(max.iter)) || (max.iter <= 1L) ) {
+    stop(sQuote("max.iter"), " must be a positive integer scalar and at least 2.")
+  }
+
+  if ( (!is_integer_scalar(burn.in)) || (burn.in <= 0L) || (burn.in >= max.iter) ) {
+    stop(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
+  }
+
+  alg.type <- match.arg(alg.type)
+
+  if ( (!is_numeric_scalar(t)) || (t <= 1) ) {
+    stop(sQuote("t"), " must be a scalar greater than 1.")
+  }
+
+  if (!is.null(dendrogram.scale)) {
+    if (dendrogram.scale %not.in% c("original", "log")) {
+      stop("If not NULL, ", sQuote("dendrogram.scale"), " must be either ", sQuote("original"), " or ", sQuote("log."))
+    }
+  }
+
+  if ( (!is_integer_scalar(npcs)) || (npcs < 2) || (npcs > NCOL(X)) ){
+    stop(sQuote("npcs"), " must be an integer scalar between 2 and ", sQuote("NCOL(X)."))
+  }
+
+  ## Get row (observation) labels
+  if (is.null(labels)) {
+    labels <- paste0("Obs", seq_len(NROW(X)))
+  }
+
+  if ( length(labels) != NROW(X) ){
+    stop(sQuote("labels"), " must be of length ", sQuote("NROW(X)."))
+  }
+
+  rownames(X) <- labels <- make.names(labels, unique = TRUE)
+
+  n.obs <- NROW(X)
+  p.var <- NCOL(X)
 
   Iter <- Cluster <- Lambda <- NULL
   if (is.logical(verbose)) {
@@ -91,76 +183,6 @@ CARP <- function(X,
   } else {
     verbose.basic <- FALSE
     verbose.deep <- FALSE
-  }
-
-  internal.control <- carp.control(...)
-  if (!is.null(control)) {
-    internal.control <- modifyList(internal.control, control)
-  }
-
-  obs.labels <- internal.control$obs.labels
-  var.labels <- internal.control$var.labels
-  X.center <- internal.control$X.center
-  X.scale <- internal.control$X.scale
-  rho <- internal.control$rho
-  max.iter <- internal.control$max.iter
-  burn.in <- internal.control$burn.in
-  alg.type <- internal.control$alg.type
-  t <- internal.control$t
-  npcs <- internal.control$npcs
-  dendrogram.scale <- internal.control$dendrogram.scale
-
-  # get labels
-  if (is.null(obs.labels)) {
-    if (!is.null(rownames(X))) {
-      n.labels <- rownames(X)
-    } else {
-      n.labels <- 1:NROW(X)
-    }
-  } else {
-    if (length(obs.labels) == n.obs) {
-      n.labels <- obs.labels
-    } else {
-      stop("obs.labels should hve length NROW(X)")
-    }
-  }
-
-  if (is.null(var.labels)) {
-    if (!is.null(colnames(X))) {
-      p.labels <- colnames(X)
-    } else {
-      p.labels <- 1:NCOL(X)
-    }
-  } else {
-    if (length(var.labels) == p.var) {
-      p.labels <- var.labels
-    } else {
-      stop("var.labels should be have length NCOL(X)")
-    }
-  }
-
-  if (is.null(npcs)) {
-    npcs <- min(4, p.var)
-    npcs <- as.integer(npcs)
-  } else {
-    npcs <- as.integer(npcs)
-    if (!is.integer(npcs) | npcs < 2) {
-      stop("npcs should be an integer greater than or equal to 2.")
-    }
-    if (npcs > p.var) {
-      stop("npcs should be less than or equal to NCOL(X)")
-    }
-  }
-
-  if (length(unique(p.labels) != length(p.labels))) {
-    colnames(X) <- make.names(p.labels, unique = TRUE)
-  } else {
-    colnames(X) <- p.labels
-  }
-  if (length(unique(n.labels)) != length(n.labels)) {
-    rownames(X) <- make.names(n.labels, unique = TRUE)
-  } else {
-    rownames(X) <- n.labels
   }
 
   # Center and scale X
@@ -282,7 +304,7 @@ CARP <- function(X,
   carp.cluster.path[["clust.path"]] <- clust.path
   carp.cluster.path[["clust.path.dups"]] <- clust.path.dups
 
-  carp.dend <- CreateDendrogram(carp.cluster.path, n.labels, dendrogram.scale)
+  carp.dend <- CreateDendrogram(carp.cluster.path, labels, dendrogram.scale)
 
   X.pca <- stats::prcomp(t(X), scale. = FALSE, center = FALSE)
   X.pca.rot <- X.pca$rotation[, 1:npcs]
@@ -295,7 +317,7 @@ CARP <- function(X,
                                      Obs  = rep(seq_len(n.obs), times = length(carp.cluster.path$clust.path)),
                                      Cluster = as.vector(vapply(carp.cluster.path$clust.path, function(x) x$membership, double(n.obs))),
                                      Lambda = rep(carp.cluster.path$lambda.path.inter, each = n.obs),
-                                     ObsLabel = rep(n.labels, times = length(carp.cluster.path$clust.path))) %>%
+                                     ObsLabel = rep(labels, times = length(carp.cluster.path$clust.path))) %>%
                               group_by(Iter) %>%
                               mutate(NCluster = n_distinct(Cluster)) %>%
                               ungroup() %>%
@@ -320,121 +342,6 @@ CARP <- function(X,
   class(carp.fit) <- "CARP"
 
   return(carp.fit)
-}
-
-#' Control for \code{CARP} fits
-#'
-#' Set \code{CARP} algorithm parameters
-#'
-#' This function constructs a list containing additional arguments to control
-#' the behavior of the \code{CARP} algorithm. It is typically only used internally
-#' by \code{\link{CARP}}, but may be useful to advanced users who wish to
-#' construct the \code{control} argument directly.
-#'
-#' Note that all arguments must be passed by name.
-#'
-#' @param obs.labels A character vector of length \eqn{n}: observations (row) labels
-#' @param var.labels A character vector of length \eqn{p}: variable (column) labels
-#' @param X.center A logical: Should \code{X} be centered columnwise?
-#' @param X.scale A logical: Should \code{X} be scaled columnwise?
-#' @param rho For advanced users only (not advisable to change): the penalty
-#'            parameter used for the augmented Lagrangian.
-#' @param max.iter An integer: the maximum number of CARP iterations.
-#' @param burn.in An integer: the number of initial iterations at a fixed
-#'                (small) value of \eqn{\lambda}
-#' @param alg.type Which \code{CARP} variant to use. Allowed values are \itemize{
-#'        \item \code{"carp"} - The standard \code{CARP} algorithm with \eqn{L2} penalty;
-#'        \item \code{"carpviz"} - The back-tracking \code{CARP} algorithm with \eqn{L2} penalty;
-#'        \item \code{"carpl1"} - The standard \code{CARP} algorithm with \eqn{L1} penalty; and
-#'        \item \code{"carpvizl1"} - The back-tracking \code{CARP} algorithm with \eqn{L1} penalty.}
-#' @param t A number greater than 1: the size of the multiplicative update to
-#'          the cluster fusion regularization parameter (not used by
-#'          back-tracking variants). Typically on the scale of \code{1.005} to \code{1.1}.
-#' @param npcs An integer >= 2. The number of principal components to compute
-#'             for path visualization.
-#' @param dendrogram.scale A character string denoting how the scale of dendrogram
-#' regularization proportions should be visualized. Choices are \code{'original'}
-#' or \code{'log'}; if not provided, a data-driven heuristic choice is used.
-#' @param ... Unused arguements. An error will be thrown if any unrecognized
-#'            arguments as given.
-#' @return A list containing the \code{CARP} algorithm parameters.
-#' @export
-carp.control <- function(...,
-                         obs.labels = NULL,
-                         var.labels = NULL,
-                         X.center = TRUE,
-                         X.scale = FALSE,
-                         rho = 1,
-                         max.iter = 1000000L,
-                         burn.in = 50L,
-                         alg.type = "carpviz",
-                         t = 1.05,
-                         npcs = NULL,
-                         dendrogram.scale = NULL) {
-
-  dots <- list(...)
-
-  if (length(dots) != 0L) {
-    if (!is.null(names(dots))) {
-      stop("Unknown argument ", sQuote(names(dots)[1L]), " passed to ", sQuote("CARP."))
-    } else {
-      stop("Unknown ", sQuote("..."), " arguments passed to ", sQuote("CARP."))
-    }
-  }
-
-  if (!is_logical_scalar(X.center)) {
-    stop(sQuote("X.center"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
-  }
-
-  if (!is_logical_scalar(X.scale)) {
-    stop(sQuote("X.scale"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
-  }
-
-  if ( (!is_numeric_scalar(rho)) || (rho <= 0)) {
-    stop(sQuote("rho"), "must be a positive scalar (vector of length 1).")
-  }
-
-  if (!is.null(npcs)) {
-    if (!is.integer(npcs) || npcs <= 1L) {
-      stop(sQuote("npcs"), " must be at least 2.")
-    }
-  }
-
-  if ( (!is_integer_scalar(max.iter)) || (max.iter <= 1L) ) {
-    stop(sQuote("max.iter"), " must be a positive integer scalar and at least 2.")
-  }
-
-  if ( (!is_integer_scalar(burn.in)) || (burn.in <= 0L) || (burn.in >= max.iter) ) {
-    stop(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
-  }
-
-  if (alg.type %not.in% c("carpviz", "carp", "carpl1", "carpvizl1")) {
-    stop("Unrecognized value of ", sQuote("alg.type;"), " see help for allowed values.")
-  }
-
-  if ( (!is_numeric_scalar(t)) || (t <= 1) ) {
-    stop(sQuote("t"), " must be a scalar greater than 1.")
-  }
-
-  if (!is.null(dendrogram.scale)) {
-    if (dendrogram.scale %not.in% c("original", "log")) {
-      stop("If not NULL, ", sQuote("dendrogram.scale"), " must be either ", sQuote("original"), " or ", sQuote("log."))
-    }
-  }
-
-  list(
-    obs.labels = obs.labels,
-    var.labels = var.labels,
-    X.center = X.center,
-    X.scale = X.scale,
-    rho = rho,
-    max.iter = max.iter,
-    burn.in = burn.in,
-    alg.type = alg.type,
-    t = t,
-    npcs = npcs,
-    dendrogram.scale = dendrogram.scale
-  )
 }
 
 #' Print \code{CARP} Results
