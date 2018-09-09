@@ -42,7 +42,5 @@ LinkingTo: Rcpp, RcppEigen
 Suggests: testthat,
     knitr,
     rmarkdown,
-    gridExtra,
-    tidyverse,
     MASS
 VignetteBuilder: knitr
