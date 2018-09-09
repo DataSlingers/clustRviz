@@ -74,7 +74,7 @@ print.RBFWeights <- function(x, indent = 2, ...){
 
   if (inherits(x, "SparseClusteringWeights")) {
     cat(" - Sparsified: ", x$k, " Nearest Neighbors [",
-        if (x$user_phi) "User-Supplied" else "Data-Driven", "]\n", sep = "")
+        if (x$user_k) "User-Supplied" else "Data-Driven", "]\n", sep = "")
   }
 
   cat("\n")
