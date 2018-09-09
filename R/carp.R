@@ -51,10 +51,10 @@
 CARP <- function(X,
                  ...,
                  verbose = 1L,
-                 weights = sparse_gaussian_kernel_weights(k = "auto",
-                                                          phi = "auto",
-                                                          dist.method = "euclidean",
-                                                          p = 2),
+                 weights = sparse_rbf_kernel_weights(k = "auto",
+                                                     phi = "auto",
+                                                     dist.method = "euclidean",
+                                                     p = 2),
                  control = NULL) {
 
   if (!is.matrix(X)) {

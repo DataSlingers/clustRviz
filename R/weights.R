@@ -147,7 +147,7 @@ make_sparse_weights_func <- function(weight_func){
   }
 }
 
-#' Construct clustering weights based on the Gaussian (RBF) kernel
+#' Construct Clustering Weights Based on the Radial Basis Function (Gaussian/Euclidean) Kernel
 #'
 #' This is a \emph{factory function} - it returns a \emph{function} which can be
 #' used to create a matrix of clustering weights. In particular, it returns a function
@@ -158,7 +158,7 @@ make_sparse_weights_func <- function(weight_func){
 #' \code{dist.method} and \code{p} arguments, which are passed to
 #' \code{\link[stats]{dist}}.
 #'
-#' The sparse weights (\code{sparse_gaussian_kernel_weights}) are calculated by
+#' The sparse weights (\code{sparse_rbf_kernel_weights}) are calculated by
 #' dropping all but the \code{k} largest weights for each row of the matrix
 #' (equivalent to taking the \code{k} nearest neighbors to each point). The
 #' weight matrix is symmetrized, so if \emph{a} is a neighbor of \emph{b}, but
@@ -179,25 +179,25 @@ make_sparse_weights_func <- function(weight_func){
 #' @importFrom stats dist var
 #' @return A function which, when called, returns a matrix of clustering weights.
 #' @examples
-#' weight_func <- dense_gaussian_kernel_weights()
+#' weight_func <- dense_rbf_kernel_weights()
 #' weight_func(presidential_speech)
 #'
-#' weight_func <- dense_gaussian_kernel_weights(phi=1, dist.method="canberra")
+#' weight_func <- dense_rbf_kernel_weights(phi=1, dist.method="canberra")
 #' weight_func(presidential_speech)
 #'
-#' weight_func <- sparse_gaussian_kernel_weights()
+#' weight_func <- sparse_rbf_kernel_weights()
 #' weight_func(presidential_speech)
 #' @export
 #' @name RBF Kernel Weights
 #' @rdname rbf_kernel_weights
-dense_gaussian_kernel_weights <- function(phi = "auto",
-                                          dist.method = c("euclidean",
-                                                          "maximum",
-                                                          "manhattan",
-                                                          "canberra",
-                                                          "binary",
-                                                          "minkowski"),
-                                          p = 2){
+dense_rbf_kernel_weights <- function(phi = "auto",
+                                     dist.method = c("euclidean",
+                                                     "maximum",
+                                                     "manhattan",
+                                                     "canberra",
+                                                     "binary",
+                                                     "minkowski"),
+                                     p = 2){
 
   tryCatch(dist.method <- match.arg(dist.method),
            error = function(e){
@@ -249,10 +249,10 @@ dense_gaussian_kernel_weights <- function(phi = "auto",
 
 #' @export
 #' @rdname rbf_kernel_weights
-#' @param ... Arguments passed through from \code{sparse_gaussian_kernel_weights} to
-#'            \code{dense_gaussian_kernel_weights}
+#' @param ... Arguments passed through from \code{sparse_rbf_kernel_weights} to
+#'            \code{dense_rbf_kernel_weights}
 #' @param k The number of neighbors to use
-sparse_gaussian_kernel_weights <- make_sparse_weights_func(dense_gaussian_kernel_weights)
+sparse_rbf_kernel_weights <- make_sparse_weights_func(dense_rbf_kernel_weights)
 
 #' Check if an adjacency matrix encodes a connected graph.
 #'
