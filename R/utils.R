@@ -1,5 +1,3 @@
-
-
 if (getRversion() >= "2.15.1") utils::globalVariables(c("."))
 
 #' Log transformed word count of presidential speeches
@@ -418,7 +416,7 @@ is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) 
 
 is_logical_scalar <- function(x) {is.logical(x) && (length(x) == 1L) && (!is.na(x))}
 is_numeric_scalar <- function(x) {is.numeric(x) && (length(x) == 1L) && (!is.na(x))}
-is_integer_scalar <- function(x) {is.wholenumber(x) && (length(x) == 1L) && (!is.na(x))}
+is_integer_scalar <- function(x) is_numeric_scalar(x) && is.wholenumber(x)
 
 is_square <- function(x) {is.matrix(x) && (NROW(x) == NCOL(x))}
 
