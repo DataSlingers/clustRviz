@@ -120,6 +120,10 @@ make_sparse_weights_func <- function(weight_func){
           } else {
             k <- k + 1
           }
+
+          if(k == NCOL(adjacency_matrix)){
+            stop("Cannot find ", sQuote("k"), " yielding fully connected graph.")
+          }
         }
       }
 
