@@ -49,12 +49,12 @@
 #' print(carp_fit)
 #' plot(carp_fit)
 CARP <- function(X,
+                 ...,
                  verbose = 1L,
                  weights = sparse_gaussian_kernel_weights(k = "auto",
                                                           phi = "auto",
                                                           dist.method = "euclidean",
                                                           p = 2),
-                 ...,
                  control = NULL) {
 
   if (!is.matrix(X)) {
@@ -323,6 +323,8 @@ CARP <- function(X,
 #' by \code{\link{CARP}}, but may be useful to advanced users who wish to
 #' construct the \code{control} argument directly.
 #'
+#' Note that all arguments must be passed by name.
+#'
 #' @param obs.labels A character vector of length \eqn{n}: observations (row) labels
 #' @param var.labels A character vector of length \eqn{p}: variable (column) labels
 #' @param X.center A logical: Should \code{X} be centered columnwise?
@@ -349,7 +351,8 @@ CARP <- function(X,
 #'            arguments as given.
 #' @return A list containing the \code{CARP} algorithm parameters.
 #' @export
-carp.control <- function(obs.labels = NULL,
+carp.control <- function(...,
+                         obs.labels = NULL,
                          var.labels = NULL,
                          X.center = TRUE,
                          X.scale = FALSE,
@@ -359,8 +362,7 @@ carp.control <- function(obs.labels = NULL,
                          alg.type = "carpviz",
                          t = 1.05,
                          npcs = NULL,
-                         dendrogram.scale = NULL,
-                         ...) {
+                         dendrogram.scale = NULL) {
 
   dots <- list(...)
 
@@ -372,16 +374,16 @@ carp.control <- function(obs.labels = NULL,
     }
   }
 
-  if (!is.logical(X.center) || is.na(X.center) || (length(X.center) != 1L)) {
+  if (!is_logical_scalar(X.center)) {
     stop(sQuote("X.center"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
   }
 
-  if (!is.logical(X.scale) || is.na(X.scale) || (length(X.scale) != 1L)) {
+  if (!is_logical_scalar(X.scale)) {
     stop(sQuote("X.scale"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
   }
 
-  if ((rho < 0) || is.na(rho) || (length(rho) != 1L)) {
-    stop(sQuote("rho"), "must a be non-negative scalar.")
+  if ( (!is_numeric_scalar(rho)) || (rho <= 0)) {
+    stop(sQuote("rho"), "must be a positive scalar (vector of length 1).")
   }
 
   if (!is.null(npcs)) {
@@ -390,11 +392,11 @@ carp.control <- function(obs.labels = NULL,
     }
   }
 
-  if (!is.integer(max.iter) || (max.iter <= 0) || (length(max.iter) != 1L)) {
-    stop(sQuote("max.iter"), " must be a positive integer.")
+  if ( (!is_integer_scalar(max.iter)) || (max.iter <= 1L) ) {
+    stop(sQuote("max.iter"), " must be a positive integer scalar and at least 2.")
   }
 
-  if (!is.integer(burn.in) || (burn.in <= 0) || (burn.in >= max.iter)) {
+  if ( (!is_integer_scalar(burn.in)) || (burn.in <= 0L) || (burn.in >= max.iter) ) {
     stop(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
   }
 
@@ -402,7 +404,7 @@ carp.control <- function(obs.labels = NULL,
     stop("Unrecognized value of ", sQuote("alg.type;"), " see help for allowed values.")
   }
 
-  if ((t <= 1) || is.na(t) || (length(t) != 1L)) {
+  if ( (!is_numeric_scalar(t)) || (t <= 1) ) {
     stop(sQuote("t"), " must be a scalar greater than 1.")
   }
 

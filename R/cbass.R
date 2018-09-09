@@ -66,6 +66,7 @@
 #' plot(cbass_fit)
 #' }
 CBASS <- function(X,
+                  ...,
                   verbose = 1L,
                   var_weights = sparse_gaussian_kernel_weights(k = "auto",
                                                                phi = "auto",
@@ -75,7 +76,6 @@ CBASS <- function(X,
                                                                phi = "auto",
                                                                dist.method = "euclidean",
                                                                p = 2),
-                  ...,
                   control = NULL) {
 
   if (!is.matrix(X)) {
@@ -192,7 +192,7 @@ CBASS <- function(X,
     var_weight_matrix <- var_weights
     var_weight_type   <- UserMatrix()
   } else {
-    stop(sQuote("CARP"), " does not know how to handle ", sQuote("var_weights"),
+    stop(sQuote("CBASS"), " does not know how to handle ", sQuote("var_weights"),
          " of class ", class(var_weights)[1], ".")
   }
 
@@ -220,7 +220,7 @@ CBASS <- function(X,
     obs_weight_matrix <- obs_weights
     obs_weight_type   <- UserMatrix()
   } else {
-    stop(sQuote("CARP"), " does not know how to handle ", sQuote("obs_weights"),
+    stop(sQuote("CBASS"), " does not know how to handle ", sQuote("obs_weights"),
          " of class ", class(obs_weights)[1], ".")
   }
 
@@ -386,13 +386,15 @@ CBASS <- function(X,
 #' by \code{\link{CBASS}}, but may be useful to advanced users who wish to
 #' construct the \code{control} argument directly.
 #'
+#' Note that all arguments must be passed by name.
+#'
 #' @param obs.labels A character vector of length \eqn{n}: observations (row) labels
 #' @param var.labels A character vector of length \eqn{p}: variable (column) labels
 #' @param X.center.global A logical: Should \code{X} be centered globally?
 #'                        \emph{I.e.}, should the global mean of \code{X} be subtracted?
 #' @param rho For advanced users only (not advisable to change): the penalty
 #'            parameter used for the augmented Lagrangian.
-#' @param max.iter An integer: the maximum number of CARP iterations.
+#' @param max.iter An integer: the maximum number of \code{CBASS} iterations.
 #' @param burn.in An integer: the number of initial iterations at a fixed
 #'                (small) value of \eqn{\lambda}
 #' @param alg.type Which \code{CBASS} variant to use. Allowed values are \itemize{
@@ -409,7 +411,8 @@ CBASS <- function(X,
 #'            arguments as given.
 #' @return A list containing the \code{CBASS} algorithm parameters.
 #' @export
-cbass.control <- function(obs.labels = NULL,
+cbass.control <- function(...,
+                          obs.labels = NULL,
                           var.labels = NULL,
                           X.center.global = TRUE,
                           rho = 1,
@@ -417,16 +420,15 @@ cbass.control <- function(obs.labels = NULL,
                           max.iter = as.integer(1e6),
                           burn.in = as.integer(50),
                           alg.type = "cbassviz",
-                          npcs = as.integer(4),
-                          ...) {
+                          npcs = as.integer(4)) {
 
   dots <- list(...)
 
   if (length(dots) != 0L) {
     if (!is.null(names(dots))) {
-      stop("Unknown argument ", sQuote(names(dots)[1L]), " passed to ", sQuote("CARP."))
+      stop("Unknown argument ", sQuote(names(dots)[1L]), " passed to ", sQuote("CBASS."))
     } else {
-      stop("Unknown ", sQuote("..."), " arguments passed to ", sQuote("CARP."))
+      stop("Unknown ", sQuote("..."), " arguments passed to ", sQuote("CBASS."))
     }
   }
 
@@ -434,8 +436,8 @@ cbass.control <- function(obs.labels = NULL,
     stop(sQuote("X.center.global"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
   }
 
-  if ((rho < 0) || is.na(rho) || (length(rho) != 1L)) {
-    stop(sQuote("rho"), "must a be non-negative scalar.")
+  if ( (!is_numeric_scalar(rho)) || (rho <= 0)) {
+    stop(sQuote("rho"), "must be a positive scalar (vector of length 1).")
   }
 
   if (!is.null(npcs)) {
@@ -444,11 +446,11 @@ cbass.control <- function(obs.labels = NULL,
     }
   }
 
-  if (!is.integer(max.iter) || (max.iter <= 0) || (length(max.iter) != 1L)) {
-    stop(sQuote("max.iter"), " must be a positive integer.")
+  if ( (!is_integer_scalar(max.iter)) || (max.iter <= 1L) ) {
+    stop(sQuote("max.iter"), " must be a positive integer scalar and at least 2.")
   }
 
-  if (!is.integer(burn.in) || (burn.in <= 0) || (burn.in >= max.iter)) {
+  if ( (!is_integer_scalar(burn.in)) || (burn.in <= 0L) || (burn.in >= max.iter) ) {
     stop(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
   }
 
@@ -456,7 +458,7 @@ cbass.control <- function(obs.labels = NULL,
     stop("Unrecognized value of ", sQuote("alg.type;"), " see help for allowed values.")
   }
 
-  if ((t <= 1) || is.na(t) || (length(t) != 1L)) {
+  if ( (!is_numeric_scalar(t)) || (t <= 1) ) {
     stop(sQuote("t"), " must be a scalar greater than 1.")
   }
 
