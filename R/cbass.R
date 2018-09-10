@@ -125,7 +125,6 @@ CBASS <- function(X,
   var.weight.dist <- internal.control$var.weight.dist
   obs.weight.dist.p <- internal.control$obs.weight.dist.p
   var.weight.dist.p <- internal.control$var.weight.dist.p
-  ncores <- internal.control$ncores
   max.iter <- internal.control$max.iter
   burn.in <- internal.control$burn.in
   alg.type <- internal.control$alg.type
@@ -208,7 +207,7 @@ CBASS <- function(X,
     ConvexClusteringPreCompute(
       X = t(X),
       weights = weights.row,
-      ncores = ncores, rho = rho
+      rho = rho
     )
   )
   cardE.row <- NROW(PreCompList.row$E)
@@ -236,7 +235,7 @@ CBASS <- function(X,
     ConvexClusteringPreCompute(
       X = X,
       weights = weights.col,
-      ncores = ncores, rho = rho
+      rho = rho
     )
   )
   cardE.col <- NROW(PreCompList.col$E)
@@ -406,7 +405,6 @@ CBASS <- function(X,
 #' @param var.weight.dist.p The exponent used to calculate the Minkowski distance if
 #'                          \code{weight.dist = "minkowski"}.
 #'                          See \code{\link[stats]{dist}} for details.
-#' @param ncores An positive integer: the number of cores to use.
 #' @param max.iter An integer: the maximum number of CARP iterations.
 #' @param burn.in An integer: the number of initial iterations at a fixed
 #'                (small) value of \eqn{\lambda}
@@ -438,7 +436,6 @@ cbass.control <- function(obs.labels = NULL,
                           k.obs = NULL,
                           k.var = NULL,
                           t = 1.01,
-                          ncores = as.integer(1),
                           max.iter = as.integer(1e6),
                           burn.in = as.integer(50),
                           alg.type = "cbassviz",
@@ -505,10 +502,6 @@ cbass.control <- function(obs.labels = NULL,
     }
   }
 
-  if (!is.integer(ncores) || ncores <= 0L) {
-    stop(sQuote("ncores"), " must be a positive integer.")
-  }
-
   if (!is.null(npcs)) {
     if (!is.integer(npcs) || npcs <= 1L) {
       stop(sQuote("npcs"), " must be at least 2.")
@@ -546,7 +539,6 @@ cbass.control <- function(obs.labels = NULL,
     k.obs = k.obs,
     k.var = k.var,
     t = t,
-    ncores = ncores,
     max.iter = max.iter,
     burn.in = burn.in,
     alg.type = alg.type

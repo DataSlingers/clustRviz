@@ -49,8 +49,7 @@ GetClustersPath <- function(ClusterGraphList) {
 #' @importFrom Matrix Matrix
 #' @importFrom Matrix t
 #' @importFrom Matrix Diagonal
-#' @importFrom parallel mclapply
-ConvexClusteringPreCompute <- function(X, weights, rho, ncores = 2, verbose = FALSE) {
+ConvexClusteringPreCompute <- function(X, weights, rho, verbose = FALSE) {
   n <- ncol(X)
   p <- nrow(X)
   # Calcuate edge set
@@ -74,17 +73,20 @@ ConvexClusteringPreCompute <- function(X, weights, rho, ncores = 2, verbose = FA
     inds <- E[l, ]
     seq(from = (p) * (inds[2] - 1) + 1, length.out = p)
   })) - 1
+
   if (verbose) print("PreMat")
-  # precompute matrix in u-update
-  PreMat <- Reduce("+", parallel::mclapply(1:cardE, function(l) {
+  # Precompute U-update matrix
+  D <- Reduce(`+`, lapply(seq_len(cardE), function(l){
     pos.ind <- E[l, 1]
     neg.ind <- E[l, 2]
 
-    d <- Matrix::Matrix(0, nrow = n, ncol = 1, sparse = TRUE)
+    d <- matrix(0, nrow = n, ncol = 1)
     d[pos.ind, 1] <- 1
     d[neg.ind, 1] <- -1
-    kronecker(d %*% Matrix::t(d), Matrix::Diagonal(p))
-  }, mc.cores = ncores)) + (1 / rho) * Matrix::Diagonal(n * p)
+    tcrossprod(d)
+  }))
+  PreMat <- kronecker(D, Matrix::Diagonal(p)) + (1 / rho) * Matrix::Diagonal(n * p)
+
   uinit <- Matrix::Matrix(X[TRUE], nrow = p, ncol = n)
   if (verbose) print("Vinit")
   Vmat <- Matrix::Matrix(0, nrow = p, ncol = cardE)
