@@ -9,6 +9,7 @@ Rcpp::List get_cluster_assignments_impl(const Eigen::MatrixXi& E,
   // we represent each component as a std::set<int>, and we store the components
   // in a std::vector
   std::vector<std::set<int> > components;
+  std::set<int> all_vertices_seen;
 
   // Iterate over all possible edges - this big loop is a no-op where edge_ind == 0
   for(Eigen::Index i = 0; i < edge_ind.size(); i++){
@@ -59,6 +60,7 @@ Rcpp::List get_cluster_assignments_impl(const Eigen::MatrixXi& E,
           // since it is connected to `edge_begin.`
           if(!found_component_end){
             component_j.insert(edge_end);
+            all_vertices_seen.insert(edge_end);
           }
 
           break; // No need to check other components,
@@ -79,6 +81,7 @@ Rcpp::List get_cluster_assignments_impl(const Eigen::MatrixXi& E,
             // We didn't find edge_begin, but we do have edge_end, so let's add
             // edge_begin to the same component
             component_j.insert(edge_begin);
+            all_vertices_seen.insert(edge_begin);
             found_component_end_inner = true;
             break;
           }
@@ -88,6 +91,8 @@ Rcpp::List get_cluster_assignments_impl(const Eigen::MatrixXi& E,
         // and get there own new component
         if(!found_component_end_inner){
           std::set<int> new_component{edge_begin, edge_end};
+          all_vertices_seen.insert(edge_begin);
+          all_vertices_seen.insert(edge_end);
           components.push_back(new_component);
         }
       }
@@ -95,45 +100,40 @@ Rcpp::List get_cluster_assignments_impl(const Eigen::MatrixXi& E,
   }
 
   // Sort components in decreasing size order
-  std::sort(components.begin(),
-            components.end(),
-            [](const std::set<int>& left, const std::set<int>& right){
-               return left.size() > right.size();
-              });
 
   // Now build things in a way that works for R
   //
-  // The total number of components is given by components.size() +
-  // any extra (isolated / untouched) vertices
-  //
-  // The number of isolated vertices
-  int num_vertices_seen = 0;
-  for(std::set<int>& component : components){
-    num_vertices_seen += component.size();
+  // Add singleton components for isolated vertices
+  for(int i = 1; i <= n; i++){ // We're using R's (1-based) vertex labels
+    if(!contains(all_vertices_seen, i)){
+      std::set<int> new_component{i};
+      components.push_back(new_component);
+    }
   }
-  int num_components = components.size() + n - num_vertices_seen;
+
+  // Sort components by smallest vertex index
+  // This is independent of the order of the edge set / algorithm used
+  std::sort(components.begin(),
+            components.end(),
+            [](const std::set<int>& left, const std::set<int>& right){
+              return *left.begin() < *right.begin();
+            });
+
+  int num_components = components.size();
 
   Rcpp::IntegerVector component_sizes(num_components, 1);
   Rcpp::IntegerVector component_indicators(n, -1);
 
-  int num_components_seen = 0;
+  // Assign labels - loop over components and then elements within components
+  // Requires irregular access to component_indicators, but it's O(1) (=O(n) total) instead
+  // of searching through all the sets repeatedly
   for(Eigen::Index i = 0; i < components.size(); i++){
-    num_components_seen += 1;
-    std::set<int> component_i = components[i];
+    std::set<int>& component_i = components[i];
     component_sizes[i] = component_i.size();
 
     for(int j : component_i){
       component_indicators[j - 1] = i + 1; // j - 1 because edges are 1-indexed (coming form R)
                                            // Similarly, we start counting components at 1
-    }
-  }
-
-  // Finally, we go through and set all of the "-1" elements to a positive
-  // number for unitary components = isolated vertices
-  for(Eigen::Index i = 0; i < n; i++){
-    if(component_indicators(i) == -1){
-      num_components_seen += 1;
-      component_indicators(i) = num_components_seen;
     }
   }
 
