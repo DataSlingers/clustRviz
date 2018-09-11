@@ -23,23 +23,23 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-This vignette provides a quick usage guide to the `clustRviz` package, 
+This vignette provides a quick usage guide to the `clustRviz` package,
 including fitting and visualization.
-In the sections below we work through a simple example dataset, 
+In the sections below we work through a simple example dataset,
 illustrating both clustering and biclustering in `clustRviz`.
-While many details and customizations are discussed in the 
-[clustRviz Details Vignette](clustRvizDetails.html), 
-for now we show how to quickly fit, visualize, and 
-save in `clustRviz`. 
+While many details and customizations are discussed in the
+[clustRviz Details Vignette](clustRvizDetails.html),
+for now we show how to quickly fit, visualize, and
+save in `clustRviz`.
 
 # A Clustering Example
 
-`clustRviz` may be used for clustering together observations based on 
+`clustRviz` may be used for clustering together observations based on
 similarities among their features.
-`clustRviz` accomplishes this by solving the Convex Clustering problem 
+`clustRviz` accomplishes this by solving the Convex Clustering problem
 quickly using the technique of Algorithmic Regularization.
-The resulting algorithm, Convex Clustering via Algorithmic Regularization Paths 
-(or CARP) provides a continuous path of clustering solutions which may 
+The resulting algorithm, Convex Clustering via Algorithmic Regularization Paths
+(or CARP) provides a continuous path of clustering solutions which may
 be visualized and interactively explored.
 
 For our first example we use the `petrol` data set from the `MASS` package.
@@ -51,13 +51,13 @@ data('petrol',package='MASS')
 head(petrol)
 ```
 
-The dataset contains the yield (`Y`) of a petroleum refining process and 
-with measurements for specific gravity (`SG`), vapour pressure (`VP`), 
-crude volatility (`V10`), 
-desired gasoline volatility (`EP`), as well as sample 
-identification labels (`No`); see `?petrol`for details. 
+The dataset contains the yield (`Y`) of a petroleum refining process and
+with measurements for specific gravity (`SG`), vapour pressure (`VP`),
+crude volatility (`V10`),
+desired gasoline volatility (`EP`), as well as sample
+identification labels (`No`); see `?petrol`for details.
 
-Before clustering our data, we extract the columns of interest 
+Before clustering our data, we extract the columns of interest
 (here `SG`, `VP`, `V10`, and `EP`), and create the input matrix:
 
 ```{r}
@@ -78,14 +78,13 @@ carp.fit <- CARP(Xdat, labels = petrol$No, X.scale = TRUE)
 Here we specify the sample number (`No`) as the labels for our observations.
 This is done by providing the `labels`. If no `labels` were provided, `CARP` would
 attempt to use the rownames of the data matrix, and if no rownames were found, would
-automatically generate names. 
-Additionally, since our variables are measured on different scales, we 
-set the `X.scale` option to `TRUE` as well; see `?carp` for additional 
-fitting options as well as examples in the 
+automatically generate names.
+Additionally, since our variables are measured on different scales, we
+set the `X.scale` option to `TRUE` as well; see `?carp` for additional
+fitting options as well as examples in the
 [clustRviz Details Vignette](clustRvizDetails.html)
 
-Once fitted, a brief description of the fit and parameter choices 
-may be shown
+Once fitted, a brief description of the fit and parameter choices may be shown:
 
 ```{r,message=TRUE}
 carp.fit
@@ -105,25 +104,25 @@ plotting the principal components of the cluster means:
 plot(carp.fit,type = 'path',percent = .10)
 ```
 
-The plot above displays the first two principal components of the 
-data, with black points representing the original data, and red 
-curves illustrating movement along the solution path. As curves 
+The plot above displays the first two principal components of the
+data, with black points representing the original data, and red
+curves illustrating movement along the solution path. As curves
 join together, observations are fused, and clusters formed.
-The `percent` argument tells `plot` to display a snapshot of the 
+The `percent` argument tells `plot` to display a snapshot of the
 clustering solution path at $10\%$ of total regularization.
 
-Both the dendrogram and the clustering solution path may be 
+Both the dendrogram and the clustering solution path may be
 viewed together interactively via the use of `shiny` applications:
 
 ```{r,eval=FALSE}
 plot(carp.fit,type = 'interactive')
 ```
 
-These interactive visualizations allow one to view the cluster 
-solution path and dendrogram as the Algorithmic Regularization 
+These interactive visualizations allow one to view the cluster
+solution path and dendrogram as the Algorithmic Regularization
 iterates vary.
 
-In addition to visualizations, cluster solutions may be obtained 
+In addition to visualizations, cluster solutions may be obtained
 via the `clustering` function:
 
 ```{r}
@@ -136,9 +135,9 @@ head(carp.clusters$cluster.means)
 ```
 
 In the code above, we specify the number of clusters and `clustering`
-returns the both the cluster assignment as well as the cluster means 
-for the $k=3$ solution along the path. As an example, we display the 
-yield (`Y`) distribution for each of the clusters: 
+returns the both the cluster assignment as well as the cluster means
+for the $k=3$ solution along the path. As an example, we display the
+yield (`Y`) distribution for each of the clusters:
 
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
 library(ggplot2)
@@ -151,9 +150,9 @@ ggplot(
 ) + geom_boxplot()
 ```
 
-After exploring visualizations and cluster solutions interactively, 
+After exploring visualizations and cluster solutions interactively,
 the visualization results can easily be exported via the `saveviz`
-function. For example, saving the cluster solution path plotted 
+function. For example, saving the cluster solution path plotted
 above may be done as follows:
 
 ```{r,eval=FALSE}
@@ -168,16 +167,16 @@ saveviz(
 The above saves a static snapshot of the cluster solution path 
 at $10\%$ regularization; the number of clusters `k` may
 also be specified instead of `percent`.
-Interactive visualization may be saved as `.gif` files by 
-specifiying `image.type='dynamic'`; see `?saveviz.CARP` for 
+Interactive visualization may be saved as `.gif` files by
+specifiying `image.type='dynamic'`; see `?saveviz.CARP` for
 details.
 
 # A Biclustering Example
 
-Clustering may also be done simultaneously on both observations and 
-variables. `clustRviz` obtains such biclustering solutions by 
-approximating the Convex Biclustering solution path, again via 
-Algorithmic Regularization. The `CBASS` function is used to obtain 
+Clustering may also be done simultaneously on both observations and
+variables. `clustRviz` obtains such biclustering solutions by
+approximating the Convex Biclustering solution path, again via
+Algorithmic Regularization. The `CBASS` function is used to obtain
 biclustering solutions, and its usage is similar to `CARP`.
 
 We fit the biclustering solution path as follows:
@@ -186,15 +185,15 @@ We fit the biclustering solution path as follows:
 cbass.fit <- CBASS(X=Xdat, obs_labels = petrol$No)
 ```
 
-Once fitted, vizualizations are displayed again via the `plot` function. 
-For CBASS fits, the default visualization is again the cluster dendrogram 
+Once fitted, vizualizations are displayed again via the `plot` function.
+For CBASS fits, the default visualization is again the cluster dendrogram
 of the observations induced by the CBASS solution path.
 
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
 plot(cbass.fit)
 ```
 
-Since both observations and variables are clustered simultaneously, a 
+Since both observations and variables are clustered simultaneously, a
 cluster dendrogram for the variables may also be plotted:
 
 ```{r,eval=FALSE}
@@ -214,18 +213,18 @@ As was the case of `CARP`, interactive visualizations may also be displayed:
 plot(cbass.fit,type='interactive')
 ```
 
-`CBASS`'s interactive visualizations allows one to view dynamic changes in the 
+`CBASS`'s interactive visualizations allows one to view dynamic changes in the
 cluster heatmap and dendrogram solutions along the path.
 
-As was the case with `CARP`, clustering solutions are obtained via the 
+As was the case with `CARP`, clustering solutions are obtained via the
 `clustering` function. The desired clustering solution is returned by
-specifying either the number of observation clusters (`k.obs`), 
-the number of variable clusters (`k.var`), or the percent of 
-regularization (`percent`). In any case, `clustering` returns 
+specifying either the number of observation clusters (`k.obs`),
+the number of variable clusters (`k.var`), or the percent of
+regularization (`percent`). In any case, `clustering` returns
 the observation and variable clustering assignments, as well as
 the matrix of cluster means.
 
-In the example below we obtain the biclustering solution 
+In the example below we obtain the biclustering solution
 which obtains $3$ observation clusters:
 
 ```{r}
@@ -239,11 +238,11 @@ table(cbass.clusters$clustering.assignment.var)
 cbass.clusters$cluster.mean.matrix[1:5,]
 ```
 
-Finally we demonstrate how to save the visualizations 
-produced by `CBASS`. Similar to `CARP` visualizations 
-can be saved via the `saveviz` function which allows for saving 
-static and dynamic visuals. For example, a `.gif` 
-of the variable dendrogram as it varies throughout the 
+Finally we demonstrate how to save the visualizations
+produced by `CBASS`. Similar to `CARP` visualizations
+can be saved via the `saveviz` function which allows for saving
+static and dynamic visuals. For example, a `.gif`
+of the variable dendrogram as it varies throughout the
 path may be saved via:
 
 ```{r,eval=FALSE}
@@ -254,9 +253,10 @@ saveviz(x=cbass.fit,
 )
 ```
 
-Similarly, a static snapshot of the bicluster heatmap at the moment 
-along the path when $4$ observation clusters are formed may be 
+Similarly, a static snapshot of the bicluster heatmap at the moment
+along the path when $4$ observation clusters are formed may be
 saved also:
+
 ```{r,eval=FALSE}
 saveviz(x=cbass.fit,
         file.name = 'cbass_heatmap_static_kobs.png',

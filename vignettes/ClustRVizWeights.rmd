@@ -36,57 +36,57 @@ add implement custom weighting schemes in `clustRviz.`
 
 ## The Role of Weights in Convex Clustering
 
-Recall the convex clustering problem, as discussed in Hocking *et al.* [-@Hocking:2011], 
-Chi and Lange [-@Chi:2015], and Tan and Witten [-@Tan:2015], among others: 
+Recall the convex clustering problem, as discussed in Hocking *et al.* [-@Hocking:2011],
+Chi and Lange [-@Chi:2015], and Tan and Witten [-@Tan:2015], among others:
 
 \[
 \underset{\vec U}{\textrm{minimize}} \;\; \frac{1}{2} \| \vec X - \vec U \|_F^2 + \lambda \sum_{l < m}  w_{l,m} \| \vec u_l - \vec u_m \|_q
 \]
 
-We typically take $q = 2$, though both `CARP` and `CBASS` support $q = 1$ as well. 
+We typically take $q = 2$, though both `CARP` and `CBASS` support $q = 1$ as well.
 
 It is well-known that, as $\lambda$ increases, the solution to this problem traces
 out a continuous set of clustering solutions,^[The so-called "cluster-path" in
 the terminology of Hocking *et al.* [-@Hocking:2011].] ranging from each observation
-being its own cluster at $\lambda = 0$ to all observations being fused into a 
+being its own cluster at $\lambda = 0$ to all observations being fused into a
 single cluster as $\lambda$ becomes large. Less well-studied in the literature is
 the effect of the weight terms $\{w_{l, m}\}_{1 \leq l < m \leq n}$. Hocking *et al.*
 [-@Hocking:2011] noted that a Gaussian kernel weighting scheme of the form
 
 \[w_{l, m} \propto \exp\left(-\phi \|\vec x_l - \vec x_m\|_2^2\right)\]
 
-performed well in experiments, giving a clustering solution that respected the 
+performed well in experiments, giving a clustering solution that respected the
 density of the data. Chi and Lange [-@Chi:2015] confirm the usefulness of this
 weighting scheme, and note that, for realistic data sets, many of these weights
 are quite small. To improve computational efficiency, they recommend dropping
-many of the smallest weights, reducing the penalty (fusion) term from a sum of 
+many of the smallest weights, reducing the penalty (fusion) term from a sum of
 $\choose{n}{2}$ terms to a much more tractable size. Since the dropped weights
 are typically several orders of magnitude smaller than the retained weights,
-omitting these terms has minimal impact on the resulting solution. 
+omitting these terms has minimal impact on the resulting solution.
 
 Our experience developing `CARP` and `CBASS` is similar: the Gaussian kernel weights
 work well in practice, and omitting smaller weights leads to significant increases
 in computational efficiency. For fully interactive data analysis, we find that
 using a relatively sparse set of weights is important, even with the speed advantages
-given by `CARP` and `CBASS`. 
+given by `CARP` and `CBASS`.
 
 We note two properties that any sensible weighting scheme must satisfy and which
-are enforced internally by our software: 
+are enforced internally by our software:
 
-- all the weights must be non-negative; and 
-- the adjacency graph implied by the weights must be fully connected. 
+- all the weights must be non-negative; and
+- the adjacency graph implied by the weights must be fully connected.
 
 If the latter condition is not satisfied, the data are never fused into a single
-cluster, even as $\lambda \to 0$, so our algorithms never terminate. Relatedly, 
+cluster, even as $\lambda \to 0$, so our algorithms never terminate. Relatedly,
 if the second condition is not satisfied, the clustering problem is fully separable
 across groups of observations and data from different parts of the graph are "in the
 dark" about each other: the same solution could be obtained by clustering the
 two sets of observations separately, which is rarely what we want in a clustering
-algorithm. 
+algorithm.
 
 ### Additional Requirements for Convex BiClustering
 
-Chi, Allen, and Baraniuk [-@Chi:2017] propose a convex formulation of biclustering: 
+Chi, Allen, and Baraniuk [-@Chi:2017] propose a convex formulation of biclustering:
 
 \[
 \underset{\vec U}{\textrm{minimize}} \;\; \frac{1}{2} \| \vec X - \vec U \|_F^2 + \lambda \left(\sum_{l < m}  w_{l,m} \| \vec U_{l\cdot} - \vec U_{m\cdot} \|_q + \sum_{j < k} w_{j, k} \|\vec U_{\cdot j} + \vec U_{\cdot k}\|_q\right)
@@ -95,7 +95,7 @@ Chi, Allen, and Baraniuk [-@Chi:2017] propose a convex formulation of biclusteri
 Here we doubly fuse our data: combining row-wise fusion (the first part of the
 penalty term) to cluster observations with column-wise fusion (the second part of
 the penalty term) to cluster features. The resulting problem induces *biclustering;*
-see Chi *et al.* [-@Chi:2017] for more details. 
+see Chi *et al.* [-@Chi:2017] for more details.
 
 As Chi *et al.* note, an additional requirement on the weights is necessary to
 obtain sensible solutions:^[Note that Chi *et al.* require the *column* weights
@@ -103,7 +103,7 @@ to sum to $n^{-1/2}$ and the *row* weights to sum to $p^{-1/2}$, because their
 data matrix $X \in \mathbb{R}^{p \times n}$ is the transpose of ours.]
 
 - the row-wise observation weights must sum to $n^{-1/2}$ while the column-wise
-  feature weights must sum to $p^{-1/2}$. 
+  feature weights must sum to $p^{-1/2}$.
 
 This behavior is automatically enforced by `CBASS`. That is, after the weights are
 calculated, they are (silently) renormalized to have an appropriate sum.
@@ -120,16 +120,16 @@ When interactively visualizing clustering results, we generally want our cluster
 to be joined together smoothly. To achieve this goal, we select the weight parameter
 $\phi$ to maximize the variance of the clustering weights. While this does not guarantee
 the smoothest possible clustering, we have found it to be a useful heuristic.
-That is, if not specified by the user, we select: 
+That is, if not specified by the user, we select:
 
 \[\hat{\phi} = \underset{\phi}{\textrm{arg max}}\;\; \text{Var}\left(\exp\left\{-\phi \|\vec x_i - \vec x_j\|_2^2\right\}\right)\]
 
 where the variance is taken over all pairs $i, j$.^[The above maximization is not
-explicitly performed, but the maximum over a relatively corse gride is used.] 
+explicitly performed, but the maximum over a relatively corse gride is used.]
 
-This is implemented in `clustRviz` via the `dense_rbf_kernel_weights` function. 
+This is implemented in `clustRviz` via the `dense_rbf_kernel_weights` function.
 Note that this is a *function factory* - it returns a function which can be called
-to actually calculate the weights: 
+to actually calculate the weights:
 
 ```{r}
 library(clustRviz)
@@ -141,25 +141,25 @@ weights <- weight_func(presidential_speech)$weight_mat
 weights[1:5, 1:5]
 ```
 
-We see here that $\phi$ was automatically selected, yielding a variance of 
+We see here that $\phi$ was automatically selected, yielding a variance of
 
 ```{r}
 var(get_upper_triangle(weights))
 ```
 
-and a nice "spread" of weights: 
+and a nice "spread" of weights:
 
 ```{r}
-hist(get_upper_triangle(weights), 
-     col    = "grey80", 
-     border = "white", 
-     breaks = 30, 
-     xlab   = "Dense RBF Kernel Weight Value", 
+hist(get_upper_triangle(weights),
+     col    = "grey80",
+     border = "white",
+     breaks = 30,
+     xlab   = "Dense RBF Kernel Weight Value",
      main   = "Highly Variable RBF Weights")
 ```
 
 If we had prior information about a good choice of the scale parameter $\phi$, we
-could supply it to the *initial* call to `dense_rbf_kernel_weights`: 
+could supply it to the *initial* call to `dense_rbf_kernel_weights`:
 
 ```{r}
 weight_func_phi_1 <- dense_rbf_kernel_weights(phi = 1)
@@ -168,14 +168,14 @@ weights_phi_1 <- weight_func_phi_1(presidential_speech)$weight_mat
 weights_phi_1[1:5, 1:5]
 ```
 
-Not surprisingly, this gives weights with much lower variance than before. 
+Not surprisingly, this gives weights with much lower variance than before.
 
 ```{r}
 var(get_upper_triangle(weights_phi_1))
 ```
 
 So far, we have used (squared) Euclidean distance to define our kernel, but we can
-in fact use any distance function $d$ to calculate weights as: 
+in fact use any distance function $d$ to calculate weights as:
 \[\phi \propto \exp\left\{-\phi d(\vec x_i, \vec x_j)^2\right\}\]
 
 To use alternate weight functions, $d(\cdot, \cdot)$, pass the `dist.method` and `p`
@@ -186,20 +186,20 @@ $\ell_4$ metric, we could use
 dense_rbf_kernel_weights(dist.method = "minkowski", p = 4)
 ```
 
-See the `dist` function in the `stats` package for supported distances. 
+See the `dist` function in the `stats` package for supported distances.
 
 ### Selecting the Sparsification Parameter $k$
 
 Once we have a dense set of weights, we typically wish to *sparsify* them to improve
-computational speed. There are several ways to do so, but perhaps the simplest 
+computational speed. There are several ways to do so, but perhaps the simplest
 is to take the $k$-nearest neighbors graph for some $k$. That is, we zero out most
 entries in the weight matrix, keeping $w_{ij}$ only if $i$ is a $k$-nearest neighbor
 of $j$ or vice versa.
 
-Sparse weights can be calculated via the `sparse_rbf_kernel_weights` function factory, 
+Sparse weights can be calculated via the `sparse_rbf_kernel_weights` function factory,
 which works like the `dense_rbf_kernel_weights` function but includes an extra
 optional parameter $k$. By default $k$ is chosen as small as possible, subject
-to the graph still being connected: 
+to the graph still being connected:
 
 ```{r}
 weight_func    <- sparse_rbf_kernel_weights()
@@ -211,7 +211,7 @@ weight_mat[1:5, 1:5]
 
 We immediately see that these weights are significantly more sparse than before.
 In fact, we see that for this example, approximately 88% of the weights have been
-zeroed out: 
+zeroed out:
 
 ```{r}
 round(100 * mean(get_upper_triangle(weight_mat) == 0))
@@ -226,21 +226,21 @@ hist(get_upper_triangle(weight_mat),
      main   = "KNN Sparsified RBF Weights")
 ```
 
-We see here that $k = 4$ was the smallest $k$ that gave a fully connected graph: 
+We see here that $k = 4$ was the smallest $k$ that gave a fully connected graph:
 
 ```{r}
 weight_details$k
 ```
 
 If the user supplied a smaller $k$ (resulting in a non-connected graph), an error
-would be thrown: 
+would be thrown:
 
 ```{r, error=TRUE}
 sparse_rbf_kernel_weights(k = 3)(presidential_speech)
 ```
 
-The distance metric used can be changed by passing additional arguments to the 
-function factory as before: 
+The distance metric used can be changed by passing additional arguments to the
+function factory as before:
 
 ```{r, results="hide"}
 sparse_rbf_kernel_weights(dist.method = "canberra")(presidential_speech)
@@ -249,30 +249,30 @@ sparse_rbf_kernel_weights(dist.method = "canberra")(presidential_speech)
 ### Setting `CARP` Weights
 
 By default, `CARP` uses Sparse RBF kernel weights, with data-driven $\phi, k$ and
-the Euclidean distance. These can be changed by passing the result of `sparse_rbf_kernel_weights` 
-to `CARP`. For example, if we wanted to use the Canberra distance with `k = 10` neighbors, 
-we would call `CARP` as: 
+the Euclidean distance. These can be changed by passing the result of `sparse_rbf_kernel_weights`
+to `CARP`. For example, if we wanted to use the Canberra distance with `k = 10` neighbors,
+we would call `CARP` as:
 
 ```{r, message=FALSE}
 CARP(presidential_speech, weights = sparse_rbf_kernel_weights(dist.method = "canberra", k = 10))
 ```
 
 Note that the `weights` function is called on the *pre-processed* data matrix, not
-the raw data matrix. 
+the raw data matrix.
 
 ### Setting `CBASS` Weights
 
-`CBASS` requires two sets of weights, one for observations and one for features. 
+`CBASS` requires two sets of weights, one for observations and one for features.
 The interface is the same as for `CARP`, but we now can supply the `obs_weights` and
 `var_weights` arguments separately. The former will be used as the `weights`
-argument to `CARP`; the latter will be used called on the *transpose* of the 
-pre-processed data, since it is used to calculate column weights. The weights are 
+argument to `CARP`; the latter will be used called on the *transpose* of the
+pre-processed data, since it is used to calculate column weights. The weights are
 computed independently (with possibly different choices of $\phi$ and $k$) and
 can be controlled separately: *e.g.*
 
 ```{r message=FALSE}
-CBASS(presidential_speech, 
-      var_weights = sparse_rbf_kernel_weights(dist.method = "canberra", k = 4), 
+CBASS(presidential_speech,
+      var_weights = sparse_rbf_kernel_weights(dist.method = "canberra", k = 4),
       obs_weights = sparse_rbf_kernel_weights(dist.method = "maximum", phi = 2))
 ```
 
@@ -280,29 +280,29 @@ As mentioned above, `CBASS` rescales the resulting weights to ensure proper bicl
 
 ## Custom Weighting Schemes
 
-Even though the Sparse Gaussian RBF scheme is generally a good default choice, 
+Even though the Sparse Gaussian RBF scheme is generally a good default choice,
 users may wish to use different weighting schemes with `clustRviz,` particularly
-if additional information or domain knowledge are available. To this end, 
+if additional information or domain knowledge are available. To this end,
 both `CARP` and `CBASS` can use custom weighting schemes. We describe the different
 interfaces to this functionality in `CARP` below, and note that `CBASS` has the
-same behavior. 
+same behavior.
 
 ### Custom Weight Matrix
 
-The easiest way to use custom weights with `clustRviz` is to supply a weight matrix 
+The easiest way to use custom weights with `clustRviz` is to supply a weight matrix
 as the `weights` matrix. `clustRviz` will perform some basic correctness checks, but
 will otherwise use your weights "as is."
 
-For example, if we wanted to use "chain" weights to cluster the presidents in 
-alphabetical order, we could do so as follows: 
+For example, if we wanted to use "chain" weights to cluster the presidents in
+alphabetical order, we could do so as follows:
 
 ```{r}
-weight_mat <- matrix(0, 
-                     nrow = NROW(presidential_speech), 
+weight_mat <- matrix(0,
+                     nrow = NROW(presidential_speech),
                      ncol = NROW(presidential_speech))
-weight_mat[cbind(seq(1, NROW(presidential_speech) - 1), 
+weight_mat[cbind(seq(1, NROW(presidential_speech) - 1),
                  seq(2, NROW(presidential_speech)))] <- 1
-weight_mat[cbind(seq(2, NROW(presidential_speech)), 
+weight_mat[cbind(seq(2, NROW(presidential_speech)),
                  seq(1, NROW(presidential_speech) - 1))] <- 1
 image(weight_mat)
 ```
@@ -313,7 +313,7 @@ print(carp_fit_chain_weights)
 ```
 
 We note that the resulting clustering is essentially nonsense, but does respect
-our weights, for the most part: 
+our weights, for the most part:
 
 ```{r}
 plot(carp_fit_chain_weights)
@@ -322,15 +322,15 @@ plot(carp_fit_chain_weights)
 ### Custom Weight Function
 
 If a weight scheme is used repeatedly, it may be useful to wrap it in a function
-which will then be called on the pre-processed data. For example, our "chain weight" 
-example from above could be written as: 
+which will then be called on the pre-processed data. For example, our "chain weight"
+example from above could be written as:
 
 ```{r}
 chain_weights <- function(X){
   weight_mat <- matrix(0, nrow = NROW(X), ncol = NROW(X))
-  weight_mat[cbind(seq(1, NROW(X) - 1), 
+  weight_mat[cbind(seq(1, NROW(X) - 1),
                    seq(2, NROW(X)))] <- 1
-  weight_mat[cbind(seq(2, NROW(X)), 
+  weight_mat[cbind(seq(2, NROW(X)),
                    seq(1, NROW(X) - 1))] <- 1
   
   weight_mat
@@ -341,8 +341,8 @@ CARP(presidential_speech, weights = chain_weights)
 Writing the weight scheme as a function is particularly useful for biclustering, *e.g.*:
 
 ```{r}
-cbass_chain_fit <- CBASS(presidential_speech, 
-                         obs_weights = chain_weights, 
+cbass_chain_fit <- CBASS(presidential_speech,
+                         obs_weights = chain_weights,
                          var_weights = chain_weights)
 ```
 
@@ -350,23 +350,23 @@ cbass_chain_fit <- CBASS(presidential_speech,
 plot(cbass_chain_fit, type="var.dendrogram")
 ```
 
-Note that the print method for `CARP` and `CBASS` knows that the weights were 
+Note that the print method for `CARP` and `CBASS` knows that the weights were
 computed based on a user-supplied function, but cannot give more information than 
 that. It is possible to provide a more complex function which will lead to more
-informative output, though it is beyond the scope of this vignette. 
+informative output, though it is beyond the scope of this vignette.
 
 ### Example: SpaCC Weights
 
 Nagorski and Allen [-@Nagorski:2018] propose the use of a spatial weighting scheme
 to cluster genomic regions. It is easy to implement a version of their scheme using
-`clustRviz` support for custom weight schemes: 
+`clustRviz` support for custom weight schemes:
 
 ```{r}
-spacc_carp <- function(X, coordinates, ..., 
+spacc_carp <- function(X, coordinates, ...,
                        dist.cutoff = 20000, ## Distances from SpaCC_Methy in the SpaCCr package
                        sigma = 2e-4){
   ## This is not a robust / tested implementation
-  ## 
+  ##
   ## It is provided for demonstration purposes only
   spacc_weights <- function(X){
     distance_mat <- as.matrix(dist(coordinates))

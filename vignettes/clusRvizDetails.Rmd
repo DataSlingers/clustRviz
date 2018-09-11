@@ -25,16 +25,16 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-The `clustRviz` package intends to make fitting and visualizing CARP and CBASS 
-solution paths an easy process. In the [Getting Started](Getting_Started.html) 
-vignettee we provide a quick start guide for basic usage, fitting, 
-and plotting. In this vignette, we build on the basics and provide a more 
+The `clustRviz` package intends to make fitting and visualizing CARP and CBASS
+solution paths an easy process. In the [Getting Started](Getting_Started.html)
+vignettee we provide a quick start guide for basic usage, fitting,
+and plotting. In this vignette, we build on the basics and provide a more
 detailed explanation for the variety of options available in `clustRviz`.
 
 # Background
 
-The starting point for CARP is the Convex Clustering 
-[@Hocking:2011; @Chi:2015; @Tan:2015] problem :
+The starting point for CARP is the Convex Clustering
+[@Hocking:2011; @Chi:2015; @Tan:2015] problem:
 
 $$
 \underset{\vec U}{\textrm{minimize}} \;\;
@@ -44,61 +44,60 @@ w_{l,m} \| \vec u_l - \vec u_m \|_2
 $$
 
 where $\vec X$ is an $p \times n$ input data matrix, consisting of $p$ measurements on $n$ subjects,
-$\lambda > 0$ a regularization parameter, and 
-$w_{l,m}>0$ a weight for each pair of observations; here $\| . \|_F$ and $\| . \|_2$ denote 
-the Frobenius norm and $\ell_2$ norm, respectively. 
+$\lambda > 0$ a regularization parameter, and
+$w_{l,m}>0$ a weight for each pair of observations; here $\| . \|_F$ and $\| . \|_2$ denote
+the Frobenius norm and $\ell_2$ norm, respectively.
 
-Briefly, Convex Clustering seeks to find and estimate,$\hat{\vec{U}} \in \mathbb{R}^{p\times n}$, such 
-that it is faithful to the original data (Frobenius norm loss term) while 
-also encouraging fusions among observations 
+Briefly, Convex Clustering seeks to find and estimate,$\hat{\vec{U}} \in \mathbb{R}^{p\times n}$, such
+that it is faithful to the original data (Frobenius norm loss term) while
+also encouraging fusions among observations
 ($\ell_2$ regularization between columns of $\vec U$, denoted $u_l$).
-At small values of regularization, $\lambda \approx 0$, Convex Clustering 
-returns estimates similar to the original data with little or no fusion among 
+At small values of regularization, $\lambda \approx 0$, Convex Clustering
+returns estimates similar to the original data with little or no fusion among
 observations. As regularization increases, more fusions occur and Convex Clustering
-returns estimates such that $\| \hat{\vec{u}}_l - \hat{\vec{u}}_m \| = 0$. When 
+returns estimates such that $\| \hat{\vec{u}}_l - \hat{\vec{u}}_m \| = 0$. When
 such fusions occur we say that observations $l$ and $m$ belong to the same cluster.
-Taken to the extreme, sufficiently large values of $\lambda$ result in all 
+Taken to the extreme, sufficiently large values of $\lambda$ result in all
 observations belonging to the same cluster.
 
 When fitting for multiple values of $\lambda$ Convex Clustering results
 in a continious solution path of clustering solutions.
-One solution method for the problem above is via the alternatving 
+One solution method for the problem above is via the alternatving
 direction method of multipliers (ADMM) [@Boyd:2011].
 For a given $\lambda$, Convex Clustering can be solved by iteratively applying ADMM updates until convergence [@Chi:2015].
-However in order to obtain a full path of clustering solutions, this method 
+However in order to obtain a full path of clustering solutions, this method
 must be employed for multiple $\lambda_k$ which is computationally expensive.
 
 To address the computational burden of Convex Clustering,
 we utilize the framework of Algorithmic Regularization Paths [@Hu:2016]
-to develop efficient methods for approximating the Convex 
-Clustering and Biclustering solution paths: Convex Clustering via 
-Algorithmic Regularization Paths (CARP) and Convex Biclustering via 
+to develop efficient methods for approximating the Convex
+Clustering and Biclustering solution paths: Convex Clustering via
+Algorithmic Regularization Paths (CARP) and Convex Biclustering via
 Algorthmic Regularization with Small Steps (CBASS), respectively.
-Rather than fully solving the Convex Clustering optimization problem at each $\lambda_k$, 
-we instead perform single updates combined with gradual increases in 
-regularization at each step. As regularization increases with 
+Rather than fully solving the Convex Clustering optimization problem at each $\lambda_k$,
+we instead perform single updates combined with gradual increases in
+regularization at each step. As regularization increases with
 each iteration, the column differences of the iterates, $\| \vec{u}^{(k)}_l - \vec{u}^{(k)}_m \|$,
 eventally become $0$ for all $l,m$.
-In contrast to traditional iterative solution techniques, we instead 
-employ the iterates themselves as approximations 
-for the true solution path.
+In contrast to traditional iterative solution techniques, we instead
+employ the iterates themselves as approximations for the true solution path.
 Remarkably, this approximation not only works well empirically, but
-can be shown theoretically to well approximate the true Convex 
+can be shown theoretically to well approximate the true Convex
 Clustering solution path.
 
 # Preprocessing and Inputs
 
 While the `CARP` and `CBASS` functions provides several reasonable default choices for weights, algorithms, etc, it
 is important to know their details if one wishes to compute more customized clustering choices.
-Here we examine several of the inputs to `CARP` and `CBASS`, as well as their preprocessing technqiues 
+Here we examine several of the inputs to `CARP` and `CBASS`, as well as their preprocessing technqiues
 
-Here we use a dataset of presidential speechs obtained from 
+Here we use a dataset of presidential speechs obtained from
 [The American Presidency Project](http://www.presidency.ucsb.edu/index_docs.php)
 to illustrate the use of `clustRviz`.
-The presidential speech data set contains the top 75 most variable 
-log-transformed word counts of each US president, aggregated over several 
-speeches. Additional text processing such as removing stop words and 
-stemming have been done via the `tm` package.  
+The presidential speech data set contains the top 75 most variable
+log-transformed word counts of each US president, aggregated over several
+speeches. Additional text processing such as removing stop words and
+stemming have been done via the `tm` package.
 
 Let's begin by loading our package and the dataset:
 
@@ -116,6 +115,7 @@ head(var.labels)
 ## Preprocessing 
 
 ### Normalization
+
 An important first choice before clustering is whether to center and scale our observations.
 Centering is typically appropriate, and is done by default for CARP and CBASS.
 The choice of scaling is left to the user discression, but should typically be applied 
@@ -129,17 +129,16 @@ Xdat.preprocessed <- scale(Xdat,center=TRUE,scale=FALSE)
 ```
 
 In the `CARP` function this preprocessing is done via the `X.center` and `X.scale`
-arguements.
-If the data is pre-processed outside of `CARP`, as is the case here, these options
-may be set to `FALSE`; by default, `CARP` with center but not scale an inputted 
-data matrix.
+arguements. If the data is pre-processed outside of `CARP`, as is the case here,
+these options may be set to `FALSE`; by default, `CARP` with center but not
+scale an inputted data matrix.
 
 Both `CARP` and `CBASS` (below) admit several options for computing the (bi)clustering 
 solution path. While we will encounter many options along the way, see the relevant
-documentation for full details. 
+documentation for full details.
 
 Similarly, the `CBASS` function also requires that data preprocessed prior usage.
-Because `CBASS` clusters both observations and variables, here centering is done 
+Because `CBASS` clusters both observations and variables, here centering is done
 by subtracting away the global mean of our data matrix.
 
 ```{r}
@@ -150,56 +149,60 @@ Xdat.bi.preprocessed <- Xdat -  mean(Xdat)
 
 ### Dimension Reduction
 
-While not directly addressed by `CARP` or `CBASS`, high dimensional 
+While not directly addressed by `CARP` or `CBASS`, high dimensional
 measurements can present a challenge for clustering methods.
 Owing to the "curse of dimensionality", high dimensional measurements 
 may deliver sub-optimal performance for distance-based methods generally.
-As such, performing dimensionality reduction before applying `CARP`  
+As such, performing dimensionality reduction before applying `CARP`
 may result in more interpretable clusters.
-We leave the choice of dimensionality reduction to the end-user, 
-but still recommend the reduced feature set be pre-processed 
+We leave the choice of dimensionality reduction to the end-user,
+but still recommend the reduced feature set be pre-processed
 as described above.
 
-For the purpose of visualuization, `CARP` addresses the problem 
-of high dimenstionality by visualizing the principal components 
+For the purpose of visualuization, `CARP` addresses the problem
+of high dimenstionality by visualizing the principal components
 of the data by default.
 
 ### Weights
 
 The use of a good weight scheme is essential to getting reasonable clustering
-results from convex clustering (`CARP`) and convex biclustering (`CBASS`). The 
+results from convex clustering (`CARP`) and convex biclustering (`CBASS`). The
 `clustRviz` package provides a useful data-driven default weight scheme as well
 as allowing users to supply their own weights. Clustering weights are discussed
 in much more detail in the [`clustRviz` weights vignette](ClustRVizWeights.html).
 
 # Fitting
 
-`clustRviz` aims to make it easy to compute the CARP and CBASS solution paths, and 
-to quickly begin exploring the results. To this end, many reasonable choices 
-regarding both preprocessing and inputs disucussed above are made by default, 
-allowing for solution path to be computed from the raw data alone. 
-In the case of CARP, for example, we may fit the compute the solution 
+`clustRviz` aims to make it easy to compute the CARP and CBASS solution paths, and
+to quickly begin exploring the results. To this end, many reasonable choices
+regarding both preprocessing and inputs disucussed above are made by default,
+allowing for solution path to be computed from the raw data alone.
+In the case of CARP, for example, we may fit the compute the solution
 path for the presidents data via the `CARP` function:
+
 ```{r}
 carp.fit <- CARP(X=Xdat)
 ```
-Once completed, we can examine a brief summary of the fitted object
+
+Once completed, we can examine a brief summary of the fitted object:
+
 ```{r,message=TRUE}
 carp.fit
 ```
-The output above displays characteristics of our data, such as sample size 
-and number of variables, and also gives a preview of the raw input. 
+
+The output above displays characteristics of our data, such as sample size
+and number of variables, and also gives a preview of the raw input.
 Additionally, the summary provides information regarding both data
-pre-processing and weight computations. From the above we see that 
-`CARP` has by default: (i) centered our data, (ii) computed 
-distance-based weights using a gaussian kernel with $\phi=.01$, and 
+pre-processing and weight computations. From the above we see that
+`CARP` has by default: (i) centered our data, (ii) computed
+distance-based weights using a gaussian kernel with $\phi=.01$, and
 (iii) created a sparse set of weights using $k=4$ nearest neighbors.
 Finally, the summary also provides information about the algorithm, here 
 CARP-VIZ, as well as the available visualizations.
 
 While `CARP`'s default choices work well in most scenarios, the user can change
 almost all aspects of the algorithm. For example, if we wish to alter the default
-pre-processing and weight choices: 
+pre-processing and weight choices:
 
 ```{r,eval=FALSE}
 CARP(Xdat, 
@@ -210,10 +213,10 @@ CARP(Xdat,
                                          k = 5))
 ```
 
-Indeed, in the case where strong *a priori* information concerning clusters is 
-available, distance-based weight computations may be avoided altogether and 
-user-specified weights given directly via the `weights` argument. See the 
-accompaning [weights vignette](ClustRVizWeights.html) for details. 
+Indeed, in the case where strong *a priori* information concerning clusters is
+available, distance-based weight computations may be avoided altogether and
+user-specified weights given directly via the `weights` argument. See the
+accompaning [weights vignette](ClustRVizWeights.html) for details.
 
 `CBASS` solutions can be fit in a similar manner:
 
@@ -228,15 +231,15 @@ cbass.fit
 
 ## Algorithm Types
 
-Another input into the fitting procedure is the 
-algorithm type. By default both `CARP` and `CBASS` use `VIZ`-type 
-extentions of Algorithmic Regularization to ensure dendrogram existence. 
-However, for larger datasets ($n.obs > 300$) this default procedure can 
-be computationally burdensome. To ameloriate this difficulty, traditional 
-Algorithmic Regularization can be used, and it computation time controlled 
+Another input into the fitting procedure is the
+algorithm type. By default both `CARP` and `CBASS` use `VIZ`-type
+extentions of Algorithmic Regularization to ensure dendrogram existence.
+However, for larger datasets ($n.obs > 300$) this default procedure can
+be computationally burdensome. To ameloriate this difficulty, traditional
+Algorithmic Regularization can be used, and it computation time controlled
 via the multiplicitive step-size parameter, $t > 1$.
 
-In the example below we again fit the presidental speech dataset using the 
+In the example below we again fit the presidental speech dataset using the
 `carp` algorithim with step size $t=1.1$
 
 ```{r}
@@ -244,43 +247,46 @@ carp_fit_fixed_t <- CARP(Xdat, alg.type = "carp", t = 1.1)
 carp_fit_fixed_t
 ```
 
-`CBASS` also allows for the use of pure Algorithmic Regularization 
-based approaches in a similar manner. Passing `alg.type=cbass` along 
-with an associated $t$ value, will produce much faster computations for 
+`CBASS` also allows for the use of pure Algorithmic Regularization
+based approaches in a similar manner. Passing `alg.type=cbass` along
+with an associated $t$ value, will produce much faster computations for
 larger datasets.
 
-By default both `CARP` and `CBASS` perform $\ell_2$ regularization between 
+By default both `CARP` and `CBASS` perform $\ell_2$ regularization between
 observation pairs to encourage fusions, and hence cluster formation. If $\ell_1$
-regularization is preferred for whatever reason, the `alg.type` argument to 
-`CARP` can also be `carpvizl1`, for a back-tracking $\ell_1$ algorithm, or 
-`carpl1` for a fixed-step-size $\ell_1$ algorithm. 
+regularization is preferred for whatever reason, the `alg.type` argument to
+`CARP` can also be `carpvizl1`, for a back-tracking $\ell_1$ algorithm, or
+`carpl1` for a fixed-step-size $\ell_1$ algorithm.
 
 # Solutions
 
-Once fit, the clustering solution of both CARP and CBASS may be examined 
+Once fit, the clustering solution of both CARP and CBASS may be examined
 via the `clustering` function.
-Using our `carp.fit` object from above, we can extract the solution along 
+Using our `carp.fit` object from above, we can extract the solution along
 the path which gives $k=2$ clusters.
 
 ```{r}
 carp.clustering <- clustering(carp.fit,k = 2)
 ```
 
-Once extracted we may examine the clustering assignment. In the table 
-below we see of count of the cluster membership. Additionally 
+Once extracted we may examine the clustering assignment. In the table
+below we see of count of the cluster membership. Additionally
 we consider the cluster assignment in relation to our original weight
 graph. We can see that the cluster membership respect our original
 weights.
+
 ```{r}
 table(carp.clustering$clustering.assignment)
 ```
 
 Additionally, we can extract the cluster means associated with $k=2$ solution. The object `cluster.means`
-below gives the CARP iterate $\vec U^{(k)}$ along the path. We note that the columns 
+below gives the CARP iterate $\vec U^{(k)}$ along the path. We note that the columns
 of the respective clusters have fused together as desired.
+
 ```{r}
 head(carp.clustering$cluster.means)
 ```
+
 Along with specifying the number of clusters $k$, we may also specify the percent of 
 regulariziation. In the example below, we extract the clustering solution at $25$\% 
 along the regularization path.
@@ -290,11 +296,10 @@ carp.clustering <- clustering(carp.fit,percent = .25)
 ```
 
 Simiarly to CARP objects, CBASS clustering solutions may also be extracted via the 
-`clustering` function.
-The desired clustering solution is returned by
-specifying either the number of observation clusters (`k.obs`), 
-the number of variable clusters (`k.var`), or the percent of 
-regularization (`percent`). In any case, `clustering` returns 
+`clustering` function. The desired clustering solution is returned by
+specifying either the number of observation clusters (`k.obs`),
+the number of variable clusters (`k.var`), or the percent of
+regularization (`percent`). In any case, `clustering` returns
 the observation and variable clustering assignments, as well as
 the matrix of cluster means.
 In the example below we extract the biclustering solution
@@ -312,22 +317,21 @@ cbass.clustering$cluster.mean.matrix[1:5,1:5]
 
 # Visualizations
 
-An important feature of both CARP and CBASS fits is the ability to visualize 
+An important feature of both CARP and CBASS fits is the ability to visualize
 an entire path of solutions. Unlike traditional clustering methods, CARP and CBASS
-allow for dynamic visualization of cluster formation, giving a more 
+allow for dynamic visualization of cluster formation, giving a more
 wholistic view of the underlying data.
 
-In this section we examine both static and dynamic visualizations for 
+In this section we examine both static and dynamic visualizations for
 CARP and CBASS.
 
 ## Static
 
 Static visualizations allow the user to view snapshots along the cluster
-solution path. In the plot below
-the first two 
-principal components of the original observations (US presidents) 
-are plotted (black dots) along with the CARP solution path (red curves). 
-Following along the CARP solution path, we can watch  
+solution path. In the plot below the first two
+principal components of the original observations (US presidents)
+are plotted (black dots) along with the CARP solution path (red curves).
+Following along the CARP solution path, we can watc
 the fusions between observations as regulaization increases.
 To obtain a snapshot we again specify the percent of regularization.
 
@@ -335,16 +339,16 @@ To obtain a snapshot we again specify the percent of regularization.
 plot(carp.fit,type = 'path',percent=.5)
 ```
 
-Owing to the CARP-VIZ algorithm, we are also ensured a 
-dendrogram representation for the resulting path. In the 
+Owing to the CARP-VIZ algorithm, we are also ensured a
+dendrogram representation for the resulting path. In the
 figure below we display the dendrogram of CARP-VIZ:
 
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
 plot(carp.fit,type = 'dendrogram')
 ```
 
-Additional static visualization are available for 
-CBASS objects, allowing both static heatmaps and 
+Additional static visualization are available for
+CBASS objects, allowing both static heatmaps and
 dendrograms for observations and variables.
 
 ```{r,echo=TRUE,eval=FALSE}
@@ -353,9 +357,8 @@ plot(cbass.fit,type='var.dendrogram')
 
 ## Dynamic
 
-The dynamic visualization of both CARP and CBASS give a wholistic view 
-of cluster formation.
-Via the use of Shiny applications, dynamic displays of dendrograms, 
+The dynamic visualization of both CARP and CBASS give a wholistic view of cluster formation.
+Via the use of Shiny applications, dynamic displays of dendrograms,
 clustering solution paths, and biclustering heatmaps may be easily obtained.
 
 ```{r,echo=TRUE,eval=FALSE}
@@ -374,12 +377,10 @@ plot(cbass.fit,type='interactive')
 
 ## Saving
 
-`clustRviz` allows for visualizations, both static and dynamic, to be 
-easily saved for use in presentations and publications. 
-Static snapshots of the clustering solution paths may be 
-saved via the `saveviz` function.
-Similar to 
-plotting a CARP object, the percent of regularization 
+`clustRviz` allows for visualizations, both static and dynamic, to be easily
+saved for use in presentations and publications. Static snapshots of the
+clustering solution paths may be saved via the `saveviz` function.
+Similar to plotting a CARP object, the percent of regularization 
 is sufficient to obtain a visualization along the path:
 
 ```{r,echo=TRUE,eval=FALSE}
@@ -408,7 +409,7 @@ saveviz(
 ```
 
 Dynamic visualizations can also be saved for viewing outside of Shiny applications.
-In the case of dynamic visuals, `saveviz` will output a `.gif` demonstrating 
+In the case of dynamic visuals, `saveviz` will output a `.gif` demonstrating
 cluster formation.
 
 ```{r,echo=TRUE,eval=FALSE}
@@ -420,8 +421,8 @@ saveviz(
 )
 ```
 
-`saveviz` may be used for CBASS objects as well, outputing dendrograms 
-for observation or variables, as well as heatmaps. In the example 
+`saveviz` may be used for CBASS objects as well, outputing dendrograms
+for observation or variables, as well as heatmaps. In the example
 below we save a `.gif` biclustering heatmap.
 
 ```{r,echo=TRUE,eval=FALSE}
@@ -431,15 +432,13 @@ saveviz(
   plot.type = 'heatmap',
   image.type = 'dynamic'
 )
-
 ```
 
 # Discussion
 
-`clustRviz` provides a integrated framework for fitting and visualizing 
-the CARP and CBASS solution paths. 
-`clustRviz` delivers fast computation relative to traditional Convex Clustering 
-solution techniques, and brings traditional and modern clustering 
-visualization techniques together in a unified framework.
+`clustRviz` provides a integrated framework for fitting and visualizing the CARP
+and CBASS solution paths. `clustRviz` delivers fast computation relative
+traditional Convex Clustering solution techniques, and brings traditional and
+modern clustering visualization techniques together in a unified framework.
 
 # References
