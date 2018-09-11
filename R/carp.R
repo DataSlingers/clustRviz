@@ -114,7 +114,6 @@ CARP <- function(X,
   weights <- internal.control$weights
   weight.dist <- internal.control$weight.dist
   weight.dist.p <- internal.control$weight.dist.p
-  ncores <- internal.control$ncores
   max.iter <- internal.control$max.iter
   burn.in <- internal.control$burn.in
   alg.type <- internal.control$alg.type
@@ -216,7 +215,6 @@ CARP <- function(X,
   PreCompList <- suppressMessages(ConvexClusteringPreCompute(
     X = X,
     weights = weights,
-    ncores = ncores,
     rho = rho
   ))
   cardE <- NROW(PreCompList$E)
@@ -369,7 +367,6 @@ CARP <- function(X,
 #'                      \code{weight.dist = "minkowski"}.
 #'                      See \code{\link[stats]{dist}} for details.
 #' @param phi A positive real number: the scale factor used in the RBF kernel
-#' @param ncores An positive integer: the number of cores to use.
 #' @param max.iter An integer: the maximum number of CARP iterations.
 #' @param burn.in An integer: the number of initial iterations at a fixed
 #'                (small) value of \eqn{\lambda}
@@ -400,7 +397,6 @@ carp.control <- function(obs.labels = NULL,
                          k = NULL,
                          weight.dist = "euclidean",
                          weight.dist.p = 2,
-                         ncores = 1L,
                          max.iter = 1000000L,
                          burn.in = 50L,
                          alg.type = "carpviz",
@@ -444,10 +440,6 @@ carp.control <- function(obs.labels = NULL,
     stop(sQuote("weight.dist.p"),
          " must be a positive scalar; see the ", sQuote("p"),
          " argument of ", sQuote("stats::dist"), " for details.")
-  }
-
-  if (!is.integer(ncores) || ncores <= 0L) {
-    stop(sQuote("ncores"), " must be a positive integer.")
   }
 
   if (!is.null(npcs)) {
@@ -495,7 +487,6 @@ carp.control <- function(obs.labels = NULL,
     weights = weights,
     weight.dist = weight.dist,
     weight.dist.p = weight.dist.p,
-    ncores = ncores,
     max.iter = max.iter,
     burn.in = burn.in,
     alg.type = alg.type,
