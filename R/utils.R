@@ -23,26 +23,14 @@ CreateAdjacency <- function(E, sp.pattern, n) {
   adjmat@x <- as.double(rep(1, times = nrow(connected.pairs)))
   return(adjmat)
 }
-CreateAdjacencyPath <- function(E, sp.path, n) {
-  lapply(1:nrow(sp.path), function(x) {
-    CreateAdjacency(E, sp.path[x, ], n)
-  })
-}
+
 CreateClusterGraph <- function(AdjMatrix) {
   igraph::graph_from_adjacency_matrix(AdjMatrix, mode = "undirected")
-}
-CreateClusterGraphPath <- function(AdjMatrixList) {
-  lapply(AdjMatrixList, function(x) {
-    CreateClusterGraph(x)
-  })
 }
 
 #' @importFrom igraph components
 GetClusters <- function(ClusterGraph) {
   igraph::components(ClusterGraph)
-}
-GetClustersPath <- function(ClusterGraphList) {
-  lapply(ClusterGraphList, GetClusters)
 }
 
 #' @importFrom Matrix which
