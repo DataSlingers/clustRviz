@@ -24,7 +24,6 @@ Imports:
     purrr,
     shiny,
     Matrix,
-    plyr,
     stringr,
     zoo,
     animation,
