@@ -277,15 +277,10 @@ CARP <- function(X,
     lambda.path = carp.sol.path$lambda.path,
     cardE = cardE
   ) -> carp.cluster.path
-  carp.cluster.path$sp.path.inter %>% duplicated(fromLast = FALSE) -> sp.path.dups
-  adj.path <- CreateAdjacencyPath(PreCompList$E, sp.path = carp.cluster.path$sp.path.inter, n.obs)
-  clust.graph.path <- CreateClusterGraphPath(adj.path)
-  clust.path <- GetClustersPath(clust.graph.path)
+
+  clust.path <- get_cluster_assignments(PreCompList$E, carp.cluster.path$sp.path.inter, n.obs)
   clust.path.dups <- duplicated(clust.path, fromLast = FALSE)
 
-  carp.cluster.path[["sp.path.dups"]] <- sp.path.dups
-  carp.cluster.path[["adj.path"]] <- adj.path
-  carp.cluster.path[["clust.graph.path"]] <- clust.graph.path
   carp.cluster.path[["clust.path"]] <- clust.path
   carp.cluster.path[["clust.path.dups"]] <- clust.path.dups
 
