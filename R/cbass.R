@@ -240,7 +240,7 @@ CBASS <- function(X,
   )
   cardE.col <- NROW(PreCompList.col$E)
 
-  if (verbose.basic) message("Computing CBASS Path\n")
+  if (verbose.basic) message("Computing CBASS Path")
 
   if (alg.type %in% c("cbassviz", "cbassvizl1")) {
     bicarp.sol.path <- CBASS_VIZcpp(x = X[TRUE],
@@ -304,7 +304,8 @@ CBASS <- function(X,
   ##         the type here for now
   bicarp.sol.path$lambda.path <- matrix(bicarp.sol.path$lambda.path, ncol=1)
 
-  if (verbose.basic) message("Post-processing\n")
+  if (verbose.basic) message("Post-processing")
+
   ISP(
     sp.path = bicarp.sol.path$v.row.zero.inds %>% t(),
     v.path = bicarp.sol.path$v.row.path,
@@ -312,21 +313,14 @@ CBASS <- function(X,
     lambda.path = bicarp.sol.path$lambda.path,
     cardE = sum(weights.row != 0)
   ) -> bicarp.cluster.path.row
-  bicarp.cluster.path.row$sp.path.inter %>% duplicated(fromLast = FALSE) -> sp.path.dups.row
-  adj.path.row <- CreateAdjacencyPath(PreCompList.row$E, sp.path = bicarp.cluster.path.row$sp.path.inter, p.var)
-  clust.graph.path.row <- CreateClusterGraphPath(adj.path.row)
-  clust.path.row <- GetClustersPath(clust.graph.path.row)
+
+  clust.path.row <- get_cluster_assignments(PreCompList.row$E, bicarp.cluster.path.row$sp.path.inter, p.var)
   clust.path.dups.row <- duplicated(clust.path.row, fromLast = FALSE)
 
-  bicarp.cluster.path.row[["sp.path.dups"]] <- sp.path.dups.row
-  bicarp.cluster.path.row[["adj.path"]] <- adj.path.row
-  bicarp.cluster.path.row[["clust.graph.path"]] <- clust.graph.path.row
   bicarp.cluster.path.row[["clust.path"]] <- clust.path.row
   bicarp.cluster.path.row[["clust.path.dups"]] <- clust.path.dups.row
 
   bicarp.dend.row <- CreateDendrogram(bicarp.cluster.path.row, p.labels)
-
-
 
   ISP(
     sp.path = bicarp.sol.path$v.col.zero.inds %>% t(),
@@ -335,19 +329,15 @@ CBASS <- function(X,
     lambda.path = bicarp.sol.path$lambda.path,
     cardE = sum(weights.col != 0)
   ) -> bicarp.cluster.path.col
-  bicarp.cluster.path.col$sp.path.inter %>% duplicated(fromLast = FALSE) -> sp.path.dups.col
-  adj.path.col <- CreateAdjacencyPath(PreCompList.col$E, sp.path = bicarp.cluster.path.col$sp.path.inter, n.obs)
-  clust.graph.path.col <- CreateClusterGraphPath(adj.path.col)
-  clust.path.col <- GetClustersPath(clust.graph.path.col)
+
+  clust.path.col <- get_cluster_assignments(PreCompList.col$E, bicarp.cluster.path.col$sp.path.inter, n.obs)
   clust.path.dups.col <- duplicated(clust.path.col, fromLast = FALSE)
 
-  bicarp.cluster.path.col[["sp.path.dups"]] <- sp.path.dups.col
-  bicarp.cluster.path.col[["adj.path"]] <- adj.path.col
-  bicarp.cluster.path.col[["clust.graph.path"]] <- clust.graph.path.col
   bicarp.cluster.path.col[["clust.path"]] <- clust.path.col
   bicarp.cluster.path.col[["clust.path.dups"]] <- clust.path.dups.col
 
   bicarp.dend.col <- CreateDendrogram(bicarp.cluster.path.col, n.labels)
+
   cbass.fit <- list(
     X = X.orig,
     cbass.sol.path = bicarp.sol.path,
