@@ -43,7 +43,7 @@
 #'         \item \code{interactive}: a logical indicating whether interactive visualizations are available for this \code{CARP} object
 #'         }
 #' @importFrom utils data
-#' @importFrom dplyr %>%
+#' @importFrom dplyr %>% bind_rows
 #' @importFrom dplyr n
 #' @importFrom dplyr tbl_df
 #' @importFrom dplyr mutate
@@ -312,9 +312,7 @@ CARP <- function(X,
           Lambda = carp.cluster.path$lambda.path.inter[iter],
           ObsLabel = n.labels
         )
-    }) %>%
-      do.call(rbind.data.frame, .) %>%
-      dplyr::tbl_df() %>%
+    }) %>% bind_rows %>%
       dplyr::group_by(Iter) %>%
       dplyr::mutate(
         NCluster = length(unique(Cluster))
