@@ -43,12 +43,7 @@
 #'         \item \code{interactive}: a logical indicating whether interactive visualizations are available for this \code{CARP} object
 #'         }
 #' @importFrom utils data
-#' @importFrom dplyr %>% bind_rows
-#' @importFrom dplyr n
-#' @importFrom dplyr tbl_df
-#' @importFrom dplyr mutate
-#' @importFrom dplyr group_by
-#' @importFrom dplyr ungroup
+#' @importFrom dplyr %>% mutate group_by ungroup as_tibble n_distinct
 #' @importFrom stats var
 #' @importFrom utils modifyList
 #' @export
@@ -297,28 +292,20 @@ CARP <- function(X,
   if (interactive) {
     X.pca <- stats::prcomp(t(X), scale. = FALSE, center = FALSE)
     X.pca.rot <- X.pca$rotation[, 1:npcs]
-    lapply(1:length(carp.cluster.path$clust.path), function(iter) {
-      U <- t(matrix(carp.cluster.path$u.path.inter[, iter], ncol = n.obs)) %*% X.pca.rot
-      names(U) <- paste("PC", 1:npcs)
-      U %>%
-        as.data.frame() %>%
-        dplyr::tbl_df() %>%
-        dplyr::mutate(
-          Iter = iter,
-          Obs = 1:n(),
-          Cluster = carp.cluster.path$clust.path[[iter]]$membership,
-          Lambda = carp.cluster.path$lambda.path.inter[iter],
-          ObsLabel = n.labels
-        )
-    }) %>% bind_rows %>%
-      dplyr::group_by(Iter) %>%
-      dplyr::mutate(
-        NCluster = length(unique(Cluster))
-      ) %>%
-      dplyr::ungroup() %>%
-      dplyr::mutate(
-        LambdaPercent = Lambda / max(Lambda)
-      ) -> carp.cluster.path.vis
+
+    U_projected <- crossprod(matrix(carp.cluster.path$u.path.inter, nrow = p.var), X.pca.rot)
+    colnames(U_projected) <- paste0("PC", 1:npcs)
+
+    carp.cluster.path.vis <- as_tibble(U_projected) %>%
+                                mutate(Iter = rep(seq_along(carp.cluster.path$clust.path), each = n.obs),
+                                       Obs  = rep(seq_len(n.obs), times = length(carp.cluster.path$clust.path)),
+                                       Cluster = as.vector(vapply(carp.cluster.path$clust.path, function(x) x$membership, double(n.obs))),
+                                       Lambda = rep(carp.cluster.path$lambda.path.inter, each = n.obs),
+                                       ObsLabel = rep(n.labels, times = length(carp.cluster.path$clust.path))) %>%
+                                group_by(Iter) %>%
+                                mutate(NCluster = n_distinct(Cluster)) %>%
+                                ungroup() %>%
+                                mutate(LambdaPercent = Lambda / max(Lambda))
   } else {
     carp.cluster.path.vis <- NULL
   }
