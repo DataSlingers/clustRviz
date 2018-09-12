@@ -3,6 +3,7 @@ library(clustRviz)
 context("CARP Function")
 data("presidential_speech")
 Xdat <- presidential_speech[1:10,1:4]
+nobs <- nrow(Xdat)
 
 
 
@@ -65,7 +66,61 @@ test_that("CARP Runs w/ carpl1 1.1",{
 })
 
 
-
+context("CARP fitting w/ uniform weights")
+test_that("CARP Runs w/ carpviz",{
+  expect_error(
+    carp.fit <- CARP(
+        X=Xdat,
+        control = list(alg.type='carpviz'),
+        weights = rep(1,times=choose(nobs,2))),
+    NA
+  )
+})
+test_that("CARP Runs w/ carpvizl1",{
+  expect_error(
+    carp.fit <- CARP(
+        X=Xdat,
+        control = list(alg.type='carpvizl1'),
+        weights = rep(1,times=choose(nobs,2))),
+    NA
+  )
+})
+test_that("CARP Runs w/ carp 1.05",{
+  expect_error(
+    carp.fit <- CARP(
+        X=Xdat,
+        control = list(alg.type='carp',t=1.05),
+        weights = rep(1,times=choose(nobs,2))),
+    NA
+  )
+})
+test_that("CARP Runs w/ carp 1.1",{
+  expect_error(
+    carp.fit <- CARP(
+        X=Xdat,
+        control = list(alg.type='carp',t=1.1),
+        weights = rep(1,times=choose(nobs,2))),
+    NA
+  )
+})
+test_that("CARP Runs w/ carpl1 1.05",{
+  expect_error(
+    carp.fit <- CARP(
+        X=Xdat,
+        control = list(alg.type='carpl1',t=1.05),
+        weights = rep(1,times=choose(nobs,2))),
+    NA
+  )
+})
+test_that("CARP Runs w/ carpl1 1.1",{
+  expect_error(
+    carp.fit <- CARP(
+        X=Xdat,
+        control = list(alg.type='carpl1',t=1.1),
+        weights = rep(1,times=choose(nobs,2))),
+    NA
+  )
+})
 
 
 

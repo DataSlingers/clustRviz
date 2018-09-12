@@ -115,6 +115,10 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
     //
     //
     while(rep_iter){
+      // Safety check - only so many iterations of inner loop before we move on
+      if(try_iter > ti){
+        rep_iter = false;
+      }
       // U-update
       // TODO - Document what is happening here
       Eigen::VectorXd solver_input = DtMatOpv2(rho * v_old - z_old, n, p, IndMat, EOneIndMat, ETwoIndMat);
@@ -147,12 +151,12 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
 
       try_iter++; // Increment internal iteration count (used to check for stopping below)
 
-      if( (nzeros_new == nzeros_old) & (try_iter == 1) ){
+      if( (nzeros_new == nzeros_old) & (try_iter == 1) & (rep_iter) ){
         // If the sparsity pattern (number of fusions) hasn't changed, we have
         // no need to back-track (we didn't miss any fusions) so we can go immediately
         // to the next iteration.
         rep_iter = false;
-      } else if(nzeros_new > nzeros_old + 1){
+      } else if( (nzeros_new > nzeros_old + 1) & (rep_iter)){
         // If we see two (or more) new fusions, we need to back-track and figure
         // out which one occured first
         vZeroIndsnew = vZeroIndsold;
@@ -162,7 +166,7 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
           gamma_upper = gamma;
           gamma = 0.5 * (gamma_lower + gamma_upper);
         }
-      } else if(nzeros_new == nzeros_old){
+      } else if( (nzeros_new == nzeros_old) & (rep_iter)){
         // If we don't observe any new fusions, we take another iteration without
         vZeroIndsnew = vZeroIndsold;
         gamma_lower = gamma;
@@ -173,10 +177,6 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
         rep_iter = false;
       }
 
-      // Safety check - only so many iterations of inner loop before we move on
-      if(try_iter > ti){
-        rep_iter = false;
-      }
     }
 
     // If we have gotten to the "lots of fusions" part of the solution space, start
