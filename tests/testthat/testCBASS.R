@@ -14,6 +14,9 @@ test_that("CBASS Runs",{
     NA
   )
 })
+test_that("CBASS Runs w/ X.center.global=FALSE",{
+  expect_error(CBASS(presidential_speech, X.center.global = FALSE), regexp = NA)
+})
 test_that("CBASS Runs w/ cbassviz",{
   expect_error(
     cbass.fit <- CBASS(X=Xdat,control = list(alg.type='cbassviz')),
@@ -172,6 +175,41 @@ test_that("Clustered data matrix returned by clustering.CBASS has correct dimens
                dim(clustering(cbass_fit, k.var = 10)$cluster.mean.matrix))
 })
 
+test_that("CBASS clustering (w/ X.center.global == TRUE) returns zero matrix at full regularization", {
+  cbass_fit <- CBASS(presidential_speech, X.center.global = TRUE)
+  expect_equal(clustering(cbass_fit, percent = 1)$cluster.mean.matrix,
+               0 * presidential_speech)
+})
+
+test_that("CBASS clustering (w/ X.center.global == FALSE) returns global mean at full regularization", {
+  cbass_fit <- CBASS(presidential_speech, X.center.global = FALSE)
+  expect_equal(clustering(cbass_fit, percent = 1)$cluster.mean.matrix,
+               0 * presidential_speech + mean(presidential_speech))
+})
+
+test_that("CBASS clustering (w/ X.center.global == TRUE) returns (centered) original data at 0 regularization", {
+  cbass_fit <- CBASS(presidential_speech, X.center.global = TRUE)
+  expect_equal(clustering(cbass_fit, percent = 0)$cluster.mean.matrix,
+               presidential_speech - mean(presidential_speech))
+})
+
+test_that("CBASS clustering (w/ X.center.global == FALSE) returns original data at 0 regularization", {
+  cbass_fit <- CBASS(presidential_speech, X.center.global = FALSE)
+  expect_equal(clustering(cbass_fit, percent = 0)$cluster.mean.matrix,
+               presidential_speech)
+})
+
+test_that("CBASS clustering cluster.mean.matrix respects obsveration/row labels", {
+  cbass_fit <- CBASS(presidential_speech)
+  expect_equal(rownames(presidential_speech),
+               rownames(clustering(cbass_fit, percent = .3)$cluster.mean.matrix))
+})
+
+test_that("CBASS clustering cluster.mean.matrix respects variable/column labels",{
+  cbass_fit <- CBASS(presidential_speech)
+  expect_equal(colnames(presidential_speech),
+               colnames(clustering(cbass_fit, percent = .3)$cluster.mean.matrix))
+})
 
 # context('CBASS Saving')
 # test_that("saveviz runs with static obs.dend, k.obs",{
