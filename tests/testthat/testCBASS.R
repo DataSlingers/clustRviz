@@ -123,7 +123,54 @@ test_that("clustering CBASS  Runs percent=.3",{
   )
 })
 
+test_that("Observation labels returned by clustering.CBASS have correct length (=NROW(X))", {
+  cbass_fit <- CBASS(presidential_speech)
 
+  # Percent
+  expect_equal(NROW(presidential_speech),
+               length(clustering(cbass_fit, percent = 0.2)$clustering.assignment.obs))
+
+  # k.obs
+  expect_equal(NROW(presidential_speech),
+               length(clustering(cbass_fit, k.obs = 10)$clustering.assignment.obs))
+
+  # k.var
+  expect_equal(NROW(presidential_speech),
+               length(clustering(cbass_fit, k.var = 10)$clustering.assignment.obs))
+})
+
+test_that("Variable labels returned by clustering.CBASS have correct length (=NCOL(X))", {
+  cbass_fit <- CBASS(presidential_speech)
+
+  # Percent
+  expect_equal(NCOL(presidential_speech),
+               length(clustering(cbass_fit, percent = 0.2)$clustering.assignment.var))
+
+  # k.obs
+  expect_equal(NCOL(presidential_speech),
+               length(clustering(cbass_fit, k.obs = 10)$clustering.assignment.var))
+
+  # k.var
+  expect_equal(NCOL(presidential_speech),
+               length(clustering(cbass_fit, k.var = 10)$clustering.assignment.var))
+
+})
+
+test_that("Clustered data matrix returned by clustering.CBASS has correct dimensions (=dim(X))",{
+  cbass_fit <- CBASS(presidential_speech)
+
+  # Percent
+  expect_equal(dim(presidential_speech),
+               dim(clustering(cbass_fit, percent = .2)$cluster.mean.matrix))
+
+  # k.obs
+  expect_equal(dim(presidential_speech),
+               dim(clustering(cbass_fit, k.obs = 10)$cluster.mean.matrix))
+
+  # k.var
+  expect_equal(dim(presidential_speech),
+               dim(clustering(cbass_fit, k.var = 10)$cluster.mean.matrix))
+})
 
 
 # context('CBASS Saving')
