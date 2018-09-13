@@ -12,25 +12,6 @@ if (getRversion() >= "2.15.1") utils::globalVariables(c("."))
 #' @source \url{http://www.presidency.ucsb.edu}
 "presidential_speech"
 
-#' @importFrom Matrix spMatrix
-CreateAdjacency <- function(E, sp.pattern, n) {
-  adjmat <- Matrix::spMatrix(nrow = n, ncol = n)
-  connected.pairs <- matrix(E[which(sp.pattern != 0), ], ncol = 2)
-  adjmat@i <- as.integer(as.vector(connected.pairs[, 1]) - 1)
-  adjmat@j <- as.integer(as.vector(connected.pairs[, 2]) - 1)
-  adjmat@x <- as.double(rep(1, times = nrow(connected.pairs)))
-  return(adjmat)
-}
-
-CreateClusterGraph <- function(AdjMatrix) {
-  igraph::graph_from_adjacency_matrix(AdjMatrix, mode = "undirected")
-}
-
-#' @importFrom igraph components
-GetClusters <- function(ClusterGraph) {
-  igraph::components(ClusterGraph)
-}
-
 #' @importFrom Matrix which
 #' @importFrom Matrix Matrix
 #' @importFrom Matrix t
