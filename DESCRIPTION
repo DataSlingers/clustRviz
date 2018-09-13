@@ -5,7 +5,11 @@ Version: 0.1.0
 Authors@R: c(
   person("John", "Nagorski", role = c("aut", "cre"), email = "jn13@rice.edu"),
   person("Michael", "Weylandt", role = "ctb", email = "Michael.Weylandt@rice.edu"),
-  person("Genevera","Allen", role = "ths", email = "gallen@rice.edu"))
+  person("Genevera","Allen", role = "ths", email = "gallen@rice.edu"),
+  person("Galili", "Tal", role="cph", comment="R/util_rect_dendrogram.R"),
+  person("Warnes", "Gregory", role="cph", comment="R/util_myheatmap2.R"),
+  person("Lewis", "Brian W.", role="cph", comment="R/util_hcs.R"),
+  person("R Core Team", role="cph", comment="R/util_myrecthclust.R"))
 Description: Provides interactive graphics and fast computation for the Convex Clustering problem.
 License: GPL-3
 Encoding: UTF-8
