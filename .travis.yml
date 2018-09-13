@@ -19,7 +19,6 @@ r_packages:
   - igraph
   - gtools
   - tidyr
-  - plyr
 
 before_install:
   - gcc --version

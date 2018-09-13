@@ -8,7 +8,7 @@ before_install <- function(){
   }
   cat("INSTALLING RUN DEPENDENCIES -------- \n\n")
   devtools::install_deps(dependencies=c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances"),
-                         quiet=FALSE, upgrade=TRUE)
+                         quiet=FALSE, upgrade=FALSE)
 
   cat("BUILDING NAMESPACE with roxygen2 -------- \n\n")
   roxygen2::roxygenize()
