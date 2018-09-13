@@ -40,11 +40,8 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' library(clustRviz)
-#' data("presidential_speech")
-#' Xdat <- presidential_speech[1:10,1:4]
-#' cbass.fit <- CARP(X=Xdat)
-#' plot(cbass.fit,type='interactive')
+#' cbass_fit <- CBASS(presidential_speech)
+#' plot(cbass_fit, type='interactive')
 #' }
 plot.CBASS <- function(
                        x,

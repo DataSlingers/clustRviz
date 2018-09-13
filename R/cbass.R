@@ -2,9 +2,7 @@
 #'
 #' \code{CBASS} returns a fast approximation to the Convex BiClustering
 #' solution path along with visualizations such as dendrograms and
-#' heatmaps. Visualizations may be static, interactive, or both.
-#'
-#' \code{CBASS} solves the Convex Biclustering problem via
+#' heatmaps. \code{CBASS} solves the Convex Biclustering problem via
 #' Algorithmic Regularization Paths. A seqeunce of biclustering
 #' solutions is returned along with several visualizations.
 #'
@@ -13,9 +11,6 @@
 #'          will not be clustered).
 #' @param verbose Any of the values \code{0}, \code{1}, or \code{2}. Higher values
 #'                correspond to more verbose output while running.
-#' @param interactive A logical. Should interactive paths and dendrograms be
-#'                    returned?
-#' @param static A logical. Should static paths and dendrograms be returned?
 #' @param control A list containing advanced parameters for the \code{CBASS} algorithm,
 #'                typically created by \code{\link{cbass.control}}.
 #' @param ... Additional arguments used to control the behavior of \code{CBASS}; see
@@ -40,23 +35,19 @@
 #'                               clustering weights for the observations
 #'         \item \code{phi.var}: the scale factor of the RBF kernel used to calculate
 #'                               clustering weights for the variables
-#'         \item \code{carp.dend.obs}: If \code{static=TRUE}, an dendrogram (object of
-#'                                     class \code{\link[stats]{hclust}}) containing
+#'         \item \code{carp.dend.obs}: a dendrogram (object of class
+#'                                     \code{\link[stats]{hclust}}) containing
 #'                                     the clustering solution path for the observations
-#'         \item \code{carp.dend.var}: If \code{static=TRUE}, an dendrogram (object of
-#'                                     class \code{\link[stats]{hclust}}) containing
+#'         \item \code{carp.dend.var}: a dendrogram (object of class
+#'                                     \code{\link[stats]{hclust}}) containing
 #'                                     the clustering solution path for the variables
 #'         \item \code{cbass.cluster.path.obs}: The \code{CBASS} solution path for the observations
 #'         \item \code{cbass.cluster.path.var}: The \code{CBASS} solution path for the variables
-#'         \item \code{static}: a logical indicating whether static visualizations are available for this \code{CBASS} object
-#'         \item \code{interactive}: a logical indicating whether interactive visualizations are available for this \code{CBASS} object
 #'         \item \code{obs.labels}: a character vector of length \code{n.obs} containing
 #'                                  observation (row) labels
 #'         \item \code{var.labels}: a character vector of length \code{p.var} containing
 #'                                  variable (column) labels
 #'         }
-#' @return obs.labels a vector of length n.obs containing observations (row) labels
-#' @return var.labels a vector of length p.var containing variable (column) labels
 #' @importFrom stats var
 #' @export
 #' @examples
@@ -67,8 +58,6 @@
 #' }
 CBASS <- function(X,
                   verbose = 1L,
-                  interactive = TRUE,
-                  static = TRUE,
                   ...,
                   control = NULL) {
 
@@ -355,12 +344,12 @@ CBASS <- function(X,
     alg.type = alg.type,
     t = t,
     X.center.global = X.center.global,
-    static = static,
-    interactive = interactive,
     obs.labels = n.labels,
     var.labels = p.labels
   )
+
   class(cbass.fit) <- "CBASS"
+
   return(cbass.fit)
 }
 
@@ -541,7 +530,8 @@ cbass.control <- function(obs.labels = NULL,
 #'
 #' Reports number of observations and variables of dataset, any preprocessing
 #' done by the \code{\link{CBASS}} function, regularization weight information,
-#' the variant of \code{CBASS} used, and the visualizations returned.
+#' and the variant of \code{CBASS}.
+#'
 #' @param x an object of class \code{CBASS} as returned by \code{\link{CBASS}}
 #' @param ... Additional unused arguments
 #' @export
@@ -558,11 +548,6 @@ print.CBASS <- function(x, ...) {
   cat("CBASS Fit Summary\n")
   cat("====================\n\n")
   cat("Algorithm: ", alg_string, "\n\n")
-
-  cat("Available Visualizations:\n")
-  cat(" - Static Dendrogram:   ", x$static, "\n")
-  cat(" - Static Heatmap:      ", x$static, "\n")
-  cat(" - Interactive Heatmap: ", x$interactive, "\n\n")
 
   cat("Number of Observations: ", x$n.obs, "\n")
   cat("Number of Variables:    ", x$p.var, "\n\n")

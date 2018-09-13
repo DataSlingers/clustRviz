@@ -71,11 +71,8 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' library(clustRviz)
-#' data("presidential_speech")
-#' Xdat <- presidential_speech[1:10,1:4]
-#' carp.fit <- CARP(X=Xdat)
-#' plot(carp.fit,type='interactive')
+#' carp_fit <- CARP(presidential_speech)
+#' plot(carp_fit, type='interactive')
 #' }
 plot.CARP <- function(
                       x,
