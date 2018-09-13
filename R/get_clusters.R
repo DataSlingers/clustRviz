@@ -225,32 +225,30 @@ clustering.CBASS <- function(x, k.obs = NULL, k.var = NULL, percent = NULL, ...)
   } else {
     stop("Select exactly one of k.obs, k.var, or percent")
   }
-  # find lambda closest in column path
-  cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
-  # find clustering solution in column path
-  cur.col.clust.assignment <- x$cbass.cluster.path.obs$clust.path[[cur.col.lam.ind]]$membership
-  cur.col.clust.labels <- unique(cur.col.clust.assignment)
-  cur.col.nclust <- length(cur.col.clust.labels)
-  # find lambda closest in row path
-  cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.var$lambda.path.inter - cur.lam))
-  # find clustering solution in row path
-  cur.row.clust.assignment <- x$cbass.cluster.path.var$clust.path[[cur.row.lam.ind]]$membership
+  # find lambda closest in row (observation) path
+  cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
+  # find clustering solution in row (observation) path
+  cur.row.clust.assignment <- x$cbass.cluster.path.obs$clust.path[[cur.row.lam.ind]]$membership
   cur.row.clust.labels <- unique(cur.row.clust.assignment)
   cur.row.nclust <- length(cur.row.clust.labels)
+  # find lambda closest in column (variable) path
+  cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.var$lambda.path.inter - cur.lam))
+  # find clustering solution in column (variable) path
+  cur.col.clust.assignment <- x$cbass.cluster.path.var$clust.path[[cur.col.lam.ind]]$membership
+  cur.col.clust.labels <- unique(cur.col.clust.assignment)
+  cur.col.nclust <- length(cur.col.clust.labels)
 
   if (x$X.center.global) {
     X.heat <- x$X
     X.heat <- X.heat - mean(X.heat)
-    X.heat <- t(X.heat)
     X <- x$X
     X <- X - mean(X)
-    X <- t(X)
   } else {
-    X.heat <- t(x$X)
-    X <- t(x$X)
+    X.heat <- x$X
+    X <- x$X
   }
-  colnames(X.heat) <- x$obs.labels
-  rownames(X.heat) <- x$var.labels
+  rownames(X.heat) <- x$obs.labels
+  colnames(X.heat) <- x$var.labels
   for (col.label.ind in seq_along(cur.col.clust.labels)) {
     cur.col.label <- cur.col.clust.labels[col.label.ind]
     col.inds <- which(cur.col.clust.assignment == cur.col.label)
@@ -263,11 +261,12 @@ clustering.CBASS <- function(x, k.obs = NULL, k.var = NULL, percent = NULL, ...)
   }
 
 
-  clust.assign.obs <- paste("cl", cur.col.clust.assignment, sep = "")
-  clust.assign.var <- paste("cl", cur.row.clust.assignment, sep = "")
+  clust.assign.obs <- paste("cl", cur.row.clust.assignment, sep = "")
+  clust.assign.var <- paste("cl", cur.col.clust.assignment, sep = "")
   list(
     clustering.assignment.obs = clust.assign.obs,
     clustering.assignment.var = clust.assign.var,
     cluster.mean.matrix = X.heat
   )
+
 }

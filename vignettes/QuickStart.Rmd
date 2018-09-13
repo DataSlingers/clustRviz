@@ -253,7 +253,7 @@ table(cbass.clusters$clustering.assignment.obs)
 # variable clusters
 table(cbass.clusters$clustering.assignment.var)
 # mean matrix
-cbass.clusters$cluster.mean.matrix[,1:5]
+cbass.clusters$cluster.mean.matrix[1:5,]
 ```
 
 
