@@ -285,7 +285,6 @@ ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
       unname() -> lambda.path.inter2
   }
 
-  seq2 <- Vectorize(seq.default, vectorize.args = c("from", "to"))
   if (nrow(mc.frame) == 0) {
     dplyr::tibble(
       Iter = 1:ncol(u.path)
@@ -324,8 +323,7 @@ ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
             NewU = purrr::map2(.x = Iter, .y = data, .f = function(x, y) {
               cur.u <- u.path[, x]
               next.u <- u.path[, x + 1]
-              new.u <- matrix(seq2(from = cur.u, to = next.u, length.out = nrow(y) + 1), nrow = length(cur.u), byrow = TRUE)
-              new.u <- new.u[, -ncol(new.u)]
+              new.u <- tcrossprod((next.u - cur.u) / NROW(y), seq(0, NROW(y) - 1)) + cur.u
               lapply(seq_len(ncol(new.u)), function(i) {
                 new.u[, i]
               })
