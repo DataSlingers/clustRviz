@@ -2,9 +2,7 @@
 #'
 #' \code{CARP} returns a fast approximation to the Convex Clustering
 #' solution path along with visualizations such as dendrograms and
-#' cluster paths. Visualizations may be static, interactive, or both.
-#'
-#' \code{CARP} solves the Convex Clustering problem via
+#' cluster paths. \code{CARP} solves the Convex Clustering problem via
 #' Algorithmic Regularization Paths. A seqeunce of clustering
 #' solutions is returned along with several visualizations.
 #'
@@ -13,9 +11,6 @@
 #'          will not be clustered).
 #' @param verbose Any of the values \code{0}, \code{1}, or \code{2}. Higher values
 #'                correspond to more verbose output while running.
-#' @param interactive A logical. Should interactive paths and dendrograms be
-#'                    returned?
-#' @param static A logical. Should static paths and dendrograms be returned?
 #' @param control A list containing advanced parameters for the \code{CARP} algorithm,
 #'                typically created by \code{\link{carp.control}}.
 #' @param ... Additional arguments used to control the behavior of \code{CARP}; see
@@ -35,12 +30,10 @@
 #'         \item \code{k}: the number of neighbors used to create sparse clustering weights
 #'         \item \code{phi}: the scale factor of the RBF kernel used to calculate
 #'                           clustering weights
-#'         \item \code{carp.dend}: If \code{static=TRUE}, an dendrogram (object of
-#'                                 class \code{\link[stats]{hclust}}) containing
+#'         \item \code{carp.dend}: a dendrogram (object of class
+#'                                 \code{\link[stats]{hclust}}) containing
 #'                                 the clustering solution path
 #'         \item \code{carp.cluster.path.vis}: The \code{CARP} solution path
-#'         \item \code{static}: a logical indicating whether static visualizations are available for this \code{CARP} object
-#'         \item \code{interactive}: a logical indicating whether interactive visualizations are available for this \code{CARP} object
 #'         }
 #' @importFrom utils data
 #' @importFrom dplyr %>% mutate group_by ungroup as_tibble n_distinct
@@ -53,8 +46,6 @@
 #' plot(carp_fit)
 CARP <- function(X,
                  verbose = 1L,
-                 interactive = TRUE,
-                 static = TRUE,
                  ...,
                  control = NULL) {
 
@@ -279,31 +270,25 @@ CARP <- function(X,
   carp.cluster.path[["clust.path"]] <- clust.path
   carp.cluster.path[["clust.path.dups"]] <- clust.path.dups
 
-  if (static | interactive) {
-    carp.dend <- CreateDendrogram(carp.cluster.path, n.labels, dendrogram.scale)
-  } else {
-    carp.dend <- NULL
-  }
-  if (interactive) {
-    X.pca <- stats::prcomp(t(X), scale. = FALSE, center = FALSE)
-    X.pca.rot <- X.pca$rotation[, 1:npcs]
+  carp.dend <- CreateDendrogram(carp.cluster.path, n.labels, dendrogram.scale)
 
-    U_projected <- crossprod(matrix(carp.cluster.path$u.path.inter, nrow = p.var), X.pca.rot)
-    colnames(U_projected) <- paste0("PC", 1:npcs)
+  X.pca <- stats::prcomp(t(X), scale. = FALSE, center = FALSE)
+  X.pca.rot <- X.pca$rotation[, 1:npcs]
 
-    carp.cluster.path.vis <- as_tibble(U_projected) %>%
-                                mutate(Iter = rep(seq_along(carp.cluster.path$clust.path), each = n.obs),
-                                       Obs  = rep(seq_len(n.obs), times = length(carp.cluster.path$clust.path)),
-                                       Cluster = as.vector(vapply(carp.cluster.path$clust.path, function(x) x$membership, double(n.obs))),
-                                       Lambda = rep(carp.cluster.path$lambda.path.inter, each = n.obs),
-                                       ObsLabel = rep(n.labels, times = length(carp.cluster.path$clust.path))) %>%
-                                group_by(Iter) %>%
-                                mutate(NCluster = n_distinct(Cluster)) %>%
-                                ungroup() %>%
-                                mutate(LambdaPercent = Lambda / max(Lambda))
-  } else {
-    carp.cluster.path.vis <- NULL
-  }
+  U_projected <- crossprod(matrix(carp.cluster.path$u.path.inter, nrow = p.var), X.pca.rot)
+  colnames(U_projected) <- paste0("PC", 1:npcs)
+
+  carp.cluster.path.vis <- as_tibble(U_projected) %>%
+                              mutate(Iter = rep(seq_along(carp.cluster.path$clust.path), each = n.obs),
+                                     Obs  = rep(seq_len(n.obs), times = length(carp.cluster.path$clust.path)),
+                                     Cluster = as.vector(vapply(carp.cluster.path$clust.path, function(x) x$membership, double(n.obs))),
+                                     Lambda = rep(carp.cluster.path$lambda.path.inter, each = n.obs),
+                                     ObsLabel = rep(n.labels, times = length(carp.cluster.path$clust.path))) %>%
+                              group_by(Iter) %>%
+                              mutate(NCluster = n_distinct(Cluster)) %>%
+                              ungroup() %>%
+                              mutate(LambdaPercent = Lambda / max(Lambda))
+
   carp.fit <- list(
     X = X.orig,
     carp.dend = carp.dend,
@@ -318,11 +303,11 @@ CARP <- function(X,
     alg.type = alg.type,
     t = t,
     X.center = X.center,
-    X.scale = X.scale,
-    static = static,
-    interactive = interactive
+    X.scale = X.scale
   )
+
   class(carp.fit) <- "CARP"
+
   return(carp.fit)
 }
 
@@ -484,7 +469,7 @@ carp.control <- function(obs.labels = NULL,
 #'
 #' Reports number of observations and variables of dataset, any preprocessing
 #' done by the \code{\link{CARP}} function, regularization weight information,
-#' the variant of \code{CARP} used, and the visualizations returned.
+#' and the variant of \code{CARP} used.
 #'
 #' @param x an object of class \code{CARP} as returned by \code{\link{CARP}}
 #' @param ... Additional unused arguments
@@ -502,11 +487,6 @@ print.CARP <- function(x, ...) {
   cat("CARP Fit Summary\n")
   cat("====================\n\n")
   cat("Algorithm: ", alg_string, "\n\n")
-
-  cat("Available Visualizations:\n")
-  cat(" - Static Dendrogram:         ", x$static, "\n")
-  cat(" - Static Cluster Path:       ", x$static, "\n")
-  cat(" - Interactive Visualization: ", x$interactive, "\n\n")
 
   cat("Number of Observations: ", x$n.obs, "\n")
   cat("Number of Variables:    ", x$p.var, "\n\n")
