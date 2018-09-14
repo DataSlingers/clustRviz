@@ -232,11 +232,11 @@ CARP <- function(X,
   weight_vec <- weight_mat_to_vec(weight_matrix)
 
   if (verbose.basic) message("Pre-computing weight-based edge sets")
-  PreCompList <- suppressMessages(ConvexClusteringPreCompute(
-    X = X,
-    weights = weight_vec,
-    rho = rho
-  ))
+  PreCompList <- ConvexClusteringPreCompute(X = X,
+                                            weights = weight_vec,
+                                            rho = rho,
+                                            verbose = verbose.deep)
+
   cardE <- NROW(PreCompList$E)
 
   if (verbose.basic) message("Computing CARP Path")
