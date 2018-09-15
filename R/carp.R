@@ -165,7 +165,7 @@ CARP <- function(X,
     stop(sQuote("labels"), " must be of length ", sQuote("NROW(X)."))
   }
 
-  rownames(X) <- labels <- make.names(labels, unique = TRUE)
+  rownames(X) <- labels <- make.unique(as.character(labels), sep="_")
 
   n.obs <- NROW(X)
   p.var <- NCOL(X)

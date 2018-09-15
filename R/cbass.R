@@ -171,7 +171,7 @@ CBASS <- function(X,
     stop(sQuote("obs_labels"), " must be of length ", sQuote("NROW(X)."))
   }
 
-  rownames(X) <- obs_labels <- make.names(obs_labels, unique = TRUE)
+  rownames(X) <- obs_labels <- make.unique(as.character(obs_labels), sep = "_")
 
   ## Get column (variable) labels
   if (is.null(var_labels)) {
@@ -182,7 +182,7 @@ CBASS <- function(X,
     stop(sQuote("var_labels"), " must be of length ", sQuote("NCOL(X)."))
   }
 
-  colnames(X) <- var_labels <- make.names(var_labels, unique = TRUE)
+  colnames(X) <- var_labels <- make.unique(as.character(var_labels), sep = "_")
 
   if (is.logical(verbose)) {
     verbose.basic <- TRUE
