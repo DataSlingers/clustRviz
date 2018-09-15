@@ -18,6 +18,16 @@ before_install <- function(){
   # Shell out to devtools::document to avoid weird reload error
   system("Rscript -e 'devtools::document()'")
 
+  ## Write test stubs to avoid TravisCI time outs when running "coverage version"
+  cat("WRITING TEST STUBS -------- \n\n")
+  skeleton <- readLines(file.path("tests", "test_stub.R"))
+  for(f in list.files(file.path("tests", "testthat"), pattern="test_")){
+    stub <- gsub("test_(.*)\\.R", "\\1", f)
+    writeLines(gsub("PATTERN", stub, skeleton),
+               file.path("tests", paste0("test_", stub, ".R")))
+  }
+  unlink(file.path("tests", "test_stub.R"))
+
   ## GitHash for debugging purposes
   cat("ADDING GIT HASH -------- \n\n")
   if(!dir.exists("inst")){
