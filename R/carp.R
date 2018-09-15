@@ -11,10 +11,36 @@
 #'          will not be clustered).
 #' @param verbose Any of the values \code{0}, \code{1}, or \code{2}. Higher values
 #'                correspond to more verbose output while running.
-#' @param control A list containing advanced parameters for the \code{CARP} algorithm,
-#'                typically created by \code{\link{carp.control}}.
-#' @param ... Additional arguments used to control the behavior of \code{CARP}; see
-#'            \code{\link{carp.control}} for details.
+#' @param labels A character vector of length \eqn{n}: observations (row) labels
+#' @param X.center A logical: Should \code{X} be centered columnwise?
+#' @param X.scale A logical: Should \code{X} be scaled columnwise?
+#' @param rho For advanced users only (not advisable to change): the penalty
+#'            parameter used for the augmented Lagrangian.
+#' @param max.iter An integer: the maximum number of \code{CARP} iterations.
+#' @param burn.in An integer: the number of initial iterations at a fixed
+#'                (small) value of \eqn{\lambda}
+#' @param alg.type Which \code{CARP} variant to use. Allowed values are \itemize{
+#'        \item \code{"carp"} - The standard \code{CARP} algorithm with \eqn{L2} penalty;
+#'        \item \code{"carpviz"} - The back-tracking \code{CARP} algorithm with \eqn{L2} penalty;
+#'        \item \code{"carpl1"} - The standard \code{CARP} algorithm with \eqn{L1} penalty; and
+#'        \item \code{"carpvizl1"} - The back-tracking \code{CARP} algorithm with \eqn{L1} penalty.}
+#' @param t A number greater than 1: the size of the multiplicative update to
+#'          the cluster fusion regularization parameter (not used by
+#'          back-tracking variants). Typically on the scale of \code{1.005} to \code{1.1}.
+#' @param npcs An integer >= 2. The number of principal components to compute
+#'             for path visualization.
+#' @param dendrogram.scale A character string denoting how the scale of dendrogram
+#'                         regularization proportions should be visualized.
+#'                         Choices are \code{'original'} or \code{'log'}; if not
+#'                         provided, a data-driven heuristic choice is used.
+#' @param ... Unused arguements. An error will be thrown if any unrecognized
+#'            arguments as given. All arguments other than \code{X} must be given
+#'            by name.
+#' @param weights One of the following: \itemize{
+#'                \item A function which, when called with argument \code{X},
+#'                      returns an b-by-n matrix of fusion weights.
+#'                \item A matrix of size n-by-n containing fusion weights
+#'                }
 #' @return An object of class \code{CARP} containing the following elements (among others):
 #'         \itemize{
 #'         \item \code{X}: the original data matrix
@@ -27,9 +53,8 @@
 #'                               column-wise before centering
 #'         \item \code{burn.in}: an integer indicating the number of "burn-in"
 #'                               iterations performed
-#'         \item \code{k}: the number of neighbors used to create sparse clustering weights
-#'         \item \code{phi}: the scale factor of the RBF kernel used to calculate
-#'                           clustering weights
+#'         \item \code{weight_type}: a record of the scheme used to create
+#'                                   fusion weights
 #'         \item \code{carp.dend}: a dendrogram (object of class
 #'                                 \code{\link[stats]{hclust}}) containing
 #'                                 the clustering solution path
@@ -38,16 +63,44 @@
 #' @importFrom utils data
 #' @importFrom dplyr %>% mutate group_by ungroup as_tibble n_distinct
 #' @importFrom stats var
-#' @importFrom utils modifyList
 #' @export
 #' @examples
 #' carp_fit <- CARP(presidential_speech[1:10,1:4])
 #' print(carp_fit)
 #' plot(carp_fit)
 CARP <- function(X,
-                 verbose = 1L,
                  ...,
-                 control = NULL) {
+                 verbose = 1L,
+                 weights = sparse_rbf_kernel_weights(k = "auto",
+                                                     phi = "auto",
+                                                     dist.method = "euclidean",
+                                                     p = 2),
+                 labels = rownames(X),
+                 X.center = TRUE,
+                 X.scale = FALSE,
+                 rho = 1.0,
+                 max.iter = 1000000L,
+                 burn.in = 50L,
+                 alg.type = c("carpviz", "carpvizl1", "carp", "carpl1"),
+                 t = 1.05,
+                 npcs = min(4L, NCOL(X)),
+                 dendrogram.scale = NULL) {
+
+  ####################
+  ##
+  ## Input validation
+  ##
+  ####################
+
+  dots <- list(...)
+
+  if (length(dots) != 0L) {
+    if (!is.null(names(dots))) {
+      stop("Unknown argument ", sQuote(names(dots)[1L]), " passed to ", sQuote("CARP."))
+    } else {
+      stop("Unknown ", sQuote("..."), " arguments passed to ", sQuote("CARP."))
+    }
+  }
 
   if (!is.matrix(X)) {
     warning(sQuote("X"), " should be a matrix, not a " , class(X)[1],
@@ -59,9 +112,6 @@ CARP <- function(X,
     stop(sQuote("X"), " must be numeric.")
   }
 
-  n.obs <- NROW(X)
-  p.var <- NCOL(X)
-
   if (anyNA(X)) {
     stop(sQuote("CARP"), " cannot handle missing data.")
   }
@@ -69,6 +119,56 @@ CARP <- function(X,
   if (!all(is.finite(X))) {
     stop("All elements of ", sQuote("X"), " must be finite.")
   }
+
+  if (!is_logical_scalar(X.center)) {
+    stop(sQuote("X.center"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
+  }
+
+  if (!is_logical_scalar(X.scale)) {
+    stop(sQuote("X.scale"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
+  }
+
+  if ( (!is_numeric_scalar(rho)) || (rho <= 0)) {
+    stop(sQuote("rho"), "must be a positive scalar (vector of length 1).")
+  }
+
+  if ( (!is_integer_scalar(max.iter)) || (max.iter <= 1L) ) {
+    stop(sQuote("max.iter"), " must be a positive integer scalar and at least 2.")
+  }
+
+  if ( (!is_integer_scalar(burn.in)) || (burn.in <= 0L) || (burn.in >= max.iter) ) {
+    stop(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
+  }
+
+  alg.type <- match.arg(alg.type)
+
+  if ( (!is_numeric_scalar(t)) || (t <= 1) ) {
+    stop(sQuote("t"), " must be a scalar greater than 1.")
+  }
+
+  if (!is.null(dendrogram.scale)) {
+    if (dendrogram.scale %not.in% c("original", "log")) {
+      stop("If not NULL, ", sQuote("dendrogram.scale"), " must be either ", sQuote("original"), " or ", sQuote("log."))
+    }
+  }
+
+  if ( (!is_integer_scalar(npcs)) || (npcs < 2) || (npcs > NCOL(X)) ){
+    stop(sQuote("npcs"), " must be an integer scalar between 2 and ", sQuote("NCOL(X)."))
+  }
+
+  ## Get row (observation) labels
+  if (is.null(labels)) {
+    labels <- paste0("Obs", seq_len(NROW(X)))
+  }
+
+  if ( length(labels) != NROW(X) ){
+    stop(sQuote("labels"), " must be of length ", sQuote("NROW(X)."))
+  }
+
+  rownames(X) <- labels <- make.unique(as.character(labels), sep="_")
+
+  n.obs <- NROW(X)
+  p.var <- NCOL(X)
 
   Iter <- Cluster <- Lambda <- NULL
   if (is.logical(verbose)) {
@@ -85,122 +185,56 @@ CARP <- function(X,
     verbose.deep <- FALSE
   }
 
-  internal.control <- carp.control(...)
-  if (!is.null(control)) {
-    internal.control <- modifyList(internal.control, control)
-  }
-
-  obs.labels <- internal.control$obs.labels
-  var.labels <- internal.control$var.labels
-  X.center <- internal.control$X.center
-  X.scale <- internal.control$X.scale
-  k <- internal.control$k
-  phi <- internal.control$phi
-  rho <- internal.control$rho
-  weights <- internal.control$weights
-  weight.dist <- internal.control$weight.dist
-  weight.dist.p <- internal.control$weight.dist.p
-  max.iter <- internal.control$max.iter
-  burn.in <- internal.control$burn.in
-  alg.type <- internal.control$alg.type
-  t <- internal.control$t
-  npcs <- internal.control$npcs
-  dendrogram.scale <- internal.control$dendrogram.scale
-
-  # get labels
-  if (is.null(obs.labels)) {
-    if (!is.null(rownames(X))) {
-      n.labels <- rownames(X)
-    } else {
-      n.labels <- 1:NROW(X)
-    }
-  } else {
-    if (length(obs.labels) == n.obs) {
-      n.labels <- obs.labels
-    } else {
-      stop("obs.labels should hve length NROW(X)")
-    }
-  }
-
-  if (is.null(var.labels)) {
-    if (!is.null(colnames(X))) {
-      p.labels <- colnames(X)
-    } else {
-      p.labels <- 1:NCOL(X)
-    }
-  } else {
-    if (length(var.labels) == p.var) {
-      p.labels <- var.labels
-    } else {
-      stop("var.labels should be have length NCOL(X)")
-    }
-  }
-
-  if (is.null(npcs)) {
-    npcs <- min(4, p.var)
-    npcs <- as.integer(npcs)
-  } else {
-    npcs <- as.integer(npcs)
-    if (!is.integer(npcs) | npcs < 2) {
-      stop("npcs should be an integer greater than or equal to 2.")
-    }
-    if (npcs > p.var) {
-      stop("npcs should be less than or equal to NCOL(X)")
-    }
-  }
-  if (!is.null(phi)) {
-    if (phi <= 0) {
-      stop("phi should be positive.")
-    }
-  }
-
-  if (length(unique(p.labels) != length(p.labels))) {
-    colnames(X) <- make.names(p.labels, unique = TRUE)
-  } else {
-    colnames(X) <- p.labels
-  }
-  if (length(unique(n.labels)) != length(n.labels)) {
-    rownames(X) <- make.names(n.labels, unique = TRUE)
-  } else {
-    rownames(X) <- n.labels
-  }
-
-  # center and scale
+  # Center and scale X
   X.orig <- X
   if (X.center | X.scale) {
-    X %>%
-      scale(center = X.center, scale = X.scale) %>%
-      t() -> X
-  } else {
-    X <- t(X)
+    X <- scale(X, center = X.center, scale = X.scale)
   }
 
-  # get weights
-  if (is.null(weights)) {
-    if (is.null(phi)) {
-      phi.vec <- 10^(-10:10)
-      sapply(phi.vec, function(phi) {
-        stats::var(DenseWeights(X = t(X), phi = phi, method = weight.dist, p = weight.dist.p))
-      }) %>%
-        which.max() %>%
-        phi.vec[.] -> phi
+  # Calculate clustering weights
+  if (is.function(weights)) { # Usual case, `weights` is a function which calculates the weight matrix
+    weight_result <- weights(X)
+
+    if (is.matrix(weight_result)) {
+      weight_matrix <- weight_result
+      weight_type   <- UserFunction()
+    } else {
+      weight_matrix <- weight_result$weight_mat
+      weight_type   <- weight_result$type
     }
-    weights <- DenseWeights(t(X), phi = phi, method = weight.dist, p = weight.dist.p)
-    if (is.null(k)) {
-      k <- MinKNN(t(X), weights)
+  } else if (is.matrix(weights)) {
+
+    if (!is_square(weights)) {
+      stop(sQuote("weights"), " must be a square matrix.")
     }
-    weights <- SparseWeights(X = t(X), dense.weights = weights, k = k)
+
+    if (NROW(weights) != NROW(X)) {
+      stop(sQuote("NROW(weights)"), " must be equal to ", sQuote("NROW(X)."))
+    }
+
+    weight_matrix <- weights
+    weight_type   <- UserMatrix()
   } else {
-    if (length(weights) != choose(n.obs, 2)) {
-      stop("Incorrect weight length")
-    }
+    stop(sQuote("CARP"), " does not know how to handle ", sQuote("weights"),
+         " of class ", class(weights)[1], ".")
   }
 
+  if (any(weight_matrix < 0) || anyNA(weight_matrix)) {
+    stop("All fusion weights must be positive or zero.")
+  }
+
+  if (!is_connected_adj_mat(weight_matrix != 0)) {
+    stop("Weights do not imply a connected graph. Clustering will not succeed.")
+  }
+
+  ## Transform to a form suitable for down-stream computation
+  X <- t(X) ## TODO: Ask JN why we did this
+  weight_vec <- weight_mat_to_vec(weight_matrix)
 
   if (verbose.basic) message("Pre-computing weight-based edge sets")
   PreCompList <- suppressMessages(ConvexClusteringPreCompute(
     X = X,
-    weights = weights,
+    weights = weight_vec,
     rho = rho
   ))
   cardE <- NROW(PreCompList$E)
@@ -212,7 +246,7 @@ CARP <- function(X,
                                    n = as.integer(n.obs),
                                    p = as.integer(p.var),
                                    lambda_init = 1e-8,
-                                   weights = weights[weights != 0],
+                                   weights = weight_vec[weight_vec != 0],
                                    uinit = as.matrix(PreCompList$uinit),
                                    vinit = as.matrix(PreCompList$vinit),
                                    premat = PreCompList$PreMat,
@@ -233,7 +267,7 @@ CARP <- function(X,
                                p = as.integer(p.var),
                                lambda_init = 1e-8,
                                t = t,
-                               weights = weights[weights != 0],
+                               weights = weight_vec[weight_vec != 0],
                                uinit = as.matrix(PreCompList$uinit),
                                vinit = as.matrix(PreCompList$vinit),
                                premat = PreCompList$PreMat,
@@ -270,7 +304,7 @@ CARP <- function(X,
   carp.cluster.path[["clust.path"]] <- clust.path
   carp.cluster.path[["clust.path.dups"]] <- clust.path.dups
 
-  carp.dend <- CreateDendrogram(carp.cluster.path, n.labels, dendrogram.scale)
+  carp.dend <- CreateDendrogram(carp.cluster.path, labels, dendrogram.scale)
 
   X.pca <- stats::prcomp(t(X), scale. = FALSE, center = FALSE)
   X.pca.rot <- X.pca$rotation[, 1:npcs]
@@ -283,7 +317,7 @@ CARP <- function(X,
                                      Obs  = rep(seq_len(n.obs), times = length(carp.cluster.path$clust.path)),
                                      Cluster = as.vector(vapply(carp.cluster.path$clust.path, function(x) x$membership, double(n.obs))),
                                      Lambda = rep(carp.cluster.path$lambda.path.inter, each = n.obs),
-                                     ObsLabel = rep(n.labels, times = length(carp.cluster.path$clust.path))) %>%
+                                     ObsLabel = rep(labels, times = length(carp.cluster.path$clust.path))) %>%
                               group_by(Iter) %>%
                               mutate(NCluster = n_distinct(Cluster)) %>%
                               ungroup() %>%
@@ -297,8 +331,7 @@ CARP <- function(X,
     cardE = cardE,
     n.obs = n.obs,
     p.var = p.var,
-    phi = phi,
-    k = k,
+    weight_type = weight_type,
     burn.in = burn.in,
     alg.type = alg.type,
     t = t,
@@ -309,158 +342,6 @@ CARP <- function(X,
   class(carp.fit) <- "CARP"
 
   return(carp.fit)
-}
-
-#' Control for \code{CARP} fits
-#'
-#' Set \code{CARP} algorithm parameters
-#'
-#' This function constructs a list containing additional arguments to control
-#' the behavior of the \code{CARP} algorithm. It is typically only used internally
-#' by \code{\link{CARP}}, but may be useful to advanced users who wish to
-#' construct the \code{control} argument directly.
-#'
-#' @param obs.labels A character vector of length \eqn{n}: observations (row) labels
-#' @param var.labels A character vector of length \eqn{p}: variable (column) labels
-#' @param X.center A logical: Should \code{X} be centered columnwise?
-#' @param X.scale A logical: Should \code{X} be scaled columnwise?
-#' @param rho For advanced users only (not advisable to change): the penalty
-#'            parameter used for the augmented Lagrangian.
-#' @param weights A vector of positive number of length \code{choose(n,2)}.
-#' @param k An positive integer: the number of neighbors used to create sparse weights
-#' @param weight.dist A string indicating the distance metric used to calculate weights.
-#'                    See \code{\link[stats]{dist}} for details.
-#' @param weight.dist.p The exponent used to calculate the Minkowski distance if
-#'                      \code{weight.dist = "minkowski"}.
-#'                      See \code{\link[stats]{dist}} for details.
-#' @param phi A positive real number: the scale factor used in the RBF kernel
-#' @param max.iter An integer: the maximum number of CARP iterations.
-#' @param burn.in An integer: the number of initial iterations at a fixed
-#'                (small) value of \eqn{\lambda}
-#' @param alg.type Which \code{CARP} variant to use. Allowed values are \itemize{
-#'        \item \code{"carp"} - The standard \code{CARP} algorithm with \eqn{L2} penalty;
-#'        \item \code{"carpviz"} - The back-tracking \code{CARP} algorithm with \eqn{L2} penalty;
-#'        \item \code{"carpl1"} - The standard \code{CARP} algorithm with \eqn{L1} penalty; and
-#'        \item \code{"carpvizl1"} - The back-tracking \code{CARP} algorithm with \eqn{L1} penalty.}
-#' @param t A number greater than 1: the size of the multiplicative update to
-#'          the cluster fusion regularization parameter (not used by
-#'          back-tracking variants). Typically on the scale of \code{1.005} to \code{1.1}.
-#' @param npcs An integer >= 2. The number of principal components to compute
-#'             for path visualization.
-#' @param dendrogram.scale A character string denoting how the scale of dendrogram
-#' regularization proportions should be visualized. Choices are \code{'original'}
-#' or \code{'log'}; if not provided, a data-driven heuristic choice is used.
-#' @param ... Unused arguements. An error will be thrown if any unrecognized
-#'            arguments as given.
-#' @return A list containing the \code{CARP} algorithm parameters.
-#' @export
-carp.control <- function(obs.labels = NULL,
-                         var.labels = NULL,
-                         X.center = TRUE,
-                         X.scale = FALSE,
-                         phi = NULL,
-                         rho = 1,
-                         weights = NULL,
-                         k = NULL,
-                         weight.dist = "euclidean",
-                         weight.dist.p = 2,
-                         max.iter = 1000000L,
-                         burn.in = 50L,
-                         alg.type = "carpviz",
-                         t = 1.05,
-                         npcs = NULL,
-                         dendrogram.scale = NULL,
-                         ...) {
-
-  dots <- list(...)
-
-  if (length(dots) != 0L) {
-    if (!is.null(names(dots))) {
-      stop("Unknown argument ", sQuote(names(dots)[1L]), " passed to ", sQuote("CARP."))
-    } else {
-      stop("Unknown ", sQuote("..."), " arguments passed to ", sQuote("CARP."))
-    }
-  }
-
-  if (!is.logical(X.center) || is.na(X.center) || (length(X.center) != 1L)) {
-    stop(sQuote("X.center"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
-  }
-
-  if (!is.logical(X.scale) || is.na(X.scale) || (length(X.scale) != 1L)) {
-    stop(sQuote("X.scale"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
-  }
-
-  if ((rho < 0) || is.na(rho) || (length(rho) != 1L)) {
-    stop(sQuote("rho"), "must a be non-negative scalar.")
-  }
-
-  if (weight.dist %not.in% SUPPORTED_DISTANCES) {
-    stop("Unsupported choice of ",
-         sQuote("weight.dist;"),
-         " see the ", sQuote("method"),
-         " argument of ",
-         sQuote("stats::dist"),
-         " for supported distances.")
-  }
-
-  if ((weight.dist.p <= 0) || (length(weight.dist.p) != 1L)) {
-    stop(sQuote("weight.dist.p"),
-         " must be a positive scalar; see the ", sQuote("p"),
-         " argument of ", sQuote("stats::dist"), " for details.")
-  }
-
-  if (!is.null(npcs)) {
-    if (!is.integer(npcs) || npcs <= 1L) {
-      stop(sQuote("npcs"), " must be at least 2.")
-    }
-  }
-
-  if (!is.null(k)) {
-    if (!is.integer(k) || k <= 0) {
-      stop("If not NULL, ", sQuote("k"), " must be a positive integer.")
-    }
-  }
-
-  if (!is.integer(max.iter) || (max.iter <= 0) || (length(max.iter) != 1L)) {
-    stop(sQuote("max.iter"), " must be a positive integer.")
-  }
-
-  if (!is.integer(burn.in) || (burn.in <= 0) || (burn.in >= max.iter)) {
-    stop(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
-  }
-
-  if (alg.type %not.in% c("carpviz", "carp", "carpl1", "carpvizl1")) {
-    stop("Unrecognized value of ", sQuote("alg.type;"), " see help for allowed values.")
-  }
-
-  if ((t <= 1) || is.na(t) || (length(t) != 1L)) {
-    stop(sQuote("t"), " must be a scalar greater than 1.")
-  }
-
-  if (!is.null(dendrogram.scale)) {
-    if (dendrogram.scale %not.in% c("original", "log")) {
-      stop("If not NULL, ", sQuote("dendrogram.scale"), " must be either ", sQuote("original"), " or ", sQuote("log."))
-    }
-  }
-
-  list(
-    obs.labels = obs.labels,
-    var.labels = var.labels,
-    X.center = X.center,
-    X.scale = X.scale,
-    rho = rho,
-    phi = phi,
-    k = k,
-    weights = weights,
-    weight.dist = weight.dist,
-    weight.dist.p = weight.dist.p,
-    max.iter = max.iter,
-    burn.in = burn.in,
-    alg.type = alg.type,
-    t = t,
-    npcs = npcs,
-    dendrogram.scale = dendrogram.scale
-  )
 }
 
 #' Print \code{CARP} Results
@@ -495,9 +376,8 @@ print.CARP <- function(x, ...) {
   cat(" - Columnwise centering: ", x$X.center, "\n")
   cat(" - Columnwise scaling:   ", x$X.scale, "\n\n")
 
-  cat("RBF Kernel Weights:\n") # TODO: Add descriptions of what these parameters represent
-  cat(" - phi = ", round(x$phi, 3), "\n")
-  cat(" - K   = ", x$k, "\n\n")
+  cat("Weights:\n")
+  print(x$weight_type)
 
   cat("Raw Data:\n")
   print(x$X[1:min(5, x$n.obs), 1:min(5, x$p.var)])

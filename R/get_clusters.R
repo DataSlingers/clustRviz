@@ -66,7 +66,24 @@ clustering <- function(x, ...) {
 #' # Examine the k=5 means again
 #' head(carp.clustering.full$cluster.means[[5]])
 clustering.CARP <- function(x, k = NULL, percent = NULL, ...) {
+
+  if ( (!is.null(k)) && (!is.null(percent)) ){
+    stop("Supply at most one of ", sQuote("k"), " and ", sQuote("percent."))
+  }
+
   if (!is.null(k)) {
+    if ( !is_integer_scalar(k) ){
+      stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+    }
+
+    if ( k <= 0 ) {
+      stop(sQuote("k"), " must be positive.")
+    }
+
+    if ( k > x$n.obs ){
+      stop(sQuote("k"), " must be at most the number of observations.")
+    }
+
     clust.assign <- stats::cutree(x$carp.dend, k = k)
     lapply(unique(clust.assign), function(cl.lab) {
       apply(
@@ -79,6 +96,18 @@ clustering.CARP <- function(x, k = NULL, percent = NULL, ...) {
     clust.assign <- paste("cl", clust.assign, sep = "")
     colnames(clust.means) <- unique(clust.assign)
   } else if (!is.null(percent)) {
+    if ( !is_numeric_scalar(percent) ){
+      stop(sQuote("percent"), " must be a scalar (vector of length 1).")
+    }
+
+    if ( percent < 0 ) {
+      stop(sQuote("percent"), " must be non-negative.")
+    }
+
+    if ( percent > 1 ){
+      stop(sQuote("percent"), " must be less than or equal to 1.")
+    }
+
     clust.assign <- stats::cutree(x$carp.dend, h = percent)
     lapply(unique(clust.assign), function(cl.lab) {
       apply(
@@ -163,18 +192,16 @@ clustering.CARP <- function(x, k = NULL, percent = NULL, ...) {
 #' cbass.clustering <- clustering(cbass.fit,percent = .8)
 #' }
 clustering.CBASS <- function(x, k.obs = NULL, k.var = NULL, percent = NULL, ...) {
+
+  n_args <- (!is.null(k.obs)) + (!is.null(k.var)) + (!is.null(percent))
+
+  if ( n_args != 1 ){
+    stop("Supply exactly one of ", sQuote("k.obs,"), " ", sQuote("k.var,"),
+         " and ", sQuote("percent."))
+  }
+
   Lambda <- NObsCl <- NVarCl <- Percent <- NULL
 
-  n.not.null <- sum(
-    c(
-      !is.null(k.obs),
-      !is.null(k.var),
-      !is.null(percent)
-    )
-  )
-  if (n.not.null != 1) {
-    stop("Select exactly one of k.obs, k.var, or percent")
-  }
   lam.vec <- x$cbass.sol.path$lambda.path %>% as.vector()
   max.lam <- max(lam.vec)
   lam.vec %>%
@@ -202,6 +229,18 @@ clustering.CBASS <- function(x, k.obs = NULL, k.var = NULL, percent = NULL, ...)
     ) -> cut.table
 
   if (!is.null(k.obs)) {
+    if ( !is_integer_scalar(k.obs) ){
+      stop(sQuote("k.obs"), " must be an integer scalar (vector of length 1).")
+    }
+
+    if ( k.obs <= 0 ) {
+      stop(sQuote("k.obs"), " must be positive.")
+    }
+
+    if ( k.obs > x$n.obs ){
+      stop(sQuote("k.obs"), " must be at most the number of observations.")
+    }
+
     cut.table %>%
       dplyr::filter(NObsCl <= k.obs) %>%
       dplyr::slice(1) %>%
@@ -209,6 +248,18 @@ clustering.CBASS <- function(x, k.obs = NULL, k.var = NULL, percent = NULL, ...)
       unlist() %>%
       unname() -> cur.lam
   } else if (!is.null(k.var)) {
+    if ( !is_integer_scalar(k.var) ){
+      stop(sQuote("k.var"), " must be an integer scalar (vector of length 1).")
+    }
+
+    if ( k.var <= 0 ) {
+      stop(sQuote("k.var"), " must be positive.")
+    }
+
+    if ( k.var > x$p.var ){
+      stop(sQuote("k.var"), " must be at most the number of variables.")
+    }
+
     cut.table %>%
       dplyr::filter(NVarCl <= k.var) %>%
       dplyr::slice(1) %>%
@@ -216,6 +267,19 @@ clustering.CBASS <- function(x, k.obs = NULL, k.var = NULL, percent = NULL, ...)
       unlist() %>%
       unname() -> cur.lam
   } else if (!is.null(percent)) {
+
+    if ( !is_numeric_scalar(percent) ){
+      stop(sQuote("percent"), " must be a scalar (vector of length 1).")
+    }
+
+    if ( percent < 0 ) {
+      stop(sQuote("percent"), " must be non-negative.")
+    }
+
+    if ( percent > 1 ){
+      stop(sQuote("percent"), " must be less than or equal to 1.")
+    }
+
     cut.table %>%
       dplyr::filter(Percent >= percent) %>%
       dplyr::slice(1) %>%

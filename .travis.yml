@@ -13,10 +13,8 @@ r_packages:
   - stringr
   - covr
   - ggrepel
-  - FNN
   - dendextend
   - zoo
-  - igraph
   - gtools
   - tidyr
 
