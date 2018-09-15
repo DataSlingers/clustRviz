@@ -41,5 +41,6 @@ LinkingTo: Rcpp, RcppEigen
 Suggests: testthat,
     knitr,
     rmarkdown,
-    MASS
+    MASS, 
+    covr
 VignetteBuilder: knitr
