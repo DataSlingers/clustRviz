@@ -45,6 +45,10 @@
 #'          back-tracking variants). Typically on the scale of \code{1.005} to \code{1.1}.
 #' @param npcs An integer >= 2. The number of principal components to compute
 #'             for path visualization.
+#' @param dendrogram.scale A character string denoting how the scale of dendrogram
+#'                         regularization proportions should be visualized.
+#'                         Choices are \code{'original'} or \code{'log'}; if not
+#'                         provided, a data-driven heuristic choice is used.
 #' @param ... Unused arguements. An error will be thrown if any unrecognized
 #'            arguments as given.
 #' @return An object of class \code{CBASS} containing the following elements (among others):
@@ -100,7 +104,8 @@ CBASS <- function(X,
                   max.iter = 1000000L,
                   burn.in = 50L,
                   alg.type = c("cbassviz", "cbassvizl1", "cbass", "cbassl1"),
-                  npcs = min(4L, NCOL(X))) {
+                  npcs = min(4L, NCOL(X), NROW(X)),
+                  dendrogram.scale = NULL) {
 
   tic <- Sys.time()
 
@@ -146,8 +151,14 @@ CBASS <- function(X,
     stop(sQuote("rho"), "must be a positive scalar (vector of length 1).")
   }
 
-  if ( (!is_integer_scalar(npcs)) || (npcs < 2) || (npcs > NCOL(X)) ){
-    stop(sQuote("npcs"), " must be an integer scalar between 2 and ", sQuote("NCOL(X)."))
+  if (!is.null(dendrogram.scale)) {
+    if (dendrogram.scale %not.in% c("original", "log")) {
+      stop("If not NULL, ", sQuote("dendrogram.scale"), " must be either ", sQuote("original"), " or ", sQuote("log."))
+    }
+  }
+
+  if ( (!is_integer_scalar(npcs)) || (npcs < 2) || (npcs > NCOL(X)) || (npcs > NROW(X)) ){
+    stop(sQuote("npcs"), " must be an integer scalar between 2 and ", sQuote("min(dim(X))."))
   }
 
   if ( (!is_integer_scalar(max.iter)) || (max.iter <= 1L) ) {
@@ -374,59 +385,50 @@ CBASS <- function(X,
   ##         the type here for now
   cbass.sol.path$lambda.path <- matrix(cbass.sol.path$lambda.path, ncol=1)
 
-  print(length(cbass.sol.path$lambda.path))
-
   if (verbose.basic) message("Post-processing")
 
-  ISP(
-    sp.path = cbass.sol.path$v.row.zero.inds %>% t(),
-    v.path = cbass.sol.path$v.row.path,
-    u.path = cbass.sol.path$u.path,
-    lambda.path = cbass.sol.path$lambda.path,
-    cardE = sum(row_weights != 0)
-  ) -> cbass.cluster.path.row
+  post_processing_results_row <- ConvexClusteringPostProcess(X = X,
+                                                             edge_matrix      = PreCompList.row$E,
+                                                             lambda_path      = cbass.sol.path$lambda.path,
+                                                             u_path           = cbass.sol.path$u.path,
+                                                             v_path           = cbass.sol.path$v.row.path,
+                                                             v_zero_indices   = cbass.sol.path$v.row.zero.inds,
+                                                             labels           = var_labels,
+                                                             dendrogram_scale = dendrogram.scale,
+                                                             npcs             = npcs)
 
-  clust.path.row <- get_cluster_assignments(PreCompList.row$E, cbass.cluster.path.row$sp.path.inter, p.var)
-  clust.path.dups.row <- duplicated(clust.path.row, fromLast = FALSE)
-
-  cbass.cluster.path.row[["clust.path"]] <- clust.path.row
-  cbass.cluster.path.row[["clust.path.dups"]] <- clust.path.dups.row
-
-  cbass.dend.row <- CreateDendrogram(cbass.cluster.path.row, var_labels)
-
-  ISP(
-    sp.path = cbass.sol.path$v.col.zero.inds %>% t(),
-    v.path = cbass.sol.path$v.col.path,
-    u.path = cbass.sol.path$u.path,
-    lambda.path = cbass.sol.path$lambda.path,
-    cardE = sum(col_weights != 0)
-  ) -> cbass.cluster.path.col
-
-  clust.path.col <- get_cluster_assignments(PreCompList.col$E, cbass.cluster.path.col$sp.path.inter, n.obs)
-  clust.path.dups.col <- duplicated(clust.path.col, fromLast = FALSE)
-
-  cbass.cluster.path.col[["clust.path"]] <- clust.path.col
-  cbass.cluster.path.col[["clust.path.dups"]] <- clust.path.dups.col
-
-  cbass.dend.col <- CreateDendrogram(cbass.cluster.path.col, obs_labels)
+  post_processing_results_col <- ConvexClusteringPostProcess(X = t(X),
+                                                             edge_matrix      = PreCompList.col$E,
+                                                             lambda_path      = cbass.sol.path$lambda.path,
+                                                             u_path           = cbass.sol.path$u.path,
+                                                             v_path           = cbass.sol.path$v.col.path,
+                                                             v_zero_indices   = cbass.sol.path$v.col.zero.inds,
+                                                             labels           = obs_labels,
+                                                             dendrogram_scale = dendrogram.scale,
+                                                             npcs             = npcs)
 
   cbass.fit <- list(
     X = X.orig,
-    cbass.sol.path = cbass.sol.path,
-    cbass.cluster.path.obs = cbass.cluster.path.col,
-    cbass.cluster.path.var = cbass.cluster.path.row,
-    cbass.dend.var = cbass.dend.row,
-    cbass.dend.obs = cbass.dend.col,
     n.obs = n.obs,
     p.var = p.var,
+    cbass.sol.path = cbass.sol.path,
+    # Rowwise (variable) results
+    cbass.cluster.path.var = post_processing_results_row$raw_path,
+    cbass.cluster.path.vis.var = post_processing_results_row$paths,
+    cbass.dend.var = post_processing_results_row$dendrogram,
     var_weight_type = var_weight_type,
+    var.labels = var_labels,
+    # Columnwise (observation) results
+    cbass.cluster.path.obs = post_processing_results_col$raw_path,
+    cbass.cluster.path.vis.obs = post_processing_results_col$paths,
+    cbass.dend.obs = post_processing_results_col$dendrogram,
     obs_weight_type = obs_weight_type,
+    obs.labels = obs_labels,
+    # General flags
     burn.in = burn.in,
     alg.type = alg.type,
     t = t,
     X.center.global = X.center.global,
-    obs.labels = obs_labels,
-    var.labels = var_labels,
     time = Sys.time() - tic
   )
 

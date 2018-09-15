@@ -387,7 +387,7 @@ CreateDendrogram <- function(carp_cluster_path, n_labels, scale = NULL) {
 #' @importFrom rlang .data
 #' @importFrom stats prcomp
 #' @importFrom dplyr as_tibble %>% mutate group_by ungroup n_distinct
-#' Post-Process CARP and CBASS results
+# Post-Process CARP and CBASS results
 # This function takes a "correctly" oriented X
 ConvexClusteringPostProcess <- function(X,
                                         edge_matrix,
@@ -431,7 +431,7 @@ ConvexClusteringPostProcess <- function(X,
                          ungroup() %>%
                          mutate(LambdaPercent = .data$Lambda / max(.data$Lambda))
 
-  list(paths = cluster_path_vis, dendrogram = cvx_dendrogram)
+  list(paths = cluster_path_vis, dendrogram = cvx_dendrogram, raw_path = cluster_path)
 }
 
 `%not.in%` <- Negate(`%in%`)
