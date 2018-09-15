@@ -391,6 +391,7 @@ is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) 
 is_logical_scalar <- function(x) {is.logical(x) && (length(x) == 1L) && (!is.na(x))}
 is_numeric_scalar <- function(x) {is.numeric(x) && (length(x) == 1L) && (!is.na(x))}
 is_integer_scalar <- function(x) is_numeric_scalar(x) && is.wholenumber(x)
+is_percent_scalar <- function(x) is_numeric_scalar(x) && (x >= 0) && (x <= 1)
 
 is_square <- function(x) {is.matrix(x) && (NROW(x) == NCOL(x))}
 
@@ -400,3 +401,7 @@ capitalize_string <- function(x){
          function(x) paste(paste0(toupper(substring(x, 1, 1)), substring(x, 2)), collapse = " "),
          character(1))
 }
+
+num_unique      <- function(x) length(unique(as.vector(x)))
+num_unique_rows <- function(x) NROW(unique(x))
+num_unique_cols <- function(x) num_unique_rows(t(x))

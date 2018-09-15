@@ -24,7 +24,3 @@ capture_print <- function(x, ...){
   paste(capture.output(print(x, ...)), collapse="\n")
 }
 
-num_unique <- function(x) length(unique(x))
-
-num_unique_rows <- function(x) NROW(unique(x))
-num_unique_cols <- function(x) num_unique_rows(t(x))
