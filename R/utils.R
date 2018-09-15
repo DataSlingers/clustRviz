@@ -12,34 +12,31 @@ if (getRversion() >= "2.15.1") utils::globalVariables(c("."))
 #' @source \url{http://www.presidency.ucsb.edu}
 "presidential_speech"
 
-#' @importFrom Matrix which
-#' @importFrom Matrix Matrix
-#' @importFrom Matrix t
+#' @importMethodsFrom Matrix which tcrossprod kronecker
 #' @importFrom Matrix Diagonal
 ConvexClusteringPreCompute <- function(X, weights, rho, verbose = FALSE) {
+  ## This function works using the convention of Chi and Lange (JCGS, 2015) or
+  ## Chi, Allen, and Baraniuk (2017, Biometrics) where X is transposed from our
+  ## usual convention and is a p-by-n matrix instead of n-by-p.
+
   n <- ncol(X)
   p <- nrow(X)
+
   # Calcuate edge set
   weight.adj <- WeightAdjacency(weights, n)
   cardE <- sum(weight.adj)
-  E <- Matrix::which(weight.adj != 0, arr.ind = TRUE)
+  E <- which(weight.adj != 0, arr.ind = TRUE)
   E <- E[order(E[, 1], E[, 2]), ]
+
   # Precompute indicies
-  if (verbose) print("Ind List")
-  ind.list <- lapply(1:cardE, function(l) {
-    seq(from = (p) * (l - 1) + 1, length.out = p)
-  })
-  ind.mat <- Reduce(rbind, ind.list) - 1
-  if (verbose) print("E1")
-  E1.ind.mat <- Reduce(rbind, lapply(1:cardE, function(l) {
-    inds <- E[l, ]
-    seq(from = (p) * (inds[1] - 1) + 1, length.out = p)
-  })) - 1
-  if (verbose) print("E2")
-  E2.ind.mat <- Reduce(rbind, lapply(1:cardE, function(l) {
-    inds <- E[l, ]
-    seq(from = (p) * (inds[2] - 1) + 1, length.out = p)
-  })) - 1
+  if (verbose) print("Calculating edge indices")
+  ind.mat <- matrix(seq(0, cardE * p - 1), byrow = TRUE, ncol = p)
+
+  if (verbose) print("Calculating E1")
+  E1.ind.mat <- outer(p * (E[, 1] - 1), seq(0, p - 1), `+`)
+
+  if (verbose) print("Calculating E2")
+  E2.ind.mat <- outer(p * (E[, 2] - 1), seq(0, p - 1), `+`)
 
   if (verbose) print("PreMat")
   # Precompute U-update matrix
@@ -55,13 +52,12 @@ ConvexClusteringPreCompute <- function(X, weights, rho, verbose = FALSE) {
   PreMat <- kronecker(D, Matrix::Diagonal(p)) + (1 / rho) * Matrix::Diagonal(n * p)
 
   uinit <- Matrix::Matrix(X[TRUE], nrow = p, ncol = n)
-  if (verbose) print("Vinit")
-  Vmat <- Matrix::Matrix(0, nrow = p, ncol = cardE)
-  for (ind in 1:nrow(E)) {
-    Vmat[, ind] <- uinit[, E[ind, 1]] - uinit[, E[ind, 2]]
-  }
-  vinit <- as.vector(Vmat[TRUE])
-  ret <- list(
+
+  if (verbose) print("Calculating initial values for V")
+  Vmat <- uinit[, E[, 1]] - uinit[, E[, 2]]
+  vinit <- as.vector(Vmat)
+
+  list(
     ind.mat = ind.mat,
     E = E,
     E1.ind.mat = E1.ind.mat,
@@ -70,7 +66,6 @@ ConvexClusteringPreCompute <- function(X, weights, rho, verbose = FALSE) {
     uinit = uinit,
     vinit = vinit
   )
-  return(ret)
 }
 
 #' @importFrom dplyr tbl_df
@@ -290,7 +285,6 @@ ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
       unname() -> lambda.path.inter2
   }
 
-  seq2 <- Vectorize(seq.default, vectorize.args = c("from", "to"))
   if (nrow(mc.frame) == 0) {
     dplyr::tibble(
       Iter = 1:ncol(u.path)
@@ -329,8 +323,7 @@ ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
             NewU = purrr::map2(.x = Iter, .y = data, .f = function(x, y) {
               cur.u <- u.path[, x]
               next.u <- u.path[, x + 1]
-              new.u <- matrix(seq2(from = cur.u, to = next.u, length.out = nrow(y) + 1), nrow = length(cur.u), byrow = TRUE)
-              new.u <- new.u[, -ncol(new.u)]
+              new.u <- tcrossprod((next.u - cur.u) / NROW(y), seq(0, NROW(y) - 1)) + cur.u
               lapply(seq_len(ncol(new.u)), function(i) {
                 new.u[, i]
               })

@@ -295,22 +295,17 @@ CBASS <- function(X,
   row_weights <- row_weights / (sum(row_weights) * sqrt(n.obs))
   col_weights <- col_weights / (sum(col_weights) * sqrt(p.var))
 
-  PreCompList.row <- suppressMessages(
-    ConvexClusteringPreCompute(
-      X = t(X),
-      weights = row_weights,
-      rho = rho
-    )
-  )
+  PreCompList.row <- ConvexClusteringPreCompute(X = t(X),
+                                                weights = row_weights,
+                                                rho = rho,
+                                                verbose = verbose.deep)
   cardE.row <- NROW(PreCompList.row$E)
 
-  PreCompList.col <- suppressMessages(
-    ConvexClusteringPreCompute(
-      X = X,
-      weights = col_weights,
-      rho = rho
-    )
-  )
+  PreCompList.col <- ConvexClusteringPreCompute(X = X,
+                                                weights = col_weights,
+                                                rho = rho,
+                                                verbose = verbose.deep)
+
   cardE.col <- NROW(PreCompList.col$E)
 
   if (verbose.basic) message("Computing CBASS Path")
