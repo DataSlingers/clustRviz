@@ -83,7 +83,7 @@ CARP <- function(X,
                  burn.in = 50L,
                  alg.type = c("carpviz", "carpvizl1", "carp", "carpl1"),
                  t = 1.05,
-                 npcs = min(4L, NCOL(X)),
+                 npcs = min(4L, NCOL(X), NROW(X)),
                  dendrogram.scale = NULL) {
 
   tic <- Sys.time()
@@ -154,8 +154,8 @@ CARP <- function(X,
     }
   }
 
-  if ( (!is_integer_scalar(npcs)) || (npcs < 2) || (npcs > NCOL(X)) ){
-    stop(sQuote("npcs"), " must be an integer scalar between 2 and ", sQuote("NCOL(X)."))
+  if ( (!is_integer_scalar(npcs)) || (npcs < 2) || (npcs > NCOL(X)) || (npcs > NROW(X)) ){
+    stop(sQuote("npcs"), " must be an integer scalar between 2 and ", sQuote("min(dim(X))."))
   }
 
   ## Get row (observation) labels
@@ -292,43 +292,21 @@ CARP <- function(X,
   carp.sol.path$lambda.path <- matrix(carp.sol.path$lambda.path, ncol=1)
 
   if (verbose.basic) message("Post-processing")
-  ISP(
-    sp.path = carp.sol.path$v.zero.inds %>% t(),
-    v.path = carp.sol.path$v.path,
-    u.path = carp.sol.path$u.path,
-    lambda.path = carp.sol.path$lambda.path,
-    cardE = cardE
-  ) -> carp.cluster.path
 
-  clust.path <- get_cluster_assignments(PreCompList$E, carp.cluster.path$sp.path.inter, n.obs)
-  clust.path.dups <- duplicated(clust.path, fromLast = FALSE)
-
-  carp.cluster.path[["clust.path"]] <- clust.path
-  carp.cluster.path[["clust.path.dups"]] <- clust.path.dups
-
-  carp.dend <- CreateDendrogram(carp.cluster.path, labels, dendrogram.scale)
-
-  X.pca <- stats::prcomp(t(X), scale. = FALSE, center = FALSE)
-  X.pca.rot <- X.pca$rotation[, 1:npcs]
-
-  U_projected <- crossprod(matrix(carp.cluster.path$u.path.inter, nrow = p.var), X.pca.rot)
-  colnames(U_projected) <- paste0("PC", 1:npcs)
-
-  carp.cluster.path.vis <- as_tibble(U_projected) %>%
-                              mutate(Iter = rep(seq_along(carp.cluster.path$clust.path), each = n.obs),
-                                     Obs  = rep(seq_len(n.obs), times = length(carp.cluster.path$clust.path)),
-                                     Cluster = as.vector(vapply(carp.cluster.path$clust.path, function(x) x$membership, double(n.obs))),
-                                     Lambda = rep(carp.cluster.path$lambda.path.inter, each = n.obs),
-                                     ObsLabel = rep(labels, times = length(carp.cluster.path$clust.path))) %>%
-                              group_by(Iter) %>%
-                              mutate(NCluster = n_distinct(Cluster)) %>%
-                              ungroup() %>%
-                              mutate(LambdaPercent = Lambda / max(Lambda))
+  post_processing_results <- ConvexClusteringPostProcess(X = t(X), # Uses a correctly-oriented X
+                                                         edge_matrix      = PreCompList$E,
+                                                         lambda_path      = carp.sol.path$lambda.path,
+                                                         u_path           = carp.sol.path$u.path,
+                                                         v_path           = carp.sol.path$v.path,
+                                                         v_zero_indices   = carp.sol.path$v.zero.inds,
+                                                         labels           = labels,
+                                                         dendrogram_scale = dendrogram.scale,
+                                                         npcs             = npcs)
 
   carp.fit <- list(
     X = X.orig,
-    carp.dend = carp.dend,
-    carp.cluster.path.vis = carp.cluster.path.vis,
+    carp.dend = post_processing_results$dendrogram,
+    carp.cluster.path.vis = post_processing_results$paths,
     carp.sol.path = carp.sol.path,
     cardE = cardE,
     n.obs = n.obs,
