@@ -86,6 +86,8 @@ CARP <- function(X,
                  npcs = min(4L, NCOL(X)),
                  dendrogram.scale = NULL) {
 
+  tic <- Sys.time()
+
   ####################
   ##
   ## Input validation
@@ -336,7 +338,8 @@ CARP <- function(X,
     alg.type = alg.type,
     t = t,
     X.center = X.center,
-    X.scale = X.scale
+    X.scale = X.scale,
+    time = Sys.time() - tic
   )
 
   class(carp.fit) <- "CARP"
@@ -367,14 +370,15 @@ print.CARP <- function(x, ...) {
 
   cat("CARP Fit Summary\n")
   cat("====================\n\n")
-  cat("Algorithm: ", alg_string, "\n\n")
+  cat("Algorithm:", alg_string, "\n")
+  cat("Time:", sprintf("%2.3f %s", x$time, attr(x$time, "units")), "\n\n")
 
-  cat("Number of Observations: ", x$n.obs, "\n")
-  cat("Number of Variables:    ", x$p.var, "\n\n")
+  cat("Number of Observations:", x$n.obs, "\n")
+  cat("Number of Variables:   ", x$p.var, "\n\n")
 
   cat("Pre-processing options:\n")
-  cat(" - Columnwise centering: ", x$X.center, "\n")
-  cat(" - Columnwise scaling:   ", x$X.scale, "\n\n")
+  cat(" - Columnwise centering:", x$X.center, "\n")
+  cat(" - Columnwise scaling:  ", x$X.scale, "\n\n")
 
   cat("Weights:\n")
   print(x$weight_type)

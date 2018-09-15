@@ -102,6 +102,8 @@ CBASS <- function(X,
                   alg.type = c("cbassviz", "cbassvizl1", "cbass", "cbassl1"),
                   npcs = min(4L, NCOL(X))) {
 
+  tic <- Sys.time()
+
   ####################
   ##
   ## Input validation
@@ -372,6 +374,8 @@ CBASS <- function(X,
   ##         the type here for now
   cbass.sol.path$lambda.path <- matrix(cbass.sol.path$lambda.path, ncol=1)
 
+  print(length(cbass.sol.path$lambda.path))
+
   if (verbose.basic) message("Post-processing")
 
   ISP(
@@ -422,7 +426,8 @@ CBASS <- function(X,
     t = t,
     X.center.global = X.center.global,
     obs.labels = obs_labels,
-    var.labels = var_labels
+    var.labels = var_labels,
+    time = Sys.time() - tic
   )
 
   class(cbass.fit) <- "CBASS"
@@ -453,13 +458,14 @@ print.CBASS <- function(x, ...) {
 
   cat("CBASS Fit Summary\n")
   cat("====================\n\n")
-  cat("Algorithm: ", alg_string, "\n\n")
+  cat("Algorithm:", alg_string, "\n")
+  cat("Time:", sprintf("%2.3f %s", x$time, attr(x$time, "units")), "\n\n")
 
-  cat("Number of Observations: ", x$n.obs, "\n")
-  cat("Number of Variables:    ", x$p.var, "\n\n")
+  cat("Number of Observations:", x$n.obs, "\n")
+  cat("Number of Variables:   ", x$p.var, "\n\n")
 
   cat("Pre-processing options:\n")
-  cat(" - Global centering: ", x$X.center.global, "\n\n")
+  cat(" - Global centering:", x$X.center.global, "\n\n")
 
   cat("Observation Weights:\n")
   print(x$obs_weight_type)
