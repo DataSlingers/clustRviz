@@ -12,7 +12,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-[![Build Status](https://travis-ci.com/DataSlingers/clustRviz.svg?branch=develop)](https://travis-ci.com/DataSlingers/clustRviz) [![codecov Coverage
+[![TravisCI Build Status](https://travis-ci.com/DataSlingers/clustRviz.svg?branch=develop)](https://travis-ci.com/DataSlingers/clustRviz) [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/DataSlingers/clustRviz?branch=develop&svg=true)](https://ci.appveyor.com/project/DataSlingers/clustRviz) [![codecov Coverage
 Status](https://codecov.io/gh/DataSlingers/clustRviz/branch/develop/graph/badge.svg)](https://codecov.io/gh/DataSlingers/clustRviz?branch=develop)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/clustRviz)](https://cran.r-project.org/package=clustRviz)
