@@ -1,0 +1,67 @@
+--- Preliminary Notes and Requirements
+
+* We use the python package Scrapy (https://scrapy.org/)
+
+* We use bash scripts to move Scrapy results
+
+* The directory containing this README is the base directory; call it BASE_DIR.
+
+
+
+--- Part 1:  Use scrapy to scrape the speeches
+
+----- Scrape State of the Unions
+
+* Change directory to the scrapy project.
+
+> cd BASE_DIR/presidential_speech/
+
+* Scrape the speeches
+
+> scrapy crawl sou_text
+
+* Go back to BASE_DIR and move the results via move_sou_results.sh
+
+> cd BASE_DIR
+> ./move_sou_results.sh
+
+----- Scrape Inaugurals
+
+* Change directory to the scrapy project.
+
+> cd BASE_DIR/presidential_speech/
+
+* Scrape the speeches
+
+> scrapy crawl inaug_text
+
+* Go back to BASE_DIR and move the results via move_inaug_results.sh
+
+> cd BASE_DIR
+> ./move_inaug_results.sh
+
+
+----- Scrape Conventions
+
+* Change directory to the scrapy project.
+
+> cd BASE_DIR/presidential_speech/
+
+* Scrape the speeches
+
+> scrapy crawl conv_text
+
+* Go back to BASE_DIR and move the results via move_conv_results.sh
+
+> cd BASE_DIR
+> ./move_conv_results.sh
+
+
+
+--- Part 2: Generate Dataset
+
+
+> cd BASE_DIR/create_dataset
+> Rscript create_dataset.R
+
+

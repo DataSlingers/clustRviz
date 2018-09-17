@@ -7,4 +7,4 @@
 ^README-.*\.png$
 ^\.travis\.yml$
 .gitignore.deploy
-^docs$
+^data-raw$
