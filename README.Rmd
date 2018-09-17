@@ -12,7 +12,13 @@ knitr::opts_chunk$set(
 )
 ```
 
-[![Build Status](https://travis-ci.org/jjn13/clustRviz.svg?branch=master)](https://travis-ci.org/jjn13/clustRviz)
+[![Build Status](https://travis-ci.org/DataSlingers/clustRviz.svg?branch=develop)](https://travis-ci.org/DataSlingers/clustRviz) [![codecov Coverage
+Status](https://codecov.io/gh/DataSlingers/clustRviz/branch/develop/graph/badge.svg)](https://codecov.io/gh/DataSlingers/clustRviz?branch=develop)
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/clustRviz)](https://cran.r-project.org/package=clustRviz)
+[![Project Status: Active – The project has reached a stable, usable
+state and is being actively
+developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 
 # clustRviz
 
@@ -25,7 +31,7 @@ You can install `clustRviz` from github with:
 
 ```{r gh-installation, eval = FALSE}
 # install.packages("devtools")
-devtools::install_github("jjn13/clustRviz")
+devtools::install_github("DataSlingers/clustRviz")
 ```
 
 Note that `RcppEigen` (which `clustRviz` internally) triggers many compiler warnings
@@ -38,7 +44,6 @@ to your `~/.R/Makevars` file.
 Here is a quick example 
 ```{r example}
 library(clustRviz)
-presidential_speech[1:5,1:5]
 carp_fit <- CARP(presidential_speech)
 carp_fit
 ```
@@ -52,5 +57,6 @@ saveviz(carp_fit,
         file.name  = "inst/path_dyn.gif", 
         image.type = "dynamic")
 ```
+
 <img src="./inst/path_dyn.gif" width="70%">
 
