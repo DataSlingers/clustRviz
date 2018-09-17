@@ -427,7 +427,6 @@ saveviz.CBASS <- function(
   NObsCl <- NULL
   NVarCl <- NULL
   Percent <- NULL
-  cbass.fit <- NULL
 
   if (image.type == "static") {
     n.not.null <- sum(
@@ -704,7 +703,7 @@ saveviz.CBASS <- function(
                 unlist() %>%
                 unname() %>%
                 min() -> ncl
-              cbass.fit$cbass.dend.obs %>%
+              x$cbass.dend.obs %>%
                 stats::as.dendrogram() %>%
                 dendextend::set("branches_lwd", dend.branch.width) %>%
                 dendextend::set("labels_cex", dend.labels.cex) %>%
@@ -731,7 +730,7 @@ saveviz.CBASS <- function(
           png(file.name, width = dynamic.width, height = dynamic.height)
           plot.new()
           par(mar = c(14, 7, 2, 1))
-          cbass.fit$cbass.dend.obs %>%
+          x$cbass.dend.obs %>%
             stats::as.dendrogram() %>%
             dendextend::set("branches_lwd", dend.branch.width) %>%
             dendextend::set("labels_cex", dend.labels.cex) %>%
@@ -791,7 +790,7 @@ saveviz.CBASS <- function(
                 unlist() %>%
                 unname() %>%
                 min() -> ncl
-              cbass.fit$cbass.dend.var %>%
+              x$cbass.dend.var %>%
                 stats::as.dendrogram() %>%
                 dendextend::set("branches_lwd", dend.branch.width) %>%
                 dendextend::set("labels_cex", dend.labels.cex) %>%
@@ -818,7 +817,7 @@ saveviz.CBASS <- function(
           png(file.name, width = dynamic.width, height = dynamic.height)
           plot.new()
           par(mar = c(14, 7, 2, 1))
-          cbass.fit$cbass.dend.var %>%
+          x$cbass.dend.var %>%
             stats::as.dendrogram() %>%
             dendextend::set("branches_lwd", dend.branch.width) %>%
             dendextend::set("labels_cex", dend.labels.cex) %>%
