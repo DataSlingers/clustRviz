@@ -62,6 +62,7 @@
 #'         }
 #' @importFrom utils data
 #' @importFrom dplyr %>% mutate group_by ungroup as_tibble n_distinct
+#' @importFrom rlang %||%
 #' @importFrom stats var
 #' @export
 #' @examples
@@ -193,6 +194,9 @@ CARP <- function(X,
     X <- scale(X, center = X.center, scale = X.scale)
   }
 
+  scale_vector  <- attr(X, "scaled:scale", exact=TRUE)  %||% rep(1, p.var)
+  center_vector <- attr(X, "scaled:center", exact=TRUE) %||% rep(0, p.var)
+
   # Calculate clustering weights
   if (is.function(weights)) { # Usual case, `weights` is a function which calculates the weight matrix
     weight_result <- weights(X)
@@ -316,7 +320,9 @@ CARP <- function(X,
     alg.type = alg.type,
     t = t,
     X.center = X.center,
+    center_vector = center_vector,
     X.scale = X.scale,
+    scale_vector = scale_vector,
     time = Sys.time() - tic
   )
 
