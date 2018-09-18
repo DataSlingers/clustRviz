@@ -22,3 +22,11 @@ test_that("CBASS supports factor labels", {
   expect_equal(rownames(cbass_fit$X), c("a", "b", "c"))
   expect_equal(colnames(cbass_fit$X), c("d", "e", "f"))
 })
+
+test_that("CBASS stores mean of original data", {
+  cbass_fit <- CBASS(presidential_speech, X.center.global = TRUE)
+  expect_equal(mean(presidential_speech), cbass_fit$mean_adjust)
+
+  cbass_fit <- CBASS(presidential_speech, X.center.global = FALSE)
+  expect_equal(0, cbass_fit$mean_adjust)
+})

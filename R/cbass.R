@@ -217,7 +217,10 @@ CBASS <- function(X,
   # Preprocess X
   X.orig <- X
   if (X.center.global) {
-    X <- X - mean(X)
+    mean_adjust <- mean(X)
+    X <- X - mean_adjust
+  } else {
+    mean_adjust <- 0
   }
 
   ## Transform to a form suitable for down-stream computation
@@ -429,6 +432,7 @@ CBASS <- function(X,
     alg.type = alg.type,
     t = t,
     X.center.global = X.center.global,
+    mean_adjust = mean_adjust,
     time = Sys.time() - tic
   )
 
