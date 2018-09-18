@@ -3,6 +3,9 @@
 #' Get Clustering Results for \code{CBASS}
 #'
 #' \code{get_cluster_labels} returns a factor vector of cluster labels.
+#' \code{get_cluster_centroids} returns a \code{k1}-by-\code{k2} matrix with the
+#' estimated centroid of the \code{k1}-th observation cluster and the \code{k2}-th
+#' feature cluster.
 #' \code{get_clustered_data} returns a matrix (with the same dimensions and names
 #' as the original data), but with the values for each observation replaced by
 #' its "estimated" value (\emph{i.e.}, the appropriate cluster centroid).
@@ -37,6 +40,9 @@
 #'
 #' # Get observation clustering corresponding to the 3 variable clusters
 #' get_cluster_labels(cbass_fit, k.var = 3, type = "obs")
+#'
+#' # Get cluster centroids partially down the path
+#' get_cluster_centroids(cbass_fit, percent = 0.5)
 #'
 #' # Get clustered data
 #' image(get_clustered_data(cbass_fit, k.obs = 2))
@@ -158,7 +164,31 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.obs, k.var, type = c("ob
 
 #' @export
 #' @rdname accessors_cbass
-get_cluster_centroids.CBASS <- function(x, ..., percent, k.var, k.obs)
+get_cluster_centroids.CBASS <- function(x, ..., percent, k.var, k.obs){
+  obs_labels <- as.integer(get_cluster_labels(x, ...,
+                                              percent = percent,
+                                              k.var = k.var,
+                                              k.obs = k.obs,
+                                              type  = "obs"))
+
+  var_labels <- as.integer(get_cluster_labels(x, ...,
+                                              percent = percent,
+                                              k.var = k.var,
+                                              k.obs = k.obs,
+                                              type  = "var"))
+
+  centroids <- matrix(NA, nrow = num_unique(obs_labels), ncol = num_unique(var_labels))
+
+  X <- x$X
+
+  for(o in unique(obs_labels)){
+    for(v in unique(var_labels)){
+      centroids[o, v] <- mean(X[obs_labels == o, var_labels == v])
+    }
+  }
+
+  centroids
+}
 
 #' @export
 #' @rdname accessors_cbass
@@ -175,12 +205,17 @@ get_clustered_data.CBASS <- function(x, ..., percent, k.var, k.obs){
                                               k.obs = k.obs,
                                               type  = "var"))
 
+  centroids <- get_cluster_centroids(x, ...,
+                                     percent = percent,
+                                     k.var = k.var,
+                                     k.obs = k.obs)
+
   X <- x$X
   clustered_data <- X * NA
 
   for(o in unique(obs_labels)){
     for(v in unique(var_labels)){
-      clustered_data[obs_labels == o, var_labels == v] <- mean(X[obs_labels == o, var_labels == v])
+      clustered_data[obs_labels == o, var_labels == v] <- centroids[o, v]
     }
   }
 

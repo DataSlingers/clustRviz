@@ -165,6 +165,45 @@ test_that("get_cluster_labels.CBASS works on variable labels", {
   }
 })
 
+test_that("get_cluster_centroids.CBASS works", {
+  cbass_fits <- list(
+    CBASS(presidential_speech, X.center.global = FALSE),
+    CBASS(presidential_speech, X.center.global = TRUE)
+  )
+
+  for(cbass_fit in cbass_fits){
+    ## Cluster centroids matrix has k1-times-k2 distinct elements
+    ## for k1 obs clusters and k2 var clusters
+    ##
+    ## These elements are typically unique, but weird things can happen
+    ## (particularly near the end of the path) so we don't test
+    for(k in 1:10){
+      obs_labels <- num_unique(get_cluster_labels(cbass_fit, k.obs = k, type = "obs"))
+      var_labels <- num_unique(get_cluster_labels(cbass_fit, k.obs = k, type = "var"))
+      expect_equal(length(get_cluster_centroids(cbass_fit, k.obs = k)), obs_labels * var_labels)
+
+      obs_labels <- num_unique(get_cluster_labels(cbass_fit, k.var = k, type = "obs"))
+      var_labels <- num_unique(get_cluster_labels(cbass_fit, k.var = k, type = "var"))
+      expect_equal(length(get_cluster_centroids(cbass_fit, k.var = k)), obs_labels * var_labels)
+
+      expect_is(get_cluster_centroids(cbass_fit, k.obs = k), "matrix")
+      expect_is(get_cluster_centroids(cbass_fit, k.var = k), "matrix")
+    }
+
+    ## At full fusion, we should get a single element that is the grand mean
+    expect_equal(mean(presidential_speech),
+                 as.vector(get_cluster_centroids(cbass_fit, percent = 1)))
+
+    ## At no fusion, we get the original data (we aren't enforcing ordering)
+    expect_equal(sort(as.vector(presidential_speech)),
+                 sort(as.vector(get_cluster_centroids(cbass_fit, percent = 0))))
+
+    ## No row or column names
+    expect_null(rownames(get_cluster_centroids(cbass_fit, percent = 0.5)))
+    expect_null(colnames(get_cluster_centroids(cbass_fit, percent = 0.5)))
+  }
+})
+
 test_that("get_clustered_data.CBASS works", {
   cbass_fits <- list(
     CBASS(presidential_speech, X.center.global = FALSE),
