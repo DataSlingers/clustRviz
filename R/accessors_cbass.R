@@ -122,9 +122,11 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.obs, k.var, type = c("ob
       select(.data$LambdaPercent,
              .data$ObsLabel,
              .data$Obs,
-             .data$Cluster) %>%
+             .data$Cluster,
+             .data$Iter) %>%
       filter(.data$LambdaPercent >= percent) %>%
       filter(.data$LambdaPercent == min(.data$LambdaPercent)) %>%
+      filter(.data$Iter == min(.data$Iter)) %>% # In case we have multiple iterations at same lambda
       arrange(.data$Obs) %>%
       select(-.data$Obs)
 
@@ -137,9 +139,11 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.obs, k.var, type = c("ob
       select(.data$LambdaPercent,
              .data$ObsLabel,
              .data$Obs,
-             .data$Cluster) %>%
+             .data$Cluster,
+             .data$Iter) %>%
       filter(.data$LambdaPercent >= percent) %>%
       filter(.data$LambdaPercent == min(.data$LambdaPercent)) %>%
+      filter(.data$Iter == min(.data$Iter)) %>% # In case we have multiple iterations at same lambda
       arrange(.data$Obs) %>%
       select(-.data$Obs)
 

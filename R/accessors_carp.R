@@ -100,9 +100,11 @@ get_cluster_labels.CARP <- function(x, ..., percent, k){
                          select(.data$LambdaPercent,
                                 .data$ObsLabel,
                                 .data$Obs,
-                                .data$Cluster) %>%
+                                .data$Cluster,
+                                .data$Iter) %>%
                          filter(.data$LambdaPercent >= percent) %>%
                          filter(.data$LambdaPercent == min(.data$LambdaPercent)) %>%
+                         filter(.data$Iter == min(.data$Iter)) %>% # In case we have multiple iterations at same lambda
                          arrange(.data$Obs) %>%
                          select(-.data$Obs)
 

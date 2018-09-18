@@ -94,6 +94,11 @@ test_that("get_cluster_labels.CARP works", {
   ## Mono-cluster at end of path
   expect_equal(1, num_unique(get_cluster_labels(carp_fit, k = 1)))
   expect_equal(1, num_unique(get_cluster_labels(carp_fit, percent = 1)))
+
+  ## Correct number of clusters
+  for(pct in seq(0, 1, length.out = 21)){
+    expect_equal(length(get_cluster_labels(carp_fit, percent = pct)), NROW(presidential_speech))
+  }
 })
 
 test_that("get_cluster_centroids.CARP works", {

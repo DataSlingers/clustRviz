@@ -122,6 +122,11 @@ test_that("get_cluster_labels.CBASS works on observation labels", {
   ## Mono-cluster at end of path
   expect_equal(1, num_unique(get_cluster_labels(cbass_fit, k.obs = 1, type = "obs")))
   expect_equal(1, num_unique(get_cluster_labels(cbass_fit, percent = 1, type = "obs")))
+
+  ## Correct number of clusters
+  for(pct in seq(0, 1, length.out = 21)){
+    expect_equal(length(get_cluster_labels(cbass_fit, percent = pct, type = "obs")), NROW(presidential_speech))
+  }
 })
 
 test_that("get_cluster_labels.CBASS works on variable labels", {
@@ -153,6 +158,11 @@ test_that("get_cluster_labels.CBASS works on variable labels", {
   ## Mono-cluster at end of path
   expect_equal(1, num_unique(get_cluster_labels(cbass_fit, k.var = 1, type = "var")))
   expect_equal(1, num_unique(get_cluster_labels(cbass_fit, percent = 1, type = "var")))
+
+  ## Correct number of clusters
+  for(pct in seq(0, 1, length.out = 21)){
+    expect_equal(length(get_cluster_labels(cbass_fit, percent = pct, type = "var")), NCOL(presidential_speech))
+  }
 })
 
 test_that("get_clustered_data.CBASS works", {
