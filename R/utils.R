@@ -456,3 +456,12 @@ capitalize_string <- function(x){
 num_unique      <- function(x) length(unique(as.vector(x)))
 num_unique_rows <- function(x) NROW(unique(x))
 num_unique_cols <- function(x) num_unique_rows(t(x))
+
+unscale_matrix <- function(X,
+                           scale=attr(X, "scaled:scale", TRUE),
+                           center=attr(X, "scaled:center", TRUE)){
+  n <- NROW(X)
+  p <- NCOL(X)
+
+  X * matrix(scale, n, p, byrow=TRUE) + matrix(center, n, p, byrow=TRUE)
+}

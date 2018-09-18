@@ -58,3 +58,13 @@ test_that("Capitalization works", {
   expect_equal("ABc", capitalize_string("ABc"))
   expect_equal("A Fantastic Cow", capitalize_string("a fantastic cow"))
 })
+
+test_that("Unscaling matrix works", {
+  set.seed(5)
+  n = 100; p = 400;
+
+  X <- matrix(rnorm(n * p, sd = 1:25, mean = 1:50), ncol=p)
+  X_std <- scale(X, center=TRUE, scale=TRUE)
+
+  expect_equal(clustRviz:::unscale_matrix(X_std), X, check.attributes = FALSE)
+})
