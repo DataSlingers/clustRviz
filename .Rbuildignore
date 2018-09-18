@@ -14,3 +14,4 @@ build_steps.R
 LICENSE
 CONTRIBUTORS
 .github/*
+^appveyor\.yml$
