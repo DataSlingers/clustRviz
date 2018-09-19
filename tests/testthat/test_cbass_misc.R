@@ -9,7 +9,7 @@ test_that("CBASS creates unique names if needed", {
 
   expect_equal(rownames(cbass_fit$X)[45], "Grover Cleveland_1")
 
-  expect_equal(head(clustering(cbass_fit, percent = 0)$cluster.mean.matrix, -1),
+  expect_equal(head(get_clustered_data(cbass_fit, percent = 0), -1),
                presidential_speech)
 })
 

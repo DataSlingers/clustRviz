@@ -4,6 +4,14 @@ test_that("Input checking works", {
   cbass_fit <- CBASS(presidential_speech)
 
   ## Get cluster labels
+
+  ## Exactly one argument required
+  expect_error(get_cluster_labels(cbass_fit))
+  expect_error(get_cluster_labels(cbass_fit, k.obs = 5, k.var = 5))
+  expect_error(get_cluster_labels(cbass_fit, k.obs = 5, percent = 0.5))
+  expect_error(get_cluster_labels(cbass_fit, k.var = 5, percent = 0.5))
+  expect_error(get_cluster_labels(cbass_fit, k.obs = 5, k.var = 5, percent = 0.5))
+
   ## Bad k.obs
   expect_error(get_cluster_labels(cbass_fit, k.obs = 2.5))
   expect_error(get_cluster_labels(cbass_fit, k.obs = 0))
@@ -33,6 +41,14 @@ test_that("Input checking works", {
   expect_error(get_cluster_labels(cbass_fit, arg = 5))
 
   ## Get clustered data
+
+  ## Exactly one argument required
+  expect_error(get_clustered_data(cbass_fit))
+  expect_error(get_clustered_data(cbass_fit, k.obs = 5, k.var = 5))
+  expect_error(get_clustered_data(cbass_fit, k.obs = 5, percent = 0.5))
+  expect_error(get_clustered_data(cbass_fit, k.var = 5, percent = 0.5))
+  expect_error(get_clustered_data(cbass_fit, k.obs = 5, k.var = 5, percent = 0.5))
+
   ## Bad k.obs
   expect_error(get_clustered_data(cbass_fit, k.obs = 2.5))
   expect_error(get_clustered_data(cbass_fit, k.obs = 0))
@@ -274,4 +290,40 @@ test_that("get_clustered_data.CBASS works", {
       }
     }
   }
+})
+
+test_that("CBASS cluster centroids are correctly calculated with refit = FALSE", {
+  ## All of these results should work regardless of pre-processing options
+  cbass_fits <- list(
+    CBASS(presidential_speech, X.center.global = FALSE),
+    CBASS(presidential_speech, X.center.global = TRUE)
+  )
+
+  presidential_speech_full_cluster <- presidential_speech * 0 + mean(presidential_speech)
+
+  for(cbass_fit in cbass_fits){
+    expect_equal(get_clustered_data(cbass_fit, percent = 0, refit = FALSE), presidential_speech)
+    expect_equal(get_clustered_data(cbass_fit, percent = 1, refit = FALSE), presidential_speech_full_cluster)
+
+    for(pct in seq(0.1, 1, by = 0.1)){
+      ## Variance should decrease as we increase regularization
+      expect_gte(sd(get_clustered_data(cbass_fit, percent = pct - 0.1, refit = FALSE)),
+                 sd(get_clustered_data(cbass_fit, percent = pct, refit = FALSE)))
+    }
+  }
+
+  ## Results should be the same regardless of centering
+  for(pct in seq(0, 1, length.out = 11)){
+    expect_equal(get_clustered_data(cbass_fits[[1]], refit = FALSE, percent = pct),
+                 get_clustered_data(cbass_fits[[2]], refit = FALSE, percent = pct))
+  }
+
+  ## grand means should always be the same
+  for(pct in seq(0, 1, length.out = 11)){
+    for(carp_fit in carp_fits){
+      expect_equal(mean(presidential_speech),
+                   mean(get_clustered_data(cbass_fit, percent = pct, refit = FALSE)))
+    }
+  }
+
 })

@@ -18,13 +18,16 @@
 #' @param k.var The desired number of variable clusters
 #' @param type For \code{get_cluster_labels}, which set of labels to return -
 #'             observation (row) or feature (column)
+#' @param refit Should "naive" centroids (\code{TRUE}) or the actual centroids
+#'              estimated by convex clustering be used? The default (\code{refit = TRUE})
+#'              centroids returned are actual centroids (mean) of all elements
+#'              assigned to that cluster; if \code{refit = FALSE}, the \eqn{\hat{U}}
+#'              from the convex biclustering problem is used. Due to the global
+#'              shrinkage imposed, these clusters are more "shrunk together" than
+#'              the naive clusters.
 #' @param ... Additional arguments - if any are provided, an error is signalled.
 #' @details \code{get_clustered_data} returns centroids on the original scale of
 #' the data, independent of any pre-processing flags passed to \code{CBASS}.
-#' These centroids are "naive" in the sense that they are means of the data points
-#' in that cluster and are not shrunk. That is to say, they are not
-#' calculated using the solution of the convex biclustering problem.
-#'
 #' Note that exactly one of \code{percent}, \code{k.obs}, \code{k.var}
 #' must be supplied and that that \code{k.obs} (if suppplied) will be
 #' used even if \code{type = "var"} and \emph{vice versa}.
@@ -33,7 +36,7 @@
 #' cbass_fit <- CBASS(presidential_speech)
 #'
 #' # Get observation clustering results from 50% along the path
-#' get_cluster_labels(carp_fit, percent = 0.5)
+#' get_cluster_labels(cbass_fit, percent = 0.5)
 #'
 #' # Get variable clustering corresponding to the 3 cluster solution
 #' get_cluster_labels(cbass_fit, k.var = 3, type = "var")
@@ -164,7 +167,7 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.obs, k.var, type = c("ob
 
 #' @export
 #' @rdname accessors_cbass
-get_cluster_centroids.CBASS <- function(x, ..., percent, k.var, k.obs){
+get_cluster_centroids.CBASS <- function(x, ..., percent, k.var, k.obs, refit = TRUE){
   obs_labels <- as.integer(get_cluster_labels(x, ...,
                                               percent = percent,
                                               k.var = k.var,
@@ -179,11 +182,15 @@ get_cluster_centroids.CBASS <- function(x, ..., percent, k.var, k.obs){
 
   centroids <- matrix(NA, nrow = num_unique(obs_labels), ncol = num_unique(var_labels))
 
-  X <- x$X
+  if(refit){
+    U <- x$X
+  } else {
+    U <- get_U(x, ..., percent = percent, k.var = k.var, k.obs = k.obs)
+  }
 
   for(o in unique(obs_labels)){
     for(v in unique(var_labels)){
-      centroids[o, v] <- mean(X[obs_labels == o, var_labels == v])
+      centroids[o, v] <- mean(U[obs_labels == o, var_labels == v])
     }
   }
 
@@ -192,7 +199,7 @@ get_cluster_centroids.CBASS <- function(x, ..., percent, k.var, k.obs){
 
 #' @export
 #' @rdname accessors_cbass
-get_clustered_data.CBASS <- function(x, ..., percent, k.var, k.obs){
+get_clustered_data.CBASS <- function(x, ..., percent, k.var, k.obs, refit = TRUE){
   obs_labels <- as.integer(get_cluster_labels(x, ...,
                                               percent = percent,
                                               k.var = k.var,
@@ -208,7 +215,8 @@ get_clustered_data.CBASS <- function(x, ..., percent, k.var, k.obs){
   centroids <- get_cluster_centroids(x, ...,
                                      percent = percent,
                                      k.var = k.var,
-                                     k.obs = k.obs)
+                                     k.obs = k.obs,
+                                     refit = refit)
 
   X <- x$X
   clustered_data <- X * NA
@@ -222,4 +230,90 @@ get_clustered_data.CBASS <- function(x, ..., percent, k.var, k.obs){
   clustered_data
 }
 
+#' @noRd
+get_U.CBASS <- function(x, ..., percent, k.var, k.obs){
+  dots <- list(...)
 
+  if ( length(dots) != 0) {
+    if (!is.null(names(dots))) {
+      nm <- names(dots)
+      nm <- nm[nzchar(nm)]
+      stop("Unknown argument ", sQuote(nm[1]), " passed to ", sQuote("get_U."))
+    } else {
+      stop("Unknown argument passed to ", sQuote("get_U."))
+    }
+  }
+
+  has_percent <- !missing(percent)
+  has_k.obs   <- !missing(k.obs)
+  has_k.var   <- !missing(k.var)
+  n_args      <- has_percent + has_k.obs + has_k.var
+
+  if(n_args != 1){
+    stop("Exactly one of ", sQuote("percent,"), " ", sQuote("k.obs"),
+         " and ", sQuote("k.var"), " must be supplied.")
+  }
+
+  if(has_k.obs){
+
+    if ( !is_integer_scalar(k.obs) ){
+      stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+    }
+
+    if( k.obs <= 0 ) {
+      stop(sQuote("k.obs"), " must be positive.")
+    }
+
+    if( k.obs > NROW(x$X) ){
+      stop(sQuote("k.obs"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
+    }
+
+    percent <- x$cbass.cluster.path.vis.obs %>%
+      select(.data$LambdaPercent, .data$NCluster) %>%
+      filter(.data$NCluster <= k.obs) %>%
+      select(.data$LambdaPercent) %>%
+      summarize(percent = min(.data$LambdaPercent)) %>%
+      pull
+  }
+
+  if(has_k.var){
+
+    if ( !is_integer_scalar(k.var) ){
+      stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+    }
+
+    if( k.var <= 0 ) {
+      stop(sQuote("k.var"), " must be positive.")
+    }
+
+    if( k.var > NCOL(x$X) ){
+      stop(sQuote("k.var"), " cannot be more than the features in the original data set (", NCOL(x$X), ").")
+    }
+
+    percent <- x$cbass.cluster.path.vis.var %>%
+      select(.data$LambdaPercent, .data$NCluster) %>%
+      filter(.data$NCluster <= k.var) %>%
+      select(.data$LambdaPercent) %>%
+      summarize(percent = min(.data$LambdaPercent)) %>%
+      pull
+  }
+
+  if( !is_percent_scalar(percent) ){
+    stop(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
+  }
+
+  index <- which.min(abs(x$cbass.sol.path$lambda.path - percent * max(x$cbass.sol.path$lambda.path)))[1]
+
+  raw_u <- matrix(x$cbass.sol.path$u.path[, index],
+                  nrow = x$n.obs,
+                  ncol = x$p.var,
+                  byrow = TRUE) # byrow = TRUE because we get u by vectorizing t(X), not X
+
+  U <- raw_u + x$mean_adjust
+
+  ## Add rownames back in
+  colnames(U) <- colnames(x$X)
+  rownames(U) <- rownames(x$X)
+
+  U
+}
