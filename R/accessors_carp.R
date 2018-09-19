@@ -16,15 +16,18 @@
 #' @param k The desired number of clusters. If no iteration with exactly this
 #'          many clusters is found, the first iterate with fewer than \code{k}
 #'          clusters is used.
+#' @param refit Should "naive" centroids (\code{TRUE}) or the actual centroids
+#'              estimated by convex clustering be used? The default (\code{refit = TRUE})
+#'              centroids returned are actual centroids (mean) of all elements
+#'              assigned to that cluster; if \code{refit = FALSE}, the \eqn{\hat{U}}
+#'              from the convex clustering problem is used. Due to the global
+#'              shrinkage imposed, these clusters are more "shrunk together" than
+#'              the naive clusters.
 #' @param ... Additional arguments - if any are provided, an error is signalled.
 #' @details \code{get_clustered_data} and \code{get_cluster_centroids} return
 #' centroids on the original scale of the data, independent of any pre-processing
-#' flags passed to \code{CARP}. These centroids are "naive" in the sense that they
-#' are means of the data points in that cluster and are not shrunk together. That
-#' is to say, they are not calculated using the solution of the convex clustering problem.
-#'
-#' Note that exactly one of \code{percent} and \code{k} must be supplied
-#'          to each function.
+#' flags passed to \code{CARP}. Note that exactly one of \code{percent} and
+#' \code{k} must be supplied to each function.
 #' @examples
 #' carp_fit <- CARP(presidential_speech)
 #'
@@ -124,19 +127,24 @@ get_cluster_centroids <- function(x, ...){
 
 #' @rdname accessors_carp
 #' @export
-get_cluster_centroids.CARP <- function(x, ..., percent, k){
+get_cluster_centroids.CARP <- function(x, ..., percent, k, refit = TRUE){
   labels <- as.integer(get_cluster_labels(x, ..., percent = percent, k = k))
 
   K <- num_unique(labels)
 
-  X <- x$X
-  p <- NCOL(X)
+  if(refit){
+    U <- x$X
+  } else {
+    U <- get_U(x, ..., percent = percent, k = k)
+  }
+
+  p <- NCOL(U)
 
   centroids <- matrix(NA, ncol = p, nrow = K)
-  colnames(centroids) <- colnames(X)
+  colnames(centroids) <- colnames(U)
 
   for(k in seq_len(K)){
-    centroids[k, ] <- colMeans(X[labels == k, , drop = FALSE])
+    centroids[k, ] <- colMeans(U[labels == k, , drop = FALSE])
   }
 
   centroids
@@ -150,9 +158,9 @@ get_clustered_data <- function(x, ...){
 
 #' @rdname accessors_carp
 #' @export
-get_clustered_data.CARP <- function(x, ..., percent, k){
+get_clustered_data.CARP <- function(x, ..., percent, k, refit = TRUE){
   labels <- as.integer(get_cluster_labels(x, ..., percent = percent, k = k))
-  centroids <- get_cluster_centroids(x, ..., percent = percent, k = k)
+  centroids <- get_cluster_centroids(x, ..., percent = percent, k = k, refit = refit)
 
   clustered_data <- x$X
   N <- NROW(clustered_data)
@@ -162,4 +170,73 @@ get_clustered_data.CARP <- function(x, ..., percent, k){
   }
 
   clustered_data
+}
+
+#' @noRd
+get_U <- function(x, ...){
+  UseMethod("get_U")
+}
+
+#' @noRd
+get_U.CARP <- function(x, ..., percent, k){
+  dots <- list(...)
+
+  if ( length(dots) != 0) {
+    if (!is.null(names(dots))) {
+      nm <- names(dots)
+      nm <- nm[nzchar(nm)]
+      stop("Unknown argument ", sQuote(nm[1]), " passed to ", sQuote("get_U."))
+    } else {
+      stop("Unknown argument passed to ", sQuote("get_U."))
+    }
+  }
+
+  has_percent <- !missing(percent)
+  has_k       <- !missing(k)
+  n_args      <- has_percent + has_k
+
+  if(n_args != 1){
+    stop("Exactly one of ", sQuote("percent"), " and ", sQuote("k"), " must be supplied.")
+  }
+
+  if(has_k){
+
+    if ( !is_integer_scalar(k) ){
+      stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+    }
+
+    if( k <= 0 ) {
+      stop(sQuote("k"), " must be positive.")
+    }
+
+    if( k > NROW(x$X) ){
+      stop(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
+    }
+
+    percent <- x$carp.cluster.path.vis %>%
+      select(.data$LambdaPercent, .data$NCluster) %>%
+      filter(.data$NCluster <= k) %>%
+      select(.data$LambdaPercent) %>%
+      summarize(percent = min(.data$LambdaPercent)) %>%
+      pull
+  }
+
+  if( !is_percent_scalar(percent) ){
+    stop(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
+  }
+
+  index <- which.min(abs(x$carp.sol.path$lambda.path - percent * max(x$carp.sol.path$lambda.path)))[1]
+
+  raw_u <- matrix(x$carp.sol.path$u.path[, index],
+                  nrow = x$n.obs,
+                  ncol = x$p.var,
+                  byrow = TRUE) # byrow = TRUE because we get u by vectorizing t(X), not X
+
+  U <- unscale_matrix(raw_u, scale = x$scale_vector, center = x$center_vector)
+
+  ## Add rownames back in
+  colnames(U) <- colnames(x$X)
+  rownames(U) <- rownames(x$X)
+
+  U
 }

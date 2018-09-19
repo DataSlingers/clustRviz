@@ -24,3 +24,6 @@ capture_print <- function(x, ...){
   paste(capture.output(print(x, ...)), collapse="\n")
 }
 
+list_all_equal <- function(x) {
+  all(vapply(seq_len(length(x) - 1), function(i) isTRUE(all.equal(x[[i]], x[[i + 1]])), logical(1)))
+}

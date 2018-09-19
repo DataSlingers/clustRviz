@@ -114,8 +114,10 @@ test_that("get_cluster_centroids.CARP works", {
   for(carp_fit in carp_fits){
     labels <- as.integer(get_cluster_labels(carp_fit, k = 2))
     centroids <- get_cluster_centroids(carp_fit, k = 2)
+    raw_centroids <- get_cluster_centroids(carp_fit, k = 2, refit = FALSE)
 
     expect_equal(colnames(centroids), colnames(presidential_speech))
+    expect_equal(colnames(raw_centroids), colnames(presidential_speech))
 
     for(k in c(1, 2)){
       expect_equal(centroids[k, ], colMeans(presidential_speech[labels == k, , drop=FALSE]))
@@ -152,6 +154,57 @@ test_that("get_clustered_data.CARP works", {
     for(n in NROW(clustered_data_matrix)){
         expect_equal(clustered_data_matrix[n, ],
                      centroids[labels[n], ])
+    }
+  }
+})
+
+test_that("CARP cluster centroids are correctly calculated with refit = FALSE", {
+  ## All of these results should work regardless of pre-processing options
+  carp_fits <- list(
+    CARP(presidential_speech, X.center = FALSE, X.scale = FALSE),
+    CARP(presidential_speech, X.center = TRUE,  X.scale = FALSE),
+    CARP(presidential_speech, X.center = FALSE, X.scale = TRUE),
+    CARP(presidential_speech, X.center = TRUE,  X.scale = TRUE)
+  )
+
+  presidential_speech_full_cluster <- presidential_speech
+  for(i in seq_len(NROW(presidential_speech))){
+    presidential_speech_full_cluster[i, ] <- colMeans(presidential_speech)
+  }
+
+  for(carp_fit in carp_fits){
+    expect_equal(get_clustered_data(carp_fit, percent = 0, refit = FALSE), presidential_speech)
+    expect_equal(get_clustered_data(carp_fit, percent = 1, refit = FALSE), presidential_speech_full_cluster)
+
+    for(pct in seq(0.1, 1, by = 0.1)){
+      ## Variance should decrease as we increase regularization
+      expect_gte(sd(get_clustered_data(carp_fit, percent = pct - 0.1, refit = FALSE)),
+                 sd(get_clustered_data(carp_fit, percent = pct, refit = FALSE)))
+    }
+  }
+
+  carp_fits_no_scale <- carp_fits[c(1, 2)]
+  carp_fits_scale    <- carp_fits[c(3, 4)]
+  ## Results should be the same regardless of centering
+  ## Scaling features can make a difference in cluster assignment
+  for(pct in seq(0, 1, length.out = 11)){
+    expect_true(list_all_equal(lapply(carp_fits_no_scale, get_clustered_data, percent = pct, refit = FALSE)))
+  }
+
+  ## Column means should always be the same
+  for(pct in seq(0, 1, length.out = 11)){
+    for(carp_fit in carp_fits){
+      expect_equal(colMeans(presidential_speech),
+                   colMeans(get_clustered_data(carp_fit, percent = pct, refit = FALSE)))
+    }
+  }
+
+  ## Column-wise standard deviations are decreasing
+  colSds <- function(x) apply(x, 2, sd)
+  for(pct in seq(0.1, 1, length.out = 10)){
+    for(carp_fit in carp_fits){
+      expect_gt(sum(colSds(get_clustered_data(carp_fit, percent = pct - 0.1, refit = FALSE))),
+                sum(colSds(get_clustered_data(carp_fit, percent = pct, refit = FALSE))))
     }
   }
 })
