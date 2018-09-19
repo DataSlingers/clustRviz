@@ -3,6 +3,13 @@ context("Test accessor functions for CBASS objects")
 test_that("Input checking works", {
   cbass_fit <- CBASS(presidential_speech)
 
+  ## Exactly one argument required
+  expect_error(clustering(cbass_fit))
+  expect_error(clustering(cbass_fit, k.obs = 5, k.var = 5))
+  expect_error(clustering(cbass_fit, k.obs = 5, percent = 0.5))
+  expect_error(clustering(cbass_fit, k.var = 5, percent = 0.5))
+  expect_error(clustering(cbass_fit, k.obs = 5, k.var = 5, percent = 0.5))
+
   ## Get cluster labels
 
   ## Exactly one argument required
@@ -91,36 +98,9 @@ test_that("get_cluster_labels.CBASS works on observation labels", {
   expect_equal(levels(get_cluster_labels(cbass_fit, k.obs = 3, type = "obs")),
                c("cluster_1", "cluster_2", "cluster_3"))
 
-  ## Should have correct names
-  labels <- get_cluster_labels(cbass_fit, k.obs = 3, type = "obs")
-  expect_equal(rownames(presidential_speech), names(labels))
-
-  ## Distinct clusters at beginning of path
-  expect_equal(NROW(presidential_speech),
-               num_unique(get_cluster_labels(cbass_fit,
-                                             k.obs = NROW(presidential_speech),
-                                             type = "obs")))
-
-  expect_equal(NROW(presidential_speech),
-               num_unique(get_cluster_labels(cbass_fit, percent = 0, type = "obs")))
-
-  ## Mono-cluster at end of path
-  expect_equal(1, num_unique(get_cluster_labels(cbass_fit, k.obs = 1, type = "obs")))
-  expect_equal(1, num_unique(get_cluster_labels(cbass_fit, percent = 1, type = "obs")))
-})
-
-test_that("get_cluster_labels.CBASS works on observation labels", {
-  cbass_fit <- CBASS(presidential_speech)
-
-  labels <- get_cluster_labels(cbass_fit, k.obs = 1, type = "obs")
-  names(labels) <- NULL
-
-  expect_equal(labels,
-               factor(rep("cluster_1", NROW(presidential_speech))))
-
-  ## Known k
-  expect_equal(levels(get_cluster_labels(cbass_fit, k.obs = 3, type = "obs")),
-               c("cluster_1", "cluster_2", "cluster_3"))
+  for (k in 1:10) {
+    expect_equal(k, nlevels(get_cluster_labels(cbass_fit, k.obs = k, type = "obs")))
+  }
 
   ## Should have correct names
   labels <- get_cluster_labels(cbass_fit, k.obs = 3, type = "obs")
@@ -139,7 +119,7 @@ test_that("get_cluster_labels.CBASS works on observation labels", {
   expect_equal(1, num_unique(get_cluster_labels(cbass_fit, k.obs = 1, type = "obs")))
   expect_equal(1, num_unique(get_cluster_labels(cbass_fit, percent = 1, type = "obs")))
 
-  ## Correct number of clusters
+  ## Correct number of labels returned
   for(pct in seq(0, 1, length.out = 21)){
     expect_equal(length(get_cluster_labels(cbass_fit, percent = pct, type = "obs")), NROW(presidential_speech))
   }
@@ -158,6 +138,10 @@ test_that("get_cluster_labels.CBASS works on variable labels", {
   expect_equal(levels(get_cluster_labels(cbass_fit, k.var = 3, type = "var")),
                c("cluster_1", "cluster_2", "cluster_3"))
 
+  for (k in 1:10) {
+    expect_equal(k, nlevels(get_cluster_labels(cbass_fit, k.var = k, type = "var")))
+  }
+
   ## Should have correct names
   labels <- get_cluster_labels(cbass_fit, k.var = 3, type = "var")
   expect_equal(colnames(presidential_speech), names(labels))
@@ -175,7 +159,7 @@ test_that("get_cluster_labels.CBASS works on variable labels", {
   expect_equal(1, num_unique(get_cluster_labels(cbass_fit, k.var = 1, type = "var")))
   expect_equal(1, num_unique(get_cluster_labels(cbass_fit, percent = 1, type = "var")))
 
-  ## Correct number of clusters
+  ## Correct number of labels returned
   for(pct in seq(0, 1, length.out = 21)){
     expect_equal(length(get_cluster_labels(cbass_fit, percent = pct, type = "var")), NCOL(presidential_speech))
   }
@@ -240,7 +224,23 @@ test_that("get_clustered_data.CBASS works", {
       obs_labels <- num_unique(get_cluster_labels(cbass_fit, k.var = k, type = "obs"))
       var_labels <- num_unique(get_cluster_labels(cbass_fit, k.var = k, type = "var"))
       expect_lte(num_unique(get_clustered_data(cbass_fit, k.var = k)), obs_labels * var_labels)
+
+      # Correct size
+      expect_equal(dim(presidential_speech), dim(get_clustered_data(cbass_fit, k.obs = k)))
+      expect_equal(dim(presidential_speech), dim(get_clustered_data(cbass_fit, k.var = k)))
+
+      # Correct names
+      expect_equal(dimnames(presidential_speech), dimnames(get_clustered_data(cbass_fit, k.obs = k)))
+      expect_equal(dimnames(presidential_speech), dimnames(get_clustered_data(cbass_fit, k.var = k)))
     }
+
+    # Expect mono-cluster at end of path
+    presidential_speech_full_cluster <- presidential_speech * 0 + mean(presidential_speech)
+
+    ## The variables are fully clustered before the observations, so this doesn't actully work
+    # expect_equal(presidential_speech_full_cluster, get_clustered_data(cbass_fit, k.var = 1))
+    expect_equal(presidential_speech_full_cluster, get_clustered_data(cbass_fit, k.obs = 1))
+    expect_equal(presidential_speech_full_cluster, get_clustered_data(cbass_fit, percent = 1))
 
     ## Clustered data are the centers from raw data, regardless of pre-processing flags
     ## Fix k.obs
@@ -320,7 +320,7 @@ test_that("CBASS cluster centroids are correctly calculated with refit = FALSE",
 
   ## grand means should always be the same
   for(pct in seq(0, 1, length.out = 11)){
-    for(carp_fit in carp_fits){
+    for(cbass_fit in cbass_fits){
       expect_equal(mean(presidential_speech),
                    mean(get_clustered_data(cbass_fit, percent = pct, refit = FALSE)))
     }

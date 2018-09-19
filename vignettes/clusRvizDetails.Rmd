@@ -260,59 +260,90 @@ regularization is preferred for whatever reason, the `alg.type` argument to
 
 # Solutions
 
-Once fit, the clustering solution of both CARP and CBASS may be examined
-via the `clustering` function.
-Using our `carp.fit` object from above, we can extract the solution along
-the path which gives $k=2$ clusters.
+Once fit, the clustering solution of both CARP and CBASS may be examined via
+three related "accessor" functions:
+
+- `get_cluster_labels`: to get a named factor vector of cluster labels
+- `get_cluster_centroids`: to get a matrix of cluster centroids
+- `get_clustered_data`: to get the clustered data matrix
+  (data replaced by estimated centroids)
+
+The interface for these functions is essentially the same for `CARP` and `CBASS`
+objects, though the exact meaning of "centroids" varies between the problems
+(vectors for `CARP` and scalars for `CBASS`). The latter two functions also support
+a `refit` flag, which determines whether the convex clustering centroids or the naive
+centroids (based only on the convex clustering labels) are returned.
+
+For example, we can extract the clustering labels from our `carp.fit` corresponding
+to a $k = 2$ cluster solution:
 
 ```{r}
-carp.clustering <- clustering(carp.fit,k = 2)
+cluster_labels <- get_cluster_labels(carp.fit, k = 2)
+head(cluster_labels)
 ```
 
-Once extracted we may examine the clustering assignment. In the table
-below we see of count of the cluster membership. Additionally
-we consider the cluster assignment in relation to our original weight
-graph. We can see that the cluster membership respect our original
-weights.
+We see a rather inbalanced data set (the "pre-WWII" cluster is much larger):
 
 ```{r}
-table(carp.clustering$clustering.assignment)
+table(cluster_labels)
 ```
 
-Additionally, we can extract the cluster means associated with $k=2$ solution. The object `cluster.means`
-below gives the CARP iterate $\vec U^{(k)}$ along the path. We note that the columns
-of the respective clusters have fused together as desired.
+Similarly, to get the cluster means, we use the `get_cluster_centroids` function:
 
 ```{r}
-head(carp.clustering$cluster.means)
+get_cluster_centroids(carp.fit, k = 2)
 ```
 
-Along with specifying the number of clusters $k$, we may also specify the percent of 
-regulariziation. In the example below, we extract the clustering solution at $25$\% 
-along the regularization path.
+Since we performed convex clustering here, our centroids are $p$-vectors. By default,
+the naive centroids are used; if we prefer the exact convex clustering solution, we
+can pass the `refit = FALSE` flag:
 
 ```{r}
-carp.clustering <- clustering(carp.fit,percent = .25)
+get_cluster_centroids(carp.fit, k = 2, refit = FALSE)
 ```
 
-Simiarly to CARP objects, CBASS clustering solutions may also be extracted via the 
-`clustering` function. The desired clustering solution is returned by
-specifying either the number of observation clusters (`k.obs`),
-the number of variable clusters (`k.var`), or the percent of
-regularization (`percent`). In any case, `clustering` returns
-the observation and variable clustering assignments, as well as
-the matrix of cluster means.
-In the example below we extract the biclustering solution
-at the level of $85$\% regularization.
+We can instead supply the `percent` argument to specify $\lambda$ (or more precisely,
+$\lambda / \lambda_{\text{max}}$) rather than the numer of clusters explicitly. For
+example, if we are interested at the clustering solution about $25\%$ of the way
+along the regularization path:
 
-```{r,eval=TRUE}
-cbass.clustering <- clustering(cbass.fit,percent = .85)
-# observation clusters
-table(cbass.clustering$clustering.assignment.obs)
-# variable clusters
-table(cbass.clustering$clustering.assignment.var)
-# mean matrix
-cbass.clustering$cluster.mean.matrix[1:5,1:5]
+```{r}
+get_cluster_labels(carp.fit, percent = 0.25)
+```
+
+We see that our data is clearly falls into three clusters.
+
+Simiarly to `CARP` objects, `CBASS` clustering solutions may also be extracted via the
+three accessor functions. The `CBASS` methods allow one of three parameters to be
+used to specify the solution:
+
+- `k.obs`: the number of observation clusters
+- `k.var`: the number of variable (feature) clusters
+- `percent`: the percent of total regularization
+
+Other than this, the behavior of `get_cluster_labels`, and `get_clustered_data`
+is roughly the same:
+
+```{r}
+# CBASS Cluster Labels for observations (default)
+get_cluster_labels(cbass.fit, percent = 0.85, type = "obs")
+
+# CBASS Cluster Labels for features
+get_cluster_labels(cbass.fit, percent = 0.85, type = "var")
+
+# CBASS Solution - naive centroids
+get_clustered_data(cbass.fit, percent = 0.85)
+
+# CBASS Solution - convex bi-clustering centroids
+get_clustered_data(cbass.fit, percent = 0.85, refit = FALSE)
+```
+
+The `get_cluster_centroids` function returns a $k_1$-by-$k_2$ matrix, giving
+the (scalar) centroids at a solution with $k_1$ observation clusters and $k_2$
+variable clusters:
+
+```{r}
+get_cluster_centroids(cbass.fit, percent = 0.85)
 ```
 
 # Visualizations

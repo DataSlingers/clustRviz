@@ -65,6 +65,9 @@ test_that("Input checking works", {
 
   ## Unknown unnamed argument
   expect_error(get_clustered_data(carp_fit, arg = 5))
+
+  ## Error with multiple arguments
+  expect_error(get_clustered_data(carp_fit, percent = 0.5, k = 3))
 })
 
 test_that("get_cluster_labels.CARP works", {

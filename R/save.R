@@ -719,15 +719,15 @@ saveviz.CBASS <- function(
         static = {
           ### START Static Obs Dend
           if (!is.null(k.obs)) {
-            cbass.fit.clustering <- clustering(cbass.fit, k.obs = k.obs)
+            cluster_labels <- get_cluster_labels(x, k.obs = k.obs, type = "obs")
           } else if (!is.null(k.var)) {
-            cbass.fit.clustering <- clustering(cbass.fit, k.var = k.var)
+            cluster_labels <- get_cluster_labels(x, k.var = k.var, type = "obs")
           } else if (!is.null(percent)) {
-            cbass.fit.clustering <- clustering(cbass.fit, percent = percent)
+            cluster_labels <- get_cluster_labels(x, percent = percent, type = "obs")
           } else {
             stop("Select exactly one of k.obs, k.var, or percent")
           }
-          ncl <- length(unique(cbass.fit.clustering$clustering.assignment.obs))
+          ncl <- length(unique(cluster_labels))
           png(file.name, width = dynamic.width, height = dynamic.height)
           plot.new()
           par(mar = c(14, 7, 2, 1))
@@ -806,15 +806,15 @@ saveviz.CBASS <- function(
         static = {
           ### Static Var Dend
           if (!is.null(k.obs)) {
-            cbass.fit.clustering <- clustering(cbass.fit, k.obs = k.obs)
+            cluster_labels <- get_cluster_labels(x, k.obs = k.obs, type = "var")
           } else if (!is.null(k.var)) {
-            cbass.fit.clustering <- clustering(cbass.fit, k.var = k.var)
+            cluster_labels <- get_cluster_labels(x, k.var = k.var, type = "var")
           } else if (!is.null(percent)) {
-            cbass.fit.clustering <- clustering(cbass.fit, percent = percent)
+            cluster_labels <- get_cluster_labels(x, percent = percent, type = "var")
           } else {
             stop("Select exactly one of k.obs, k.var, or percent")
           }
-          ncl <- length(unique(cbass.fit.clustering$clustering.assignment.var))
+          ncl <- length(unique(cluster_labels))
           png(file.name, width = dynamic.width, height = dynamic.height)
           plot.new()
           par(mar = c(14, 7, 2, 1))
