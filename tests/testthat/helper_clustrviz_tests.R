@@ -24,7 +24,6 @@ capture_print <- function(x, ...){
   paste(capture.output(print(x, ...)), collapse="\n")
 }
 
-num_unique <- function(x) length(unique(x))
-
-num_unique_rows <- function(x) NROW(unique(x))
-num_unique_cols <- function(x) num_unique_rows(t(x))
+list_all_equal <- function(x) {
+  all(vapply(seq_len(length(x) - 1), function(i) isTRUE(all.equal(x[[i]], x[[i + 1]])), logical(1)))
+}

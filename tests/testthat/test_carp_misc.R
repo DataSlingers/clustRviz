@@ -18,3 +18,15 @@ test_that("CARP supports factor labels", {
 
   expect_equal(rownames(carp_fit$X), c("a", "b", "c"))
 })
+
+test_that("CARP stores scale factors", {
+  carp_fit_std    <- CARP(presidential_speech, X.center = TRUE,  X.scale = TRUE)
+
+  expect_equal(carp_fit_std$center_vector, colMeans(presidential_speech))
+  expect_equal(carp_fit_std$scale_vector, apply(presidential_speech, 2, sd))
+
+  carp_fit_no_std <- CARP(presidential_speech, X.center = FALSE, X.scale = FALSE)
+
+  expect_equal(carp_fit_no_std$scale_vector, rep(1, NCOL(presidential_speech)))
+  expect_equal(carp_fit_no_std$center_vector, rep(0, NCOL(presidential_speech)))
+})

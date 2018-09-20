@@ -11,6 +11,7 @@ test_that("Validators work", {
   is_logical_scalar <- clustRviz:::is_logical_scalar
   is_numeric_scalar <- clustRviz:::is_numeric_scalar
   is_integer_scalar <- clustRviz:::is_integer_scalar
+  is_percent_scalar <- clustRviz:::is_percent_scalar
 
   expect_true(is_logical_scalar(TRUE))
   expect_true(is_logical_scalar(FALSE))
@@ -35,6 +36,15 @@ test_that("Validators work", {
   expect_false(is_integer_scalar(c(2, 5)))
   expect_false(is_integer_scalar("a"))
 
+  expect_true(is_percent_scalar(0.3))
+  expect_true(is_percent_scalar(1))
+  expect_true(is_percent_scalar(0))
+  expect_false(is_percent_scalar(1.5))
+  expect_false(is_percent_scalar(-1.5))
+  expect_false(is_percent_scalar(NA))
+  expect_false(is_percent_scalar(c(0.2, 0.5)))
+  expect_false(is_percent_scalar("a"))
+
   is_square <- clustRviz:::is_square
   expect_true(is_square(matrix(1, 5, 5)))
   expect_false(is_square(matrix(1, 5, 3)))
@@ -47,4 +57,14 @@ test_that("Capitalization works", {
   expect_equal("Abc", capitalize_string("abc"))
   expect_equal("ABc", capitalize_string("ABc"))
   expect_equal("A Fantastic Cow", capitalize_string("a fantastic cow"))
+})
+
+test_that("Unscaling matrix works", {
+  set.seed(5)
+  n = 100; p = 400;
+
+  X <- matrix(rnorm(n * p, sd = 1:25, mean = 1:50), ncol=p)
+  X_std <- scale(X, center=TRUE, scale=TRUE)
+
+  expect_equal(clustRviz:::unscale_matrix(X_std), X, check.attributes = FALSE)
 })

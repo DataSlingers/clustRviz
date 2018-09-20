@@ -383,6 +383,57 @@ CreateDendrogram <- function(carp_cluster_path, n_labels, scale = NULL) {
   cvx.hclust
 }
 
+#' @noRd
+#' @importFrom rlang .data
+#' @importFrom stats prcomp
+#' @importFrom dplyr as_tibble %>% mutate group_by ungroup n_distinct
+# Post-Process CARP and CBASS results
+# This function takes a "correctly" oriented X
+ConvexClusteringPostProcess <- function(X,
+                                        edge_matrix,
+                                        lambda_path,
+                                        u_path,
+                                        v_path,
+                                        v_zero_indices,
+                                        labels,
+                                        dendrogram_scale,
+                                        npcs){
+
+  n.obs     <- NROW(X)
+  p.var     <- NCOL(X)
+  num_edges <- NROW(edge_matrix)
+
+  cluster_path <- ISP(sp.path     = t(v_zero_indices),
+                      u.path      = u_path,
+                      v.path      = v_path,
+                      lambda.path = lambda_path,
+                      cardE       = num_edges)
+
+  cluster_path[["clust.path"]] <- get_cluster_assignments(edge_matrix, cluster_path$sp.path.inter, n.obs)
+  cluster_path[["clust.path.dups"]] <- duplicated(cluster_path[["clust.path"]], fromList = FALSE)
+
+  cvx_dendrogram <- CreateDendrogram(cluster_path, labels, dendrogram_scale)
+
+  X_pca <- stats::prcomp(X, scale. = FALSE, center = FALSE)
+  X_pca_rotation <- X_pca$rotation[, seq_len(npcs)]
+
+  U_projected <- crossprod(matrix(cluster_path$u.path.inter, nrow = p.var), X_pca_rotation)
+  colnames(U_projected) <- paste0("PC", seq_len(npcs))
+
+  cluster_path_vis <- as_tibble(U_projected) %>%
+                         mutate(Iter = rep(seq_along(cluster_path$clust.path), each = n.obs),
+                                Obs  = rep(seq_len(n.obs), times = length(cluster_path$clust.path)),
+                                Cluster = as.vector(vapply(cluster_path$clust.path, function(x) x$membership, double(n.obs))),
+                                Lambda = rep(cluster_path$lambda.path.inter, each = n.obs),
+                                ObsLabel = rep(labels, times = length(cluster_path$clust.path))) %>%
+                         group_by(.data$Iter) %>%
+                         mutate(NCluster = n_distinct(.data$Cluster)) %>%
+                         ungroup() %>%
+                         mutate(LambdaPercent = .data$Lambda / max(.data$Lambda))
+
+  list(paths = cluster_path_vis, dendrogram = cvx_dendrogram, raw_path = cluster_path)
+}
+
 `%not.in%` <- Negate(`%in%`)
 
 # From ?is.integer:
@@ -391,6 +442,7 @@ is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) 
 is_logical_scalar <- function(x) {is.logical(x) && (length(x) == 1L) && (!is.na(x))}
 is_numeric_scalar <- function(x) {is.numeric(x) && (length(x) == 1L) && (!is.na(x))}
 is_integer_scalar <- function(x) is_numeric_scalar(x) && is.wholenumber(x)
+is_percent_scalar <- function(x) is_numeric_scalar(x) && (x >= 0) && (x <= 1)
 
 is_square <- function(x) {is.matrix(x) && (NROW(x) == NCOL(x))}
 
@@ -399,4 +451,17 @@ capitalize_string <- function(x){
   vapply(strsplit(x, " "),
          function(x) paste(paste0(toupper(substring(x, 1, 1)), substring(x, 2)), collapse = " "),
          character(1))
+}
+
+num_unique      <- function(x) length(unique(as.vector(x)))
+num_unique_rows <- function(x) NROW(unique(x))
+num_unique_cols <- function(x) num_unique_rows(t(x))
+
+unscale_matrix <- function(X,
+                           scale=attr(X, "scaled:scale", TRUE),
+                           center=attr(X, "scaled:center", TRUE)){
+  n <- NROW(X)
+  p <- NCOL(X)
+
+  X * matrix(scale, n, p, byrow=TRUE) + matrix(center, n, p, byrow=TRUE)
 }
