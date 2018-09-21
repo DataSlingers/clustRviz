@@ -129,47 +129,13 @@ plot.CBASS <- function(x,
                       type = "var")
     },
     heatmap = {
-      dots <- list(...)
-      if ( length(dots) != 0 ){
-        stop("Unknown arguments passed to ", sQuote("plot.CARP."))
-      }
-
-      if (x$X.center.global) {
-        X <- x$X
-        X <- X - mean(X)
-        X <- t(X)
-      } else {
-        X <- t(x$X.orig)
-      }
-      rownames(X) <- x$var.labels
-      colnames(X) <- x$obs.labels
-      nbreaks <- 50
-      quant.probs <- seq(0, 1, length.out = nbreaks)
-      breaks <- unique(stats::quantile(X[TRUE], probs = quant.probs))
-      nbreaks <- length(breaks)
-      heatcols <- grDevices::colorRampPalette(c("blue", "yellow"))(nbreaks - 1)
-
-      my.cols <- grDevices::adjustcolor(c("black", "grey"), alpha.f = .3)
-      my.heatmap.2(
-        x = X,
-        scale = "none",
-        Colv = stats::as.dendrogram(x$cbass.dend.obs),
-        Rowv = stats::as.dendrogram(x$cbass.dend.var),
-        trace = "none",
-        density.info = "none",
-        key = FALSE,
-        breaks = breaks,
-        col = heatcols,
-        symkey = F,
-        Row.hclust = x$cbass.dend.var %>% stats::as.hclust(),
-        Col.hclust = x$cbass.dend.obs %>% stats::as.hclust(),
-        k.col = x$n.obs,
-        k.row = x$p.var,
-        my.col.vec = my.cols,
-        cexRow = heatrow.label.cex,
-        cexCol = heatcol.label.cex,
-        margins = c(14, 8)
-      )
+      cbass_heatmap_plot(x,
+                         ...,
+                         percent = percent,
+                         k.obs = k.obs,
+                         k.var = k.var,
+                         heatrow.label.cex = heatrow.label.cex,
+                         heatcol.label.cex = heatcol.label.cex)
     },
     interactive = {
       dots <- list(...)
@@ -506,6 +472,83 @@ cbass_dendro_plot <- function(x,
     my.cols <- adjustcolor(c("grey", "black"), alpha.f = .2)
     my.rect.hclust(dend, k = n_clusters, border = 2, my.col.vec = my.cols, lwd = 3)
   }
+
+  invisible(x)
+}
+
+#' @importFrom grDevices colorRampPalette adjustcolor
+#' @importFrom stats quantile as.dendrogram as.hclust
+cbass_heatmap_plot <- function(x,
+                               ...,
+                               percent,
+                               k.obs,
+                               k.var,
+                               heatrow.label.cex,
+                               heatcol.label.cex){
+
+  dots <- list(...)
+
+  if ( length(dots) != 0 ){
+    stop("Unknown arguments passed to ", sQuote("plot.CBASS."))
+  }
+
+  has_percent <- !missing(percent)
+  has_k.obs   <- !missing(k.obs)
+  has_k.var   <- !missing(k.var)
+
+  n_args <- has_percent + has_k.obs + has_k.var
+
+  if(n_args >= 2){
+    stop("At most one of ", sQuote("percent,"), " ", sQuote("k.obs"), " and ",
+         sQuote("k.var"), " may be supplied.")
+  }
+
+  if(n_args == 0){
+    U     <- get_clustered_data(x, percent = 0, refit = TRUE)
+    k.col <- NCOL(U) ## FIXME - why is this backwards?
+    k.row <- NROW(U)
+  } else {
+    U <- get_clustered_data(x, percent = percent, k.obs = k.obs, k.var = k.var, refit = TRUE)
+    k.row <- nlevels(get_cluster_labels(x, percent = percent, k.obs = k.obs, k.var = k.var, type = "obs"))
+    k.col <- nlevels(get_cluster_labels(x, percent = percent, k.obs = k.obs, k.var = k.var, type = "var"))
+  }
+
+  if (heatrow.label.cex < 0) {
+    stop(sQuote("heatrow.label.cex"), " must be positive.")
+  }
+
+  if (heatcol.label.cex < 0) {
+    stop(sQuote("heatcol.label.cex"), " must be positive.")
+  }
+
+  nbreaks <- 50
+  quant.probs <- seq(0, 1, length.out = nbreaks)
+  breaks <- unique(quantile(as.vector(U), probs = quant.probs))
+  nbreaks <- length(breaks)
+
+  heatcols <- colorRampPalette(c("blue", "yellow"))(nbreaks - 1)
+  my.cols  <- adjustcolor(c("black", "grey"), alpha.f = .3)
+
+  my.heatmap.2(
+    x = U,
+    scale = "none",
+    Rowv = as.dendrogram(x$cbass.dend.obs),
+    Colv = as.dendrogram(x$cbass.dend.var),
+    trace = "none",
+    density.info = "none",
+    key = FALSE,
+    breaks = breaks,
+    col = heatcols,
+    symkey = FALSE,
+    Row.hclust = as.hclust(x$cbass.dend.obs),
+    Col.hclust = as.hclust(x$cbass.dend.var),
+    k.col = k.col,
+    k.row = k.row,
+    my.col.vec = my.cols,
+    cexRow = heatrow.label.cex,
+    cexCol = heatcol.label.cex,
+    margins = c(14, 8)
+  )
 
   invisible(x)
 }

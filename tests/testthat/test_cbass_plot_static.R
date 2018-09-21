@@ -184,3 +184,42 @@ test_that("CBASS dendrogram plot works for observations", {
   ## Error if `show_clusters = TRUE` but no regularization given
   expect_error(plot(cbass_fit, type = "var.dendrogram", show_clusters = TRUE))
 })
+
+test_that("CBASS heatmap plot works", {
+  cbass_fit <- CBASS(presidential_speech)
+
+  ## Main settings work
+  expect_no_error(plot(cbass_fit, type = "heatmap"))
+  expect_equal(plot(cbass_fit, type = "heatmap"), invisible(cbass_fit))
+  expect_equal(plot(cbass_fit, type = "heatmap", percent = 0.5), invisible(cbass_fit))
+  expect_equal(plot(cbass_fit, type = "heatmap", k.obs = 5), invisible(cbass_fit))
+  expect_equal(plot(cbass_fit, type = "heatmap", k.var = 5), invisible(cbass_fit))
+
+  ## Must give at most one of `percent`, `k.obs`, `k.var`
+  expect_error(plot(cbass_fit, type = "heatmap", percent = 0.5, k.obs = 3))
+  expect_error(plot(cbass_fit, type = "heatmap", percent = 0.5, k.var = 3))
+  expect_error(plot(cbass_fit, type = "heatmap", k.obs = 3, k.var = 3))
+  expect_error(plot(cbass_fit, type = "heatmap", k.obs = 3, k.var = 3, percent = 0.5))
+
+  ## Error checking on `percent`, `k.obs`, `k.var`
+  expect_error(plot(cbass_fit, type = "heatmap", percent = 1.5))
+  expect_error(plot(cbass_fit, type = "heatmap", percent = -0.5))
+  expect_error(plot(cbass_fit, type = "heatmap", percent = NA))
+  expect_error(plot(cbass_fit, type = "heatmap", percent = c(0.25, 0.75)))
+
+  expect_error(plot(cbass_fit, type = "heatmap", k.obs = 3.5))
+  expect_error(plot(cbass_fit, type = "heatmap", k.obs = 0))
+  expect_error(plot(cbass_fit, type = "heatmap", k.obs = -1))
+  expect_error(plot(cbass_fit, type = "heatmap", k.obs = NROW(presidential_speech) + 1))
+
+  expect_error(plot(cbass_fit, type = "heatmap", k.var = 3.5))
+  expect_error(plot(cbass_fit, type = "heatmap", k.var = 0))
+  expect_error(plot(cbass_fit, type = "heatmap", k.var = -1))
+  expect_error(plot(cbass_fit, type = "heatmap", k.var = NCOL(presidential_speech) + 1))
+
+  ## Error checking on two specially handled arguments
+  expect_error(plot(cbass_fit, type = "heatmap", heatcol.label.cex = 0))
+  expect_error(plot(cbass_fit, type = "heatmap", heatcol.label.cex = -2))
+  expect_error(plot(cbass_fit, type = "heatmap", heatrow.label.cex = 0))
+  expect_error(plot(cbass_fit, type = "heatmap", heatrow.label.cex = -2))
+})
