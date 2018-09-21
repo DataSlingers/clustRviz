@@ -96,11 +96,13 @@ plot.CARP <- function(x,
   switch(
     type,
     dendrogram = {
-      x$carp.dend %>%
-        stats::as.dendrogram() %>%
-        dendextend::set("branches_lwd", dend.branch.width) %>%
-        dendextend::set("labels_cex", dend.labels.cex) %>%
-        plot(ylab = "Amount of Regularization")
+      carp_dendro_plot(x,
+                       percent = percent,
+                       k = k,
+                       show_clusters = show_clusters,
+                       dend.branch.width = dend.branch.width,
+                       dend.labels.cex = dend.labels.cex,
+                       ...)
     },
     path = {
       carp_path_plot(x,
@@ -505,3 +507,81 @@ carp_path_plot <- function(x, ..., axis, percent, k, show_clusters){
       xlab(axis[1]) +
       ylab(axis[2])
 }
+
+#' @noRd
+#' @importFrom rlang .data
+#' @importFrom dplyr filter select summarize pull
+#' @importFrom stats as.dendrogram
+#' @importFrom dendextend set
+#' @importFrom grDevices adjustcolor
+carp_dendro_plot <- function(x,
+                             percent,
+                             k,
+                             dend.branch.width = 2,
+                             dend.labels.cex = .6,
+                             show_clusters = (n_args == 1),
+                             ...){
+
+  if(dend.branch.width <= 0){
+    stop(sQuote("dend.branch.width"), " must be positive.")
+  }
+
+  if(dend.labels.cex <= 0){
+    stop(sQuote("dend.labels.cex"), " must be positive.")
+  }
+
+  has_percent <- !missing(percent)
+  has_k       <- !missing(k)
+  n_args      <- has_percent + has_k
+
+  if (missing(show_clusters)) {
+    show_clusters <- (n_args == 1L)
+  }
+
+  if (!is_logical_scalar(show_clusters)) {
+    stop(sQuote("show_clusters"), " must be either TRUE or FALSE.")
+  }
+
+  ## Set better default borders
+  par(mar = c(14, 7, 2, 1))
+
+  x$carp.dend %>%
+    stats::as.dendrogram() %>%
+    dendextend::set("branches_lwd", dend.branch.width) %>%
+    dendextend::set("labels_cex", dend.labels.cex) %>%
+    plot(ylab = "Amount of Regularization", cex.lab = 1.5, ...)
+
+  if(show_clusters){
+
+    if(n_args != 1){
+      stop("Exactly one of ", sQuote("percent"), " and ", sQuote("k"), " must be supplied if ", sQuote("show_clusters"), " is TRUE.")
+    }
+
+    if(has_percent){
+      if (!is_percent_scalar(percent)) {
+        stop(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
+      }
+
+      k <- x$carp.cluster.path.vis %>% filter(.data$LambdaPercent <= percent) %>%
+                                       select(.data$NCluster) %>%
+                                       summarize(NCluster = min(.data$NCluster)) %>%
+                                       pull
+    } else {
+      if (!is_integer_scalar(k)) {
+        stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+      }
+      if ( k <= 0 ) {
+        stop(sQuote("k"), " must be positive.")
+      }
+      if ( k > NROW(x$X) ) {
+        stop(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
+      }
+    }
+
+    my.cols <- adjustcolor(c("grey", "black"), alpha.f = .2)
+    my.rect.hclust(x$carp.dend, k = k, border = 2, my.col.vec = my.cols, lwd = 3)
+  }
+
+  invisible(x)
+}
+
