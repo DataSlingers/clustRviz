@@ -31,10 +31,6 @@ test_that("CARP path plot works", {
   expect_error(plot(carp_fit, type = "path", k = -1))
   expect_error(plot(carp_fit, type = "path", k = NROW(presidential_speech) + 1))
 
-  ## Error checking on `show_clusters`
-  expect_error(plot(carp_fit, type = "path", show_clusters = NA))
-  expect_error(plot(carp_fit, type = "path", show_clusters = c(TRUE, FALSE)))
-
   ## Error on unknown arguments
   expect_error(plot(carp_fit, type = "path", 5))
   expect_error(plot(carp_fit, type = "path", a = 5))
@@ -61,16 +57,9 @@ test_that("CARP dendrogram plot works", {
   expect_error(plot(carp_fit, type = "dendrogram", k = -1))
   expect_error(plot(carp_fit, type = "dendrogram", k = NROW(presidential_speech) + 1))
 
-  ## Error checking on `show_clusters`
-  expect_error(plot(carp_fit, type = "dendrogram", show_clusters = NA))
-  expect_error(plot(carp_fit, type = "dendrogram", show_clusters = c(TRUE, FALSE)))
-
   ## Error checking on two specially handled arguments
   expect_error(plot(carp_fit, type = "dendrogram", k = 3, dend.branch.width = 0))
   expect_error(plot(carp_fit, type = "dendrogram", k = 3, dend.branch.width = -2))
   expect_error(plot(carp_fit, type = "dendrogram", k = 3, dend.labels.cex   = 0))
   expect_error(plot(carp_fit, type = "dendrogram", k = 3, dend.labels.cex   = -2))
-
-  ## Error if no regularization given, but show_clusters = TRUE
-  expect_error(plot(carp_fit, type = "dendrogram", show_clusters = TRUE))
 })

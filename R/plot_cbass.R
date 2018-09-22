@@ -32,8 +32,6 @@
 #' @param k.var An integer indicating the desired number of feature clusters to be displayed
 #'              in the static plots. (If plotting variables, the regularization level
 #'              giving \code{k.var} feature clusters is used.)
-#' @param show_clusters A Boolean value indicating whether the cluster assignments
-#'                      are indicated in the static plot types
 #' @param ... Additional arguments. Currently an error when \code{type} is not
 #'            \code{"obs.dendrogram"} or \code{"var.dendrogram"}; passed to
 #'            \code{\link[stats]{plot.dendrogram}} when \code{type == "obs.dendrogram"}
@@ -79,8 +77,7 @@ plot.CBASS <- function(x,
                        dend.labels.cex = .6,
                        heatrow.label.cex = 1.5,
                        heatcol.label.cex = 1.5,
-                       axis = c("PC1", "PC2"),
-                       show_clusters) {
+                       axis = c("PC1", "PC2")) {
 
   type <- match.arg(type)
 
@@ -91,7 +88,6 @@ plot.CBASS <- function(x,
                         percent = percent,
                         k.obs = k.obs,
                         k.var = k.var,
-                        show_clusters = show_clusters,
                         dend.branch.width = dend.branch.width,
                         dend.labels.cex = dend.labels.cex,
                         type = "obs",
@@ -102,7 +98,6 @@ plot.CBASS <- function(x,
                         percent = percent,
                         k.obs = k.obs,
                         k.var = k.var,
-                        show_clusters = show_clusters,
                         dend.branch.width = dend.branch.width,
                         dend.labels.cex = dend.labels.cex,
                         type = "var",
@@ -114,7 +109,6 @@ plot.CBASS <- function(x,
                      percent = percent,
                      k.obs = k.obs,
                      k.var = k.var,
-                     show_clusters = show_clusters,
                      ...,
                      type = "obs")
     },
@@ -124,7 +118,6 @@ plot.CBASS <- function(x,
                       percent = percent,
                       k.obs = k.obs,
                       k.var = k.var,
-                      show_clusters = show_clusters,
                       ...,
                       type = "var")
     },
@@ -262,8 +255,7 @@ cbass_path_plot <- function(x,
                             percent,
                             k.obs,
                             k.var,
-                            type = c("obs", "var"),
-                            show_clusters){
+                            type = c("obs", "var")){
 
   type <- match.arg(type)
 
@@ -284,23 +276,15 @@ cbass_path_plot <- function(x,
 
   n_args <- has_percent + has_k.obs + has_k.var
 
-  if (missing(show_clusters)) {
-    show_clusters <- (n_args == 1)
-  }
-
-  if (!is_logical_scalar(show_clusters)) {
-    stop(sQuote("show_clusters"), " must be either TRUE or FALSE.")
-  }
+  show_clusters <- (n_args == 1)
 
   if(n_args > 1){
     stop("At most one of ", sQuote("percent"), " ", sQuote("k.obs"), " and ",
          sQuote("k.var"), " may be supplied.")
   }
 
-  if (show_clusters && (n_args != 1)) {
-    stop("Exactly one of ", sQuote("percent,"), " ",
-         sQuote("k.obs"), " and ", sQuote("k.var"),
-         " must be supplied if ", sQuote("show_clusters"), " is TRUE.")
+  if (n_args == 0L) {
+    percent <- 1 ## By default, show the whole path
   }
 
   plot_cols <- c(
@@ -417,7 +401,6 @@ cbass_dendro_plot <- function(x,
                              k.var,
                              dend.branch.width = 2,
                              dend.labels.cex = .6,
-                             show_clusters,
                              type = c("obs", "var"),
                              ...){
 
@@ -436,23 +419,11 @@ cbass_dendro_plot <- function(x,
   has_k.var   <- !missing(k.var)
   n_args      <- has_percent + has_k.obs + has_k.var
 
-  if (missing(show_clusters)) {
-    show_clusters <- (n_args == 1)
-  }
-
-  if (!is_logical_scalar(show_clusters)) {
-    stop(sQuote("show_clusters"), " must be either TRUE or FALSE.")
-  }
+  show_clusters <- (n_args == 1)
 
   if(n_args > 1){
     stop("At most one of ", sQuote("percent"), " ", sQuote("k.obs"), " and ",
          sQuote("k.var"), " may be supplied.")
-  }
-
-  if (show_clusters && (n_args != 1)) {
-    stop("Exactly one of ", sQuote("percent,"), " ",
-         sQuote("k.obs"), " and ", sQuote("k.var"),
-         " must be supplied if ", sQuote("show_clusters"), " is TRUE.")
   }
 
   dend <- if(type == "obs") x$cbass.dend.obs else x$cbass.dend.var

@@ -38,16 +38,9 @@ test_that("CBASS path plot works for observations", {
   expect_error(plot(cbass_fit, type = "obs.path", k.var = -1))
   expect_error(plot(cbass_fit, type = "obs.path", k.var = NCOL(presidential_speech) + 1))
 
-  ## Error checking on `show_clusters`
-  expect_error(plot(cbass_fit, type = "obs.path", show_clusters = NA))
-  expect_error(plot(cbass_fit, type = "obs.path", show_clusters = c(TRUE, FALSE)))
-
   ## Error on unknown arguments
   expect_error(plot(cbass_fit, type = "obs.path", 5))
   expect_error(plot(cbass_fit, type = "obs.path", a = 5))
-
-  ## Error if `show_clusters = TRUE` but no regularization given
-  expect_error(plot(cbass_fit, type = "obs.path", show_clusters = TRUE))
 })
 
 test_that("CBASS path plot works for variables", {
@@ -83,16 +76,9 @@ test_that("CBASS path plot works for variables", {
   expect_error(plot(cbass_fit, type = "var.path", k.var = -1))
   expect_error(plot(cbass_fit, type = "var.path", k.var = NCOL(presidential_speech) + 1))
 
-  ## Error checking on `show_clusters`
-  expect_error(plot(cbass_fit, type = "var.path", show_clusters = NA))
-  expect_error(plot(cbass_fit, type = "var.path", show_clusters = c(TRUE, FALSE)))
-
   ## Error on unknown arguments
   expect_error(plot(cbass_fit, type = "var.path", 5))
   expect_error(plot(cbass_fit, type = "var.path", a = 5))
-
-  ## Error if `show_clusters = TRUE` but no regularization given
-  expect_error(plot(cbass_fit, type = "var.path", show_clusters = TRUE))
 })
 
 test_that("CBASS dendrogram plot works for observations", {
@@ -123,21 +109,11 @@ test_that("CBASS dendrogram plot works for observations", {
   expect_error(plot(cbass_fit, type = "obs.dendrogram", k.var = -1))
   expect_error(plot(cbass_fit, type = "obs.dendrogram", k.var = NCOL(presidential_speech) + 1))
 
-  ## Error checking on `show_clusters`
-  expect_error(plot(cbass_fit, type = "obs.dendrogram", show_clusters = NA))
-  expect_error(plot(cbass_fit, type = "obs.dendrogram", show_clusters = c(TRUE, FALSE)))
-
   ## Error checking on two specially handled arguments
   expect_error(plot(cbass_fit, type = "obs.dendrogram", k.obs = 3, dend.branch.width = 0))
   expect_error(plot(cbass_fit, type = "obs.dendrogram", k.obs = 3, dend.branch.width = -2))
   expect_error(plot(cbass_fit, type = "obs.dendrogram", k.obs = 3, dend.labels.cex   = 0))
   expect_error(plot(cbass_fit, type = "obs.dendrogram", k.obs = 3, dend.labels.cex   = -2))
-
-  ## No cluster specification required if `show_clusters` is FALSE
-  expect_no_error(plot(cbass_fit, type = "obs.dendrogram", show_clusters = FALSE))
-
-  ## Error if `show_clusters = TRUE` but no regularization given
-  expect_error(plot(cbass_fit, type = "obs.dendrogram", show_clusters = TRUE))
 })
 
 test_that("CBASS dendrogram plot works for observations", {
@@ -168,21 +144,11 @@ test_that("CBASS dendrogram plot works for observations", {
   expect_error(plot(cbass_fit, type = "var.dendrogram", k.var = -1))
   expect_error(plot(cbass_fit, type = "var.dendrogram", k.var = NCOL(presidential_speech) + 1))
 
-  ## Error checking on `show_clusters`
-  expect_error(plot(cbass_fit, type = "var.dendrogram", show_clusters = NA))
-  expect_error(plot(cbass_fit, type = "var.dendrogram", show_clusters = c(TRUE, FALSE)))
-
   ## Error checking on two specially handled arguments
   expect_error(plot(cbass_fit, type = "var.dendrogram", k.obs = 3, dend.branch.width = 0))
   expect_error(plot(cbass_fit, type = "var.dendrogram", k.obs = 3, dend.branch.width = -2))
   expect_error(plot(cbass_fit, type = "var.dendrogram", k.obs = 3, dend.labels.cex   = 0))
   expect_error(plot(cbass_fit, type = "var.dendrogram", k.obs = 3, dend.labels.cex   = -2))
-
-  ## No cluster specification required if `show_clusters` is FALSE
-  expect_no_error(plot(cbass_fit, type = "var.dendrogram", show_clusters = FALSE))
-
-  ## Error if `show_clusters = TRUE` but no regularization given
-  expect_error(plot(cbass_fit, type = "var.dendrogram", show_clusters = TRUE))
 })
 
 test_that("CBASS heatmap plot works", {

@@ -24,8 +24,6 @@
 #'          in the static plots. If no \code{CARP} iteration with exactly this
 #'          many clusters is found, the first iterate with fewer than \code{k}
 #'          clusters is used.
-#' @param show_clusters A Boolean value indicating whether the cluster assignments
-#'                      are indicated in the static plot types
 #' @param ... Additional arguments. Currently an error when \code{type != "dendrogram"}
 #'            and passed to \code{\link[stats]{plot.dendrogram}} when \code{type =
 #'            "dendrogram"}.
@@ -71,8 +69,7 @@ plot.CARP <- function(x,
                       percent,
                       k,
                       max.nclust = 9,
-                      min.nclust = 1,
-                      show_clusters) {
+                      min.nclust = 1) {
 
   LambdaPercent <- NULL
   Iter <- NULL
@@ -99,7 +96,6 @@ plot.CARP <- function(x,
       carp_dendro_plot(x,
                        percent = percent,
                        k = k,
-                       show_clusters = show_clusters,
                        dend.branch.width = dend.branch.width,
                        dend.labels.cex = dend.labels.cex,
                        ...)
@@ -109,7 +105,6 @@ plot.CARP <- function(x,
                      axis = axis,
                      percent = percent,
                      k = k,
-                     show_clusters = show_clusters,
                      ...)
     },
     interactive = {
@@ -391,7 +386,7 @@ plot.CARP <- function(x,
 #' @importFrom dplyr filter select left_join pull
 #' @importFrom ggplot2 ggplot geom_path aes geom_point guides theme element_text xlab ylab
 #' @importFrom ggrepel geom_text_repel
-carp_path_plot <- function(x, ..., axis, percent, k, show_clusters){
+carp_path_plot <- function(x, ..., axis, percent, k){
 
   dots <- list(...)
   if ( length(dots) != 0) {
@@ -413,17 +408,7 @@ carp_path_plot <- function(x, ..., axis, percent, k, show_clusters){
     stop("At most one of ", sQuote("percent"), " and ", sQuote("k"), " must be supplied.")
   }
 
-  if (missing(show_clusters)) {
-    show_clusters <- (n_args == 1L)
-  }
-
-  if (!is_logical_scalar(show_clusters)) {
-    stop(sQuote("show_clusters"), " must be either TRUE or FALSE.")
-  }
-
-  if (show_clusters && (n_args != 1)) {
-    stop("Exactly one of ", sQuote("percent"), " and ", sQuote("k"), " must be supplied if ", sQuote("show_clusters"), " is TRUE.")
-  }
+  show_clusters <- (n_args == 1L)
 
   if (n_args == 0L){
     percent <- 1
@@ -519,7 +504,6 @@ carp_dendro_plot <- function(x,
                              k,
                              dend.branch.width = 2,
                              dend.labels.cex = .6,
-                             show_clusters = (n_args == 1),
                              ...){
 
   if(dend.branch.width <= 0){
@@ -534,13 +518,11 @@ carp_dendro_plot <- function(x,
   has_k       <- !missing(k)
   n_args      <- has_percent + has_k
 
-  if (missing(show_clusters)) {
-    show_clusters <- (n_args == 1L)
+  if(n_args > 1L){
+    stop("At most one of ", sQuote("percent"), " and ", sQuote("k"), " may be supplied.")
   }
 
-  if (!is_logical_scalar(show_clusters)) {
-    stop(sQuote("show_clusters"), " must be either TRUE or FALSE.")
-  }
+  show_clusters <- (n_args == 1L)
 
   ## Set better default borders
   par(mar = c(14, 7, 2, 1))
@@ -552,10 +534,6 @@ carp_dendro_plot <- function(x,
     plot(ylab = "Amount of Regularization", cex.lab = 1.5, ...)
 
   if(show_clusters){
-
-    if(n_args != 1){
-      stop("Exactly one of ", sQuote("percent"), " and ", sQuote("k"), " must be supplied if ", sQuote("show_clusters"), " is TRUE.")
-    }
 
     if(has_percent){
       if (!is_percent_scalar(percent)) {
