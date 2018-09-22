@@ -48,7 +48,7 @@
 #' @importFrom shiny column plotOutput sliderInput uiOutput renderUI tags
 #' @importFrom shiny checkboxGroupInput animationOptions renderPlot
 #' @importFrom stats as.dendrogram median
-#' @importFrom ggplot2 ggplot aes geom_path geom_point geom_text guides theme
+#' @importFrom ggplot2 ggplot aes_string geom_path geom_point geom_text guides theme
 #' @importFrom ggplot2 element_text xlab ylab scale_color_manual
 #' @importFrom ggrepel geom_text_repel
 #' @importFrom dplyr filter select distinct rename mutate left_join select_ %>%
@@ -476,17 +476,17 @@ carp_path_plot <- function(x, ..., axis, percent, k){
   ## FIXME -- It looks like we don't actually have full fusion in `plot_frame_final`
   ##          (even in points which should be in the same cluster...)
 
-  g <- ggplot(mapping = aes(x = V1, y = V2, group = Obs))
+  g <- ggplot(mapping = aes_string(x = "V1", y = "V2", group = "Obs"))
 
   if (show_clusters) {
-    g <- g + geom_path(data = plot_frame_full, aes(color = final_cluster), linejoin="round", size=1) +
-             geom_point(data = plot_frame_final, aes(color = final_cluster), size = 4)
+    g <- g + geom_path(data = plot_frame_full, aes_string(color = "final_cluster"), linejoin="round", size=1) +
+             geom_point(data = plot_frame_final, aes_string(color = "final_cluster"), size = 4)
   } else {
     g <- g + geom_path(data = plot_frame_full, color = "red", linejoin="round", size=1)
   }
 
   g + geom_point(data = plot_frame_init, color="black", size = 2) +
-      geom_text_repel(data = plot_frame_init, mapping = aes(label = ObsLabel), size = 3) +
+      geom_text_repel(data = plot_frame_init, mapping = aes_string(label = "ObsLabel"), size = 3) +
       guides(color = FALSE, size = FALSE) +
       theme(axis.title = element_text(size = 15),
             axis.text  = element_text(size = 10)) +
@@ -529,9 +529,9 @@ carp_dendro_plot <- function(x,
   par(mar = c(14, 7, 2, 1))
 
   x$carp.dend %>%
-    stats::as.dendrogram() %>%
-    dendextend::set("branches_lwd", dend.branch.width) %>%
-    dendextend::set("labels_cex", dend.labels.cex) %>%
+    as.dendrogram() %>%
+    set("branches_lwd", dend.branch.width) %>%
+    set("labels_cex", dend.labels.cex) %>%
     plot(ylab = "Amount of Regularization", cex.lab = 1.5, ...)
 
   if(show_clusters){
