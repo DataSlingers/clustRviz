@@ -69,7 +69,7 @@ my.heatmap.2 <- function(x, Rowv = TRUE,
     col <- get(col, mode = "function")
   }
   if (!missing(breaks) && (scale != "none")) {
-    warning(
+    crv_warning(
       "Using scale=\"row\" or scale=\"column\" when breaks are",
       "specified can produce unpredictable results.",
       "Please consider using only one or the other."
@@ -105,7 +105,7 @@ my.heatmap.2 <- function(x, Rowv = TRUE,
       } else {
         dedrogram <- "none"
       }
-      warning(
+      crv_warning(
         "Discrepancy: Rowv is FALSE, while dendrogram is `",
         dendrogram, "'. Omitting row dendogram."
       )
@@ -119,7 +119,7 @@ my.heatmap.2 <- function(x, Rowv = TRUE,
       } else {
         dendrogram <- "none"
       }
-      warning(
+      crv_warning(
         "Discrepancy: Colv is FALSE, while dendrogram is `",
         dendrogram, "'. Omitting column dendogram."
       )

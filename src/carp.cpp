@@ -16,7 +16,6 @@ Rcpp::List CARPcpp(const Eigen::VectorXd& x,
                    double rho   = 1,
                    int max_iter = 10000,
                    int burn_in  = 50,
-                   bool verbose = false,
                    int keep     = 10,
                    bool l1      = false){
 

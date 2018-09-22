@@ -9,8 +9,6 @@
 #' @param X The data matrix (\eqn{X \in R^{n \times p}}{X}): rows correspond to
 #'          the observations (to be clustered) and columns to the variables (which
 #'          will not be clustered).
-#' @param verbose Any of the values \code{0}, \code{1}, or \code{2}. Higher values
-#'                correspond to more verbose output while running.
 #' @param obs_weights One of the following: \itemize{
 #'                    \item A function which, when called with argument \code{X},
 #'                          returns a n-by-n matrix of fusion weights.
@@ -87,7 +85,6 @@
 #' }
 CBASS <- function(X,
                   ...,
-                  verbose = 1L,
                   var_weights = sparse_rbf_kernel_weights(k = "auto",
                                                           phi = "auto",
                                                           dist.method = "euclidean",
@@ -126,8 +123,8 @@ CBASS <- function(X,
   }
 
   if (!is.matrix(X)) {
-    warning(sQuote("X"), " should be a matrix, not a " , class(X)[1],
-            ". Converting with as.matrix().")
+    crv_warning(sQuote("X"), " should be a matrix, not a " , class(X)[1],
+                ". Converting with as.matrix().")
     X <- as.matrix(X)
   }
 
@@ -197,20 +194,6 @@ CBASS <- function(X,
 
   colnames(X) <- var_labels <- make.unique(as.character(var_labels), sep = "_")
 
-  if (is.logical(verbose)) {
-    verbose.basic <- TRUE
-    verbose.deep <- FALSE
-  } else if (verbose == 1) {
-    verbose.basic <- TRUE
-    verbose.deep <- FALSE
-  } else if (verbose == 2) {
-    verbose.basic <- TRUE
-    verbose.deep <- TRUE
-  } else {
-    verbose.basic <- FALSE
-    verbose.deep <- FALSE
-  }
-
   n.obs <- NROW(X)
   p.var <- NCOL(X)
 
@@ -225,6 +208,8 @@ CBASS <- function(X,
 
   ## Transform to a form suitable for down-stream computation
   X <- t(X) ## TODO: Ask JN why we keep this. (It matches the convention in Chi, Allen, Baraniuk)
+
+  crv_message("Pre-computing row weights and edge sets")
 
   # Calculate variable/feature (row)-clustering weights
   if (is.function(var_weights)) { # Usual case, `var_weights` is a function which calculates the weight matrix
@@ -261,6 +246,8 @@ CBASS <- function(X,
   if (!is_connected_adj_mat(var_weight_matrix != 0)) {
     crv_error("Weights for variables do not imply a connected graph. Biclustering will not succeed.")
   }
+
+  crv_message("Pre-computing column weights and edge sets")
 
   # Calculate observation (column)-clustering weights
   if (is.function(obs_weights)) { # Usual case, `obs_weights` is a function which calculates the weight matrix
@@ -313,18 +300,16 @@ CBASS <- function(X,
 
   PreCompList.row <- ConvexClusteringPreCompute(X = t(X),
                                                 weights = row_weights,
-                                                rho = rho,
-                                                verbose = verbose.deep)
+                                                rho = rho)
   cardE.row <- NROW(PreCompList.row$E)
 
   PreCompList.col <- ConvexClusteringPreCompute(X = X,
                                                 weights = col_weights,
-                                                rho = rho,
-                                                verbose = verbose.deep)
+                                                rho = rho)
 
   cardE.col <- NROW(PreCompList.col$E)
 
-  if (verbose.basic) message("Computing CBASS Path")
+  crv_message("Computing CBASS Path")
 
   if (alg.type %in% c("cbassviz", "cbassvizl1")) {
     cbass.sol.path <- CBASS_VIZcpp(x = X[TRUE],
@@ -348,7 +333,6 @@ CBASS <- function(X,
                                    rho = rho,
                                    max_iter = as.integer(max.iter),
                                    burn_in = burn.in,
-                                   verbose = verbose.deep,
                                    ti = 10,
                                    t_switch = 1.01,
                                    keep = 10,
@@ -376,7 +360,6 @@ CBASS <- function(X,
                                rho = rho,
                                max_iter = as.integer(max.iter),
                                burn_in = burn.in,
-                               verbose = verbose.deep,
                                keep = 10,
                                l1 = (alg.type == "cbassl1"))
   }
@@ -388,7 +371,7 @@ CBASS <- function(X,
   ##         the type here for now
   cbass.sol.path$lambda.path <- matrix(cbass.sol.path$lambda.path, ncol=1)
 
-  if (verbose.basic) message("Post-processing")
+  crv_message("Post-processing rows")
 
   post_processing_results_row <- ConvexClusteringPostProcess(X = X,
                                                              edge_matrix      = PreCompList.row$E,
@@ -399,6 +382,8 @@ CBASS <- function(X,
                                                              labels           = var_labels,
                                                              dendrogram_scale = dendrogram.scale,
                                                              npcs             = npcs)
+
+  crv_message("Post-processing columns")
 
   post_processing_results_col <- ConvexClusteringPostProcess(X = t(X),
                                                              edge_matrix      = PreCompList.col$E,

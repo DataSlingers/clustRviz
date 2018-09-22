@@ -45,7 +45,7 @@ rect.dendrogram <- function(tree, k = NULL, which = NULL, x = NULL, h = NULL, bo
       crv_error(gettextf("k must be between 2 and %d", length(tree_heights), domain = NA))
     }
     else {
-      warning(gettextf("k must be between 2 and %d", length(tree_heights), domain = NA))
+      crv_warning(gettextf("k must be between 2 and %d", length(tree_heights), domain = NA))
     }
   }
   if (is.null(cluster)) {

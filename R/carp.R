@@ -9,8 +9,6 @@
 #' @param X The data matrix (\eqn{X \in R^{n \times p}}{X}): rows correspond to
 #'          the observations (to be clustered) and columns to the variables (which
 #'          will not be clustered).
-#' @param verbose Any of the values \code{0}, \code{1}, or \code{2}. Higher values
-#'                correspond to more verbose output while running.
 #' @param labels A character vector of length \eqn{n}: observations (row) labels
 #' @param X.center A logical: Should \code{X} be centered columnwise?
 #' @param X.scale A logical: Should \code{X} be scaled columnwise?
@@ -71,7 +69,6 @@
 #' plot(carp_fit)
 CARP <- function(X,
                  ...,
-                 verbose = 1L,
                  weights = sparse_rbf_kernel_weights(k = "auto",
                                                      phi = "auto",
                                                      dist.method = "euclidean",
@@ -106,8 +103,8 @@ CARP <- function(X,
   }
 
   if (!is.matrix(X)) {
-    warning(sQuote("X"), " should be a matrix, not a " , class(X)[1],
-            ". Converting with as.matrix().")
+    crv_warning(sQuote("X"), " should be a matrix, not a " , class(X)[1],
+                ". Converting with as.matrix().")
     X <- as.matrix(X)
   }
 
@@ -173,21 +170,6 @@ CARP <- function(X,
   n.obs <- NROW(X)
   p.var <- NCOL(X)
 
-  Iter <- Cluster <- Lambda <- NULL
-  if (is.logical(verbose)) {
-    verbose.basic <- TRUE
-    verbose.deep <- FALSE
-  } else if (verbose == 1) {
-    verbose.basic <- TRUE
-    verbose.deep <- FALSE
-  } else if (verbose == 2) {
-    verbose.basic <- TRUE
-    verbose.deep <- TRUE
-  } else {
-    verbose.basic <- FALSE
-    verbose.deep <- FALSE
-  }
-
   # Center and scale X
   X.orig <- X
   if (X.center | X.scale) {
@@ -196,6 +178,8 @@ CARP <- function(X,
 
   scale_vector  <- attr(X, "scaled:scale", exact=TRUE)  %||% rep(1, p.var)
   center_vector <- attr(X, "scaled:center", exact=TRUE) %||% rep(0, p.var)
+
+  crv_message("Pre-computing weights and edge sets")
 
   # Calculate clustering weights
   if (is.function(weights)) { # Usual case, `weights` is a function which calculates the weight matrix
@@ -237,15 +221,13 @@ CARP <- function(X,
   X <- t(X) ## TODO: Ask JN why we did this
   weight_vec <- weight_mat_to_vec(weight_matrix)
 
-  if (verbose.basic) message("Pre-computing weight-based edge sets")
   PreCompList <- ConvexClusteringPreCompute(X = X,
                                             weights = weight_vec,
-                                            rho = rho,
-                                            verbose = verbose.deep)
+                                            rho = rho)
 
   cardE <- NROW(PreCompList$E)
 
-  if (verbose.basic) message("Computing CARP Path")
+  crv_message("Computing CARP Path")
 
   if (alg.type %in% c("carpvizl1", "carpviz")) {
       carp.sol.path <- CARP_VIZcpp(x = X[TRUE],
@@ -262,7 +244,6 @@ CARP <- function(X,
                                    rho = rho,
                                    max_iter = as.integer(max.iter),
                                    burn_in = as.integer(burn.in),
-                                   verbose = verbose.deep,
                                    ti = 10,
                                    t_switch = 1.01,
                                    keep = 1,
@@ -283,7 +264,6 @@ CARP <- function(X,
                                rho = rho,
                                max_iter = as.integer(max.iter),
                                burn_in = as.integer(burn.in),
-                               verbose = verbose.deep,
                                keep = 1,
                                l1 = (alg.type == "carpl1"))
   }
@@ -295,7 +275,7 @@ CARP <- function(X,
   ##         the type here for now
   carp.sol.path$lambda.path <- matrix(carp.sol.path$lambda.path, ncol=1)
 
-  if (verbose.basic) message("Post-processing")
+  crv_message("Post-processing")
 
   post_processing_results <- ConvexClusteringPostProcess(X = t(X), # Uses a correctly-oriented X
                                                          edge_matrix      = PreCompList$E,
