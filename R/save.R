@@ -44,52 +44,29 @@ saveviz <- function(x, ...) {
 #' @param static.height static output height in inches
 #' @param ... Unused additional generic arguements
 #' @importFrom stats as.dendrogram
-#' @importFrom ggplot2 ggplot
-#' @importFrom ggplot2 aes
-#' @importFrom ggplot2 geom_path
-#' @importFrom ggplot2 geom_point
-#' @importFrom ggplot2 geom_text
-#' @importFrom ggplot2 guides
-#' @importFrom ggplot2 theme
-#' @importFrom ggplot2 element_text
-#' @importFrom ggplot2 xlab
-#' @importFrom ggplot2 ylab
-#' @importFrom ggplot2 scale_color_manual
-#' @importFrom ggplot2 ggsave
+#' @importFrom ggplot2 ggplot aes geom_path geom_point geom_text guides theme element_text
+#' @importFrom ggplot2 xlab ylab scale_color_manual ggsave
 #' @importFrom ggrepel geom_text_repel
-#' @importFrom dplyr filter
-#' @importFrom dplyr select
-#' @importFrom dplyr distinct
-#' @importFrom dplyr rename
-#' @importFrom dplyr mutate
-#' @importFrom dplyr left_join
-#' @importFrom dplyr select_
-#' @importFrom dplyr %>%
-#' @importFrom tools file_ext
-#' @importFrom tools file_path_sans_ext
-#' @importFrom grDevices adjustcolor
-#' @importFrom grDevices png
-#' @importFrom grDevices dev.off
+#' @importFrom dplyr filter select distinct rename mutate left_join select %>%
+#' @importFrom tools file_ext file_path_sans_ext
+#' @importFrom grDevices adjustcolor png dev.off dev.cur dev.set
 #' @importFrom gganimate gganimate
-#' @importFrom animation ani.options
-#' @importFrom animation saveGIF
+#' @importFrom animation ani.options saveGIF
 #' @importFrom RColorBrewer brewer.pal
 #' @export
 saveviz.CARP <- function(x,
                          file.name,
                          plot.type = c("path", "dendrogram"),
                          image.type = c("dynamic", "static"),
-                         static.image.type = c("png"),
                          axis = c("PC1", "PC2"),
                          dend.branch.width = 2,
                          dend.labels.cex = .6,
                          percent,
                          k,
                          percent.seq = seq(from = .05, to = 1, by = .05),
-                         dynamic.width = 1200,
-                         dynamic.height = 700,
-                         static.width = 8,
-                         static.height = 5,
+                         width = 8,
+                         height = 5,
+                         units = c("in", "cm", "mm", "px"),
                          ...) {
   Iter <- NULL
   Obs <- NULL
@@ -105,20 +82,20 @@ saveviz.CARP <- function(x,
 
   plot.type         <- match.arg(plot.type)
   image.type        <- match.arg(image.type)
-  static.image.type <- match.arg(static.image.type)
 
   if(image.type == "static"){
+    dev_cur <- dev.cur()
+    on.exit(dev.set(dev_cur))
     switch(plot.type,
            path = {
              p <- carp_path_plot(x, axis = axis, percent = percent, k = k)
              ggsave(filename = file.name,
                     plot = p,
-                    width = static.width,
-                    height = static.height,
-                    device = static.image.type)
+                    width = width,
+                    height = height)
            },
            dendrogram = {
-             png(file.name, width = dynamic.width, height = dynamic.height)
+             crv_new_dev_static(file.name, width = width, height = height, units = units)
              carp_dendro_plot(x,
                               percent = percent,
                               k = k,
@@ -201,7 +178,7 @@ saveviz.CARP <- function(x,
         ggplot2::theme(axis.text = ggplot2::element_text(size = 20)) +
         ggplot2::xlab(axis[1]) +
         ggplot2::ylab(axis[2]) -> p
-      animation::ani.options(ani.width = dynamic.width, ani.height = dynamic.height)
+      animation::ani.options(ani.width = width, ani.height = height)
       gganimate::gganimate(p, file.name)
     },
     dendrogram = {
@@ -231,7 +208,7 @@ saveviz.CARP <- function(x,
           par(mar = c(14, 7, 2, 1))
           my.rect.hclust(x$carp.dend, k = ncl, border = 2, my.col.vec = my.cols, lwd = 3)
         }
-      }, movie.name = file.name, img.name = "dend", ani.width = dynamic.width, ani.height = dynamic.height, clean = TRUE)
+      }, movie.name = file.name, img.name = "dend", ani.width = width, height = dynamic.height, clean = TRUE)
     }
   )
 }
@@ -273,44 +250,21 @@ saveviz.CARP <- function(x,
 #' @param static.height static output height in inches
 #' @param ... Unused additional generic arguements
 #' @importFrom stats as.dendrogram
-#' @importFrom ggplot2 ggplot
-#' @importFrom ggplot2 aes
-#' @importFrom ggplot2 geom_path
-#' @importFrom ggplot2 geom_point
-#' @importFrom ggplot2 geom_text
-#' @importFrom ggplot2 guides
-#' @importFrom ggplot2 theme
-#' @importFrom ggplot2 element_text
-#' @importFrom ggplot2 xlab
-#' @importFrom ggplot2 ylab
-#' @importFrom ggplot2 scale_color_manual
+#' @importFrom ggplot2 ggplot aes geom_path geom_point geom_text guides theme
+#' @importFrom ggplot2 element_text xlab ylab scale_color_manual
 #' @importFrom ggrepel geom_text_repel
 #' @importFrom purrr map_dfr
-#' @importFrom dplyr tibble
-#' @importFrom dplyr filter
-#' @importFrom dplyr select
-#' @importFrom dplyr distinct
-#' @importFrom dplyr rename
-#' @importFrom dplyr mutate
-#' @importFrom dplyr left_join
-#' @importFrom dplyr select_
-#' @importFrom dplyr %>%
-#' @importFrom tools file_ext
-#' @importFrom tools file_path_sans_ext
-#' @importFrom grDevices adjustcolor
-#' @importFrom grDevices png
-#' @importFrom grDevices colorRampPalette
-#' @importFrom grDevices dev.off
+#' @importFrom dplyr tibble filter select distinct rename mutate left_join select_ %>%
+#' @importFrom tools file_ext file_path_sans_ext
+#' @importFrom grDevices adjustcolor png colorRampPalette dev.off dev.cur dev.set
 #' @importFrom gganimate gganimate
-#' @importFrom animation ani.options
-#' @importFrom animation saveGIF
+#' @importFrom animation ani.options saveGIF
 #' @importFrom RColorBrewer brewer.pal
 #' @export
 saveviz.CBASS <- function(x,
                           file.name,
                           plot.type = c("heatmap", "obs.dendrogram", "var.dendrogram"),
                           image.type = c("dynamic", "static"),
-                          static.image.type = c("png"),
                           dend.branch.width = 2,
                           dend.labels.cex = .6,
                           heatrow.label.cex = 1.5,
@@ -319,10 +273,9 @@ saveviz.CBASS <- function(x,
                           k.obs,
                           k.var,
                           percent.seq = seq(from = .05, to = 1, by = .05),
-                          dynamic.width = 1200,
-                          dynamic.height = 700,
-                          static.width = 8,
-                          static.height = 5,
+                          width = 8,
+                          height = 5,
+                          units = c("in", "cm", "mm", "px"),
                           ...) {
 
   Iter <- NULL
@@ -343,12 +296,13 @@ saveviz.CBASS <- function(x,
 
   plot.type         <- match.arg(plot.type)
   image.type        <- match.arg(image.type)
-  static.image.type <- match.arg(static.image.type)
 
   if(image.type == "static"){
+    dev_cur <- dev.cur()
+    on.exit(dev.set(dev_cur))
     switch(plot.type,
            heatmap = {
-             png(file.name, width = dynamic.width, height = dynamic.height)
+             crv_new_dev_static(file.name, width = width, height = height, units = units)
              cbass_heatmap_plot(x,
                                 ...,
                                 percent = percent,
@@ -359,7 +313,7 @@ saveviz.CBASS <- function(x,
              dev.off()
            },
            obs.dendrogram = {
-             png(file.name, width = dynamic.width, height = dynamic.height)
+             crv_new_dev_static(file.name, width = width, height = height, units = units)
              cbass_dendro_plot(x,
                                percent = percent,
                                k.obs = k.obs,
@@ -371,7 +325,7 @@ saveviz.CBASS <- function(x,
              dev.off()
            },
            var.dendrogram = {
-             png(file.name, width = dynamic.width, height = dynamic.height)
+             crv_new_dev_static(file.name, width = width, height = height, units = units)
              cbass_dendro_plot(x,
                                percent = percent,
                                k.obs = k.obs,
@@ -470,7 +424,7 @@ saveviz.CBASS <- function(x,
           )
           par(mar = c(14, 7, 2, 1))
         }
-      }, movie.name = file.name, img.name = "heatmap", ani.width = dynamic.width, ani.height = dynamic.height, clean = TRUE)
+      }, movie.name = file.name, img.name = "heatmap", ani.width = width, ani.height = height, clean = TRUE)
     },
     obs.dendrogram = {
       ### Dynamic Obs Dend
@@ -526,7 +480,7 @@ saveviz.CBASS <- function(x,
           par(mar = c(14, 7, 2, 1))
           my.rect.hclust(x$cbass.dend.obs, k = ncl, border = 2, my.col.vec = my.cols, lwd = 3)
         }
-      }, movie.name = file.name, img.name = "obsdend", ani.width = dynamic.width, ani.height = dynamic.height, clean = TRUE)
+      }, movie.name = file.name, img.name = "obsdend", ani.width = width, ani.height = height, clean = TRUE)
       ### END Dynamic Obs Dend
     },
     var.dendrogram = {
@@ -583,7 +537,7 @@ saveviz.CBASS <- function(x,
           par(mar = c(14, 7, 2, 1))
           my.rect.hclust(x$cbass.dend.var, k = ncl, border = 2, my.col.vec = my.cols, lwd = 3)
         }
-      }, movie.name = file.name, img.name = "vardend", ani.width = dynamic.width, ani.height = dynamic.height, clean = TRUE)
+      }, movie.name = file.name, img.name = "vardend", ani.width = width, ani.height = height, clean = TRUE)
       ### END Dynamic Var Dend
     }
   )
