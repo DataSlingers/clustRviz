@@ -1,48 +1,21 @@
-#' Method for saving CARP and CBASS visualizations
-#'
-#' See \code{saveviz.CARP} and \code{saveviz.CBASS} for details
-#'
-#' @param x a CARP or CBASS object
-#' @param ... additional arguements passed to \code{saveviz.CARP} or
-#' \code{saveviz.CBASS}
+#' @rdname plot_carp
 #' @export
 saveviz <- function(x, ...) {
   UseMethod("saveviz", x)
 }
 
-
-#' Save CARP visualizations
-#'
-#' This function will save dynamic CARP visualizations as gifs and static visualizations as image files
-#'
-#' @param x a CARP object returned by \code{CARP}
-#' @param file.name name and location of image to be saved.
-#' @param plot.type a string specifying the type of plot to produce. 'dendrogram'
-#' produces CARP's cluster dendrogram and 'path' produces the
-#' cluster path
-#' @param image.type a string specifying the type of image output. 'dynamic'
-#' produced a gif of the plot.type along the CARP path. 'static' produces
-#' a single image of plot.type at a point along the CARP path.
-#' @param static.image.type string specifying the graphics device with which to save
-#' static images.
-#' @param axis a character vector of length two with elements as 'PC1','PC2',..
-#' etc. Specifics which principal component axis to display for the 'path'
-#' plot.type
-#' @param percent a number between 0 and 1. Specifies how far along the
-#' CARP path the static visualizations should display in terms of
-#' percent reguarlization.
-#' @param k an interger between 1 and n.obs. Specifies how far along the
-#' CARP path the static visualizations should display in term of
-#' number of clusters.
-#' @param percent.seq a vector of numbers between 0 and 1 specifying the
-#' positions along the CARP path used to generate dynamic images.
-#' @param dend.branch.width a positive number. Line width on dendrograms.
-#' @param dend.labels.cex a positive number. Label size on dendrograms.
-#' @param dynamic.width dynamic output width in pixels
-#' @param dynamic.height dynamic output heigth in pixels
-#' @param static.width static output width in inches
-#' @param static.height static output height in inches
-#' @param ... Unused additional generic arguements
+#' @param file.name The name of the output file. The type of resulting image
+#'                  is determined from the extension.
+#' @param image.type The type of image output. If \code{image.type == "static"},
+#'                   a fixed visualization of a single solution, with the level
+#'                   of regularization being determined by \code{percent} and
+#'                   \code{k}. If \code{image.type == "dynamic"}, an animated
+#'                   visualization which varies along the solution path.
+#' @param percent.seq A grid of values of \code{percent} along which to generate
+#'                    dynamic visualizations (if \code{image.type == "dynamic"})
+#' @param width The width of the output, given in \code{unit}s
+#' @param height The height of the output, given in \code{unit}s
+#' @param units The unit in which \code{width} and \code{height} are specified
 #' @importFrom stats as.dendrogram
 #' @importFrom ggplot2 ggplot aes geom_path geom_point geom_text guides theme element_text
 #' @importFrom ggplot2 xlab ylab scale_color_manual ggsave
@@ -53,10 +26,11 @@ saveviz <- function(x, ...) {
 #' @importFrom gganimate gganimate
 #' @importFrom animation ani.options saveGIF
 #' @importFrom RColorBrewer brewer.pal
+#' @rdname plot_carp
 #' @export
 saveviz.CARP <- function(x,
                          file.name,
-                         plot.type = c("path", "dendrogram"),
+                         type = c("dendrogram", "path"),
                          image.type = c("dynamic", "static"),
                          axis = c("PC1", "PC2"),
                          dend.branch.width = 2,
@@ -80,13 +54,13 @@ saveviz.CARP <- function(x,
   FirstObsLabel <- NULL
   NCluster <- NULL
 
-  plot.type         <- match.arg(plot.type)
-  image.type        <- match.arg(image.type)
+  type       <- match.arg(type)
+  image.type <- match.arg(image.type)
 
   if(image.type == "static"){
     dev_cur <- dev.cur()
     on.exit(dev.set(dev_cur))
-    switch(plot.type,
+    switch(type,
            path = {
              p <- carp_path_plot(x, axis = axis, percent = percent, k = k)
              ggsave(filename = file.name,
@@ -108,7 +82,7 @@ saveviz.CARP <- function(x,
   }
 
   switch(
-    plot.type,
+    type,
     path = {
       plot.cols <- c(
         axis,
@@ -213,42 +187,18 @@ saveviz.CARP <- function(x,
   )
 }
 
-#' Save CBASS visualizations
-#'
-#' This function will save dynamic CBASS visualizations as gifs and static visualizations as image files
-#'
-#' @param x a CBASS object returned by \code{CBASS}
-#' @param file.name name and location of image to be saved.
-#' @param plot.type a string specifying the type of plot to produce. 'obs.dendrogram'
-#' and 'var.dendrogram' produces the CBASS cluster dendrogram for the observations and
-#' variables respecitvely. 'heatmap' produces a heatmap of the CBASS solution.
-#' @param image.type a string specifying the type of image output. 'dynamic'
-#' produced a gif of the plot.type along the CARP path. 'static' produces
-#' a single image of plot.type at a point along the CARP path.
-#' @param static.image.type string specifying the graphics device with which to save
-#' static images.
-#' @param percent a number between 0 and 1. Specifies how far along the
-#' CARP path the static visualizations should display via the amount of
-#' regularization.
-#' @param k.obs An interger between 1 and \code{n.obs}.
-#' Specifies how far along the
-#' CARP path the static visualizations should display via the number of unique
-#' observation clusters.
-#' @param k.var An interger between 1 and \code{p.var}.
-#' Specifies how far along the
-#' CARP path the static visualizations should display via the number of unique
-#' variable clusters.
-#' @param percent.seq a vector of numbers between 0 and 1 specifying the
-#' positions along the CARP path used to generate dynamic images.
-#' @param dend.branch.width a positive number. Line width on dendrograms.
-#' @param dend.labels.cex a positive number. Label size on dendrograms.
-#' @param heatrow.label.cex heatmap row label size
-#' @param heatcol.label.cex heatmap column label size
-#' @param dynamic.width dynamic output width in pixels
-#' @param dynamic.height dynamic output heigth in pixels
-#' @param static.width static output width in inches
-#' @param static.height static output height in inches
-#' @param ... Unused additional generic arguements
+#' @param file.name The name of the output file. The type of resulting image
+#'                  is determined from the extension.
+#' @param image.type The type of image output. If \code{image.type == "static"},
+#'                   a fixed visualization of a single solution, with the level
+#'                   of regularization being determined by \code{percent} and
+#'                   \code{k}. If \code{image.type == "dynamic"}, an animated
+#'                   visualization which varies along the solution path.
+#' @param percent.seq A grid of values of \code{percent} along which to generate
+#'                    dynamic visualizations (if \code{image.type == "dynamic"})
+#' @param width The width of the output, given in \code{unit}s
+#' @param height The height of the output, given in \code{unit}s
+#' @param units The unit in which \code{width} and \code{height} are specified
 #' @importFrom stats as.dendrogram
 #' @importFrom ggplot2 ggplot aes geom_path geom_point geom_text guides theme
 #' @importFrom ggplot2 element_text xlab ylab scale_color_manual
@@ -260,10 +210,11 @@ saveviz.CARP <- function(x,
 #' @importFrom gganimate gganimate
 #' @importFrom animation ani.options saveGIF
 #' @importFrom RColorBrewer brewer.pal
+#' @rdname plot_cbass
 #' @export
 saveviz.CBASS <- function(x,
                           file.name,
-                          plot.type = c("heatmap", "obs.dendrogram", "var.dendrogram"),
+                          type = c("heatmap", "obs.dendrogram", "var.dendrogram"),
                           image.type = c("dynamic", "static"),
                           dend.branch.width = 2,
                           dend.labels.cex = .6,
@@ -294,13 +245,13 @@ saveviz.CBASS <- function(x,
   NVarCl <- NULL
   Percent <- NULL
 
-  plot.type         <- match.arg(plot.type)
-  image.type        <- match.arg(image.type)
+  type       <- match.arg(type)
+  image.type <- match.arg(image.type)
 
   if(image.type == "static"){
     dev_cur <- dev.cur()
     on.exit(dev.set(dev_cur))
-    switch(plot.type,
+    switch(type,
            heatmap = {
              crv_new_dev_static(file.name, width = width, height = height, units = units)
              cbass_heatmap_plot(x,
@@ -340,7 +291,7 @@ saveviz.CBASS <- function(x,
   }
 
   switch(
-    plot.type,
+    type,
     heatmap = {
       ### Dynamic Heatmap
       cur.file.ext <- tools::file_ext(file.name)

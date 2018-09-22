@@ -24,7 +24,7 @@
 #'             the first principal component projections) are supported.
 #' @param percent A number between 0 and 1, giving the regularization level (as
 #'                a fraction of the final regularization level used) at which to
-#'                assign clusters in the static (\code{type = "dendrogram" or \code{type = "path"})
+#'                assign clusters in the static (\code{type = "dendrogram"} or \code{type = "path"})
 #'                plots.
 #' @param k.obs An integer indicating the desired number of observation clusters to be displayed
 #'              in the static plots. (If plotting variables, the regularization level
@@ -41,15 +41,15 @@
 #' @param heatrow.label.cex heatmap row label size
 #' @param heatcol.label.cex heatmap column label size
 #' @return The value of the return type depends on the \code{type} argument:\itemize{
-#'   \item if \code{type %in% c("obs.dendrogram", "var.dendrogram", "heatmap")},
+#'  \item if \code{type \%in\% c("obs.dendrogram", "var.dendrogram", "heatmap")},
 #'         \code{x} is returned invisibly;
-#'   \item if \code{type %in% c("obs.path", "var.path")}, an object of class
-#'         \code{\link[ggplot2]{ggplot}} which can be plotted directly (by invoking
-#'         its print method) or modified further by the user is returned;
-#'   \item if \code{type = "interactive"}, a \code{shiny} app which can be activated
-#'         by invoking its print method.
-#' }
-#' @details The \code{\link{saveviz.BASS}} function provides a unified interface
+#'  \item if \code{type \%in\% c("obs.path", "var.path")}, an object of class
+#'        \code{\link[ggplot2]{ggplot}} which can be plotted directly (by invoking
+#'        its print method) or modified further by the user is returned;
+#'  \item if \code{type = "interactive"}, a \code{\link[shiny]{shiny}} app which can be activated
+#'        by invoking its print method.
+#' } \code{saveviz.CBASS} always returns \code{file.name} invisibly.
+#' @details The \code{\link{saveviz.CBASS}} function provides a unified interface
 #'          for exporting \code{CBASS} visualizations to files. For all plots,
 #'          at most one of \code{percent}, \code{k.obs}, and \code{k.var} must be supplied.
 #' @importFrom shiny shinyApp fluidPage titlePanel tabsetPanel fluidRow animationOptions
@@ -57,6 +57,7 @@
 #' @importFrom stats as.dendrogram as.hclust quantile
 #' @importFrom grDevices colorRampPalette adjustcolor
 #' @export
+#' @rdname plot_cbass
 #' @examples
 #' \dontrun{
 #' cbass_fit <- CBASS(presidential_speech)

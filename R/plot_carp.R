@@ -18,7 +18,7 @@
 #'             the first principal component projections) are supported.
 #' @param percent A number between 0 and 1, giving the regularization level (as
 #'                a fraction of the final regularization level used) at which to
-#'                assign clusters in the static (\code{type = "dendrogram" or \code{type = "path"})
+#'                assign clusters in the static (\code{type = "dendrogram"} or \code{type = "path"})
 #'                plots.
 #' @param k An integer indicating the desired number of clusters to be displayed
 #'          in the static plots. If no \code{CARP} iteration with exactly this
@@ -38,9 +38,9 @@
 #'   \item if \code{type = "path"}, an object of class \code{\link[ggplot2]{ggplot}}
 #'         which can be plotted directly (by invoking its print method) or modified
 #'         further by the user is returned;
-#'   \item if \code{type = "interactive"}, a \code{shiny} app which can be activated
+#'   \item if \code{type = "interactive"}, a \code{\link[shiny]{shiny}} app which can be activated
 #'         by invoking its print method.
-#' }
+#' } \code{saveviz.CARP} always returns \code{file.name} invisibly.
 #' @details The \code{\link{saveviz.CARP}} function provides a unified interface
 #'          for exporting \code{CARP} visualizations to files. For all plots,
 #'          at most one of \code{percent} and \code{k} may be supplied.
@@ -55,6 +55,7 @@
 #' @importFrom grDevices adjustcolor
 #' @importFrom RColorBrewer brewer.pal
 #' @export
+#' @rdname plot_carp
 #' @examples
 #' \dontrun{
 #' carp_fit <- CARP(presidential_speech)
