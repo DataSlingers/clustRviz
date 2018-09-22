@@ -91,6 +91,8 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
   double t = 1.1;
 
   while( (iter < max_iter) & (nzeros_new < num_edges) ){
+    ClustRVizLogger::info("Beginning iteration k = ") << iter + 1;
+    ClustRVizLogger::debug("gamma = ") << gamma;
     // Begin iteration - move updated values to "_old" values
     //
     // TODO -- Confirm that these use "move semantics" to avoid full copies
@@ -121,6 +123,8 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
       solver_input /= rho;
       u_new = premat_solver.solve(solver_input);
 
+      ClustRVizLogger::debug("u = ") << u_new;
+
       // V-update
       // TODO - Document what is happening here
       Eigen::VectorXd prox_argument = DMatOpv2(u_new, p, IndMat, EOneIndMat, ETwoIndMat) + (1/rho)*z_old;
@@ -131,9 +135,13 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
         v_new = ProxL2(prox_argument, p, (1/rho) * weights * gamma, IndMat);
       }
 
+      ClustRVizLogger::debug("v = ") << v_new;
+
       // Z-update
       // TODO - Document what is happening here
       z_new = z_old + rho*(DMatOpv2(u_new, p, IndMat, EOneIndMat, ETwoIndMat) - v_new);
+
+      ClustRVizLogger::debug("z = ") << z_new;
 
       // TODO- Document this check: what are we trying to do here?
       for(int l = 0; l < num_edges; l++){
@@ -144,6 +152,8 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
       }
       nzeros_new = vZeroIndsnew.sum();
 
+      ClustRVizLogger::debug("Number of fusions identified ") << nzeros_new;
+
       try_iter++; // Increment internal iteration count (used to check for stopping below)
 
       if( (nzeros_new == nzeros_old) & (try_iter == 1) ){
@@ -151,6 +161,7 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
         // no need to back-track (we didn't miss any fusions) so we can go immediately
         // to the next iteration.
         rep_iter = false;
+        ClustRVizLogger::debug("No fusions identified -- continuing to next step.");
       } else if(nzeros_new > nzeros_old + 1){
         // If we see two (or more) new fusions, we need to back-track and figure
         // out which one occured first
@@ -161,15 +172,18 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
           gamma_upper = gamma;
           gamma = 0.5 * (gamma_lower + gamma_upper);
         }
+        ClustRVizLogger::debug("Too many fusions -- backtracking.");
       } else if(nzeros_new == nzeros_old){
         // If we don't observe any new fusions, we take another iteration without
         vZeroIndsnew = vZeroIndsold;
         gamma_lower = gamma;
         gamma = 0.5 * (gamma_lower + gamma_upper);
+        ClustRVizLogger::debug("Fusion not isolated -- moving forward.");
       } else{
         // If we see exactly one new fusion, we have a good step size and exit
         // the inner back-tracking loop
         rep_iter = false;
+        ClustRVizLogger::debug("Good iteration - continuing to next step.");
       }
 
       // Safety check - only so many iterations of inner loop before we move on
@@ -189,6 +203,7 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
     if( (nzeros_new != nzeros_old) | (iter % keep == 0) ){
       // Before we can store values, we need to make sure we have enough buffer space
       if(path_iter >= buffer_size){
+        ClustRVizLogger::info("Resizing storage from ") << buffer_size << " to " << 2 * buffer_size << " iterations.";
         buffer_size *= 2; // Double our buffer sizes
         UPath.conservativeResize(UPath.rows(), buffer_size);
         VPath.conservativeResize(VPath.rows(), buffer_size);
@@ -214,6 +229,10 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
     if((iter % CLUSTRVIZ_CHECK_USER_INTERRUPT_RATE) == 0){
       Rcpp::checkUserInterrupt();
     }
+  }
+
+  if(iter >= max_iter){
+    ClustRVizLogger::warning("CARP-VIZ ended early -- `max_iter` reached");
   }
 
   // Now that we are done, we can "drop" unused buffer space before returning to R

@@ -78,6 +78,8 @@ Rcpp::List CARPcpp(const Eigen::VectorXd& x,
   Eigen::Index nzeros_new = 0;
 
   while( (iter < max_iter) & (nzeros_new < num_edges) ){
+    ClustRVizLogger::info("Beginning iteration k = ") << iter + 1;
+    ClustRVizLogger::debug("gamma = ") << gamma;
     // Begin iteration - move updated values to "_old" values
     //
     // TODO -- Confirm that these use "move semantics" to avoid full copies
@@ -94,6 +96,8 @@ Rcpp::List CARPcpp(const Eigen::VectorXd& x,
     solver_input /= rho;
     u_new = premat_solver.solve(solver_input);
 
+    ClustRVizLogger::debug("u = ") << u_new;
+
     // V-update
     // TODO - Document what is happening here
     Eigen::VectorXd prox_argument = DMatOpv2(u_new, p, IndMat, EOneIndMat, ETwoIndMat) + (1/rho)*z_old;
@@ -104,9 +108,13 @@ Rcpp::List CARPcpp(const Eigen::VectorXd& x,
       v_new = ProxL2(prox_argument, p, (1/rho) * weights * gamma, IndMat);
     }
 
+    ClustRVizLogger::debug("v = ") << v_new;
+
     // Z-update
     // TODO - Document what is happening here
     z_new = z_old + rho*(DMatOpv2(u_new, p, IndMat, EOneIndMat, ETwoIndMat) - v_new);
+
+    ClustRVizLogger::debug("z = ") << z_new;
 
     // TODO- Document this check: what are we trying to do here?
     for(int l = 0; l < num_edges; l++){
@@ -117,12 +125,15 @@ Rcpp::List CARPcpp(const Eigen::VectorXd& x,
     }
     nzeros_new = vZeroIndsnew.sum();
 
+    ClustRVizLogger::debug("Number of fusions identified ") << nzeros_new;
+
     // If we have seen a fusion or are otherwise interested in keeping this iteration,
     // add values to our storage buffers
     if( (nzeros_new != nzeros_old) | (iter % keep == 0) ) {
 
       // Before we can store values, we need to make sure we have enough buffer space
       if(path_iter >= buffer_size){
+        ClustRVizLogger::info("Resizing storage from ") << buffer_size << " to " << 2 * buffer_size << " iterations.";
         buffer_size *= 2; // Double our buffer sizes
         UPath.conservativeResize(UPath.rows(), buffer_size);
         VPath.conservativeResize(VPath.rows(), buffer_size);
@@ -147,6 +158,10 @@ Rcpp::List CARPcpp(const Eigen::VectorXd& x,
     if((iter % CLUSTRVIZ_CHECK_USER_INTERRUPT_RATE) == 0){
       Rcpp::checkUserInterrupt();
     }
+  }
+
+  if(iter >= max_iter){
+    ClustRVizLogger::warning("CARP ended early -- `max_iter` reached");
   }
 
   // Now that we are done, we can "drop" unused buffer space before returning to R
