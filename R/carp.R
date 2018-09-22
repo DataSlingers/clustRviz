@@ -99,9 +99,9 @@ CARP <- function(X,
 
   if (length(dots) != 0L) {
     if (!is.null(names(dots))) {
-      stop("Unknown argument ", sQuote(names(dots)[1L]), " passed to ", sQuote("CARP."))
+      crv_error("Unknown argument ", sQuote(names(dots)[1L]), " passed to ", sQuote("CARP."))
     } else {
-      stop("Unknown ", sQuote("..."), " arguments passed to ", sQuote("CARP."))
+      crv_error("Unknown ", sQuote("..."), " arguments passed to ", sQuote("CARP."))
     }
   }
 
@@ -112,51 +112,51 @@ CARP <- function(X,
   }
 
   if (!is.numeric(X)) {
-    stop(sQuote("X"), " must be numeric.")
+    crv_error(sQuote("X"), " must be numeric.")
   }
 
   if (anyNA(X)) {
-    stop(sQuote("CARP"), " cannot handle missing data.")
+    crv_error(sQuote("CARP"), " cannot handle missing data.")
   }
 
   if (!all(is.finite(X))) {
-    stop("All elements of ", sQuote("X"), " must be finite.")
+    crv_error("All elements of ", sQuote("X"), " must be finite.")
   }
 
   if (!is_logical_scalar(X.center)) {
-    stop(sQuote("X.center"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
+    crv_error(sQuote("X.center"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
   }
 
   if (!is_logical_scalar(X.scale)) {
-    stop(sQuote("X.scale"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
+    crv_error(sQuote("X.scale"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
   }
 
   if ( (!is_numeric_scalar(rho)) || (rho <= 0)) {
-    stop(sQuote("rho"), "must be a positive scalar (vector of length 1).")
+    crv_error(sQuote("rho"), "must be a positive scalar (vector of length 1).")
   }
 
   if ( (!is_integer_scalar(max.iter)) || (max.iter <= 1L) ) {
-    stop(sQuote("max.iter"), " must be a positive integer scalar and at least 2.")
+    crv_error(sQuote("max.iter"), " must be a positive integer scalar and at least 2.")
   }
 
   if ( (!is_integer_scalar(burn.in)) || (burn.in <= 0L) || (burn.in >= max.iter) ) {
-    stop(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
+    crv_error(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
   }
 
   alg.type <- match.arg(alg.type)
 
   if ( (!is_numeric_scalar(t)) || (t <= 1) ) {
-    stop(sQuote("t"), " must be a scalar greater than 1.")
+    crv_error(sQuote("t"), " must be a scalar greater than 1.")
   }
 
   if (!is.null(dendrogram.scale)) {
     if (dendrogram.scale %not.in% c("original", "log")) {
-      stop("If not NULL, ", sQuote("dendrogram.scale"), " must be either ", sQuote("original"), " or ", sQuote("log."))
+      crv_error("If not NULL, ", sQuote("dendrogram.scale"), " must be either ", sQuote("original"), " or ", sQuote("log."))
     }
   }
 
   if ( (!is_integer_scalar(npcs)) || (npcs < 2) || (npcs > NCOL(X)) || (npcs > NROW(X)) ){
-    stop(sQuote("npcs"), " must be an integer scalar between 2 and ", sQuote("min(dim(X))."))
+    crv_error(sQuote("npcs"), " must be an integer scalar between 2 and ", sQuote("min(dim(X))."))
   }
 
   ## Get row (observation) labels
@@ -165,7 +165,7 @@ CARP <- function(X,
   }
 
   if ( length(labels) != NROW(X) ){
-    stop(sQuote("labels"), " must be of length ", sQuote("NROW(X)."))
+    crv_error(sQuote("labels"), " must be of length ", sQuote("NROW(X)."))
   }
 
   rownames(X) <- labels <- make.unique(as.character(labels), sep="_")
@@ -211,26 +211,26 @@ CARP <- function(X,
   } else if (is.matrix(weights)) {
 
     if (!is_square(weights)) {
-      stop(sQuote("weights"), " must be a square matrix.")
+      crv_error(sQuote("weights"), " must be a square matrix.")
     }
 
     if (NROW(weights) != NROW(X)) {
-      stop(sQuote("NROW(weights)"), " must be equal to ", sQuote("NROW(X)."))
+      crv_error(sQuote("NROW(weights)"), " must be equal to ", sQuote("NROW(X)."))
     }
 
     weight_matrix <- weights
     weight_type   <- UserMatrix()
   } else {
-    stop(sQuote("CARP"), " does not know how to handle ", sQuote("weights"),
-         " of class ", class(weights)[1], ".")
+    crv_error(sQuote("CARP"), " does not know how to handle ", sQuote("weights"),
+              " of class ", class(weights)[1], ".")
   }
 
   if (any(weight_matrix < 0) || anyNA(weight_matrix)) {
-    stop("All fusion weights must be positive or zero.")
+    crv_error("All fusion weights must be positive or zero.")
   }
 
   if (!is_connected_adj_mat(weight_matrix != 0)) {
-    stop("Weights do not imply a connected graph. Clustering will not succeed.")
+    crv_error("Weights do not imply a connected graph. Clustering will not succeed.")
   }
 
   ## Transform to a form suitable for down-stream computation

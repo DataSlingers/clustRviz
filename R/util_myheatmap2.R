@@ -84,15 +84,15 @@ my.heatmap.2 <- function(x, Rowv = TRUE,
     Colv <- FALSE
   }
   if (length(di <- dim(x)) != 2 || !is.numeric(x)) {
-    stop("`x' must be a numeric matrix")
+    crv_error("`x' must be a numeric matrix")
   }
   nr <- di[1]
   nc <- di[2]
   if (nr <= 1 || nc <= 1) {
-    stop("`x' must have at least 2 rows and 2 columns")
+    crv_error("`x' must have at least 2 rows and 2 columns")
   }
   if (!is.numeric(margins) || length(margins) != 2) {
-    stop("`margins' must be a numeric vector of length 2")
+    crv_error("`margins' must be a numeric vector of length 2")
   }
   if (missing(cellnote)) {
     cellnote <- matrix("", ncol = ncol(x), nrow = nrow(x))
@@ -135,7 +135,7 @@ my.heatmap.2 <- function(x, Rowv = TRUE,
     ddr <- reorder(ddr, Rowv)
     rowInd <- order.dendrogram(ddr)
     if (nr != length(rowInd)) {
-      stop("row dendrogram ordering gave index of wrong length")
+      crv_error("row dendrogram ordering gave index of wrong length")
     }
   }
   else if (isTRUE(Rowv)) {
@@ -145,7 +145,7 @@ my.heatmap.2 <- function(x, Rowv = TRUE,
     ddr <- reorder(ddr, Rowv)
     rowInd <- order.dendrogram(ddr)
     if (nr != length(rowInd)) {
-      stop("row dendrogram ordering gave index of wrong length")
+      crv_error("row dendrogram ordering gave index of wrong length")
     }
   }
   else {
@@ -157,7 +157,7 @@ my.heatmap.2 <- function(x, Rowv = TRUE,
   }
   else if (identical(Colv, "Rowv")) {
     if (nr != nc) {
-      stop("Colv = \"Rowv\" but nrow(x) != ncol(x)")
+      crv_error("Colv = \"Rowv\" but nrow(x) != ncol(x)")
     }
     if (exists("ddr")) {
       ddc <- ddr
@@ -177,7 +177,7 @@ my.heatmap.2 <- function(x, Rowv = TRUE,
     ddc <- reorder(ddc, Colv)
     colInd <- order.dendrogram(ddc)
     if (nc != length(colInd)) {
-      stop("column dendrogram ordering gave index of wrong length")
+      crv_error("column dendrogram ordering gave index of wrong length")
     }
   }
   else if (isTRUE(Colv)) {
@@ -191,7 +191,7 @@ my.heatmap.2 <- function(x, Rowv = TRUE,
     ddc <- reorder(ddc, Colv)
     colInd <- order.dendrogram(ddc)
     if (nc != length(colInd)) {
-      stop("column dendrogram ordering gave index of wrong length")
+      crv_error("column dendrogram ordering gave index of wrong length")
     }
   }
   else {
@@ -271,7 +271,7 @@ my.heatmap.2 <- function(x, Rowv = TRUE,
     if (!missing(ColSideColors)) {
       if (!is.character(ColSideColors) || length(ColSideColors) !=
           nc) {
-        stop("'ColSideColors' must be a character vector of length ncol(x)")
+        crv_error("'ColSideColors' must be a character vector of length ncol(x)")
       }
       lmat <- rbind(lmat[1, ] + 1, c(NA, 1), lmat[2, ] +
                       1)
@@ -280,7 +280,7 @@ my.heatmap.2 <- function(x, Rowv = TRUE,
     if (!missing(RowSideColors)) {
       if (!is.character(RowSideColors) || length(RowSideColors) !=
           nr) {
-        stop("'RowSideColors' must be a character vector of length nrow(x)")
+        crv_error("'RowSideColors' must be a character vector of length nrow(x)")
       }
       lmat <- cbind(lmat[, 1] + 1, c(rep(NA, nrow(lmat) -
                                            1), 1), lmat[, 2] + 1)
@@ -289,10 +289,10 @@ my.heatmap.2 <- function(x, Rowv = TRUE,
     lmat[is.na(lmat)] <- 0
   }
   if (length(lhei) != nrow(lmat)) {
-    stop("lhei must have length = nrow(lmat) = ", nrow(lmat))
+    crv_error("lhei must have length = nrow(lmat) = ", nrow(lmat))
   }
   if (length(lwid) != ncol(lmat)) {
-    stop("lwid must have length = ncol(lmat) =", ncol(lmat))
+    crv_error("lwid must have length = ncol(lmat) =", ncol(lmat))
   }
   op <- par(no.readonly = TRUE)
   on.exit(par(op))

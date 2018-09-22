@@ -134,7 +134,7 @@ plot.CBASS <- function(x,
     interactive = {
       dots <- list(...)
       if ( length(dots) != 0 ){
-        stop("Unknown arguments passed to ", sQuote("plot.CARP."))
+        crv_error("Unknown arguments passed to ", sQuote("plot.CARP."))
       }
 
       shiny::shinyApp(
@@ -265,9 +265,9 @@ cbass_path_plot <- function(x,
     if (!is.null(names(dots))) {
       nm <- names(dots)
       nm <- nm[nzchar(nm)]
-      stop("Unknown argument ", sQuote(nm[1]), " passed to ", sQuote("plot.CBASS."))
+      crv_error("Unknown argument ", sQuote(nm[1]), " passed to ", sQuote("plot.CBASS."))
     } else {
-      stop("Unknown argument passed to ", sQuote("plot.CBASS."))
+      crv_error("Unknown argument passed to ", sQuote("plot.CBASS."))
     }
   }
 
@@ -280,8 +280,8 @@ cbass_path_plot <- function(x,
   show_clusters <- (n_args == 1)
 
   if(n_args > 1){
-    stop("At most one of ", sQuote("percent"), " ", sQuote("k.obs"), " and ",
-         sQuote("k.var"), " may be supplied.")
+    crv_error("At most one of ", sQuote("percent"), " ", sQuote("k.obs"), " and ",
+              sQuote("k.var"), " may be supplied.")
   }
 
   if (n_args == 0L) {
@@ -303,7 +303,7 @@ cbass_path_plot <- function(x,
 
   if (any(plot_cols %not.in% colnames(path_obj))) {
     missing_col <- plot_cols[which(plot_cols %not.in% colnames(path_obj))][1]
-    stop(sQuote(missing_col), " is not available for plotting.")
+    crv_error(sQuote(missing_col), " is not available for plotting.")
   }
 
   plot_frame_full <- path_obj %>% select(plot_cols) %>%
@@ -313,15 +313,15 @@ cbass_path_plot <- function(x,
   if(has_k.obs){
 
     if ( !is_integer_scalar(k.obs) ){
-      stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+      crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
     }
 
     if( k.obs <= 0 ) {
-      stop(sQuote("k.obs"), " must be positive.")
+      crv_error(sQuote("k.obs"), " must be positive.")
     }
 
     if( k.obs > NROW(x$X) ){
-      stop(sQuote("k.obs"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
+      crv_error(sQuote("k.obs"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
     }
 
     percent <- x$cbass.cluster.path.vis.obs %>%
@@ -335,15 +335,15 @@ cbass_path_plot <- function(x,
   if(has_k.var){
 
     if ( !is_integer_scalar(k.var) ){
-      stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+      crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
     }
 
     if( k.var <= 0 ) {
-      stop(sQuote("k.var"), " must be positive.")
+      crv_error(sQuote("k.var"), " must be positive.")
     }
 
     if( k.var > NCOL(x$X) ){
-      stop(sQuote("k.var"), " cannot be more than the features in the original data set (", NCOL(x$X), ").")
+      crv_error(sQuote("k.var"), " cannot be more than the features in the original data set (", NCOL(x$X), ").")
     }
 
     percent <- x$cbass.cluster.path.vis.var %>%
@@ -355,7 +355,7 @@ cbass_path_plot <- function(x,
   }
 
   if( !is_percent_scalar(percent) ){
-    stop(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
+    crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
   }
 
   plot_frame_full <- plot_frame_full %>% filter(.data$LambdaPercent <= percent)
@@ -408,11 +408,11 @@ cbass_dendro_plot <- function(x,
   type <- match.arg(type)
 
   if(dend.branch.width <= 0){
-    stop(sQuote("dend.branch.width"), " must be positive.")
+    crv_error(sQuote("dend.branch.width"), " must be positive.")
   }
 
   if(dend.labels.cex <= 0){
-    stop(sQuote("dend.labels.cex"), " must be positive.")
+    crv_error(sQuote("dend.labels.cex"), " must be positive.")
   }
 
   has_percent <- !missing(percent)
@@ -423,7 +423,7 @@ cbass_dendro_plot <- function(x,
   show_clusters <- (n_args == 1)
 
   if(n_args > 1){
-    stop("At most one of ", sQuote("percent"), " ", sQuote("k.obs"), " and ",
+    crv_error("At most one of ", sQuote("percent"), " ", sQuote("k.obs"), " and ",
          sQuote("k.var"), " may be supplied.")
   }
 
@@ -461,7 +461,7 @@ cbass_heatmap_plot <- function(x,
   dots <- list(...)
 
   if ( length(dots) != 0 ){
-    stop("Unknown arguments passed to ", sQuote("plot.CBASS."))
+    crv_error("Unknown arguments passed to ", sQuote("plot.CBASS."))
   }
 
   has_percent <- !missing(percent)
@@ -471,8 +471,8 @@ cbass_heatmap_plot <- function(x,
   n_args <- has_percent + has_k.obs + has_k.var
 
   if(n_args >= 2){
-    stop("At most one of ", sQuote("percent,"), " ", sQuote("k.obs"), " and ",
-         sQuote("k.var"), " may be supplied.")
+    crv_error("At most one of ", sQuote("percent,"), " ", sQuote("k.obs"), " and ",
+              sQuote("k.var"), " may be supplied.")
   }
 
   if(n_args == 0){
@@ -486,11 +486,11 @@ cbass_heatmap_plot <- function(x,
   }
 
   if (heatrow.label.cex < 0) {
-    stop(sQuote("heatrow.label.cex"), " must be positive.")
+    crv_error(sQuote("heatrow.label.cex"), " must be positive.")
   }
 
   if (heatcol.label.cex < 0) {
-    stop(sQuote("heatcol.label.cex"), " must be positive.")
+    crv_error(sQuote("heatcol.label.cex"), " must be positive.")
   }
 
   nbreaks <- 50

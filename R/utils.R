@@ -376,7 +376,7 @@ CreateDendrogram <- function(carp_cluster_path, n_labels, scale = NULL) {
   } else if (scale == "log") {
     cvx.hclust$height <- log(cvx.hclust$height + 1)
   } else {
-    stop("CreateDendrogram scale argument must be either 'original' or 'log'")
+    crv_error("CreateDendrogram scale argument must be either 'original' or 'log'")
   }
   max.dend.height <- max(cvx.hclust$height)
   cvx.hclust$height <- cvx.hclust$height * (1 / max.dend.height)

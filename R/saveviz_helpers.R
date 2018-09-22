@@ -37,9 +37,8 @@ crv_new_dev_static <- function(file.name, width, height, units = c("in", "cm", "
                      bmp  = function(filename, ...) bmp(filename, ..., units = "in", res = 300),
                      svg  = function(filename, ...) svg(filename, ...),
                      tex  = function(filename, ...) pictex(file = filename, ...),
-                     stop("File extension ", sQuote(ext), " not currently supported by ", sQuote("saveviz."))
+                     crv_error("File extension ", sQuote(ext), " not currently supported by ", sQuote("saveviz."))
                      )
 
   dev_func(file.name, width = width, height = height)
-
 }

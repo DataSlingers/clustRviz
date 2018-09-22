@@ -14,17 +14,17 @@
 my.rect.hclust <- function(tree, k = NULL, which = NULL, x = NULL, h = NULL, border = 2,
                            cluster = NULL, my.col.vec = NULL, lwd = NULL) {
   if (length(h) > 1L | length(k) > 1L) {
-    stop("'k' and 'h' must be a scalar")
+    crv_error("'k' and 'h' must be a scalar")
   }
   if (!is.null(h)) {
     if (!is.null(k)) {
-      stop("specify exactly one of 'k' and 'h'")
+      crv_error("specify exactly one of 'k' and 'h'")
     }
     k <- min(which(rev(tree$height) < h))
     k <- max(k, 2)
   }
   else if (is.null(k)) {
-    stop("specify exactly one of 'k' and 'h'")
+    crv_error("specify exactly one of 'k' and 'h'")
   }
   if (k < 2 | k > length(tree$height)) {
     graphics::rect(
@@ -44,7 +44,7 @@ my.rect.hclust <- function(tree, k = NULL, which = NULL, x = NULL, h = NULL, bor
     m <- c(0, cumsum(clustab))
     if (!is.null(x)) {
       if (!is.null(which)) {
-        stop("specify exactly one of 'which' and 'x'")
+        crv_error("specify exactly one of 'which' and 'x'")
       }
       which <- x
       for (n in seq_along(x)) which[n] <- max(which(m < x[n]))
@@ -53,10 +53,8 @@ my.rect.hclust <- function(tree, k = NULL, which = NULL, x = NULL, h = NULL, bor
       which <- 1L:k
     }
     if (any(which > k)) {
-      stop(gettextf(
-        "all elements of 'which' must be between 1 and %d",
-        k
-      ), domain = NA)
+      crv_error(gettextf("all elements of 'which' must be between 1 and %d",
+                         k, domain = NA))
     }
     border <- rep_len(border, length(which))
     #### ADD

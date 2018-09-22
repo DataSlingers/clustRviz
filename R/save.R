@@ -330,7 +330,6 @@ saveviz.CBASS <- function(x,
           plt.iter <- which.min(abs(percent.loop - lam.prop.seq))
           # find lambda at iter
           cur.lam <- x$cbass.sol.path$lambda.path[plt.iter]
-          cur.lam
           # find lambda closest in column path
           cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
           # find clustering solution in column path

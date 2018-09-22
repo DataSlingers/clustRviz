@@ -122,17 +122,17 @@ make_sparse_weights_func <- function(weight_func){
           }
 
           if(k == NCOL(adjacency_matrix)){
-            stop("Cannot find ", sQuote("k"), " yielding fully connected graph.")
+            crv_error("Cannot find ", sQuote("k"), " yielding fully connected graph.")
           }
         }
       }
 
       if (!is_integer_scalar(k)) {
-        stop("If not `auto,` ", sQuote("k"), " must be an integer scalar (vector of length 1).")
+        crv_error("If not `auto,` ", sQuote("k"), " must be an integer scalar (vector of length 1).")
       }
 
       if (k <= 0) {
-        stop(sQuote("k"), " must be positive.")
+        crv_error(sQuote("k"), " must be positive.")
       }
 
       sparse_weights <- take_k_neighbors(dense_weights, k = k)
@@ -140,7 +140,7 @@ make_sparse_weights_func <- function(weight_func){
       connected <- is_connected_adj_mat(sparse_weights)
 
       if (!connected) {
-        stop("k = ", k, " does not give a fully connected graph. Convex (bi)clustering will not converge.")
+        crv_error("k = ", k, " does not give a fully connected graph. Convex (bi)clustering will not converge.")
       }
 
       list(weight_mat = sparse_weights,
@@ -205,15 +205,15 @@ dense_rbf_kernel_weights <- function(phi = "auto",
 
   tryCatch(dist.method <- match.arg(dist.method),
            error = function(e){
-             stop("Unsupported choice of ", sQuote("weight.dist;"),
-                  " see the ", sQuote("method"), " argument of ",
-                  sQuote("stats::dist"), " for supported distances.")
+             crv_error("Unsupported choice of ", sQuote("weight.dist;"),
+                       " see the ", sQuote("method"), " argument of ",
+                       sQuote("stats::dist"), " for supported distances.")
            })
 
   if ((p <= 0) || !is_numeric_scalar(p)) {
-    stop(sQuote("p"),
-         " must be a positive scalar; see the ", sQuote("p"),
-         " argument of ", sQuote("stats::dist"), " for details.")
+    crv_error(sQuote("p"),
+              " must be a positive scalar; see the ", sQuote("p"),
+              " argument of ", sQuote("stats::dist"), " for details.")
   }
 
   function(X){
@@ -231,11 +231,11 @@ dense_rbf_kernel_weights <- function(phi = "auto",
     }
 
     if (!is_numeric_scalar(phi)) {
-      stop("If not `auto,` ", sQuote("phi"), " must be a numeric scalar (vector of length 1).")
+      crv_error("If not `auto,` ", sQuote("phi"), " must be a numeric scalar (vector of length 1).")
     }
 
     if (phi <= 0) {
-      stop(sQuote("phi"), " must be positive.")
+      crv_error(sQuote("phi"), " must be positive.")
     }
 
     dist_mat <- as.matrix(dist(X, method = dist.method, p = p))
@@ -321,7 +321,7 @@ kth_largest_element <- function(x, k){
 #' a nearest-neighbor of a, the edge is retained
 take_k_neighbors <- function(weight_matrix, k){
   if (k == NROW(weight_matrix)) {
-    stop("k should be less than the size of the graph")
+    crv_error("k should be less than the size of the graph")
   }
   mask <- apply(weight_matrix, 2, function(x) x >= kth_largest_element(x, k))
   mask <- (mask | t(mask)) # Symmetrize our matrix
