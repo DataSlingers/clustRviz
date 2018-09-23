@@ -3,85 +3,49 @@ context("Test saveviz.CBASS")
 ## FIXME - Make these rigorous tests: right now, we're just checking for no errors on the default path
 
 test_that("saveviz.CBASS can save a dynamic heatmap", {
-  skip_on_cran(); skip_on_travis()
+  skip("Need to rework dynamic visualizations")
 
   cbass_fit <- CBASS(presidential_speech)
   expect_no_error(saveviz(cbass_fit, file.name = tempfile(), plot.type = "heatmap", image.type = "dynamic"))
 })
 
 test_that("saveviz.CBASS can save a dynamic observation dendrogram", {
-  skip_on_cran(); skip_on_travis()
+  skip("Need to rework dynamic visualizations")
 
   cbass_fit <- CBASS(presidential_speech)
   expect_no_error(saveviz(cbass_fit, file.name = tempfile(), plot.type = "obs.dendrogram", image.type = "dynamic"))
 })
 
 test_that("saveviz.CBASS can save a dynamic variable dendrogram", {
-  skip_on_cran(); skip_on_travis()
+  skip("Need to rework dynamic visualizations")
 
   cbass_fit <- CBASS(presidential_speech)
   expect_no_error(saveviz(cbass_fit, file.name = tempfile(), plot.type = "var.dendrogram", image.type = "dynamic"))
 })
-
-test_that("saveviz.CBASS can save a static (fixed k.obs) heatmap", {
-  skip_on_cran(); skip_on_travis()
+test_that("saveviz.CBASS can save a static heatmap as a PNG", {
+  skip_on_cran()
 
   cbass_fit <- CBASS(presidential_speech)
-  expect_no_error(saveviz(cbass_fit, file.name = tempfile(), plot.type = "heatmap", image.type = "static", k.obs = 5))
+  temp_file <- file.path(tempdir(), "tester.png")
+  expect_equal(invisible(temp_file), saveviz(cbass_fit, file.name = temp_file, type = "heatmap", image.type = "static"))
+  expect_true(file.exists(temp_file))
 })
 
-test_that("saveviz.CBASS can save a static (fixed k.obs) observation dendrogram", {
-  skip_on_cran(); skip_on_travis()
+test_that("saveviz.CBASS can save a static observation dendrogram as a JPG", {
+  skip_on_cran()
 
   cbass_fit <- CBASS(presidential_speech)
-  expect_no_error(saveviz(cbass_fit, file.name = tempfile(), plot.type = "obs.dendrogram", image.type = "static", k.obs = 5))
+  temp_file <- file.path(tempdir(), "tester.jpg")
+  expect_equal(invisible(temp_file), saveviz(cbass_fit, file.name = temp_file, type = "obs.dendrogram", image.type = "static"))
+  expect_true(file.exists(temp_file))
 })
 
-test_that("saveviz.CBASS can save a static (fixed k.obs) variable dendrogram", {
-  skip_on_cran(); skip_on_travis()
+
+test_that("saveviz.CBASS can save a static variable dendrogram as a PDF", {
+  skip_on_cran()
 
   cbass_fit <- CBASS(presidential_speech)
-  expect_no_error(saveviz(cbass_fit, file.name = tempfile(), plot.type = "var.dendrogram", image.type = "static", k.obs = 5))
-})
-
-test_that("saveviz.CBASS can save a static (fixed k.var) heatmap", {
-  skip_on_cran(); skip_on_travis()
-
-  cbass_fit <- CBASS(presidential_speech)
-  expect_no_error(saveviz(cbass_fit, file.name = tempfile(), plot.type = "heatmap", image.type = "static", k.var = 5))
-})
-
-test_that("saveviz.CBASS can save a static (fixed k.var) observation dendrogram", {
-  skip_on_cran(); skip_on_travis()
-
-  cbass_fit <- CBASS(presidential_speech)
-  expect_no_error(saveviz(cbass_fit, file.name = tempfile(), plot.type = "obs.dendrogram", image.type = "static", k.var = 5))
-})
-
-test_that("saveviz.CBASS can save a static (fixed k.var) variable dendrogram", {
-  skip_on_cran(); skip_on_travis()
-
-  cbass_fit <- CBASS(presidential_speech)
-  expect_no_error(saveviz(cbass_fit, file.name = tempfile(), plot.type = "var.dendrogram", image.type = "static", k.var = 5))
-})
-
-test_that("saveviz.CBASS can save a static (fixed percent) heatmap", {
-  skip_on_cran(); skip_on_travis()
-
-  cbass_fit <- CBASS(presidential_speech)
-  expect_no_error(saveviz(cbass_fit, file.name = tempfile(), plot.type = "heatmap", image.type = "static", percent = 0.5))
-})
-
-test_that("saveviz.CBASS can save a static (fixed percent) observation dendrogram", {
-  skip_on_cran(); skip_on_travis()
-
-  cbass_fit <- CBASS(presidential_speech)
-  expect_no_error(saveviz(cbass_fit, file.name = tempfile(), plot.type = "obs.dendrogram", image.type = "static", percent = 0.5))
-})
-
-test_that("saveviz.CBASS can save a static (fixed percent) variable dendrogram", {
-  skip_on_cran(); skip_on_travis()
-
-  cbass_fit <- CBASS(presidential_speech)
-  expect_no_error(saveviz(cbass_fit, file.name = tempfile(), plot.type = "var.dendrogram", image.type = "static", percent = 0.5))
+  temp_file <- file.path(tempdir(), "tester.pdf")
+  expect_equal(invisible(temp_file), saveviz(cbass_fit, file.name = temp_file, type = "var.dendrogram", image.type = "static"))
+  expect_true(file.exists(temp_file))
 })

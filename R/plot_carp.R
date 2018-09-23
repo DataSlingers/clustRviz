@@ -1,89 +1,77 @@
-#' Plot function for CARP objects
+#' Visualize the results of Convex Clustering (\code{CARP})
 #'
-#' \code{plot.CARP} displays both static and interactive visualizations of
-#' the CARP clustering solution path, including dendrograms and clustering
-#' paths
+#' \code{plot.CARP} provides a range of ways to visualize the results of convex
+#' clustering, including: \itemize{
+#' \item A dendrogram, illustrating the nested cluster hierarchy inferred from
+#'       the convex clustering solution path (\code{type = "dendrogram"});
+#' \item A path plot, showing the coalescence of the estimated cluster centroids
+#'       as the regularization parameter is increased (\code{type = "path"}); and
+#' \item A \code{\link[shiny]{shiny}} app, which can display the clustering solutions
+#'       as a "movie" or allow for interactive exploration (\code{type = "interactive"}).
+#' }
 #'
-#' Possible visualizations of the CARP solution path are: (i) a static
-#' dendrogram representing the clustering solution path at various
-#' levels of regularization; (ii) a static clustering path representing
-#' the coalescence of observations projected via PCA; and (iii) a
-#' interactive dendorgram and clustering path visualization, showing
-#' how the clustering solutions change with increased reguarliazation.
-#' The first interactive tab shows a movie of real-time cluster solutions
-#' while the second tabs shows the cluster solution for various numbers
-#' of clusters
-#' @param x a CARP object returned by \code{CARP}
-#' @param type a string specifying the type of plot to produce. 'dendrogram'
-#' produces the static cluster dendrogram; 'path' produces the static
-#' cluster path; and 'interactive' produces an interactive visualization of
-#' both the cluster path and dendrogram
-#' @param axis a character vector of length two with elements as 'PC1','PC2',..
-#' etc. Specifics which principal component axis to display for the 'path'
-#' visualization
-#' @param percent a number between 0 and 1. Specifies how far along the
-#' CARP path the 'path' visualization should display.
+#' @param x An object of class \code{CARP} as returned by \code{\link{CARP}}
+#' @param type A string indicating the type of visualization to show (see details above).
+#' @param axis A character vector of length two indicating which features or principal
+#'             components to use as the axes in the \code{type = "path"} visualization.
+#'             Currently only features like \code{"PC1"} or \code{"PC2"} (indicating
+#'             the first principal component projections) are supported.
+#' @param percent A number between 0 and 1, giving the regularization level (as
+#'                a fraction of the final regularization level used) at which to
+#'                assign clusters in the static (\code{type = "dendrogram"} or \code{type = "path"})
+#'                plots.
+#' @param k An integer indicating the desired number of clusters to be displayed
+#'          in the static plots. If no \code{CARP} iteration with exactly this
+#'          many clusters is found, the first iterate with fewer than \code{k}
+#'          clusters is used.
+#' @param ... Additional arguments. Currently an error when \code{type != "dendrogram"}
+#'            and passed to \code{\link[stats]{plot.dendrogram}} when \code{type =
+#'            "dendrogram"}.
 #' @param max.nclust a positive integer. The maximum number of clusters
 #' to display in the interactive plot.
 #' @param min.nclust a positive value. The minimum number of clusters to
 #' display in the interactive plot.
-#' @param ... Unused additional generic arguements
 #' @param dend.branch.width a positive number. Line width on dendrograms.
 #' @param dend.labels.cex a positive number. Label size on dendrograms.
-#' @importFrom shiny shinyApp
-#' @importFrom shiny fluidPage
-#' @importFrom shiny titlePanel
-#' @importFrom shiny tabsetPanel
-#' @importFrom shiny fluidRow
-#' @importFrom shiny animationOptions
-#' @importFrom shiny column
-#' @importFrom shiny plotOutput
-#' @importFrom shiny sliderInput
-#' @importFrom shiny uiOutput
-#' @importFrom shiny renderUI
-#' @importFrom shiny tags
-#' @importFrom shiny checkboxGroupInput
-#' @importFrom shiny renderPlot
-#' @importFrom stats as.dendrogram
-#' @importFrom stats median
-#' @importFrom ggplot2 ggplot
-#' @importFrom ggplot2 aes
-#' @importFrom ggplot2 geom_path
-#' @importFrom ggplot2 geom_point
-#' @importFrom ggplot2 geom_text
-#' @importFrom ggplot2 guides
-#' @importFrom ggplot2 theme
-#' @importFrom ggplot2 element_text
-#' @importFrom ggplot2 xlab
-#' @importFrom ggplot2 ylab
-#' @importFrom ggplot2 scale_color_manual
+#' @return The value of the return type depends on the \code{type} argument:\itemize{
+#'   \item if \code{type = "dendrogram"}, \code{x} is returned invisibly;
+#'   \item if \code{type = "path"}, an object of class \code{\link[ggplot2]{ggplot}}
+#'         which can be plotted directly (by invoking its print method) or modified
+#'         further by the user is returned;
+#'   \item if \code{type = "interactive"}, a \code{\link[shiny]{shiny}} app which can be activated
+#'         by invoking its print method.
+#' } \code{saveviz.CARP} always returns \code{file.name} invisibly.
+#' @details The \code{\link{saveviz.CARP}} function provides a unified interface
+#'          for exporting \code{CARP} visualizations to files. For all plots,
+#'          at most one of \code{percent} and \code{k} may be supplied.
+#' @importFrom shiny shinyApp fluidPage titlePanel tabsetPanel fluidRow
+#' @importFrom shiny column plotOutput sliderInput uiOutput renderUI tags
+#' @importFrom shiny checkboxGroupInput animationOptions renderPlot
+#' @importFrom stats as.dendrogram median
+#' @importFrom ggplot2 ggplot aes_string geom_path geom_point geom_text guides theme
+#' @importFrom ggplot2 element_text xlab ylab scale_color_manual
 #' @importFrom ggrepel geom_text_repel
-#' @importFrom dplyr filter
-#' @importFrom dplyr select
-#' @importFrom dplyr distinct
-#' @importFrom dplyr rename
-#' @importFrom dplyr mutate
-#' @importFrom dplyr left_join
-#' @importFrom dplyr select_
-#' @importFrom dplyr %>%
+#' @importFrom dplyr filter select distinct rename mutate left_join select_ %>%
 #' @importFrom grDevices adjustcolor
 #' @importFrom RColorBrewer brewer.pal
 #' @export
+#' @rdname plot_carp
 #' @examples
 #' \dontrun{
 #' carp_fit <- CARP(presidential_speech)
 #' plot(carp_fit, type='interactive')
 #' }
-plot.CARP <- function(
-                      x,
+plot.CARP <- function(x,
+                      ...,
                       type = c("dendrogram", "path", "interactive"),
                       axis = c("PC1", "PC2"),
                       dend.branch.width = 2,
                       dend.labels.cex = .6,
-                      percent = 1,
+                      percent,
+                      k,
                       max.nclust = 9,
-                      min.nclust = 1,
-                      ...) {
+                      min.nclust = 1) {
+
   LambdaPercent <- NULL
   Iter <- NULL
   V1 <- NULL
@@ -106,53 +94,26 @@ plot.CARP <- function(
   switch(
     type,
     dendrogram = {
-      x$carp.dend %>%
-        stats::as.dendrogram() %>%
-        dendextend::set("branches_lwd", dend.branch.width) %>%
-        dendextend::set("labels_cex", dend.labels.cex) %>%
-        plot(ylab = "Amount of Regularization")
+      carp_dendro_plot(x,
+                       percent = percent,
+                       k = k,
+                       dend.branch.width = dend.branch.width,
+                       dend.labels.cex = dend.labels.cex,
+                       ...)
     },
     path = {
-      plot.cols <- c(
-        axis,
-        "Iter",
-        "Obs",
-        "Cluster",
-        "Lambda",
-        "ObsLabel",
-        "NCluster",
-        "LambdaPercent"
-      )
-      plot.frame <- x$carp.cluster.path.vis[, plot.cols]
-      names(plot.frame)[1:2] <- c("V1", "V2")
-      plot.frame %>%
-        dplyr::filter(LambdaPercent <= percent) %>%
-        dplyr::filter(Iter > x$burn.in) %>%
-        ggplot2::ggplot(ggplot2::aes(x = V1, y = V2, group = Obs)) +
-        ggplot2::geom_path(
-          ggplot2::aes(x = V1, y = V2),
-          linejoin = "round",
-          color = "red",
-          size = 1
-        ) +
-        ggplot2::geom_point(
-          ggplot2::aes(x = V1, y = V2),
-          data = plot.frame %>% dplyr::filter(Iter == 1),
-          color = "black",
-          size = I(2)
-        ) +
-        ggrepel::geom_text_repel(
-          ggplot2::aes(x = V1, y = V2, label = ObsLabel),
-          size = I(3),
-          data = plot.frame %>% dplyr::filter(Iter == 1)
-        ) +
-        ggplot2::guides(color = FALSE, size = FALSE) +
-        ggplot2::theme(axis.title = ggplot2::element_text(size = 15)) +
-        ggplot2::theme(axis.text = ggplot2::element_text(size = 10)) +
-        ggplot2::xlab(axis[1]) +
-        ggplot2::ylab(axis[2])
+      carp_path_plot(x,
+                     axis = axis,
+                     percent = percent,
+                     k = k,
+                     ...)
     },
     interactive = {
+      dots <- list(...)
+      if ( length(dots) != 0 ){
+        stop("Unknown arguments passed to ", sQuote("plot.CARP."))
+      }
+
       shiny::shinyApp(
         ui = shiny::fluidPage(
           shiny::tags$style(
@@ -420,3 +381,186 @@ plot.CARP <- function(
     }
   )
 }
+
+#' @noRd
+#' @importFrom rlang .data
+#' @importFrom dplyr filter select left_join pull
+#' @importFrom ggplot2 ggplot geom_path aes geom_point guides theme element_text xlab ylab
+#' @importFrom ggrepel geom_text_repel
+carp_path_plot <- function(x, ..., axis, percent, k){
+
+  dots <- list(...)
+  if ( length(dots) != 0) {
+    if (!is.null(names(dots))) {
+      nm <- names(dots)
+      nm <- nm[nzchar(nm)]
+      stop("Unknown argument ", sQuote(nm[1]), " passed to ", sQuote("plot.CARP."))
+    } else {
+      stop("Unknown argument passed to ", sQuote("plot.CARP."))
+    }
+  }
+
+  has_percent <- !missing(percent)
+  has_k       <- !missing(k)
+
+  n_args <- has_percent + has_k
+
+  if(n_args > 1){
+    stop("At most one of ", sQuote("percent"), " and ", sQuote("k"), " must be supplied.")
+  }
+
+  show_clusters <- (n_args == 1L)
+
+  if (n_args == 0L){
+    percent <- 1
+    has_percent <- TRUE # We've now set the percent (whole path) for display
+  }
+
+  plot_cols <- c(
+    axis,
+    "Iter",
+    "Obs",
+    "Cluster",
+    "Lambda",
+    "ObsLabel",
+    "NCluster",
+    "LambdaPercent"
+  )
+
+  if (any(plot_cols %not.in% colnames(x$carp.cluster.path.vis))) {
+    missing_col <- plot_cols[which(plot_cols %not.in% colnames(x$carp.cluster.path.vis))][1]
+    stop(sQuote(missing_col), " is not available for plotting.")
+  }
+
+  plot_frame_full <- x$carp.cluster.path.vis %>% select(plot_cols) %>%
+                                                 filter(.data$Iter > x$burn.in)
+  names(plot_frame_full)[1:2] <- c("V1", "V2")
+
+  if (has_percent) {
+    if (!is_percent_scalar(percent)) {
+      stop(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
+    }
+
+    plot_frame_full <- plot_frame_full %>% filter(.data$LambdaPercent <= percent)
+  } else {
+    # Get the first iteration at which we have k (or fewer) clusters
+    # to avoid plotting "beyond" what we want
+
+    if (!is_integer_scalar(k)) {
+      stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+    }
+    if ( k <= 0 ) {
+      stop(sQuote("k"), " must be positive.")
+    }
+    if ( k > NROW(x$X) ) {
+      stop(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
+    }
+
+    iter_first_k <- plot_frame_full %>% select(.data$Iter, .data$NCluster) %>%
+                                        filter(.data$NCluster <= k) %>%
+                                        summarize(iter_first_k = min(.data$Iter)) %>%
+                                        pull
+
+    plot_frame_full <- plot_frame_full %>% filter(.data$Iter <= iter_first_k)
+  }
+
+  plot_frame_init  <- plot_frame_full %>% filter(.data$Iter == min(.data$Iter))
+  plot_frame_final <- plot_frame_full %>% filter(.data$Iter == max(.data$Iter)) %>%
+                                          mutate(final_cluster = factor(.data$Cluster))
+
+  plot_frame_full <- left_join(plot_frame_full,
+                               plot_frame_final %>% select(.data$Obs, .data$final_cluster),
+                               by = "Obs")
+
+
+  ## FIXME -- It looks like we don't actually have full fusion in `plot_frame_final`
+  ##          (even in points which should be in the same cluster...)
+
+  g <- ggplot(mapping = aes_string(x = "V1", y = "V2", group = "Obs"))
+
+  if (show_clusters) {
+    g <- g + geom_path(data = plot_frame_full, aes_string(color = "final_cluster"), linejoin="round", size=1) +
+             geom_point(data = plot_frame_final, aes_string(color = "final_cluster"), size = 4)
+  } else {
+    g <- g + geom_path(data = plot_frame_full, color = "red", linejoin="round", size=1)
+  }
+
+  g + geom_point(data = plot_frame_init, color="black", size = 2) +
+      geom_text_repel(data = plot_frame_init, mapping = aes_string(label = "ObsLabel"), size = 3) +
+      guides(color = FALSE, size = FALSE) +
+      theme(axis.title = element_text(size = 15),
+            axis.text  = element_text(size = 10)) +
+      xlab(axis[1]) +
+      ylab(axis[2])
+}
+
+#' @noRd
+#' @importFrom rlang .data
+#' @importFrom dplyr filter select summarize pull
+#' @importFrom stats as.dendrogram
+#' @importFrom dendextend set
+#' @importFrom grDevices adjustcolor
+carp_dendro_plot <- function(x,
+                             percent,
+                             k,
+                             dend.branch.width = 2,
+                             dend.labels.cex = .6,
+                             ...){
+
+  if(dend.branch.width <= 0){
+    stop(sQuote("dend.branch.width"), " must be positive.")
+  }
+
+  if(dend.labels.cex <= 0){
+    stop(sQuote("dend.labels.cex"), " must be positive.")
+  }
+
+  has_percent <- !missing(percent)
+  has_k       <- !missing(k)
+  n_args      <- has_percent + has_k
+
+  if(n_args > 1L){
+    stop("At most one of ", sQuote("percent"), " and ", sQuote("k"), " may be supplied.")
+  }
+
+  show_clusters <- (n_args == 1L)
+
+  ## Set better default borders
+  par(mar = c(14, 7, 2, 1))
+
+  x$carp.dend %>%
+    as.dendrogram() %>%
+    set("branches_lwd", dend.branch.width) %>%
+    set("labels_cex", dend.labels.cex) %>%
+    plot(ylab = "Amount of Regularization", cex.lab = 1.5, ...)
+
+  if(show_clusters){
+
+    if(has_percent){
+      if (!is_percent_scalar(percent)) {
+        stop(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
+      }
+
+      k <- x$carp.cluster.path.vis %>% filter(.data$LambdaPercent <= percent) %>%
+                                       select(.data$NCluster) %>%
+                                       summarize(NCluster = min(.data$NCluster)) %>%
+                                       pull
+    } else {
+      if (!is_integer_scalar(k)) {
+        stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+      }
+      if ( k <= 0 ) {
+        stop(sQuote("k"), " must be positive.")
+      }
+      if ( k > NROW(x$X) ) {
+        stop(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
+      }
+    }
+
+    my.cols <- adjustcolor(c("grey", "black"), alpha.f = .2)
+    my.rect.hclust(x$carp.dend, k = k, border = 2, my.col.vec = my.cols, lwd = 3)
+  }
+
+  invisible(x)
+}
+

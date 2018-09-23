@@ -27,3 +27,7 @@ capture_print <- function(x, ...){
 list_all_equal <- function(x) {
   all(vapply(seq_len(length(x) - 1), function(i) isTRUE(all.equal(x[[i]], x[[i + 1]])), logical(1)))
 }
+
+num_unique      <- clustRviz:::num_unique
+num_unique_rows <- clustRviz:::num_unique_rows
+num_unique_cols <- clustRviz:::num_unique_cols
