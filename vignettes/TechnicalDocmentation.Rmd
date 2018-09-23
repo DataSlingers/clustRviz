@@ -1,0 +1,636 @@
+---
+title: "Technical Documentation"
+header-includes:
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,message = FALSE)
+```
+
+This is internal package documentation describing the vectorized formulation of the Convex Clustering problem, CARP and CBASS.
+
+The goal is describe how CARP and CBASS make their updates at each iteration, and also describe some of the auxillary functions
+which are used to accomplish this.
+
+## Original Problem
+
+The Convex Clustering problem is given by
+
+$$
+\min_{\boldsymbol{U}} \frac{1}{2} \| \boldsymbol{X} - \boldsymbol{U} \|_F^2 + \lambda \sum_{(i,j) \in E} w_{ij} \| \boldsymbol{u}_{i} - \boldsymbol{u}_{j} \|_2
+$$
+here
+
+* $\boldsymbol{X} \in \mathbb{R}^{p \times n}$ is our data matrix consisting of $n$ observations in $p$ dimensions
+
+* $\lambda > 0$ a reguarlization parameter
+
+* $E$ our edge set of size $|E|$
+
+* $w_{ij} > 0$ a set of given weights; we have $|E|$ of these
+
+* $\boldsymbol{U} \in \mathbb{R}^{p \times n}$ is our estimand; we denote it's 
+$i$th column (the $i$ the observation) as $\boldsymbol{u}_{i} in \mathbb{R}^p$
+
+
+## Vectorized Problem
+
+We rewrite in terms of vectors. Define 
+
+* $\boldsymbol{x} \equiv \textrm{vec}(\boldsymbol{X}) \in \mathbb{R}^{np}$
+
+* $\boldsymbol{u} \equiv \textrm{vec}(\boldsymbol{u}) \in \mathbb{R}^{np}$
+
+
+
+The loss can be rewritten as $\frac{1}{2}\|\boldsymbol{x} - \boldsymbol{u}\|_2^2$.
+To rewrite the regularization term we need to compute $\boldsymbol{u}_i - \boldsymbol{u}_j$
+in term of $\boldsymbol{u}$.
+
+Define
+
+* $\boldsymbol{d}_{ij} \in \mathbb{R}^n$ be a vector of all $0$'s, except with a $1$ in 
+the $i$th position and $-1$ in the $j$th position.
+
+* $\boldsymbol{D}_{ij} \equiv (\boldsymbol{d}_{ij}^T \otimes \boldsymbol{I}_p)$
+
+where $\otimes$ is kronecker product and 
+$\boldsymbol{I}_p \in \mathbb{R}{p\times p}$  the identity.
+
+
+
+Our vectorized problem is now
+
+$$
+\min_{\boldsymbol{u}} \frac{1}{2} \| \boldsymbol{x} - \boldsymbol{u} \|_F^2 + \lambda \sum_{(i,j) \in E} w_{ij} \| \boldsymbol{D}_{ij} \boldsymbol{u} \|_2
+$$
+
+The above is difficult to solve via ADMM/AMA due to the presence of $\boldsymbol{D}_{ij}$, which does not yield closed-form proximal operators.
+
+## Auxillary Variable Formulation via ADMM
+
+We rewrite the above problem introducing auxillary variables and equality constraints. We have,
+
+$$
+\min_{\boldsymbol{u},\boldsymbol{v}_{ij}} \frac{1}{2} \| \boldsymbol{x} - \boldsymbol{u} \|_F^2 + \lambda \sum_{(i,j) \in E} w_{ij} \| \boldsymbol{v}_{ij}\|_2
+$$
+
+subject to 
+
+$$
+\boldsymbol{D}_{ij} \boldsymbol{u} - \boldsymbol{v}_{ij} = \boldsymbol{0}
+$$
+for all $(i,j) \in E$. 
+
+Next we vectorize the $\boldsymbol{v}_{ij}$ portion. Define
+
+* $\boldsymbol{V} \equiv \left[ \boldsymbol{v}_{1,2}, \boldsymbol{v}_{1,3}, \dots, \boldsymbol{v}_{n-1,n} \right] \in \mathbb{R}^{p \times |E|}$
+
+* $\boldsymbol{v} \equiv \textrm{vec}(\boldsymbol{V}) \in \mathbb{R}^{p|E|}$
+
+The above can be rewritten as 
+
+$$
+\min_{\boldsymbol{u},\boldsymbol{v}} \frac{1}{2} \| \boldsymbol{x} - \boldsymbol{v} \|_2^2 + \lambda \sum_{(i,j)\in E} w_{ij} \| \boldsymbol{v}_{ij} \|_2
+$$
+subject to 
+
+$$
+\boldsymbol{Du} - \boldsymbol{v} = \boldsymbol{0}
+$$
+where
+
+$$
+\boldsymbol{D} \equiv 
+\begin{bmatrix} 
+\boldsymbol{d}_{1,2}^T  \\ 
+\boldsymbol{d}_{1,3}^T \\
+\vdots \\
+\boldsymbol{d}_{n-1,n}^T
+\end{bmatrix}
+\otimes
+\boldsymbol{I}_p \in \mathbb{R}^{|E|p \times np}
+$$
+
+
+Note that in the penalty portion above our $\boldsymbol{v}_{ij}$ is 
+a case of the non-overlapping group lasso, by construction of $\boldsymbol{v}$.
+This gives us a closed-form proximal update later on.
+
+The above is of the form
+
+$$
+\min_{\boldsymbol{u},\boldsymbol{v}} f(\boldsymbol{u}) + g(\boldsymbol{v})
+$$
+
+subject to
+$$
+\boldsymbol{A}\boldsymbol{v} + \boldsymbol{B}\boldsymbol{v} = \boldsymbol{c}
+$$
+We will solve via ADMM.
+
+### The Augmented Lagrangian
+
+Note the augmented Lagrangian is given by
+
+$$
+\mathcal{L}_{\rho}(\boldsymbol{u},\boldsymbol{v}, \boldsymbol{z}) = 
+\frac{1}{2}\|\boldsymbol{x} - \boldsymbol{u}\|_2^2 + \lambda \sum_{(i,j)\in E} w_{ij} \| \boldsymbol{v}_{ij} \|_2 +
+\boldsymbol{z}^T(\boldsymbol{Du} - \boldsymbol{v}) + 
+\frac{\rho}{2} \| \boldsymbol{D}\boldsymbol{u} - \boldsymbol{v} \|_2^2
+$$
+
+with $\boldsymbol{z} \in \mathbb{R}^{p|E|}$, $\rho >0$.
+
+### Traditional Updates 
+
+Solved via ADMM our updates are given by
+
+$$
+\boldsymbol{u}^{k+1} =  \textrm{argmin}_{\boldsymbol{u}} \mathcal{L}_{\rho}(\boldsymbol{u},\boldsymbol{v}^k, \boldsymbol{z}^k) \\
+\boldsymbol{v}^{k+1} =  \textrm{argmin}_{\boldsymbol{v}} \mathcal{L}_{\rho}(\boldsymbol{u}^{k+1},\boldsymbol{v}, \boldsymbol{z}^k) \\
+\boldsymbol{z}^{k+1} = \boldsymbol{z}^k + \rho(\boldsymbol{D}\boldsymbol{u}^{k+1} - \boldsymbol{v}^{k+1})
+$$
+
+In traditional ADMM these updates are repeatedly solved until convergence for a given $\lambda$. In CARP these updates are performed 
+singly, with $\lambda$ increasing each time. We outline each subproblem below and give the associated update.
+
+### The u-subproblem
+
+Here we solve
+
+$$
+\textrm{argmin}_{\boldsymbol{u}} \frac{1}{2} \| \boldsymbol{x} - \boldsymbol{u} \|_2^2 + 
+\boldsymbol{z}^T (\boldsymbol{D}\boldsymbol{u} - \boldsymbol{v}) + 
+\frac{\rho}{2} \| \boldsymbol{D}\boldsymbol{u} - \boldsymbol{v}\|_2^2
+$$
+
+This can be done in closed form. Take partials, set to zero, and solve. Note that
+
+$$
+\nabla_{\boldsymbol{u}} \mathcal{L} = \boldsymbol{u} - \boldsymbol{x} 
++ \boldsymbol{D}^T \boldsymbol{z}  +
+\rho \boldsymbol{D}^T\boldsymbol{D}\boldsymbol{u} - \rho \boldsymbol{D}^T \boldsymbol{v}
+$$
+Setting to zero yields
+
+$$
+( \boldsymbol{I}_{np} + \rho \boldsymbol{D}^T \boldsymbol{D}) \boldsymbol{u} = \boldsymbol{x} + \rho \boldsymbol{D}^T \boldsymbol{v} - \boldsymbol{D}^T \boldsymbol{z}
+$$
+
+
+solving for $\boldsymbol{u}$ yields,
+
+
+$$
+\boldsymbol{u} = ( \boldsymbol{I}_{np} + \rho \boldsymbol{D}^T \boldsymbol{D})^{-1} (  \boldsymbol{x} + \rho \boldsymbol{D}^T \boldsymbol{v} - \boldsymbol{D}^T \boldsymbol{z})
+$$
+
+which gives our update for $\boldsymbol{u}$ as follows.
+
+#### The u-problem update
+
+$$
+\boldsymbol{u}^{k+1} = ( \boldsymbol{I}_{np} + \rho \boldsymbol{D}^T \boldsymbol{D})^{-1} (  \boldsymbol{x} + \rho \boldsymbol{D}^T \boldsymbol{v}^k - \boldsymbol{D}^T \boldsymbol{z}^k)
+$$
+
+
+### The v-subproblem
+
+Here we solve
+
+$$
+\textrm{argmin}_{\boldsymbol{v}} \lambda \sum_{l=1}^{|E|} w_l \| \boldsymbol{v}_l \|_2 
+- \boldsymbol{z}^T \boldsymbol{v} 
++ \frac{\rho}{2} \|\boldsymbol{D} \boldsymbol{u} - \boldsymbol{v} \|_2^2
+$$
+We have dropped the $(i,j)$ indexing in favor of the simplier $l$ subscript; we assume $l$ indicies map to the 
+lexigraphic ordering of the $(i,j)$ indicies.
+
+Expand the objective above and drop terms not dependent on $\boldsymbol{v}$
+
+$$
+\lambda \sum_{l=1}^{|E|} w_l \| \boldsymbol{v}_l \|_2  
++ \frac{\rho}{2} (\boldsymbol{v}^T \boldsymbol{v} - 2 \boldsymbol{v}^T \boldsymbol{D}\boldsymbol{u} - \frac{2}{\rho}\boldsymbol{v}^T\boldsymbol{z})
+$$
+Divide objective by $\rho$ and define $\boldsymbol{\delta} = \boldsymbol{D}\boldsymbol{u} + \frac{1}{\rho}\boldsymbol{z}$. Objective is now
+
+$$
+\frac{\lambda}{\rho} \sum_{l = 1}^{|E|} w_l \| \boldsymbol{v}_l \|_2 
++ \frac{1}{2} (\boldsymbol{v}^T\boldsymbol{v} - 2 \boldsymbol{v}^T \boldsymbol{\delta})
+$$
+Complete the square (add and subtract $\boldsymbol{\delta}^T \boldsymbol{\delta}$, 
+and drop $-\boldsymbol{\delta}^T \boldsymbol{\delta}$ term as it doesn't depend on $\boldsymbol{v}$)
+yields our problem to be
+
+$$
+\textrm{argmin}_{\boldsymbol{v}} 
+\frac{\lambda}{\rho} \sum_{l = 1}^{|E|} w_l \| \boldsymbol{v}_l \|_2  +
+\frac{1}{2} \| \boldsymbol{v} -  \boldsymbol{\delta} \|_2^2
+$$
+Note this is the (weighted) non-overlapping group lasso proximal operator. 
+
+Our $\boldsymbol{v}$ updates can then be given in closed form.
+
+#### The v-problem update
+
+$$
+\boldsymbol{v}^{k+1}_l = \left[ 1 - \frac{ \frac{\lambda}{\rho} w_l}{ \| \boldsymbol{\delta}^{k+1}_l \|_2} \right]_+ \boldsymbol{\delta}^{k+1}_l
+$$
+
+
+
+
+## Code Notes
+
+Here we outline serveral key parts of the CARP/CBASS code and connect 
+these to the problem outlined above.
+
+As outlined above, we work the the $p \times n$ (variables by observation) 
+data matrix. This is important to note, as the indexing operations below
+will be relative to this matrix.
+
+### Quick Notes
+
+* $\rho$ can be taken to be $1$ throughout.
+
+* The function `DtMatOpv2` computes $\boldsymbol{D}^T \boldsymbol{z}$, for $\boldsymbol{z} \in \mathbb{R}^{|E|p}$.
+
+* The function `DMatOpv2` computes $\boldsymbol{D} \boldsymbol{z}$, for $\boldsymbol{z} \in \mathbb{R}^{np}$.
+
+
+### The `ConvexClusteringPreCompute` Function
+
+`ConvexClusteringPreCompute` also keeps track of indicies in the vectorized 
+matricies, and precomputes useful items. 
+
+It takes as input the $p \times n$ (variables by observation) data matrix 
+along with sparse weight vector of length $\binom{n}{2}$
+
+Using the presidents:
+
+```{r,echo=TRUE}
+library(tidyverse)
+library(clustRviz)
+data("presidential_speech")
+# center data and calculate weights
+X <- scale(presidential_speech,center = TRUE,scale = FALSE) 
+nobs <- nrow(X)
+pvar <- ncol(X)
+dense.weights <- clustRviz:::DenseWeights(X = X, phi = .01)
+k <- clustRviz:::MinKNN(X = X,dense.weights = dense.weights)
+sparse.weights <- clustRviz:::SparseWeights(X = X, dense.weights = dense.weights, k=k)
+```
+
+Call to `ConvexClusteringPreCompute`
+```{r,echo=TRUE}
+# pass transposed data matrix
+precomp <- clustRviz:::ConvexClusteringPreCompute(X = t(X), weights = sparse.weights,rho=1) 
+```
+
+#### PreMat matrix
+
+The `ConvexClusteringPreCompute` function creates the `PreMat` matrix, which is $\boldsymbol{I}_{np} + \rho \boldsymbol{D}^T \boldsymbol{D}$
+in the u-subproblem above.
+
+#### E matrix
+
+This matrix tells us which pairs of observations are fused together, or 
+equivalently who is in the edge set, $E$.
+
+`precomp$E` has dimensions $|E| \times 2$ and is returned as follows:
+
+```{r,echo=TRUE}
+head(precomp$E)
+```
+
+The first row, for example, says that the weight between observation 1 and 3 is non-zero. 
+The sparsity pattern of `sparse.weights` determines our edge set, $E$. `sparse.weights`
+is sorted in lexigraphical order ($(1,2), (1,3), (1,4),\dots$), so this corresponds to its second entry.
+
+```{r,echo=TRUE}
+head(sparse.weights)
+```
+
+
+
+#### E1.ind.mat matirx
+
+This matrix gives us the indicies in $\boldsymbol{u}$ (or $\boldsymbol{x}$) corresponding to the observation listed 
+in the first column of `precomp$E`. 
+
+Its dimensions are $|E| \times p$.
+
+It is used in the `C++` function so it is zero-indexed.
+
+
+##### Example 
+
+Find the third pair in the edge set, say $(i_3,j_3)$ and return observation $i_3$.
+
+
+```{r,echo=TRUE}
+# third edge set pair
+edge.idx <- 3
+# lookup in E
+edge.pair <- precomp$E[edge.idx,]
+edge.pair
+# E1.ind.mat will look up obs 1 in this case
+
+# find it's indicies in the vectorized u or x
+# add 1 for R, since 0 indexed
+obs1.idx <- precomp$E1.ind.mat[edge.idx,] + 1
+obs.of.interest <- t(X)[TRUE][obs1.idx]
+
+# compare w/ grabbing the column directly
+all(obs.of.interest == t(X)[,edge.pair[1]] %>% unname())
+```
+
+
+#### E2.ind.mat matrix
+
+Similar to `E1.ind.mat`, `E2.ind.mat` gives us the indicies in $\boldsymbol{u}$ (or $\boldsymbol{x}$) corresponding to the observation listed 
+in the second column of `precomp$E`. 
+
+Its dimensions are $|E| \times p$.
+
+It is used in the `C++` function so it is zero-indexed.
+
+##### Example 
+
+Find the third pair in the edge set, say $(i_3,j_3)$, and return observation $j_3$.
+
+```{r,echo=TRUE}
+# third edge set pair
+edge.idx <- 3
+# lookup in E
+edge.pair <- precomp$E[edge.idx,]
+edge.pair
+# E2.ind.mat will look up obs 23 in this case
+
+# find it's indicies in the vectorized u or x
+# add 1 for R, since 0 indexed
+obs2.idx <- precomp$E2.ind.mat[edge.idx,] + 1
+obs.of.interest <- t(X)[TRUE][obs2.idx]
+
+# compare w/ grabbing the column directly
+all(obs.of.interest == t(X)[,edge.pair[2]] %>% unname())
+```
+
+#### ind.mat matrix
+
+Just as `E1.ind.mat` and `E2.ind.mat` keep track of indicies in 
+$\boldsymbol{u}$ and $\boldsymbol{x}$, `ind.mat` keeps track of 
+indicies in $\boldsymbol{v}$. 
+
+Here row $l$ of `ind.mat` corresponds to those indicies (zero indexed) in 
+$\boldsymbol{v}$ which correspond to column $l$ of $\boldsymbol{V}$
+
+
+
+### Subproblem Updates
+
+Recall our u-subproblem update is given by (here, taking $\rho = 1$)
+
+$$
+\boldsymbol{u}^{k+1} = ( \boldsymbol{I}_{np} + \boldsymbol{D}^T \boldsymbol{D})^{-1} (  \boldsymbol{x} + \boldsymbol{D}^T(\boldsymbol{v}^k -  \boldsymbol{z}^k))
+$$
+
+Since $( \boldsymbol{I}_{np} + \boldsymbol{D}^T \boldsymbol{D})$ is precomputed as `premat` this update become in our code (roughly):
+
+```{r,echo=TRUE,eval=FALSE}
+unew = solve(premat,x + DtMatOpv2(vold - zold))
+```
+
+Recall our v-subproblem  update is given by (again taking $\rho=1$)
+
+$$
+\boldsymbol{v}^{k+1}_l = \left[ 1 - \frac{ \frac{\lambda}{\rho} w_l}{ \| \boldsymbol{\delta}^{k+1}_l \|_2} \right]_+ \boldsymbol{\delta}^{k+1}_l
+$$
+
+where $\boldsymbol{\delta} = \boldsymbol{D}\boldsymbol{u} + \frac{1}{\rho}\boldsymbol{z}$. In our code this becomes (roughly):
+
+```{r,echo=TRUE,eval=FALSE}
+proxin = DtMatOp(unew) + zold
+vnew = ProxL2(proxin)
+```
+
+
+We again get the $z$ update directly from ADMM via
+
+$$
+\boldsymbol{z}^{k+1} = \boldsymbol{z}^k + \rho(\boldsymbol{D}\boldsymbol{u}^{k+1} - \boldsymbol{v}^{k+1})
+$$
+In our code this is (roughy)
+```{r,echo=TRUE,eval=FALSE}
+znew = zold + DMatOpv2(unew) - vnew
+```
+
+
+## Algorithm Notes
+
+Now that we have described our vectorized problem and key portions of the code, we 
+can now outline our algorthims. 
+
+We define a helpful sub-algorithm, CARP Single Step, which simply performs a single iteration of 
+the updates described above.
+
+#### CARP Single Step
+
+1. Input: $\boldsymbol{x},\boldsymbol{u}^k \in \mathbb{R}^{n p}$, $\boldsymbol{v}^k, \boldsymbol{z}^k \in \mathbb{R}^{|E|p}$,$\boldsymbol{w} \in \mathbb{R}^{\binom{n}{2}}$, $\lambda>0$
+
+    a. u-update step
+    
+        $$
+        \boldsymbol{u}^{k+1} = ( \boldsymbol{I}_{np} + \boldsymbol{D}^T \boldsymbol{D})^{-1} (  \boldsymbol{x} + \boldsymbol{D}^T(\boldsymbol{v}^k -  \boldsymbol{z}^k)) 
+        $$
+    
+    b. v-update step
+        $$
+        \boldsymbol{\delta}^{k+1} = \boldsymbol{D}\boldsymbol{u}^{k+1} + \frac{1}{\rho}\boldsymbol{z}^k \\
+        \boldsymbol{v}^{k+1}_l = \left[ 1 - \frac{ \frac{\lambda}{\rho} w_l}{ \| \boldsymbol{\delta}^{k+1}_l \|_2} \right]_+ \boldsymbol{\delta}^{k+1}_l
+        $$
+    
+    c. $z$-update step
+        $$
+        \boldsymbol{z}^{k+1} = \boldsymbol{z}^k + \rho(\boldsymbol{D}\boldsymbol{u}^{k+1} - \boldsymbol{v}^{k+1})
+        $$
+2. Return: $\boldsymbol{u}^{k+1}$, $\boldsymbol{v}^{k+1}$, $\boldsymbol{z}^{k+1}$
+
+
+
+We will denote a call to CARP Single Step via 
+$\textrm{CARPSS}(\boldsymbol{x},\boldsymbol{u},\boldsymbol{v},\boldsymbol{z},\boldsymbol{w},\lambda)$
+
+
+#### CARP Algorithm
+
+The basic CARP algorithm now becomes
+
+1. Input: $\boldsymbol{x},\in \mathbb{R}^{n p}$, $\boldsymbol{w} \in \mathbb{R}^{\binom{n}{2}}$, $\lambda^{(0)} = \epsilon > 0, t > 0$
+
+2. Initialize: $\boldsymbol{u}^{(0)} = \boldsymbol{x}$, $\boldsymbol{v}^{(0)}_l,\boldsymbol{z}^{(0)}_l = \boldsymbol{x}_{l_1} - \boldsymbol{x}_{l_2}$
+
+3. `while` $\| \boldsymbol{v}^{(k)} \|_2 \neq 0$
+
+    a. $\textrm{CARPSS}(\boldsymbol{x},\boldsymbol{u}^{(k)},\boldsymbol{v}^{(k)},\boldsymbol{z}^{(k)},\boldsymbol{w},\lambda^{(k)})$
+    
+    b. $\lambda^{(k+1)} = t\lambda^{(k)}$
+    
+    
+#### CARP Algorithm, no fissions
+
+Here we introduce the variable $\boldsymbol{s} \in \left\{0,1\right\}^{|E|}$ where
+$s_l = 1$ denotes column $\boldsymbol{v}_l = \boldsymbol{0}$, and a fusion between 
+the corresponding observations; $s_l = 0$ otherwise.
+
+In our code, $\boldsymbol{s}$ correponds to `vZeroIndsnew`, `vZeroIndsold`, and the 
+number of non-zero elements in $\boldsymbol{s}$ denoted by `nzeros_new`, and `nzeros_old`.
+
+Updates to $\boldsymbol{s}$ are performed via 
+
+```{r,echo=TRUE,eval=FALSE}
+for(int l = 0; l < num_edges; l++){
+  Eigen::VectorXi v_index = IndMat.row(l);
+  if(extract(v_new, v_index).sum() == 0){
+    vZeroIndsnew(l) = 1;
+  }
+}
+```
+
+Note, changes in the sparsity pattern (`vZeroIndsnew`) are one way, updating
+to $1$ if a column of zeros is observed, and not resetting to $0$ is a 
+fission occurs. Hence fusions are recorded in the order they happen, and 
+fissions are not represented.
+
+The CARP algorithm is now modified to terminate once all fusions have been 
+observed.
+
+1. Input: $\boldsymbol{x},\in \mathbb{R}^{n p}$, $\boldsymbol{w} \in \mathbb{R}^{\binom{n}{2}}$, $\lambda^{(0)} = \epsilon > 0, t > 0$
+
+2. Initialize: $\boldsymbol{u}^{(0)} = \boldsymbol{x}$, $\boldsymbol{v}^{(0)}_l,\boldsymbol{z}^{(0)}_l = \boldsymbol{x}_{l_1} - \boldsymbol{x}_{l_2}$
+
+3. `while` $\| s \|^2_2 \neq |E|$
+
+    a. $\textrm{CARPSS}(\boldsymbol{x},\boldsymbol{u}^{(k)},\boldsymbol{v}^{(k)},\boldsymbol{z}^{(k)},\boldsymbol{w},\lambda^{(k)})$
+    
+    b. $\lambda^{(k+1)} = t\lambda^{(k)}$
+    
+    
+
+
+#### CBASS
+
+Our `CBASS` duplicates the `CARP` updates above based on the Dykstra-like 
+proximal algorithm  of Convex Biclustering.
+ 
+Recall the Convex Biclusering algorithm is given by
+
+1. Input: $\boldsymbol{X} \in \mathbb{R}^{p \times n}$, $\boldsymbol{w}_c \in \mathbb{R}^{\binom{n}{2}}$,
+$\boldsymbol{w}_r \in \mathbb{R}^{\binom{p}{2}}$, $\lambda > 0$
+
+2. Initialize: $\boldsymbol{U}^0 = \boldsymbol{X}$, $\boldsymbol{P}^0 = \boldsymbol{0} \in \mathbb{R}^{p \times n}$,
+$\boldsymbol{Q}^0 = \boldsymbol{0} \in \mathbb{R}^{p \times n}$
+
+    a. $(\boldsymbol{Y}^{k})^T = \textrm{ConvexClustering}( (\boldsymbol{U}^k)^T + (\boldsymbol{P}^k)^T, \boldsymbol{w}_r, \lambda)$
+    
+    b. $\boldsymbol{P}^{k+1} = \boldsymbol{U}^k + \boldsymbol{P}^k - \boldsymbol{Y}^k$
+    
+    c. $\boldsymbol{U}^{k+1} = \textrm{ConvexClustering}( \boldsymbol{Y}^{k} + \boldsymbol{Q}^{k},\boldsymbol{w}_c,\lambda)$
+    
+    d. $\boldsymbol{Q}^{k+1} = \boldsymbol{Y}^k + \boldsymbol{Q}^k - \boldsymbol{U}^{k+1}$
+    
+
+where here $\textrm{ConvexClustering}(\boldsymbol{X},\boldsymbol{w},\lambda)$ 
+performs Convex Clustering on the columns of $\boldsymbol{X}$, using the 
+weights $\boldsymbol{w}$ at regularization amount $\lambda > 0$, returning 
+a matrix the same dimensions as $\boldsymbol{X}$.
+
+
+`CBASS` replaces calls to $\textrm{ConvexClustering}$ with calls to `CARPSS`, 
+unvec-ing and performing transposes as necessary:
+
+
+The update (a)
+$$
+(\boldsymbol{Y}^{k})^T = \textrm{ConvexClustering}( (\boldsymbol{U}^k)^T + (\boldsymbol{P}^k)^T, \boldsymbol{w}_r, \lambda)
+$$
+becomes in `CBASS`
+
+
+```{r,eval=FALSE,echo=TRUE}
+/// Row-fusion iterations
+// U-update
+Eigen::VectorXd solver_input_row = DtMatOpv2(rho * v_old_row - z_old_row, p, n, IndMat_row, EOneIndMat_row, ETwoIndMat_row);
+solver_input_row += P_old_t + u_old_t;
+solver_input_row /= rho;
+Eigen::VectorXd Y_t = premat_solver_row.solve(solver_input_row);
+
+// V-update
+Eigen::VectorXd prox_argument_row = DMatOpv2(Y_t,n, IndMat_row, EOneIndMat_row, ETwoIndMat_row) + (1/rho)*z_old_row;
+if(l1){
+  v_new_row = ProxL1(prox_argument_row, n, (1/rho) * gamma, weights_row);
+} else {
+  v_new_row = ProxL2(prox_argument_row, n, (1/rho) * weights_row * gamma, IndMat_row);
+}
+
+// Z-update
+z_new_row = z_old_row + rho*(DMatOpv2(Y_t, n, IndMat_row, EOneIndMat_row, ETwoIndMat_row) - v_new_row);
+/// END Row-fusion iterations
+```
+
+
+Update (b) 
+
+$$
+\boldsymbol{P}^{k+1} = \boldsymbol{U}^k + \boldsymbol{P}^k - \boldsymbol{Y}^k
+$$
+
+becomes
+
+```{r,eval=FALSE,echo=TRUE}
+Eigen::VectorXd Y = restride(Y_t, n);
+P_new = u_old + P_old - Y;
+```
+
+Update (c) 
+
+$$
+\boldsymbol{U}^{k+1} = \textrm{ConvexClustering}( \boldsymbol{Y}^{k} + \boldsymbol{Q}^{k},\boldsymbol{w}_c,\lambda)
+$$
+
+becomes
+
+```{r,eval=FALSE,echo=TRUE}
+/// Column-fusion iterations
+// U-update
+Eigen::VectorXd solver_input_col = DtMatOpv2(rho * v_old_col - z_old_col, n, p, IndMat_col, EOneIndMat_col, ETwoIndMat_col);
+solver_input_col += Y + Q_old;
+solver_input_col /= rho;
+u_new = premat_solver_col.solve(solver_input_col);
+
+// V-update
+Eigen::VectorXd prox_argument_col = DMatOpv2(u_new, p, IndMat_col, EOneIndMat_col, ETwoIndMat_col) + (1/rho)*z_old_col;
+if(l1){
+  v_new_col = ProxL1(prox_argument_col, p, (1/rho) * gamma, weights_col);
+} else {
+  v_new_col = ProxL2(prox_argument_col, p, (1/rho) * weights_col * gamma, IndMat_col);
+}
+
+// Z-update
+z_new_col = z_old_col + rho*(DMatOpv2(u_new, p, IndMat_col, EOneIndMat_col, ETwoIndMat_col)-v_new_col);
+/// END Column-fusion iterations
+```
+
+And finally, update (d)
+
+$$
+\boldsymbol{Q}^{k+1} = \boldsymbol{Y}^k + \boldsymbol{Q}^k - \boldsymbol{U}^{k+1}
+$$
+
+in `CBASS` is given by
+
+```{r,echo=TRUE,eval=FALSE}
+Q_new = Y + Q_old - u_new;
+```
