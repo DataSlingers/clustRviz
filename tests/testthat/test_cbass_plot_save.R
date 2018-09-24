@@ -69,3 +69,14 @@ test_that("saveviz.CBASS can save a dynamic variable dendrogram as a GIF", {
   expect_equal(sv_res, invisible(temp_file))
   expect_true(file.exists(temp_file))
 })
+
+
+test_that("saveviz.CBASS can save a dynamic heatmap as a GIF", {
+  skip_on_cran()
+
+  cbass_fit <- CBASS(presidential_speech)
+  temp_file <- file.path(tempdir(), "tester.gif")
+  expect_no_warning(sv_res <- saveviz(cbass_fit, file.name = temp_file, type = "heatmap", image.type = "dynamic"))
+  expect_equal(sv_res, invisible(temp_file))
+  expect_true(file.exists(temp_file))
+})

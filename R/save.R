@@ -37,7 +37,7 @@ saveviz.CARP <- function(x,
                          dend.labels.cex = .6,
                          percent,
                          k,
-                         percent.seq = seq(from = .05, to = 1, by = .05),
+                         percent.seq = seq(from = 0, to = 1, by = .05),
                          width = 8,
                          height = 5,
                          units = c("in", "cm", "mm", "px"),
@@ -187,14 +187,9 @@ saveviz.CARP <- function(x,
 #' @param width The width of the output, given in \code{unit}s
 #' @param height The height of the output, given in \code{unit}s
 #' @param units The unit in which \code{width} and \code{height} are specified
-#' @importFrom stats as.dendrogram
-#' @importFrom ggplot2 ggplot aes geom_path geom_point geom_text guides theme
-#' @importFrom ggplot2 element_text xlab ylab scale_color_manual
-#' @importFrom ggrepel geom_text_repel
-#' @importFrom purrr map_dfr
-#' @importFrom dplyr tibble filter select distinct rename mutate left_join select_ %>%
+#' @importFrom stats quantile
 #' @importFrom tools file_ext file_path_sans_ext
-#' @importFrom grDevices adjustcolor png colorRampPalette dev.off dev.cur dev.set
+#' @importFrom grDevices adjustcolor colorRampPalette dev.off dev.cur dev.set
 #' @importFrom animation ani.options saveGIF
 #' @importFrom RColorBrewer brewer.pal
 #' @rdname plot_cbass
@@ -210,27 +205,11 @@ saveviz.CBASS <- function(x,
                           percent,
                           k.obs,
                           k.var,
-                          percent.seq = seq(from = .05, to = 1, by = .05),
+                          percent.seq = seq(from = 0, to = 1, by = .05),
                           width = 8,
                           height = 5,
                           units = c("in", "cm", "mm", "px"),
                           ...) {
-
-  Iter <- NULL
-  Obs <- NULL
-  V1 <- NULL
-  V2 <- NULL
-  ObsLabel <- NULL
-  LambdaPercent <- NULL
-  PlotIdx <- NULL
-  FirstV1 <- NULL
-  FirstV2 <- NULL
-  FirstObsLabel <- NULL
-  NCluster <- NULL
-  Lambda <- NULL
-  NObsCl <- NULL
-  NVarCl <- NULL
-  Percent <- NULL
 
   type       <- match.arg(type)
   image.type <- match.arg(image.type)
@@ -287,84 +266,31 @@ saveviz.CBASS <- function(x,
   switch(
     type,
     heatmap = {
-      ### Dynamic Heatmap
-      if (x$X.center.global) {
-        X.heat <- x$X
-        X.heat <- X.heat - mean(X.heat)
-        X.heat <- t(X.heat)
-        X <- x$X
-        X <- X - mean(X)
-        X <- t(X)
-      } else {
-        X.heat <- t(x$X)
-        X <- t(x$X)
-      }
-      colnames(X.heat) <- x$obs.labels
-      rownames(X.heat) <- x$var.labels
-      x$cbass.sol.path$lambda.path %>% as.vector() -> lam.seq
-      lam.prop.seq <- lam.seq / max(lam.seq)
-      nbreaks <- 50
+      ## Calculate breaks and colors on the raw data so that they are consitent
+      ## across frames. (If we use cbass_heatmap_plot's internal fitting, it will
+      ## only look at the gradient for a single frame.)
+      nbreaks     <- 50
       quant.probs <- seq(0, 1, length.out = nbreaks)
-      breaks <- unique(stats::quantile(X[TRUE], probs = quant.probs))
-      nbreaks <- length(breaks)
-      heatcols <- grDevices::colorRampPalette(c("blue", "yellow"))(nbreaks - 1)
-      my.cols <- grDevices::adjustcolor(c("black", "grey"), alpha.f = .3)
+      breaks      <- unique(quantile(x$X[TRUE], probs = quant.probs))
+      nbreaks     <- length(breaks)
+      heatmap_col <- colorRampPalette(c("blue", "yellow"))(nbreaks - 1)
 
       animation::saveGIF({
-        for (seq.idx in seq_along(percent.seq)) {
-          percent.loop <- percent.seq[seq.idx]
-          plt.iter <- which.min(abs(percent.loop - lam.prop.seq))
-          # find lambda at iter
-          cur.lam <- x$cbass.sol.path$lambda.path[plt.iter]
-          # find lambda closest in column path
-          cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
-          # find clustering solution in column path
-          cur.col.clust.assignment <- x$cbass.cluster.path.obs$clust.path[[cur.col.lam.ind]]$membership
-          cur.col.clust.labels <- unique(cur.col.clust.assignment)
-          cur.col.nclust <- length(cur.col.clust.labels)
-          # find lambda closest in row path
-          cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.var$lambda.path.inter - cur.lam))
-          # find clustering solution in row path
-          cur.row.clust.assignment <- x$cbass.cluster.path.var$clust.path[[cur.row.lam.ind]]$membership
-          cur.row.clust.labels <- unique(cur.row.clust.assignment)
-          cur.row.nclust <- length(cur.row.clust.labels)
-          for (col.label.ind in seq_along(cur.col.clust.labels)) {
-            cur.col.label <- cur.col.clust.labels[col.label.ind]
-            col.inds <- which(cur.col.clust.assignment == cur.col.label)
-            for (row.label.ind in seq_along(cur.row.clust.labels)) {
-              cur.row.label <- cur.row.clust.labels[row.label.ind]
-              row.inds <- which(cur.row.clust.assignment == cur.row.label)
-              mean.value <- mean(X[row.inds, col.inds])
-              X.heat[row.inds, col.inds] <- mean.value
-            }
-          }
-          my.heatmap.2(
-            x = X.heat,
-            scale = "none",
-            Colv = stats::as.dendrogram(x$cbass.dend.obs),
-            Rowv = stats::as.dendrogram(x$cbass.dend.var),
-            trace = "none",
-            density.info = "none",
-            key = FALSE,
-            breaks = breaks,
-            col = heatcols,
-            symkey = F,
-            Row.hclust = x$cbass.dend.var %>% stats::as.hclust(),
-            Col.hclust = x$cbass.dend.obs %>% stats::as.hclust(),
-            k.col = cur.col.nclust,
-            k.row = cur.row.nclust,
-            my.col.vec = my.cols,
-            cexRow = heatrow.label.cex,
-            cexCol = heatcol.label.cex,
-            margins = c(10, 10)
-          )
-          par(mar = c(14, 7, 2, 1))
+        for (pct in percent.seq) {
+          cbass_heatmap_plot(x,
+                             percent = pct,
+                             heatrow.label.cex = heatrow.label.cex,
+                             heatcol.label.cex = heatcol.label.cex,
+                             ...,
+                             breaks = breaks,
+                             heatmap_col = heatmap_col)
         }
       }, movie.name = file.name,
-         img.name = "heatmap",
+         img.name = "cbass_heatmap",
          ani.width  = convert_units(width, from = units, to = "px"),
          ani.height = convert_units(height, from = units, to = "px"),
          clean = TRUE)
+      invisible(file.name)
     },
     obs.dendrogram = {
       animation::saveGIF({
