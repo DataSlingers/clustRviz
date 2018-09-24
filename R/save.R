@@ -6,13 +6,14 @@ saveviz <- function(x, ...) {
 
 #' @param file.name The name of the output file. The type of resulting image
 #'                  is determined from the extension.
-#' @param image.type The type of image output. If \code{image.type == "static"},
-#'                   a fixed visualization of a single solution, with the level
-#'                   of regularization being determined by \code{percent} and
-#'                   \code{k}. If \code{image.type == "dynamic"}, an animated
-#'                   visualization which varies along the solution path.
+#' @param dynamic Should the resulting animation be dynamic (animated) or not?
+#'                If \code{TRUE}, a dynamic visualization which varies along the
+#'                \code{CARP} solution path at a grid given by \code{percent.seq}
+#'                is produced (as a \code{GIF}). If \code{FALSE}, a fixed visualization
+#'                at a single solution (determined by either \code{percent} or \code{k}
+#'                if supplied) is produced.
 #' @param percent.seq A grid of values of \code{percent} along which to generate
-#'                    dynamic visualizations (if \code{image.type == "dynamic"})
+#'                    dynamic visualizations (if \code{dynamic == TRUE})
 #' @param width The width of the output, given in \code{unit}s
 #' @param height The height of the output, given in \code{unit}s
 #' @param units The unit in which \code{width} and \code{height} are specified
@@ -31,7 +32,7 @@ saveviz <- function(x, ...) {
 saveviz.CARP <- function(x,
                          file.name,
                          type = c("dendrogram", "path"),
-                         image.type = c("dynamic", "static"),
+                         dynamic = TRUE,
                          axis = c("PC1", "PC2"),
                          dend.branch.width = 2,
                          dend.labels.cex = .6,
@@ -55,13 +56,16 @@ saveviz.CARP <- function(x,
   NCluster <- NULL
 
   type       <- match.arg(type)
-  image.type <- match.arg(image.type)
+
+  if (!is_logical_scalar(dynamic)) {
+    crv_error(sQuote("dynamic"), " must be either TRUE or FALSE.")
+  }
 
   if (!all(vapply(percent.seq, is_percent_scalar, TRUE))) {
     crv_error("All elements of ", sQuote("percent.seq"), " must be between 0 and 1.")
   }
 
-  if(image.type == "static"){
+  if (!dynamic) {
     dev_cur <- dev.cur()
     on.exit(dev.set(dev_cur))
     switch(type,
@@ -177,13 +181,14 @@ saveviz.CARP <- function(x,
 
 #' @param file.name The name of the output file. The type of resulting image
 #'                  is determined from the extension.
-#' @param image.type The type of image output. If \code{image.type == "static"},
-#'                   a fixed visualization of a single solution, with the level
-#'                   of regularization being determined by \code{percent} and
-#'                   \code{k}. If \code{image.type == "dynamic"}, an animated
-#'                   visualization which varies along the solution path.
+#' @param dynamic Should the resulting animation be dynamic (animated) or not?
+#'                If \code{TRUE}, a dynamic visualization which varies along the
+#'                \code{CARP} solution path at a grid given by \code{percent.seq}
+#'                is produced (as a \code{GIF}). If \code{FALSE}, a fixed visualization
+#'                at a single solution (determined by \code{percent}, \code{k.obs} or
+#'                \code{k.var} if supplied) is produced.
 #' @param percent.seq A grid of values of \code{percent} along which to generate
-#'                    dynamic visualizations (if \code{image.type == "dynamic"})
+#'                    dynamic visualizations (if \code{dynamic == TRUE})
 #' @param width The width of the output, given in \code{unit}s
 #' @param height The height of the output, given in \code{unit}s
 #' @param units The unit in which \code{width} and \code{height} are specified
@@ -197,7 +202,7 @@ saveviz.CARP <- function(x,
 saveviz.CBASS <- function(x,
                           file.name,
                           type = c("heatmap", "obs.dendrogram", "var.dendrogram"),
-                          image.type = c("dynamic", "static"),
+                          dynamic = TRUE,
                           dend.branch.width = 2,
                           dend.labels.cex = .6,
                           heatrow.label.cex = 1.5,
@@ -212,13 +217,16 @@ saveviz.CBASS <- function(x,
                           ...) {
 
   type       <- match.arg(type)
-  image.type <- match.arg(image.type)
+
+  if (!is_logical_scalar(dynamic)) {
+    crv_error(sQuote("dynamic"), " must be either TRUE or FALSE.")
+  }
 
   if (!all(vapply(percent.seq, is_percent_scalar, TRUE))) {
     crv_error("All elements of ", sQuote("percent.seq"), " must be between 0 and 1.")
   }
 
-  if(image.type == "static"){
+  if (!dynamic) {
     dev_cur <- dev.cur()
     on.exit(dev.set(dev_cur))
     switch(type,

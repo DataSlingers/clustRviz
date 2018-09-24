@@ -6,14 +6,14 @@ test_that("saveviz.CARP can save a dynamic path", {
   skip("Need to rework dynamic visualizations")
 
   carp_fit <- CARP(presidential_speech)
-  expect_no_error(saveviz(carp_fit, file.name = tempfile(), plot.type = "path", image.type = "dynamic"))
+  expect_no_error(saveviz(carp_fit, file.name = tempfile(), plot.type = "path", dynamic = TRUE))
 })
 
 test_that("saveviz.CARP can save a dynamic dendrogram", {
   skip("Need to rework dynamic visualizations")
 
   carp_fit <- CARP(presidential_speech)
-  expect_no_error(saveviz(carp_fit, file.name = tempfile(), plot.type = "dendrogram", image.type = "dynamic"))
+  expect_no_error(saveviz(carp_fit, file.name = tempfile(), plot.type = "dendrogram", dynamic = TRUE))
 })
 
 
@@ -22,7 +22,7 @@ test_that("saveviz.CARP can save a static path as a PNG", {
 
   carp_fit <- CARP(presidential_speech)
   temp_file <- file.path(tempdir(), "tester.png")
-  expect_equal(invisible(temp_file), saveviz(carp_fit, file.name = temp_file, type = "path", image.type = "static"))
+  expect_equal(invisible(temp_file), saveviz(carp_fit, file.name = temp_file, type = "path", dynamic = FALSE))
   expect_true(file.exists(temp_file))
 })
 
@@ -31,7 +31,7 @@ test_that("saveviz.CARP can save a static dendrogram as a JPG", {
 
   carp_fit <- CARP(presidential_speech)
   temp_file <- file.path(tempdir(), "tester.jpg")
-  expect_equal(invisible(temp_file), saveviz(carp_fit, file.name = temp_file, type = "dendrogram", image.type = "static"))
+  expect_equal(invisible(temp_file), saveviz(carp_fit, file.name = temp_file, type = "dendrogram", dynamic = FALSE))
   expect_true(file.exists(temp_file))
 })
 
@@ -40,7 +40,7 @@ test_that("saveviz.CARP can save a dynamic dendrogram as a GIF", {
 
   carp_fit <- CARP(presidential_speech)
   temp_file <- file.path(tempdir(), "tester.gif")
-  expect_no_warning(sv_res <- saveviz(carp_fit, file.name = temp_file, type = "dendrogram", image.type = "dynamic"))
+  expect_no_warning(sv_res <- saveviz(carp_fit, file.name = temp_file, type = "dendrogram", dynamic = TRUE))
   expect_equal(sv_res, invisible(temp_file))
   expect_true(file.exists(temp_file))
 })
