@@ -40,6 +40,12 @@ after_success <- function(){
   devtools::install()
   rmarkdown::render("README.Rmd")
   pkgdown::build_site()
+
+  ## Copy GIF to a place where pkgdown site will find it
+  dir.create("docs/inst", recursive = TRUE)
+  file.copy("inst/path_dyn.gif", "docs/inst/path_dyn.gif")
+
+  ## Clean up build artifacts
   unlink(Sys.glob("clustRviz.Rcheck"), recursive=TRUE, force=TRUE)
   unlink(Sys.glob("clustRviz*.tar.gz"), recursive=TRUE, force=TRUE)
   file.rename(".gitignore.deploy", ".gitignore")

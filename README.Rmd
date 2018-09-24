@@ -12,8 +12,8 @@ knitr::opts_chunk$set(
 )
 ```
 
-[![TravisCI Build Status](https://travis-ci.com/DataSlingers/clustRviz.svg?branch=develop)](https://travis-ci.com/DataSlingers/clustRviz) [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/DataSlingers/clustRviz?branch=develop&svg=true)](https://ci.appveyor.com/project/DataSlingers/clustRviz) [![codecov Coverage
-Status](https://codecov.io/gh/DataSlingers/clustRviz/branch/develop/graph/badge.svg)](https://codecov.io/gh/DataSlingers/clustRviz?branch=develop)
+[![TravisCI Build Status](https://travis-ci.com/DataSlingers/clustRviz.svg?branch=develop)](https://travis-ci.com/DataSlingers/clustRviz) [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/DataSlingers/clustRviz?branch=develop&svg=true)](https://ci.appveyor.com/project/michaelweylandt/clustRviz) [![codecov Coverage
+Status](https://codecov.io/gh/DataSlingers/clustRviz/branch/develop/graph/badge.svg)](https://codecov.io/gh/DataSlingers/clustRviz/branch/develop)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/clustRviz)](https://cran.r-project.org/package=clustRviz)
 [![Project Status: Active – The project has reached a stable, usable
@@ -54,9 +54,9 @@ if (!dir.exists("inst")) {
 }
 
 saveviz(carp_fit, 
-        file.name  = "inst/path_dyn.gif", 
+        file.name  = "inst/path_dyn.gif",
+        type       = "path",
         image.type = "dynamic")
 ```
 
 <img src="./inst/path_dyn.gif" width="70%">
-
