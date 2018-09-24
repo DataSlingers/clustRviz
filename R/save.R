@@ -182,7 +182,7 @@ saveviz.CARP <- function(x,
           par(mar = c(14, 7, 2, 1))
           my.rect.hclust(x$carp.dend, k = ncl, border = 2, my.col.vec = my.cols, lwd = 3)
         }
-      }, movie.name = file.name, img.name = "dend", ani.width = width, height = dynamic.height, clean = TRUE)
+      }, movie.name = file.name, img.name = "dend", ani.width = width, height = height, clean = TRUE)
     }
   )
 }

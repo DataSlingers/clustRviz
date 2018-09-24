@@ -382,7 +382,7 @@ cbass_path_plot <- function(x,
   }
 
   g + geom_point(data = plot_frame_init, color="black", size = 2) +
-    geom_text_repel(data = plot_frame_init, mapping = aes(label = ObsLabel), size = 3) +
+    geom_text_repel(data = plot_frame_init, mapping = aes_string(label = "ObsLabel"), size = 3) +
     guides(color = FALSE, size = FALSE) +
     theme(axis.title = element_text(size = 15),
           axis.text  = element_text(size = 10)) +
