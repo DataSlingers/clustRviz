@@ -4,8 +4,11 @@
 #' clustering, including: \itemize{
 #' \item A dendrogram, illustrating the nested cluster hierarchy inferred from
 #'       the convex clustering solution path (\code{type = "dendrogram"});
-#' \item A path plot, showing the coalescence of the estimated cluster centroids
-#'       as the regularization parameter is increased (\code{type = "path"}); and
+#' \item A static path plot, showing the coalescence of the estimated cluster centroids
+#'       at a fixed value of the regularization parameter is increased (\code{type = "path"});
+#' \item A \code{\link[gganimate]{gganimate}} plot, showing the coalescence of the
+#'       estimated cluster centroids as the regularization parameter is increased
+#'       (\code{type = "dynamic_path"}); and
 #' \item A \code{\link[shiny]{shiny}} app, which can display the clustering solutions
 #'       as a "movie" or allow for interactive exploration (\code{type = "interactive"}).
 #' }
@@ -38,6 +41,8 @@
 #'   \item if \code{type = "path"}, an object of class \code{\link[ggplot2]{ggplot}}
 #'         which can be plotted directly (by invoking its print method) or modified
 #'         further by the user is returned;
+#'   \item if \code{type = "dynamic_path"}, an object of class \code{\link[gganimate:gganimate]{gganim}}
+#'         is returned, and many be further manipulated by the user or plotted directly;
 #'   \item if \code{type = "interactive"}, a \code{\link[shiny]{shiny}} app which can be activated
 #'         by invoking its print method.
 #' } \code{saveviz.CARP} always returns \code{file.name} invisibly.
@@ -63,12 +68,13 @@
 #' }
 plot.CARP <- function(x,
                       ...,
-                      type = c("dendrogram", "path", "interactive"),
+                      type = c("dendrogram", "path", "dynamic_path", "interactive"),
                       axis = c("PC1", "PC2"),
                       dend.branch.width = 2,
                       dend.labels.cex = .6,
                       percent,
                       k,
+                      percent.seq = seq(0, 1, length.out = 21),
                       max.nclust = 9,
                       min.nclust = 1) {
 
@@ -107,6 +113,11 @@ plot.CARP <- function(x,
                      percent = percent,
                      k = k,
                      ...)
+    },
+    dynamic_path = {
+      carp_dynamic_path_plot(x,
+                             axis = axis,
+                             percent.seq = percent.seq)
     },
     interactive = {
       dots <- list(...)
@@ -566,4 +577,49 @@ carp_dendro_plot <- function(x,
   }
 
   invisible(x)
+}
+
+
+#' @noRd
+#' @importFrom rlang .data
+#' @importFrom dplyr select filter rename left_join mutate bind_rows
+#' @importFrom ggplot2 ggplot aes_string geom_path geom_point geom_text guides
+#' @importFrom ggplot2 theme element_text xlab ylab
+#' @importFrom gganimate transition_manual
+carp_dynamic_path_plot <- function(x, axis, percent.seq){
+  ## TODO - Combine this and carp_path_plot as much as possible
+
+  plot_cols <- c(axis, "Iter", "Obs", "ObsLabel", "Lambda", "LambdaPercent")
+
+  if (any(plot_cols %not.in% colnames(x$carp.cluster.path.vis))) {
+    missing_col <- plot_cols[which(plot_cols %not.in% colnames(x$carp.cluster.path.vis))][1]
+    crv_error(sQuote(missing_col), " is not available for plotting.")
+  }
+
+  plot_frame_full <- x$carp.cluster.path.vis %>% select(plot_cols) %>%
+                                                 filter(.data$Iter > x$burn.in)
+  names(plot_frame_full)[1:2] <- c("V1", "V2")
+
+  plot_frame_first <- plot_frame_full %>% filter(.data$Iter == min(.data$Iter)) %>%
+                                          select(.data$Obs, .data$V1, .data$V2, .data$ObsLabel) %>%
+                                          rename(FirstV1 = .data$V1,
+                                                 FirstV2 = .data$V2,
+                                                 FirstObsLabel = .data$ObsLabel)
+
+  plot_frame_animation <- bind_rows(lapply(percent.seq, function(pct){
+    ## Make a list of things to plot at each "percent" and then combine
+    plot_frame_full %>% filter(.data$LambdaPercent <= pct) %>%
+                        mutate(percent = pct)
+  }))
+
+  ggplot(plot_frame_animation, aes_string(x = "V1", y = "V2", group = "Obs")) +
+    geom_path(linejoin = "round", color = "red", size = 1) +
+    geom_point(data = plot_frame_first,
+               aes_string(x = "FirstV1", y = "FirstV2"), color = "black", size = I(4)) +
+    geom_text(data = plot_frame_first,
+              aes_string(x = "FirstV1", y = "FirstV2", label = "FirstObsLabel"), size = I(6)) +
+    guides(color = FALSE, size = FALSE) +
+    theme(axis.title = element_text(size = 25), axis.text = element_text(size = 20)) +
+    xlab(axis[1]) + ylab(axis[2]) +
+    transition_manual(.data$percent)
 }

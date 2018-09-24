@@ -24,7 +24,7 @@ saveviz <- function(x, ...) {
 #' @importFrom dplyr filter select distinct rename mutate left_join select %>%
 #' @importFrom tools file_ext file_path_sans_ext
 #' @importFrom grDevices adjustcolor png dev.off dev.cur dev.set
-#' @importFrom gganimate transition_manual anim_save
+#' @importFrom gganimate transition_manual anim_save animate
 #' @importFrom animation ani.options saveGIF
 #' @importFrom RColorBrewer brewer.pal
 #' @rdname plot_carp
@@ -43,17 +43,6 @@ saveviz.CARP <- function(x,
                          height = 5,
                          units = c("in", "cm", "mm", "px"),
                          ...) {
-  Iter <- NULL
-  Obs <- NULL
-  V1 <- NULL
-  V2 <- NULL
-  ObsLabel <- NULL
-  LambdaPercent <- NULL
-  PlotIdx <- NULL
-  FirstV1 <- NULL
-  FirstV2 <- NULL
-  FirstObsLabel <- NULL
-  NCluster <- NULL
 
   type       <- match.arg(type)
 
@@ -95,70 +84,13 @@ saveviz.CARP <- function(x,
   switch(
     type,
     path = {
-      plot.cols <- c(
-        axis,
-        "Iter",
-        "Obs",
-        "Cluster",
-        "Lambda",
-        "ObsLabel",
-        "NCluster",
-        "LambdaPercent"
-      )
-      plot.frame <- x$carp.cluster.path.vis[, plot.cols]
-      names(plot.frame)[1:2] <- c("V1", "V2")
-      plot.frame %>%
-        filter(Iter == 1) %>%
-        select(Obs, V1, V2, ObsLabel) %>%
-        rename(
-          FirstV1 = V1,
-          FirstV2 = V2,
-          FirstObsLabel = ObsLabel
-        ) -> plot.frame.first.iter
-      plot.frame %>%
-        left_join(
-          plot.frame.first.iter,
-          by = c("Obs")
-        ) -> plot.frame
-      plot.frame.list <- list()
-
-      for (seq.idx in seq_along(percent.seq)) {
-        percent <- percent.seq[seq.idx]
-        plot.frame %>%
-          dplyr::filter(LambdaPercent <= percent) %>%
-          dplyr::filter(Iter > x$burn.in) %>%
-          dplyr::mutate(
-            PlotIdx = seq.idx
-          ) -> plot.frame.list[[seq.idx]]
-      }
-
-      dplyr::bind_rows(plot.frame.list) -> plot.frame.ani
-      plot.frame.ani %>%
-        ggplot2::ggplot(ggplot2::aes(x = V1, y = V2, group = Obs)) +
-        gganimate::transition_manual(PlotIdx) +
-        ggplot2::geom_path(
-          ggplot2::aes(x = V1, y = V2),
-          linejoin = "round",
-          color = "red",
-          size = 1
-        ) +
-        ggplot2::geom_point(
-          ggplot2::aes(x = FirstV1, y = FirstV2),
-          color = "black",
-          size = I(4)
-        ) +
-        ggplot2::geom_text(
-          ggplot2::aes(x = FirstV1, y = FirstV2, label = FirstObsLabel),
-          size = I(6)
-        ) +
-        ggplot2::guides(color = FALSE, size = FALSE) +
-        ggplot2::theme(axis.title = ggplot2::element_text(size = 25)) +
-        ggplot2::theme(axis.text = ggplot2::element_text(size = 20)) +
-        ggplot2::xlab(axis[1]) +
-        ggplot2::ylab(axis[2]) -> p
+      p <- carp_dynamic_path_plot(x,
+                                  axis = axis,
+                                  percent.seq = percent.seq)
       animation::ani.options(ani.width  = convert_units(width,  from = units, to = "px"),
                              ani.height = convert_units(height, from = units, to = "px"))
-      gganimate::anim_save(filename = file.name,animation = p)
+      gganimate::anim_save(filename = file.name, animation = animate(p))
+      invisible(file.name)
     },
     dendrogram = {
       animation::saveGIF({
