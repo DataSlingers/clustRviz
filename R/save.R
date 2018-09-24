@@ -152,7 +152,8 @@ saveviz.CARP <- function(x,
         ggplot2::theme(axis.text = ggplot2::element_text(size = 20)) +
         ggplot2::xlab(axis[1]) +
         ggplot2::ylab(axis[2]) -> p
-      animation::ani.options(ani.width = width, ani.height = height)
+      animation::ani.options(ani.width  = convert_units(width,  from = units, to = "px"),
+                             ani.height = convert_units(height, from = units, to = "px"))
       gganimate::gganimate(p, file.name)
     },
     dendrogram = {
@@ -182,7 +183,11 @@ saveviz.CARP <- function(x,
           par(mar = c(14, 7, 2, 1))
           my.rect.hclust(x$carp.dend, k = ncl, border = 2, my.col.vec = my.cols, lwd = 3)
         }
-      }, movie.name = file.name, img.name = "dend", ani.width = width, height = height, clean = TRUE)
+      }, movie.name = file.name,
+         img.name = "dend",
+         ani.width  = convert_units(width, from = units, to = "px"),
+         ani.height = convert_units(height, from = units, to = "px"),
+         clean = TRUE)
     }
   )
 }
@@ -375,7 +380,11 @@ saveviz.CBASS <- function(x,
           )
           par(mar = c(14, 7, 2, 1))
         }
-      }, movie.name = file.name, img.name = "heatmap", ani.width = width, ani.height = height, clean = TRUE)
+      }, movie.name = file.name,
+         img.name = "heatmap",
+         ani.width  = convert_units(width, from = units, to = "px"),
+         ani.height = convert_units(height, from = units, to = "px"),
+         clean = TRUE)
     },
     obs.dendrogram = {
       ### Dynamic Obs Dend
@@ -431,7 +440,11 @@ saveviz.CBASS <- function(x,
           par(mar = c(14, 7, 2, 1))
           my.rect.hclust(x$cbass.dend.obs, k = ncl, border = 2, my.col.vec = my.cols, lwd = 3)
         }
-      }, movie.name = file.name, img.name = "obsdend", ani.width = width, ani.height = height, clean = TRUE)
+      }, movie.name = file.name,
+         img.name = "obsdend",
+         ani.width  = convert_units(width, from = units, to = "px"),
+         ani.height = convert_units(height, from = units, to = "px"),
+         clean = TRUE)
       ### END Dynamic Obs Dend
     },
     var.dendrogram = {
@@ -488,7 +501,11 @@ saveviz.CBASS <- function(x,
           par(mar = c(14, 7, 2, 1))
           my.rect.hclust(x$cbass.dend.var, k = ncl, border = 2, my.col.vec = my.cols, lwd = 3)
         }
-      }, movie.name = file.name, img.name = "vardend", ani.width = width, ani.height = height, clean = TRUE)
+      }, movie.name = file.name,
+         img.name = "vardend",
+         ani.width  = convert_units(width, from = units, to = "px"),
+         ani.height = convert_units(height, from = units, to = "px"),
+         clean = TRUE)
       ### END Dynamic Var Dend
     }
   )
