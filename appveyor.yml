@@ -43,3 +43,10 @@ artifacts:
 
   - path: '\*_*.zip'
     name: Bits
+
+# Only build our master branch (with generated files)
+branches:
+  only:
+    - master
+
+skip_branch_with_pr: true
