@@ -81,6 +81,9 @@ saveviz.CARP <- function(x,
     return(invisible(file.name))
   }
 
+  ## From here, we can safely assume we are making a dynamic plot (i.e., a GIF)
+  file.name <- ensure_gif(file.name)
+
   switch(
     type,
     path = {
@@ -111,14 +114,6 @@ saveviz.CARP <- function(x,
         ) -> plot.frame
       plot.frame.list <- list()
 
-      cur.file.ext <- tools::file_ext(file.name)
-      if (cur.file.ext != "gif") {
-        file.name <- paste(
-          tools::file_path_sans_ext(file.name),
-          "gif",
-          sep = "."
-        )
-      }
       for (seq.idx in seq_along(percent.seq)) {
         percent <- percent.seq[seq.idx]
         plot.frame %>%
@@ -158,14 +153,6 @@ saveviz.CARP <- function(x,
       gganimate::anim_save(filename = file.name,animation = p)
     },
     dendrogram = {
-      cur.file.ext <- tools::file_ext(file.name)
-      if (cur.file.ext != "gif") {
-        file.name <- paste(
-          tools::file_path_sans_ext(file.name),
-          "gif",
-          sep = "."
-        )
-      }
       animation::saveGIF({
         for (seq.idx in seq_along(percent.seq)) {
           percent <- percent.seq[seq.idx]
@@ -295,18 +282,13 @@ saveviz.CBASS <- function(x,
     return(invisible(file.name))
   }
 
+  ## From here, we can safely assume we are making a dynamic plot (i.e., a GIF)
+  file.name <- ensure_gif(file.name)
+
   switch(
     type,
     heatmap = {
       ### Dynamic Heatmap
-      cur.file.ext <- tools::file_ext(file.name)
-      if (cur.file.ext != "gif") {
-        file.name <- paste(
-          tools::file_path_sans_ext(file.name),
-          "gif",
-          sep = "."
-        )
-      }
       if (x$X.center.global) {
         X.heat <- x$X
         X.heat <- X.heat - mean(X.heat)
@@ -387,14 +369,6 @@ saveviz.CBASS <- function(x,
     },
     obs.dendrogram = {
       ### Dynamic Obs Dend
-      cur.file.ext <- tools::file_ext(file.name)
-      if (cur.file.ext != "gif") {
-        file.name <- paste(
-          tools::file_path_sans_ext(file.name),
-          "gif",
-          sep = "."
-        )
-      }
       lam.vec <- x$cbass.sol.path$lambda.path %>% as.vector()
       max.lam <- max(lam.vec)
       lam.vec %>%
@@ -448,14 +422,6 @@ saveviz.CBASS <- function(x,
     },
     var.dendrogram = {
       ### Dynamic Var Dend
-      cur.file.ext <- tools::file_ext(file.name)
-      if (cur.file.ext != "gif") {
-        file.name <- paste(
-          tools::file_path_sans_ext(file.name),
-          "gif",
-          sep = "."
-        )
-      }
       lam.vec <- x$cbass.sol.path$lambda.path %>% as.vector()
       max.lam <- max(lam.vec)
       lam.vec %>%
