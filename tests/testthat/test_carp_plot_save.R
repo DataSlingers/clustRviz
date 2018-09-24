@@ -34,3 +34,13 @@ test_that("saveviz.CARP can save a static dendrogram as a JPG", {
   expect_equal(invisible(temp_file), saveviz(carp_fit, file.name = temp_file, type = "dendrogram", image.type = "static"))
   expect_true(file.exists(temp_file))
 })
+
+test_that("saveviz.CARP can save a dynamic dendrogram as a GIF", {
+  skip_on_cran()
+
+  carp_fit <- CARP(presidential_speech)
+  temp_file <- file.path(tempdir(), "tester.gif")
+  expect_no_warning(sv_res <- saveviz(carp_fit, file.name = temp_file, type = "dendrogram", image.type = "dynamic"))
+  expect_equal(sv_res, invisible(temp_file))
+  expect_true(file.exists(temp_file))
+})

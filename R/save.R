@@ -57,6 +57,10 @@ saveviz.CARP <- function(x,
   type       <- match.arg(type)
   image.type <- match.arg(image.type)
 
+  if (!all(vapply(percent.seq, is_percent_scalar, TRUE))) {
+    crv_error("All elements of ", sQuote("percent.seq"), " must be between 0 and 1.")
+  }
+
   if(image.type == "static"){
     dev_cur <- dev.cur()
     on.exit(dev.set(dev_cur))
@@ -154,28 +158,19 @@ saveviz.CARP <- function(x,
     },
     dendrogram = {
       animation::saveGIF({
-        for (seq.idx in seq_along(percent.seq)) {
-          percent <- percent.seq[seq.idx]
-          x$carp.cluster.path.vis %>%
-            dplyr::filter(LambdaPercent <= percent) %>%
-            dplyr::select(NCluster) %>%
-            unlist() %>%
-            unname() %>%
-            min() -> ncl
-          x$carp.dend %>%
-            stats::as.dendrogram() %>%
-            dendextend::set("branches_lwd", dend.branch.width) %>%
-            dendextend::set("labels_cex", dend.labels.cex) %>%
-            plot(ylab = "Amount of Regularization", cex.lab = 1.5)
-          my.cols <- grDevices::adjustcolor(c("grey", "black"), alpha.f = .2)
-          par(mar = c(14, 7, 2, 1))
-          my.rect.hclust(x$carp.dend, k = ncl, border = 2, my.col.vec = my.cols, lwd = 3)
+        for (pct in percent.seq) {
+          carp_dendro_plot(x,
+                           percent = pct,
+                           dend.branch.width = dend.branch.width,
+                           dend.labels.cex = dend.labels.cex,
+                           ...)
         }
       }, movie.name = file.name,
-         img.name = "dend",
+         img.name = "carp_dendrogram",
          ani.width  = convert_units(width, from = units, to = "px"),
          ani.height = convert_units(height, from = units, to = "px"),
          clean = TRUE)
+      invisible(file.name)
     }
   )
 }
@@ -239,6 +234,10 @@ saveviz.CBASS <- function(x,
 
   type       <- match.arg(type)
   image.type <- match.arg(image.type)
+
+  if (!all(vapply(percent.seq, is_percent_scalar, TRUE))) {
+    crv_error("All elements of ", sQuote("percent.seq"), " must be between 0 and 1.")
+  }
 
   if(image.type == "static"){
     dev_cur <- dev.cur()
@@ -368,110 +367,38 @@ saveviz.CBASS <- function(x,
          clean = TRUE)
     },
     obs.dendrogram = {
-      ### Dynamic Obs Dend
-      lam.vec <- x$cbass.sol.path$lambda.path %>% as.vector()
-      max.lam <- max(lam.vec)
-      lam.vec %>%
-        purrr::map_dfr(.f = function(cur.lam) {
-          # find lambda closest in column path
-          cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
-          # find clustering solution in column path
-          cur.col.clust.assignment <- x$cbass.cluster.path.obs$clust.path[[cur.col.lam.ind]]$membership
-          cur.col.clust.labels <- unique(cur.col.clust.assignment)
-          cur.col.nclust <- length(cur.col.clust.labels)
-          # find lambda closest in rowumn path
-          cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.var$lambda.path.inter - cur.lam))
-          # find clustering solution in rowumn path
-          cur.row.clust.assignment <- x$cbass.cluster.path.var$clust.path[[cur.row.lam.ind]]$membership
-          cur.row.clust.labels <- unique(cur.row.clust.assignment)
-          cur.row.nclust <- length(cur.row.clust.labels)
-          dplyr::tibble(
-            Lambda = cur.lam,
-            NObsCl = cur.col.nclust,
-            NVarCl = cur.row.nclust
-          )
-        }) %>%
-        dplyr::mutate(
-          Percent = Lambda / max.lam
-        ) -> cut.table
-
       animation::saveGIF({
-        for (seq.idx in seq_along(percent.seq)) {
-          percent <- percent.seq[seq.idx]
-          cut.table %>%
-            dplyr::filter(Percent <= percent) %>%
-            dplyr::select(NObsCl) %>%
-            unlist() %>%
-            unname() %>%
-            min() -> ncl
-          x$cbass.dend.obs %>%
-            stats::as.dendrogram() %>%
-            dendextend::set("branches_lwd", dend.branch.width) %>%
-            dendextend::set("labels_cex", dend.labels.cex) %>%
-            plot(ylab = "Amount of Regularization")
-          my.cols <- grDevices::adjustcolor(c("black", "grey"), alpha.f = .3)
-          par(mar = c(14, 7, 2, 1))
-          my.rect.hclust(x$cbass.dend.obs, k = ncl, border = 2, my.col.vec = my.cols, lwd = 3)
+        for (pct in percent.seq) {
+          cbass_dendro_plot(x,
+                            percent = pct,
+                            dend.branch.width = dend.branch.width,
+                            dend.labels.cex = dend.labels.cex,
+                            type = "obs",
+                            ...)
         }
       }, movie.name = file.name,
-         img.name = "obsdend",
+         img.name = "cbass_observation_dendrogram",
          ani.width  = convert_units(width, from = units, to = "px"),
          ani.height = convert_units(height, from = units, to = "px"),
          clean = TRUE)
-      ### END Dynamic Obs Dend
+      invisible(file.name)
     },
     var.dendrogram = {
-      ### Dynamic Var Dend
-      lam.vec <- x$cbass.sol.path$lambda.path %>% as.vector()
-      max.lam <- max(lam.vec)
-      lam.vec %>%
-        purrr::map_dfr(.f = function(cur.lam) {
-          # find lambda closest in column path
-          cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
-          # find clustering solution in column path
-          cur.col.clust.assignment <- x$cbass.cluster.path.obs$clust.path[[cur.col.lam.ind]]$membership
-          cur.col.clust.labels <- unique(cur.col.clust.assignment)
-          cur.col.nclust <- length(cur.col.clust.labels)
-          # find lambda closest in rowumn path
-          cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.var$lambda.path.inter - cur.lam))
-          # find clustering solution in rowumn path
-          cur.row.clust.assignment <- x$cbass.cluster.path.var$clust.path[[cur.row.lam.ind]]$membership
-          cur.row.clust.labels <- unique(cur.row.clust.assignment)
-          cur.row.nclust <- length(cur.row.clust.labels)
-          dplyr::tibble(
-            Lambda = cur.lam,
-            NObsCl = cur.col.nclust,
-            NVarCl = cur.row.nclust
-          )
-        }) %>%
-        dplyr::mutate(
-          Percent = Lambda / max.lam
-        ) -> cut.table
-
       animation::saveGIF({
-        for (seq.idx in seq_along(percent.seq)) {
-          percent <- percent.seq[seq.idx]
-          cut.table %>%
-            dplyr::filter(Percent <= percent) %>%
-            dplyr::select(NVarCl) %>%
-            unlist() %>%
-            unname() %>%
-            min() -> ncl
-          x$cbass.dend.var %>%
-            stats::as.dendrogram() %>%
-            dendextend::set("branches_lwd", dend.branch.width) %>%
-            dendextend::set("labels_cex", dend.labels.cex) %>%
-            plot(ylab = "Amount of Regularization")
-          my.cols <- grDevices::adjustcolor(c("black", "grey"), alpha.f = .3)
-          par(mar = c(14, 7, 2, 1))
-          my.rect.hclust(x$cbass.dend.var, k = ncl, border = 2, my.col.vec = my.cols, lwd = 3)
+        for (pct in percent.seq) {
+          cbass_dendro_plot(x,
+                            percent = pct,
+                            dend.branch.width = dend.branch.width,
+                            dend.labels.cex = dend.labels.cex,
+                            type = "obs",
+                            ...)
         }
       }, movie.name = file.name,
-         img.name = "vardend",
+         img.name = "cbass_variable_dendrogram",
          ani.width  = convert_units(width, from = units, to = "px"),
          ani.height = convert_units(height, from = units, to = "px"),
          clean = TRUE)
-      ### END Dynamic Var Dend
+      invisible(file.name)
     }
   )
 }

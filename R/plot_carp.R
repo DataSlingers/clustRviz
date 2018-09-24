@@ -541,6 +541,10 @@ carp_dendro_plot <- function(x,
         crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
       }
 
+      if(percent == 0){ ## Don't bother showing boxes if percent is 0 and bail early
+        return(invisible(x))
+      }
+
       k <- x$carp.cluster.path.vis %>% filter(.data$LambdaPercent <= percent) %>%
                                        select(.data$NCluster) %>%
                                        summarize(NCluster = min(.data$NCluster)) %>%

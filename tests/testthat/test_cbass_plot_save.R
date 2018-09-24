@@ -49,3 +49,23 @@ test_that("saveviz.CBASS can save a static variable dendrogram as a PDF", {
   expect_equal(invisible(temp_file), saveviz(cbass_fit, file.name = temp_file, type = "var.dendrogram", image.type = "static"))
   expect_true(file.exists(temp_file))
 })
+
+test_that("saveviz.CBASS can save a dynamic observation dendrogram as a GIF", {
+  skip_on_cran()
+
+  cbass_fit <- CBASS(presidential_speech)
+  temp_file <- file.path(tempdir(), "tester.gif")
+  expect_no_warning(sv_res <- saveviz(cbass_fit, file.name = temp_file, type = "obs.dendrogram", image.type = "dynamic"))
+  expect_equal(sv_res, invisible(temp_file))
+  expect_true(file.exists(temp_file))
+})
+
+test_that("saveviz.CBASS can save a dynamic variable dendrogram as a GIF", {
+  skip_on_cran()
+
+  cbass_fit <- CBASS(presidential_speech)
+  temp_file <- file.path(tempdir(), "tester.gif")
+  expect_no_warning(sv_res <- saveviz(cbass_fit, file.name = temp_file, type = "var.dendrogram", image.type = "dynamic"))
+  expect_equal(sv_res, invisible(temp_file))
+  expect_true(file.exists(temp_file))
+})
