@@ -23,7 +23,7 @@ saveviz <- function(x, ...) {
 #' @importFrom dplyr filter select distinct rename mutate left_join select %>%
 #' @importFrom tools file_ext file_path_sans_ext
 #' @importFrom grDevices adjustcolor png dev.off dev.cur dev.set
-#' @importFrom gganimate gganimate
+#' @importFrom gganimate transition_manual anim_save
 #' @importFrom animation ani.options saveGIF
 #' @importFrom RColorBrewer brewer.pal
 #' @rdname plot_carp
@@ -131,7 +131,8 @@ saveviz.CARP <- function(x,
 
       dplyr::bind_rows(plot.frame.list) -> plot.frame.ani
       plot.frame.ani %>%
-        ggplot2::ggplot(ggplot2::aes(x = V1, y = V2, group = Obs, frame = PlotIdx)) +
+        ggplot2::ggplot(ggplot2::aes(x = V1, y = V2, group = Obs)) +
+        gganimate::transition_manual(PlotIdx) +
         ggplot2::geom_path(
           ggplot2::aes(x = V1, y = V2),
           linejoin = "round",
@@ -154,7 +155,7 @@ saveviz.CARP <- function(x,
         ggplot2::ylab(axis[2]) -> p
       animation::ani.options(ani.width  = convert_units(width,  from = units, to = "px"),
                              ani.height = convert_units(height, from = units, to = "px"))
-      gganimate::gganimate(p, file.name)
+      gganimate::anim_save(filename = file.name,animation = p)
     },
     dendrogram = {
       cur.file.ext <- tools::file_ext(file.name)
@@ -212,7 +213,6 @@ saveviz.CARP <- function(x,
 #' @importFrom dplyr tibble filter select distinct rename mutate left_join select_ %>%
 #' @importFrom tools file_ext file_path_sans_ext
 #' @importFrom grDevices adjustcolor png colorRampPalette dev.off dev.cur dev.set
-#' @importFrom gganimate gganimate
 #' @importFrom animation ani.options saveGIF
 #' @importFrom RColorBrewer brewer.pal
 #' @rdname plot_cbass
