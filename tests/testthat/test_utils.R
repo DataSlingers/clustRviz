@@ -68,3 +68,23 @@ test_that("Unscaling matrix works", {
 
   expect_equal(clustRviz:::unscale_matrix(X_std), X, check.attributes = FALSE)
 })
+
+test_that("Converting plot dimensions works", {
+  set.seed(254)
+  convert_units <- clustRviz:::convert_units
+  x <- rexp(25, 3)
+
+  for (from_unit in c("in", "cm", "mm", "px")) {
+    for (to_unit in c("in", "cm", "mm", "px")) {
+      round_trip <- convert_units(convert_units(x, from = from_unit, to = to_unit),
+                                  from = to_unit,
+                                  to = from_unit)
+      expect_equal(x, round_trip)
+    }
+  }
+
+  expect_equal(10,     convert_units(1, from = "cm", to = "mm"))
+  expect_equal(0.1,    convert_units(1, from = "mm", to = "cm"))
+  expect_equal(2.54,   convert_units(1, from = "in", to = "cm"))
+  expect_equal(1/2.54, convert_units(1, from = "cm", to = "in"))
+})

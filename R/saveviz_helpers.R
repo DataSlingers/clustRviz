@@ -1,5 +1,36 @@
 # Helper functions for saving
 
+#' @noRd
+#' Convert from one set of plotting units to another
+convert_units <- function(units, from = c("in", "cm", "mm", "px"),
+                                 to   = c("in", "cm", "mm", "px"),
+                          dpi = 300){
+  from <- match.arg(from)
+  to   <- match.arg(to)
+
+  switch(from,
+         `in` = switch(to,
+                       `in` = units,
+                        cm  = units * 2.54,
+                        mm  = units * 25.4,
+                        px  = units * dpi),
+         cm   = switch(to,
+                       `in` = units / 2.54,
+                       cm   = units,
+                       mm   = units * 10,
+                       px   = units * dpi / 2.54),
+         mm   = switch(to,
+                       `in` = units / 25.4,
+                       cm   = units / 10,
+                       mm   = units,
+                       px   = units * dpi / 25.4),
+         px   = switch(to,
+                       `in` = units / dpi,
+                       cm   = units / dpi * 2.54,
+                       mm   = units / dpi * 25.4,
+                       px   = units))
+}
+
 #' Load a new graphics device for plotting static base graphics visualizations
 #' @noRd
 #' @param file.name the file name of the graphics device
@@ -14,16 +45,9 @@ crv_new_dev_static <- function(file.name, width, height, units = c("in", "cm", "
 
   units <- match.arg(units)
   ## Convert to inches for consistency
-  if(units == "cm"){
-    width  <- width / 2.54
-    height <- height / 2.54
-  } else if (units == "mm") {
-    width  <- width / 25.4
-    height <- height / 25.4
-  } else if (units == "px") {
-    width  <- width / 300 # Assume default 300 dpi
-    height <- height / 300
-  }
+
+  width  <- convert_units(width,  from = units, to = "in")
+  height <- convert_units(height, from = units, to = "in")
 
   ext <- file_ext(file.name)
 
