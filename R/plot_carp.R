@@ -111,7 +111,7 @@ plot.CARP <- function(x,
     interactive = {
       dots <- list(...)
       if ( length(dots) != 0 ){
-        stop("Unknown arguments passed to ", sQuote("plot.CARP."))
+        crv_error("Unknown arguments passed to ", sQuote("plot.CARP."))
       }
 
       shiny::shinyApp(
@@ -394,9 +394,9 @@ carp_path_plot <- function(x, ..., axis, percent, k){
     if (!is.null(names(dots))) {
       nm <- names(dots)
       nm <- nm[nzchar(nm)]
-      stop("Unknown argument ", sQuote(nm[1]), " passed to ", sQuote("plot.CARP."))
+      crv_error("Unknown argument ", sQuote(nm[1]), " passed to ", sQuote("plot.CARP."))
     } else {
-      stop("Unknown argument passed to ", sQuote("plot.CARP."))
+      crv_error("Unknown argument passed to ", sQuote("plot.CARP."))
     }
   }
 
@@ -406,7 +406,7 @@ carp_path_plot <- function(x, ..., axis, percent, k){
   n_args <- has_percent + has_k
 
   if(n_args > 1){
-    stop("At most one of ", sQuote("percent"), " and ", sQuote("k"), " must be supplied.")
+    crv_error("At most one of ", sQuote("percent"), " and ", sQuote("k"), " must be supplied.")
   }
 
   show_clusters <- (n_args == 1L)
@@ -429,7 +429,7 @@ carp_path_plot <- function(x, ..., axis, percent, k){
 
   if (any(plot_cols %not.in% colnames(x$carp.cluster.path.vis))) {
     missing_col <- plot_cols[which(plot_cols %not.in% colnames(x$carp.cluster.path.vis))][1]
-    stop(sQuote(missing_col), " is not available for plotting.")
+    crv_error(sQuote(missing_col), " is not available for plotting.")
   }
 
   plot_frame_full <- x$carp.cluster.path.vis %>% select(plot_cols) %>%
@@ -438,7 +438,7 @@ carp_path_plot <- function(x, ..., axis, percent, k){
 
   if (has_percent) {
     if (!is_percent_scalar(percent)) {
-      stop(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
+      crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
     }
 
     plot_frame_full <- plot_frame_full %>% filter(.data$LambdaPercent <= percent)
@@ -447,13 +447,13 @@ carp_path_plot <- function(x, ..., axis, percent, k){
     # to avoid plotting "beyond" what we want
 
     if (!is_integer_scalar(k)) {
-      stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+      crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
     }
     if ( k <= 0 ) {
-      stop(sQuote("k"), " must be positive.")
+      crv_error(sQuote("k"), " must be positive.")
     }
     if ( k > NROW(x$X) ) {
-      stop(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
+      crv_error(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
     }
 
     iter_first_k <- plot_frame_full %>% select(.data$Iter, .data$NCluster) %>%
@@ -508,11 +508,11 @@ carp_dendro_plot <- function(x,
                              ...){
 
   if(dend.branch.width <= 0){
-    stop(sQuote("dend.branch.width"), " must be positive.")
+    crv_error(sQuote("dend.branch.width"), " must be positive.")
   }
 
   if(dend.labels.cex <= 0){
-    stop(sQuote("dend.labels.cex"), " must be positive.")
+    crv_error(sQuote("dend.labels.cex"), " must be positive.")
   }
 
   has_percent <- !missing(percent)
@@ -520,7 +520,7 @@ carp_dendro_plot <- function(x,
   n_args      <- has_percent + has_k
 
   if(n_args > 1L){
-    stop("At most one of ", sQuote("percent"), " and ", sQuote("k"), " may be supplied.")
+    crv_error("At most one of ", sQuote("percent"), " and ", sQuote("k"), " may be supplied.")
   }
 
   show_clusters <- (n_args == 1L)
@@ -538,7 +538,7 @@ carp_dendro_plot <- function(x,
 
     if(has_percent){
       if (!is_percent_scalar(percent)) {
-        stop(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
+        crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
       }
 
       k <- x$carp.cluster.path.vis %>% filter(.data$LambdaPercent <= percent) %>%
@@ -547,13 +547,13 @@ carp_dendro_plot <- function(x,
                                        pull
     } else {
       if (!is_integer_scalar(k)) {
-        stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+        crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
       }
       if ( k <= 0 ) {
-        stop(sQuote("k"), " must be positive.")
+        crv_error(sQuote("k"), " must be positive.")
       }
       if ( k > NROW(x$X) ) {
-        stop(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
+        crv_error(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
       }
     }
 
@@ -563,4 +563,3 @@ carp_dendro_plot <- function(x,
 
   invisible(x)
 }
-

@@ -1,6 +1,7 @@
 #include <RcppEigen.h>
 #include <vector>
 #include <set>
+#include "clustRviz_logging.h"
 
 #define CLUSTRVIZ_CHECK_USER_INTERRUPT_RATE 50
 
@@ -38,3 +39,4 @@ Eigen::VectorXd ProxL2(const Eigen::VectorXd&, int,
                        const Eigen::VectorXd&, const Eigen::MatrixXi&);
 Eigen::VectorXd ProxL1(const Eigen::VectorXd&, int, double,
                        const Eigen::VectorXd& weights);
+

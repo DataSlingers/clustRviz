@@ -9,8 +9,6 @@
 #' @param X The data matrix (\eqn{X \in R^{n \times p}}{X}): rows correspond to
 #'          the observations (to be clustered) and columns to the variables (which
 #'          will not be clustered).
-#' @param verbose Any of the values \code{0}, \code{1}, or \code{2}. Higher values
-#'                correspond to more verbose output while running.
 #' @param labels A character vector of length \eqn{n}: observations (row) labels
 #' @param X.center A logical: Should \code{X} be centered columnwise?
 #' @param X.scale A logical: Should \code{X} be scaled columnwise?
@@ -71,7 +69,6 @@
 #' plot(carp_fit)
 CARP <- function(X,
                  ...,
-                 verbose = 1L,
                  weights = sparse_rbf_kernel_weights(k = "auto",
                                                      phi = "auto",
                                                      dist.method = "euclidean",
@@ -99,64 +96,64 @@ CARP <- function(X,
 
   if (length(dots) != 0L) {
     if (!is.null(names(dots))) {
-      stop("Unknown argument ", sQuote(names(dots)[1L]), " passed to ", sQuote("CARP."))
+      crv_error("Unknown argument ", sQuote(names(dots)[1L]), " passed to ", sQuote("CARP."))
     } else {
-      stop("Unknown ", sQuote("..."), " arguments passed to ", sQuote("CARP."))
+      crv_error("Unknown ", sQuote("..."), " arguments passed to ", sQuote("CARP."))
     }
   }
 
   if (!is.matrix(X)) {
-    warning(sQuote("X"), " should be a matrix, not a " , class(X)[1],
-            ". Converting with as.matrix().")
+    crv_warning(sQuote("X"), " should be a matrix, not a " , class(X)[1],
+                ". Converting with as.matrix().")
     X <- as.matrix(X)
   }
 
   if (!is.numeric(X)) {
-    stop(sQuote("X"), " must be numeric.")
+    crv_error(sQuote("X"), " must be numeric.")
   }
 
   if (anyNA(X)) {
-    stop(sQuote("CARP"), " cannot handle missing data.")
+    crv_error(sQuote("CARP"), " cannot handle missing data.")
   }
 
   if (!all(is.finite(X))) {
-    stop("All elements of ", sQuote("X"), " must be finite.")
+    crv_error("All elements of ", sQuote("X"), " must be finite.")
   }
 
   if (!is_logical_scalar(X.center)) {
-    stop(sQuote("X.center"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
+    crv_error(sQuote("X.center"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
   }
 
   if (!is_logical_scalar(X.scale)) {
-    stop(sQuote("X.scale"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
+    crv_error(sQuote("X.scale"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
   }
 
   if ( (!is_numeric_scalar(rho)) || (rho <= 0)) {
-    stop(sQuote("rho"), "must be a positive scalar (vector of length 1).")
+    crv_error(sQuote("rho"), "must be a positive scalar (vector of length 1).")
   }
 
   if ( (!is_integer_scalar(max.iter)) || (max.iter <= 1L) ) {
-    stop(sQuote("max.iter"), " must be a positive integer scalar and at least 2.")
+    crv_error(sQuote("max.iter"), " must be a positive integer scalar and at least 2.")
   }
 
   if ( (!is_integer_scalar(burn.in)) || (burn.in <= 0L) || (burn.in >= max.iter) ) {
-    stop(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
+    crv_error(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
   }
 
   alg.type <- match.arg(alg.type)
 
   if ( (!is_numeric_scalar(t)) || (t <= 1) ) {
-    stop(sQuote("t"), " must be a scalar greater than 1.")
+    crv_error(sQuote("t"), " must be a scalar greater than 1.")
   }
 
   if (!is.null(dendrogram.scale)) {
     if (dendrogram.scale %not.in% c("original", "log")) {
-      stop("If not NULL, ", sQuote("dendrogram.scale"), " must be either ", sQuote("original"), " or ", sQuote("log."))
+      crv_error("If not NULL, ", sQuote("dendrogram.scale"), " must be either ", sQuote("original"), " or ", sQuote("log."))
     }
   }
 
   if ( (!is_integer_scalar(npcs)) || (npcs < 2) || (npcs > NCOL(X)) || (npcs > NROW(X)) ){
-    stop(sQuote("npcs"), " must be an integer scalar between 2 and ", sQuote("min(dim(X))."))
+    crv_error(sQuote("npcs"), " must be an integer scalar between 2 and ", sQuote("min(dim(X))."))
   }
 
   ## Get row (observation) labels
@@ -165,28 +162,13 @@ CARP <- function(X,
   }
 
   if ( length(labels) != NROW(X) ){
-    stop(sQuote("labels"), " must be of length ", sQuote("NROW(X)."))
+    crv_error(sQuote("labels"), " must be of length ", sQuote("NROW(X)."))
   }
 
   rownames(X) <- labels <- make.unique(as.character(labels), sep="_")
 
   n.obs <- NROW(X)
   p.var <- NCOL(X)
-
-  Iter <- Cluster <- Lambda <- NULL
-  if (is.logical(verbose)) {
-    verbose.basic <- TRUE
-    verbose.deep <- FALSE
-  } else if (verbose == 1) {
-    verbose.basic <- TRUE
-    verbose.deep <- FALSE
-  } else if (verbose == 2) {
-    verbose.basic <- TRUE
-    verbose.deep <- TRUE
-  } else {
-    verbose.basic <- FALSE
-    verbose.deep <- FALSE
-  }
 
   # Center and scale X
   X.orig <- X
@@ -196,6 +178,8 @@ CARP <- function(X,
 
   scale_vector  <- attr(X, "scaled:scale", exact=TRUE)  %||% rep(1, p.var)
   center_vector <- attr(X, "scaled:center", exact=TRUE) %||% rep(0, p.var)
+
+  crv_message("Pre-computing weights and edge sets")
 
   # Calculate clustering weights
   if (is.function(weights)) { # Usual case, `weights` is a function which calculates the weight matrix
@@ -211,41 +195,39 @@ CARP <- function(X,
   } else if (is.matrix(weights)) {
 
     if (!is_square(weights)) {
-      stop(sQuote("weights"), " must be a square matrix.")
+      crv_error(sQuote("weights"), " must be a square matrix.")
     }
 
     if (NROW(weights) != NROW(X)) {
-      stop(sQuote("NROW(weights)"), " must be equal to ", sQuote("NROW(X)."))
+      crv_error(sQuote("NROW(weights)"), " must be equal to ", sQuote("NROW(X)."))
     }
 
     weight_matrix <- weights
     weight_type   <- UserMatrix()
   } else {
-    stop(sQuote("CARP"), " does not know how to handle ", sQuote("weights"),
-         " of class ", class(weights)[1], ".")
+    crv_error(sQuote("CARP"), " does not know how to handle ", sQuote("weights"),
+              " of class ", class(weights)[1], ".")
   }
 
   if (any(weight_matrix < 0) || anyNA(weight_matrix)) {
-    stop("All fusion weights must be positive or zero.")
+    crv_error("All fusion weights must be positive or zero.")
   }
 
   if (!is_connected_adj_mat(weight_matrix != 0)) {
-    stop("Weights do not imply a connected graph. Clustering will not succeed.")
+    crv_error("Weights do not imply a connected graph. Clustering will not succeed.")
   }
 
   ## Transform to a form suitable for down-stream computation
   X <- t(X) ## TODO: Ask JN why we did this
   weight_vec <- weight_mat_to_vec(weight_matrix)
 
-  if (verbose.basic) message("Pre-computing weight-based edge sets")
   PreCompList <- ConvexClusteringPreCompute(X = X,
                                             weights = weight_vec,
-                                            rho = rho,
-                                            verbose = verbose.deep)
+                                            rho = rho)
 
   cardE <- NROW(PreCompList$E)
 
-  if (verbose.basic) message("Computing CARP Path")
+  crv_message("Computing CARP Path")
 
   if (alg.type %in% c("carpvizl1", "carpviz")) {
       carp.sol.path <- CARP_VIZcpp(x = X[TRUE],
@@ -262,7 +244,6 @@ CARP <- function(X,
                                    rho = rho,
                                    max_iter = as.integer(max.iter),
                                    burn_in = as.integer(burn.in),
-                                   verbose = verbose.deep,
                                    ti = 10,
                                    t_switch = 1.01,
                                    keep = 1,
@@ -283,7 +264,6 @@ CARP <- function(X,
                                rho = rho,
                                max_iter = as.integer(max.iter),
                                burn_in = as.integer(burn.in),
-                               verbose = verbose.deep,
                                keep = 1,
                                l1 = (alg.type == "carpl1"))
   }
@@ -295,7 +275,7 @@ CARP <- function(X,
   ##         the type here for now
   carp.sol.path$lambda.path <- matrix(carp.sol.path$lambda.path, ncol=1)
 
-  if (verbose.basic) message("Post-processing")
+  crv_message("Post-processing")
 
   post_processing_results <- ConvexClusteringPostProcess(X = t(X), # Uses a correctly-oriented X
                                                          edge_matrix      = PreCompList$E,

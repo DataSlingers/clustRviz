@@ -25,7 +25,6 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
                         double rho         = 1,
                         int max_iter       = 10000,
                         int burn_in        = 50,
-                        bool verbose       = false,
                         int ti             = 15,
                         double t_switch    = 1.01,
                         int keep           = 10,
@@ -139,6 +138,8 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
   double t = 1.1;
 
   while( ((nzeros_new_row < num_edges_row) | (nzeros_new_col < num_edges_col)) & (iter < max_iter)){
+    ClustRVizLogger::info("Beginning iteration k = ") << iter + 1;
+    ClustRVizLogger::debug("gamma = ") << gamma;
     // Begin iteration - move updated values to "_old" values
     //
     // TODO -- Do this as a swap and avoid full copies if possible
@@ -179,6 +180,8 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
       solver_input_row /= rho;
       Eigen::VectorXd Y_t = premat_solver_row.solve(solver_input_row);
 
+      ClustRVizLogger::debug("y^T = ") << Y_t;
+
       // V-update
       Eigen::VectorXd prox_argument_row = DMatOpv2(Y_t,n, IndMat_row, EOneIndMat_row, ETwoIndMat_row) + (1/rho)*z_old_row;
       if(l1){
@@ -187,8 +190,12 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
         v_new_row = ProxL2(prox_argument_row, n, (1/rho) * weights_row * gamma, IndMat_row);
       }
 
+      ClustRVizLogger::debug("v_row = ") << v_new_row;
+
       // Z-update
       z_new_row = z_old_row + rho*(DMatOpv2(Y_t, n, IndMat_row, EOneIndMat_row, ETwoIndMat_row) - v_new_row);
+
+      ClustRVizLogger::debug("z_row = ") << z_new_row;
       /// END Row-fusion iterations
 
       Eigen::VectorXd Y = restride(Y_t, n);
@@ -201,6 +208,8 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
       solver_input_col /= rho;
       u_new = premat_solver_col.solve(solver_input_col);
 
+      ClustRVizLogger::debug("u = ") << u_new;
+
       // V-update
       Eigen::VectorXd prox_argument_col = DMatOpv2(u_new, p, IndMat_col, EOneIndMat_col, ETwoIndMat_col) + (1/rho)*z_old_col;
       if(l1){
@@ -209,8 +218,12 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
         v_new_col = ProxL2(prox_argument_col, p, (1/rho) * weights_col * gamma, IndMat_col);
       }
 
+      ClustRVizLogger::debug("v_col = ") << v_new_col;
+
       // Z-update
       z_new_col = z_old_col + rho*(DMatOpv2(u_new, p, IndMat_col, EOneIndMat_col, ETwoIndMat_col)-v_new_col);
+
+      ClustRVizLogger::debug("z_col = ") << z_new_col;
       /// END Column-fusion iterations
 
       Q_new = Y + Q_old - u_new;
@@ -233,6 +246,9 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
       }
       nzeros_new_col = vZeroIndsnew_col.sum();
 
+      ClustRVizLogger::debug("Number of row fusions identified ") << nzeros_new_row;
+      ClustRVizLogger::debug("Number of column fusions identified ") << nzeros_new_col;
+
       /// END CBASS steps
 
       try_iter++; // Increment internal iteration count (used to check stopping below)
@@ -242,6 +258,7 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
         // no need to back-track (we didn't miss any fusions) so we can go immediately
         // to the next iteration.
         rep_iter = false;
+        ClustRVizLogger::debug("No fusions identified -- continuing to next step.");
       } else if((nzeros_new_row > nzeros_old_row + 1) | (nzeros_new_col > nzeros_old_col + 1) ){
         // If we see two (or more) new fusions, we need to back-track and figure
         // out which one occured first
@@ -255,16 +272,19 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
           gamma_upper = gamma;
           gamma = 0.5 * (gamma_lower + gamma_upper);
         }
+        ClustRVizLogger::debug("Too many fusions -- backtracking.");
       } else if( (nzeros_new_row == nzeros_old_row) & (nzeros_new_col == nzeros_old_col) ){
         // If we don't observe any new fusions, we take another iteration without
         vZeroIndsnew_col = vZeroIndsold_col;
         vZeroIndsnew_row = vZeroIndsold_row;
         gamma_lower = gamma;
         gamma = 0.5 * (gamma_lower + gamma_upper);
+        ClustRVizLogger::debug("Fusion not isolated -- moving forward.");
       } else{
         // If we see exactly one new fusion, we have a good step size and exit
         // the inner back-tracking loop
         rep_iter = false;
+        ClustRVizLogger::debug("Good iteration - continuing to next step.");
       }
 
       // Safety check - only so many iterations of the inner loop before we move on
@@ -285,6 +305,7 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
 
       // Before we can store values, we need to make sure we have enough buffer space
       if(path_iter >= buffer_size){
+        ClustRVizLogger::info("Resizing storage from ") << buffer_size << " to " << 2 * buffer_size << " iterations.";
         buffer_size *= 2; // Double our buffer sizes
         UPath.conservativeResize(UPath.rows(), buffer_size);
         VPath_row.conservativeResize(VPath_row.rows(), buffer_size);
@@ -316,6 +337,10 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
     if((iter % CLUSTRVIZ_CHECK_USER_INTERRUPT_RATE) == 0){
       Rcpp::checkUserInterrupt();
     }
+  }
+
+  if(iter >= max_iter){
+    ClustRVizLogger::warning("CBASS-VIZ ended early -- `max_iter` reached");
   }
 
   // Now that we are done, we can "drop" unused buffer space before returning to R

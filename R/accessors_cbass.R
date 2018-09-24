@@ -60,9 +60,9 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.obs, k.var, type = c("ob
     if (!is.null(names(dots))) {
       nm <- names(dots)
       nm <- nm[nzchar(nm)]
-      stop("Unknown argument ", sQuote(nm[1]), " passed to ", sQuote("get_cluster_labels."))
+      crv_error("Unknown argument ", sQuote(nm[1]), " passed to ", sQuote("get_cluster_labels."))
     } else {
-      stop("Unknown argument passed to ", sQuote("get_cluster_labels."))
+      crv_error("Unknown argument passed to ", sQuote("get_cluster_labels."))
     }
   }
 
@@ -74,22 +74,22 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.obs, k.var, type = c("ob
   n_args      <- has_percent + has_k.obs + has_k.var
 
   if(n_args != 1){
-    stop("Exactly one of ", sQuote("percent,"), " ", sQuote("k.obs"),
-         " and ", sQuote("k.var"), " must be supplied.")
+    crv_error("Exactly one of ", sQuote("percent,"), " ", sQuote("k.obs"),
+             " and ", sQuote("k.var"), " must be supplied.")
   }
 
   if(has_k.obs){
 
     if ( !is_integer_scalar(k.obs) ){
-      stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+      crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
     }
 
     if( k.obs <= 0 ) {
-      stop(sQuote("k.obs"), " must be positive.")
+      crv_error(sQuote("k.obs"), " must be positive.")
     }
 
     if( k.obs > NROW(x$X) ){
-      stop(sQuote("k.obs"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
+      crv_error(sQuote("k.obs"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
     }
 
     percent <- x$cbass.cluster.path.vis.obs %>%
@@ -103,15 +103,15 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.obs, k.var, type = c("ob
   if(has_k.var){
 
     if ( !is_integer_scalar(k.var) ){
-      stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+      crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
     }
 
     if( k.var <= 0 ) {
-      stop(sQuote("k.var"), " must be positive.")
+      crv_error(sQuote("k.var"), " must be positive.")
     }
 
     if( k.var > NCOL(x$X) ){
-      stop(sQuote("k.var"), " cannot be more than the features in the original data set (", NCOL(x$X), ").")
+      crv_error(sQuote("k.var"), " cannot be more than the features in the original data set (", NCOL(x$X), ").")
     }
 
     percent <- x$cbass.cluster.path.vis.var %>%
@@ -123,7 +123,7 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.obs, k.var, type = c("ob
   }
 
   if( !is_percent_scalar(percent) ){
-    stop(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
+    crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
   }
 
   if(type == "obs"){
@@ -238,9 +238,9 @@ get_U.CBASS <- function(x, ..., percent, k.var, k.obs){
     if (!is.null(names(dots))) {
       nm <- names(dots)
       nm <- nm[nzchar(nm)]
-      stop("Unknown argument ", sQuote(nm[1]), " passed to ", sQuote("get_U."))
+      crv_error("Unknown argument ", sQuote(nm[1]), " passed to ", sQuote("get_U."))
     } else {
-      stop("Unknown argument passed to ", sQuote("get_U."))
+      crv_error("Unknown argument passed to ", sQuote("get_U."))
     }
   }
 
@@ -250,22 +250,22 @@ get_U.CBASS <- function(x, ..., percent, k.var, k.obs){
   n_args      <- has_percent + has_k.obs + has_k.var
 
   if(n_args != 1){
-    stop("Exactly one of ", sQuote("percent,"), " ", sQuote("k.obs"),
-         " and ", sQuote("k.var"), " must be supplied.")
+    crv_error("Exactly one of ", sQuote("percent,"), " ", sQuote("k.obs"),
+              " and ", sQuote("k.var"), " must be supplied.")
   }
 
   if(has_k.obs){
 
     if ( !is_integer_scalar(k.obs) ){
-      stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+      crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
     }
 
     if( k.obs <= 0 ) {
-      stop(sQuote("k.obs"), " must be positive.")
+      crv_error(sQuote("k.obs"), " must be positive.")
     }
 
     if( k.obs > NROW(x$X) ){
-      stop(sQuote("k.obs"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
+      crv_error(sQuote("k.obs"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
     }
 
     percent <- x$cbass.cluster.path.vis.obs %>%
@@ -279,15 +279,15 @@ get_U.CBASS <- function(x, ..., percent, k.var, k.obs){
   if(has_k.var){
 
     if ( !is_integer_scalar(k.var) ){
-      stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+      crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
     }
 
     if( k.var <= 0 ) {
-      stop(sQuote("k.var"), " must be positive.")
+      crv_error(sQuote("k.var"), " must be positive.")
     }
 
     if( k.var > NCOL(x$X) ){
-      stop(sQuote("k.var"), " cannot be more than the features in the original data set (", NCOL(x$X), ").")
+      crv_error(sQuote("k.var"), " cannot be more than the features in the original data set (", NCOL(x$X), ").")
     }
 
     percent <- x$cbass.cluster.path.vis.var %>%
@@ -299,7 +299,7 @@ get_U.CBASS <- function(x, ..., percent, k.var, k.obs){
   }
 
   if( !is_percent_scalar(percent) ){
-    stop(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
+    crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
   }
 
   index <- which.min(abs(x$cbass.sol.path$lambda.path - percent * max(x$cbass.sol.path$lambda.path)))[1]

@@ -14,7 +14,7 @@ if (getRversion() >= "2.15.1") utils::globalVariables(c("."))
 
 #' @importMethodsFrom Matrix which tcrossprod kronecker
 #' @importFrom Matrix Diagonal
-ConvexClusteringPreCompute <- function(X, weights, rho, verbose = FALSE) {
+ConvexClusteringPreCompute <- function(X, weights, rho) {
   ## This function works using the convention of Chi and Lange (JCGS, 2015) or
   ## Chi, Allen, and Baraniuk (2017, Biometrics) where X is transposed from our
   ## usual convention and is a p-by-n matrix instead of n-by-p.
@@ -29,16 +29,16 @@ ConvexClusteringPreCompute <- function(X, weights, rho, verbose = FALSE) {
   E <- E[order(E[, 1], E[, 2]), ]
 
   # Precompute indicies
-  if (verbose) print("Calculating edge indices")
+  crv_info("Calculating edge indices")
   ind.mat <- matrix(seq(0, cardE * p - 1), byrow = TRUE, ncol = p)
 
-  if (verbose) print("Calculating E1")
+  crv_info("Calculating E1")
   E1.ind.mat <- outer(p * (E[, 1] - 1), seq(0, p - 1), `+`)
 
-  if (verbose) print("Calculating E2")
+  crv_info("Calculating E2")
   E2.ind.mat <- outer(p * (E[, 2] - 1), seq(0, p - 1), `+`)
 
-  if (verbose) print("PreMat")
+  crv_info("Calculating U-Update PreMat")
   # Precompute U-update matrix
   D <- Reduce(`+`, lapply(seq_len(cardE), function(l){
     pos.ind <- E[l, 1]
@@ -53,7 +53,7 @@ ConvexClusteringPreCompute <- function(X, weights, rho, verbose = FALSE) {
 
   uinit <- Matrix::Matrix(X[TRUE], nrow = p, ncol = n)
 
-  if (verbose) print("Calculating initial values for V")
+  crv_info("Calculating initial values for V")
   Vmat <- uinit[, E[, 1]] - uinit[, E[, 2]]
   vinit <- as.vector(Vmat)
 
@@ -376,7 +376,7 @@ CreateDendrogram <- function(carp_cluster_path, n_labels, scale = NULL) {
   } else if (scale == "log") {
     cvx.hclust$height <- log(cvx.hclust$height + 1)
   } else {
-    stop("CreateDendrogram scale argument must be either 'original' or 'log'")
+    crv_error("CreateDendrogram scale argument must be either 'original' or 'log'")
   }
   max.dend.height <- max(cvx.hclust$height)
   cvx.hclust$height <- cvx.hclust$height * (1 / max.dend.height)

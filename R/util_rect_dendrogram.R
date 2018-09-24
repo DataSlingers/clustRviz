@@ -22,34 +22,30 @@ rect.dendrogram <- function(tree, k = NULL, which = NULL, x = NULL, h = NULL, bo
                             my.col.vec = NULL,
                             ...) {
   if (!dendextend::is.dendrogram(tree)) {
-    stop("x is not a dendrogram object.")
+    crv_error("x is not a dendrogram object.")
   }
   if (length(h) > 1L | length(k) > 1L) {
-    stop("'k' and 'h' must be a scalar(i.e.: of length 1)")
+    crv_error("'k' and 'h' must be a scalar(i.e.: of length 1)")
   }
   tree_heights <- dendextend::heights_per_k.dendrogram(tree)[-1]
   tree_order <- stats::order.dendrogram(tree)
   if (!is.null(h)) {
     if (!is.null(k)) {
-      stop("specify exactly one of 'k' and 'h'")
+      crv_error("specify exactly one of 'k' and 'h'")
     }
     ss_ks <- tree_heights < h
     k <- min(as.numeric(names(ss_ks))[ss_ks])
     k <- max(k, 2)
   }
   else if (is.null(k)) {
-    stop("specify exactly one of 'k' and 'h'")
+    crv_error("specify exactly one of 'k' and 'h'")
   }
   if (k < 2 | k > length(tree_heights)) {
     if (stop_if_out) {
-      stop(gettextf("k must be between 2 and %d", length(tree_heights)),
-           domain = NA
-      )
+      crv_error(gettextf("k must be between 2 and %d", length(tree_heights), domain = NA))
     }
     else {
-      warning(gettextf("k must be between 2 and %d", length(tree_heights)),
-              domain = NA
-      )
+      crv_warning(gettextf("k must be between 2 and %d", length(tree_heights), domain = NA))
     }
   }
   if (is.null(cluster)) {
@@ -59,7 +55,7 @@ rect.dendrogram <- function(tree, k = NULL, which = NULL, x = NULL, h = NULL, bo
   m <- c(0, cumsum(clustab))
   if (!is.null(x)) {
     if (!is.null(which)) {
-      stop("specify exactly one of 'which' and 'x'")
+      crv_error("specify exactly one of 'which' and 'x'")
     }
     which <- x
     for (n in seq_along(x)) which[n] <- max(which(m < x[n]))
@@ -68,10 +64,7 @@ rect.dendrogram <- function(tree, k = NULL, which = NULL, x = NULL, h = NULL, bo
     which <- 1L:k
   }
   if (any(which > k)) {
-    stop(gettextf(
-      "all elements of 'which' must be between 1 and %d",
-      k
-    ), domain = NA)
+    crv_error(gettextf("all elements of 'which' must be between 1 and %d", k, domain = NA))
   }
   border <- rep_len(border, length(which))
   retval <- list()

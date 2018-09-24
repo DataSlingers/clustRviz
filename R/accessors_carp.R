@@ -59,9 +59,9 @@ get_cluster_labels.CARP <- function(x, ..., percent, k){
     if (!is.null(names(dots))) {
       nm <- names(dots)
       nm <- nm[nzchar(nm)]
-      stop("Unknown argument ", sQuote(nm[1]), " passed to ", sQuote("get_cluster_labels."))
+      crv_error("Unknown argument ", sQuote(nm[1]), " passed to ", sQuote("get_cluster_labels."))
     } else {
-      stop("Unknown argument passed to ", sQuote("get_cluster_labels."))
+      crv_error("Unknown argument passed to ", sQuote("get_cluster_labels."))
     }
   }
 
@@ -70,21 +70,21 @@ get_cluster_labels.CARP <- function(x, ..., percent, k){
   n_args      <- has_percent + has_k
 
   if(n_args != 1){
-    stop("Exactly one of ", sQuote("percent"), " and ", sQuote("k"), " must be supplied.")
+    crv_error("Exactly one of ", sQuote("percent"), " and ", sQuote("k"), " must be supplied.")
   }
 
   if(has_k){
 
     if ( !is_integer_scalar(k) ){
-      stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+      crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
     }
 
     if( k <= 0 ) {
-      stop(sQuote("k"), " must be positive.")
+      crv_error(sQuote("k"), " must be positive.")
     }
 
     if( k > NROW(x$X) ){
-      stop(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
+      crv_error(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
     }
 
     percent <- x$carp.cluster.path.vis %>%
@@ -96,7 +96,7 @@ get_cluster_labels.CARP <- function(x, ..., percent, k){
   }
 
   if( !is_percent_scalar(percent) ){
-    stop(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
+    crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
   }
 
   cluster_labels_df <- x$carp.cluster.path.vis %>%
@@ -185,9 +185,9 @@ get_U.CARP <- function(x, ..., percent, k){
     if (!is.null(names(dots))) {
       nm <- names(dots)
       nm <- nm[nzchar(nm)]
-      stop("Unknown argument ", sQuote(nm[1]), " passed to ", sQuote("get_U."))
+      crv_error("Unknown argument ", sQuote(nm[1]), " passed to ", sQuote("get_U."))
     } else {
-      stop("Unknown argument passed to ", sQuote("get_U."))
+      crv_error("Unknown argument passed to ", sQuote("get_U."))
     }
   }
 
@@ -196,21 +196,21 @@ get_U.CARP <- function(x, ..., percent, k){
   n_args      <- has_percent + has_k
 
   if(n_args != 1){
-    stop("Exactly one of ", sQuote("percent"), " and ", sQuote("k"), " must be supplied.")
+    crv_error("Exactly one of ", sQuote("percent"), " and ", sQuote("k"), " must be supplied.")
   }
 
   if(has_k){
 
     if ( !is_integer_scalar(k) ){
-      stop(sQuote("k"), " must be an integer scalar (vector of length 1).")
+      crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
     }
 
     if( k <= 0 ) {
-      stop(sQuote("k"), " must be positive.")
+      crv_error(sQuote("k"), " must be positive.")
     }
 
     if( k > NROW(x$X) ){
-      stop(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
+      crv_error(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
     }
 
     percent <- x$carp.cluster.path.vis %>%
@@ -222,7 +222,7 @@ get_U.CARP <- function(x, ..., percent, k){
   }
 
   if( !is_percent_scalar(percent) ){
-    stop(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
+    crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
   }
 
   index <- which.min(abs(x$carp.sol.path$lambda.path - percent * max(x$carp.sol.path$lambda.path)))[1]

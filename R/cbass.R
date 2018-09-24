@@ -9,8 +9,6 @@
 #' @param X The data matrix (\eqn{X \in R^{n \times p}}{X}): rows correspond to
 #'          the observations (to be clustered) and columns to the variables (which
 #'          will not be clustered).
-#' @param verbose Any of the values \code{0}, \code{1}, or \code{2}. Higher values
-#'                correspond to more verbose output while running.
 #' @param obs_weights One of the following: \itemize{
 #'                    \item A function which, when called with argument \code{X},
 #'                          returns a n-by-n matrix of fusion weights.
@@ -87,7 +85,6 @@
 #' }
 CBASS <- function(X,
                   ...,
-                  verbose = 1L,
                   var_weights = sparse_rbf_kernel_weights(k = "auto",
                                                           phi = "auto",
                                                           dist.method = "euclidean",
@@ -119,60 +116,60 @@ CBASS <- function(X,
 
   if (length(dots) != 0L) {
     if (!is.null(names(dots))) {
-      stop("Unknown argument ", sQuote(names(dots)[1L]), " passed to ", sQuote("CBASS."))
+      crv_error("Unknown argument ", sQuote(names(dots)[1L]), " passed to ", sQuote("CBASS."))
     } else {
-      stop("Unknown ", sQuote("..."), " arguments passed to ", sQuote("CBASS."))
+      crv_error("Unknown ", sQuote("..."), " arguments passed to ", sQuote("CBASS."))
     }
   }
 
   if (!is.matrix(X)) {
-    warning(sQuote("X"), " should be a matrix, not a " , class(X)[1],
-            ". Converting with as.matrix().")
+    crv_warning(sQuote("X"), " should be a matrix, not a " , class(X)[1],
+                ". Converting with as.matrix().")
     X <- as.matrix(X)
   }
 
   if (!is.numeric(X)) {
-    stop(sQuote("X"), " must be numeric.")
+    crv_error(sQuote("X"), " must be numeric.")
   }
 
   if (anyNA(X)) {
-    stop(sQuote("CBASS"), " cannot handle missing data.")
+    crv_error(sQuote("CBASS"), " cannot handle missing data.")
   }
 
   if (!all(is.finite(X))) {
-    stop("All elements of ", sQuote("X"), " must be finite.")
+    crv_error("All elements of ", sQuote("X"), " must be finite.")
   }
 
   if (!is.logical(X.center.global) || is.na(X.center.global) || (length(X.center.global) != 1L)) {
-    stop(sQuote("X.center.global"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
+    crv_error(sQuote("X.center.global"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
   }
 
   if ( (!is_numeric_scalar(rho)) || (rho <= 0)) {
-    stop(sQuote("rho"), "must be a positive scalar (vector of length 1).")
+    crv_error(sQuote("rho"), "must be a positive scalar (vector of length 1).")
   }
 
   if (!is.null(dendrogram.scale)) {
     if (dendrogram.scale %not.in% c("original", "log")) {
-      stop("If not NULL, ", sQuote("dendrogram.scale"), " must be either ", sQuote("original"), " or ", sQuote("log."))
+      crv_error("If not NULL, ", sQuote("dendrogram.scale"), " must be either ", sQuote("original"), " or ", sQuote("log."))
     }
   }
 
   if ( (!is_integer_scalar(npcs)) || (npcs < 2) || (npcs > NCOL(X)) || (npcs > NROW(X)) ){
-    stop(sQuote("npcs"), " must be an integer scalar between 2 and ", sQuote("min(dim(X))."))
+    crv_error(sQuote("npcs"), " must be an integer scalar between 2 and ", sQuote("min(dim(X))."))
   }
 
   if ( (!is_integer_scalar(max.iter)) || (max.iter <= 1L) ) {
-    stop(sQuote("max.iter"), " must be a positive integer scalar and at least 2.")
+    crv_error(sQuote("max.iter"), " must be a positive integer scalar and at least 2.")
   }
 
   if ( (!is_integer_scalar(burn.in)) || (burn.in <= 0L) || (burn.in >= max.iter) ) {
-    stop(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
+    crv_error(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
   }
 
   alg.type <- match.arg(alg.type)
 
   if ( (!is_numeric_scalar(t)) || (t <= 1) ) {
-    stop(sQuote("t"), " must be a scalar greater than 1.")
+    crv_error(sQuote("t"), " must be a scalar greater than 1.")
   }
 
   ## Get row (observation) labels
@@ -181,7 +178,7 @@ CBASS <- function(X,
   }
 
   if ( length(obs_labels) != NROW(X) ){
-    stop(sQuote("obs_labels"), " must be of length ", sQuote("NROW(X)."))
+    crv_error(sQuote("obs_labels"), " must be of length ", sQuote("NROW(X)."))
   }
 
   rownames(X) <- obs_labels <- make.unique(as.character(obs_labels), sep = "_")
@@ -192,24 +189,10 @@ CBASS <- function(X,
   }
 
   if ( length(var_labels) != NCOL(X) ){
-    stop(sQuote("var_labels"), " must be of length ", sQuote("NCOL(X)."))
+    crv_error(sQuote("var_labels"), " must be of length ", sQuote("NCOL(X)."))
   }
 
   colnames(X) <- var_labels <- make.unique(as.character(var_labels), sep = "_")
-
-  if (is.logical(verbose)) {
-    verbose.basic <- TRUE
-    verbose.deep <- FALSE
-  } else if (verbose == 1) {
-    verbose.basic <- TRUE
-    verbose.deep <- FALSE
-  } else if (verbose == 2) {
-    verbose.basic <- TRUE
-    verbose.deep <- TRUE
-  } else {
-    verbose.basic <- FALSE
-    verbose.deep <- FALSE
-  }
 
   n.obs <- NROW(X)
   p.var <- NCOL(X)
@@ -226,6 +209,8 @@ CBASS <- function(X,
   ## Transform to a form suitable for down-stream computation
   X <- t(X) ## TODO: Ask JN why we keep this. (It matches the convention in Chi, Allen, Baraniuk)
 
+  crv_message("Pre-computing row weights and edge sets")
+
   # Calculate variable/feature (row)-clustering weights
   if (is.function(var_weights)) { # Usual case, `var_weights` is a function which calculates the weight matrix
     var_weight_result <- var_weights(X)
@@ -240,27 +225,29 @@ CBASS <- function(X,
   } else if (is.matrix(var_weights)) {
 
     if (!is_square(var_weights)) {
-      stop(sQuote("var_weights"), " must be a square matrix.")
+      crv_error(sQuote("var_weights"), " must be a square matrix.")
     }
 
     if (NROW(var_weights) != NROW(X)) {
-      stop(sQuote("NROW(var_weights)"), " must be equal to ", sQuote("NROW(X)."))
+      crv_error(sQuote("NROW(var_weights)"), " must be equal to ", sQuote("NROW(X)."))
     }
 
     var_weight_matrix <- var_weights
     var_weight_type   <- UserMatrix()
   } else {
-    stop(sQuote("CBASS"), " does not know how to handle ", sQuote("var_weights"),
+    crv_error(sQuote("CBASS"), " does not know how to handle ", sQuote("var_weights"),
          " of class ", class(var_weights)[1], ".")
   }
 
   if (any(var_weight_matrix < 0) || anyNA(var_weight_matrix)) {
-    stop("All fusion weights for variables must be positive or zero.")
+    crv_error("All fusion weights for variables must be positive or zero.")
   }
 
   if (!is_connected_adj_mat(var_weight_matrix != 0)) {
-    stop("Weights for variables do not imply a connected graph. Biclustering will not succeed.")
+    crv_error("Weights for variables do not imply a connected graph. Biclustering will not succeed.")
   }
+
+  crv_message("Pre-computing column weights and edge sets")
 
   # Calculate observation (column)-clustering weights
   if (is.function(obs_weights)) { # Usual case, `obs_weights` is a function which calculates the weight matrix
@@ -276,26 +263,26 @@ CBASS <- function(X,
   } else if (is.matrix(obs_weights)) {
 
     if (!is_square(obs_weights)) {
-      stop(sQuote("obs_weights"), " must be a square matrix.")
+      crv_error(sQuote("obs_weights"), " must be a square matrix.")
     }
 
     if (NROW(obs_weights) != NCOL(X)) {
-      stop(sQuote("NROW(obs_weights)"), " must be equal to ", sQuote("NCOL(X)."))
+      crv_error(sQuote("NROW(obs_weights)"), " must be equal to ", sQuote("NCOL(X)."))
     }
 
     obs_weight_matrix <- obs_weights
     obs_weight_type   <- UserMatrix()
   } else {
-    stop(sQuote("CBASS"), " does not know how to handle ", sQuote("obs_weights"),
-         " of class ", class(obs_weights)[1], ".")
+    crv_error(sQuote("CBASS"), " does not know how to handle ", sQuote("obs_weights"),
+              " of class ", class(obs_weights)[1], ".")
   }
 
   if (any(obs_weight_matrix < 0) || anyNA(obs_weight_matrix)) {
-    stop("All fusion weights for observations must be positive or zero.")
+    crv_error("All fusion weights for observations must be positive or zero.")
   }
 
   if (!is_connected_adj_mat(obs_weight_matrix != 0)) {
-    stop("Weights for observations do not imply a connected graph. Clustering will not succeed.")
+    crv_error("Weights for observations do not imply a connected graph. Clustering will not succeed.")
   }
 
   ## NB: We are following Chi, Allen, and Baraniuk so "row" here refers to
@@ -313,18 +300,16 @@ CBASS <- function(X,
 
   PreCompList.row <- ConvexClusteringPreCompute(X = t(X),
                                                 weights = row_weights,
-                                                rho = rho,
-                                                verbose = verbose.deep)
+                                                rho = rho)
   cardE.row <- NROW(PreCompList.row$E)
 
   PreCompList.col <- ConvexClusteringPreCompute(X = X,
                                                 weights = col_weights,
-                                                rho = rho,
-                                                verbose = verbose.deep)
+                                                rho = rho)
 
   cardE.col <- NROW(PreCompList.col$E)
 
-  if (verbose.basic) message("Computing CBASS Path")
+  crv_message("Computing CBASS Path")
 
   if (alg.type %in% c("cbassviz", "cbassvizl1")) {
     cbass.sol.path <- CBASS_VIZcpp(x = X[TRUE],
@@ -348,7 +333,6 @@ CBASS <- function(X,
                                    rho = rho,
                                    max_iter = as.integer(max.iter),
                                    burn_in = burn.in,
-                                   verbose = verbose.deep,
                                    ti = 10,
                                    t_switch = 1.01,
                                    keep = 10,
@@ -376,7 +360,6 @@ CBASS <- function(X,
                                rho = rho,
                                max_iter = as.integer(max.iter),
                                burn_in = burn.in,
-                               verbose = verbose.deep,
                                keep = 10,
                                l1 = (alg.type == "cbassl1"))
   }
@@ -388,7 +371,7 @@ CBASS <- function(X,
   ##         the type here for now
   cbass.sol.path$lambda.path <- matrix(cbass.sol.path$lambda.path, ncol=1)
 
-  if (verbose.basic) message("Post-processing")
+  crv_message("Post-processing rows")
 
   post_processing_results_row <- ConvexClusteringPostProcess(X = X,
                                                              edge_matrix      = PreCompList.row$E,
@@ -399,6 +382,8 @@ CBASS <- function(X,
                                                              labels           = var_labels,
                                                              dendrogram_scale = dendrogram.scale,
                                                              npcs             = npcs)
+
+  crv_message("Post-processing columns")
 
   post_processing_results_col <- ConvexClusteringPostProcess(X = t(X),
                                                              edge_matrix      = PreCompList.col$E,

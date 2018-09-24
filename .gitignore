@@ -36,11 +36,10 @@ README.md
 figs/*
 
 # Spell file
-.aspell/lariat.rds
+.aspell/clustRviz.rds
 
 # Test stubs
 tests/test_*.R
 
 # MacOS files
 *.DS_Store
-
