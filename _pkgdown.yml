@@ -1,3 +1,42 @@
 template:
   params:
     bootswatch: flatly
+
+reference:
+  - title: "CARP - Convex Clustering"
+    desc: >
+      CARP (Convex Clustering via Algorithmic
+      Regularization Paths) is a fast method
+      for convex clustering.
+    contents:
+      - CARP
+      - plot.CARP
+      - get_cluster_labels
+      - print.CARP
+  - title: "CBASS - Convex BiClustering"
+    desc: >
+      CBASS (Convex BiClustering via algorithmic
+      regularization with Small Steps) is a fast
+      method for convex bi-clustering.
+    contents:
+      - CBASS
+      - plot.CBASS
+      - get_cluster_labels.CBASS
+      - print.CBASS
+  - title: "Weights"
+    desc: >
+      Functions to calculate fusion weights
+      for `CARP` and `CBASS`
+    contents:
+      - dense_rbf_kernel_weights
+  - title: "Miscellaneous"
+    desc: >
+      Other functions and data provided
+      by `clustRviz`
+    contents:
+      - presidential_speech
+
+nabvar:
+  right:
+    - icon: fa-github fa-lg
+      href: https://github.com/DataSlingers/clustRviz

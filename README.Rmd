@@ -54,9 +54,9 @@ if (!dir.exists("inst")) {
 }
 
 saveviz(carp_fit, 
-        file.name  = "inst/path_dyn.gif", 
+        file.name  = "inst/path_dyn.gif",
+        type       = "path",
         image.type = "dynamic")
 ```
 
 <img src="./inst/path_dyn.gif" width="70%">
-
