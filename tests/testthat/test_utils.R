@@ -88,3 +88,18 @@ test_that("Converting plot dimensions works", {
   expect_equal(2.54,   convert_units(1, from = "in", to = "cm"))
   expect_equal(1/2.54, convert_units(1, from = "cm", to = "in"))
 })
+
+test_that("ensure_gif works", {
+  ensure_gif <- clustRviz:::ensure_gif
+
+  expect_equal("plot.gif", ensure_gif("plot.gif"))
+  expect_equal("~/plot.gif", ensure_gif("~/plot.gif"))
+  expect_equal("/my/long/path/plot.gif", ensure_gif("/my/long/path/plot.gif"))
+
+  expect_warning(ensure_gif("plot.jpg"))
+  expect_no_warning(ensure_gif("plot.gif"))
+
+  expect_equal("plot.gif", suppressWarnings(ensure_gif("plot.jpg")))
+  expect_equal("~/plot.gif", suppressWarnings(ensure_gif("~/plot.jpg")))
+  expect_equal("/my/long/path/plot.gif", suppressWarnings(ensure_gif("/my/long/path/plot.jpg")))
+})

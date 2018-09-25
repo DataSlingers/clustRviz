@@ -456,7 +456,9 @@ cbass_heatmap_plot <- function(x,
                                k.obs,
                                k.var,
                                heatrow.label.cex,
-                               heatcol.label.cex){
+                               heatcol.label.cex,
+                               breaks = NULL,
+                               heatmap_col = NULL){
 
   dots <- list(...)
 
@@ -493,12 +495,17 @@ cbass_heatmap_plot <- function(x,
     crv_error(sQuote("heatcol.label.cex"), " must be positive.")
   }
 
-  nbreaks <- 50
-  quant.probs <- seq(0, 1, length.out = nbreaks)
-  breaks <- unique(quantile(as.vector(U), probs = quant.probs))
-  nbreaks <- length(breaks)
+  if (is.null(breaks)) {
+    nbreaks <- 50
+    quant.probs <- seq(0, 1, length.out = nbreaks)
+    breaks <- unique(quantile(as.vector(U), probs = quant.probs))
+  }
 
-  heatcols <- colorRampPalette(c("blue", "yellow"))(nbreaks - 1)
+  if (is.null(heatmap_col)) {
+    nbreaks <- length(breaks)
+    heatmap_col <- colorRampPalette(c("blue", "yellow"))(nbreaks - 1)
+  }
+
   my.cols  <- adjustcolor(c("black", "grey"), alpha.f = .3)
 
   my.heatmap.2(
@@ -510,7 +517,7 @@ cbass_heatmap_plot <- function(x,
     density.info = "none",
     key = FALSE,
     breaks = breaks,
-    col = heatcols,
+    col = heatmap_col,
     symkey = FALSE,
     Row.hclust = as.hclust(x$cbass.dend.obs),
     Col.hclust = as.hclust(x$cbass.dend.var),

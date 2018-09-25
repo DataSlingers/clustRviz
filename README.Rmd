@@ -22,7 +22,7 @@ developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repo
 
 # clustRviz
 
-`clustRviz` aims to enable fast computation and easy visualization of Convex Clustering 
+`clustRviz` aims to enable fast computation and easy visualization of Convex Clustering
 solution paths.
 
 ## Installation
@@ -35,28 +35,73 @@ devtools::install_github("DataSlingers/clustRviz")
 ```
 
 Note that `RcppEigen` (which `clustRviz` internally) triggers many compiler warnings
-(which cannot be suppressed per [CRAN policies](http://cran.r-project.org/web/packages/policies.html#Source-packages)).
+(which cannot be suppressed per
+[CRAN policies](http://cran.r-project.org/web/packages/policies.html#Source-packages)).
 Many of these warnings can be locally suppressed by adding the line `CXX11FLAGS+=-Wno-ignored-attributes`
 to your `~/.R/Makevars` file.
 
-## Example
+`clustRviz` also depends on the development version of the `gganimate` package,
+which is not yet on CRAN, but may be found [here](https://github.com/thomasp85/gganimate).
 
-Here is a quick example 
-```{r example}
+## Quick-Start
+
+There are two main entry points to the `clustRviz` package, the `CARP` and `CBASS`
+functions, which perform convex clustering and convex biclustering respectively.
+We demonstrate the use of these two functions on a text minining data set,
+`presidential_speech`, which measures how often the 44 U.S. presidents used certain
+words in their public addresses.
+
+```{r load_data}
 library(clustRviz)
-carp_fit <- CARP(presidential_speech)
-carp_fit
+data(presidential_speech)
+presidential_speech[1:6, 1:6]
 ```
 
-```{r plot, include=FALSE, results="hide"}
+We begin by clustering this data set, grouping the rows (presidents) into clusters:
+
+```{r carp_example}
+carp_fit <- CARP(presidential_speech)
+print(carp_fit)
+```
+
+The algorithmic regularization technique employed by `CARP` makes computation of
+the whole solution path almost immediate.
+
+We can examine the result of `CARP` graphically. We begin with a standard dendrogram,
+with three clusters highlighted:
+
+```{r carp_dendro}
+plot(carp_fit, type = "dendrogram", k = 3)
+```
+
+Examing the dendrogram, we see two clear clusters, consisting of pre-WWII and post-WWII
+presidents and Warren G. Harding as a possible outlier. Harding is generally considered
+one of the worst US presidents of all time, so this is perhaps not too surprising.
+
+A more interesting visualization is the dynamic path visualization, whereby we can
+watch the clusters fuse as the regularization level is increased:
+
+```{r carp_dynamic, eval = FALSE}
+plot(carp_fit, type = "dynamic_path")
+```
+
+```{r carp_dynamic_impl, echo = FALSE, results = "hide", message=FALSE}
 if (!dir.exists("inst")) {
   dir.create("inst")
 }
 
-saveviz(carp_fit, 
-        file.name  = "inst/path_dyn.gif",
-        type       = "path",
-        image.type = "dynamic")
+saveviz(carp_fit, file.name = "inst/path_dyn.gif", type = "path", dynamic = TRUE)
 ```
 
-<img src="./inst/path_dyn.gif" width="70%">
+<img src="./inst/path_dyn.gif" width = "70%">
+
+The use of `CBASS` for convex biclustering is similar, and we demonstrate it here
+with a cluster heatmap, with the regularization set to give 3 observation clusters:
+
+```{r cbass}
+cbass_fit <- CBASS(presidential_speech)
+plot(cbass_fit, k.obs = 3)
+```
+
+More details about the use and mathematical formulation of `CARP` and `CBASS`
+may be found in the package documentation.

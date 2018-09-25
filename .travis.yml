@@ -4,6 +4,12 @@ sudo: false
 cache: packages
 warnings_are_errors: true
 
+## Necessary for gifski dependency
+addons:
+  apt:
+    packages:
+      - cargo
+
 before_install:
   - gcc --version
   - g++ --version

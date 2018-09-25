@@ -66,3 +66,20 @@ crv_new_dev_static <- function(file.name, width, height, units = c("in", "cm", "
 
   dev_func(file.name, width = width, height = height)
 }
+
+#' Convert a file name to ".gif" and warn if necessary
+#' @noRd
+#' @importFrom tools file_ext file_path_sans_ext
+ensure_gif <- function(file_name){
+
+  current_extension <- file_ext(file_name)
+
+  if (current_extension != "gif") {
+    new_file_name <- paste(file_path_sans_ext(file_name), ".gif", sep = "")
+    crv_warning("File extension for dynamic visualization is not ", sQuote(".gif"),
+                " -- changing from ", sQuote(file_name), " to ", sQuote(new_file_name))
+    new_file_name
+  } else {
+    file_name
+  }
+}
