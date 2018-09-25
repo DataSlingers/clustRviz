@@ -1,4 +1,4 @@
-context("test clustering.CARP")
+context("test CARP sparsity patterns")
 
 
 test_that("CARP-returned sparsity pattern begins with no fusions",{

@@ -1,4 +1,4 @@
-context("test clustering.CBASS")
+context("test CBASS sparsity pattern")
 
 
 
