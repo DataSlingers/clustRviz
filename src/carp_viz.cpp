@@ -156,6 +156,11 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
 
       try_iter++; // Increment internal iteration count (used to check for stopping below)
 
+      // Safety check - only so many iterations of inner loop before we move on
+      if(try_iter > ti){
+        break;
+      }
+
       if( (nzeros_new == nzeros_old) & (try_iter == 1) ){
         // If the sparsity pattern (number of fusions) hasn't changed, we have
         // no need to back-track (we didn't miss any fusions) so we can go immediately
@@ -186,10 +191,6 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
         ClustRVizLogger::debug("Good iteration - continuing to next step.");
       }
 
-      // Safety check - only so many iterations of inner loop before we move on
-      if(try_iter > ti){
-        rep_iter = false;
-      }
     }
 
     // If we have gotten to the "lots of fusions" part of the solution space, start
