@@ -217,30 +217,24 @@ CARP <- function(X,
     crv_error("Weights do not imply a connected graph. Clustering will not succeed.")
   }
 
-  ## Transform to a form suitable for down-stream computation
-  X <- t(X) ## TODO: Ask JN why we did this
+  weight_matrix_ut <- weight_matrix * upper.tri(weight_matrix);
+
+  edge_list <- which(weight_matrix_ut != 0, arr.ind = TRUE)
+  edge_list <- edge_list[order(edge_list[, 1], edge_list[, 2]), ]
+  cardE <- NROW(edge_list)
+  D <- matrix(0, ncol = n.obs, nrow = cardE)
+  D[cbind(seq_len(cardE), edge_list[,1])] <-  1
+  D[cbind(seq_len(cardE), edge_list[,2])] <- -1
+
   weight_vec <- weight_mat_to_vec(weight_matrix)
-
-  PreCompList <- ConvexClusteringPreCompute(X = X,
-                                            weights = weight_vec,
-                                            rho = rho)
-
-  cardE <- NROW(PreCompList$E)
 
   crv_message("Computing CARP Path")
 
   if (alg.type %in% c("carpvizl1", "carpviz")) {
-      carp.sol.path <- CARP_VIZcpp(x = X[TRUE],
-                                   n = as.integer(n.obs),
-                                   p = as.integer(p.var),
+      carp.sol.path <- CARP_VIZcpp(X,
+                                   D,
                                    lambda_init = 1e-8,
                                    weights = weight_vec[weight_vec != 0],
-                                   uinit = as.matrix(PreCompList$uinit),
-                                   vinit = as.matrix(PreCompList$vinit),
-                                   premat = PreCompList$PreMat,
-                                   IndMat = PreCompList$ind.mat,
-                                   EOneIndMat = PreCompList$E1.ind.mat,
-                                   ETwoIndMat = PreCompList$E2.ind.mat,
                                    rho = rho,
                                    max_iter = as.integer(max.iter),
                                    burn_in = as.integer(burn.in),
@@ -249,18 +243,11 @@ CARP <- function(X,
                                    keep = 1,
                                    l1 = (alg.type == "carpvizl1"))
   } else {
-      carp.sol.path <- CARPcpp(x = X[TRUE],
-                               n = as.integer(n.obs),
-                               p = as.integer(p.var),
+      carp.sol.path <- CARPcpp(X,
+                               D,
                                lambda_init = 1e-8,
                                t = t,
                                weights = weight_vec[weight_vec != 0],
-                               uinit = as.matrix(PreCompList$uinit),
-                               vinit = as.matrix(PreCompList$vinit),
-                               premat = PreCompList$PreMat,
-                               IndMat = PreCompList$ind.mat,
-                               EOneIndMat = PreCompList$E1.ind.mat,
-                               ETwoIndMat = PreCompList$E2.ind.mat,
                                rho = rho,
                                max_iter = as.integer(max.iter),
                                burn_in = as.integer(burn.in),
@@ -277,8 +264,8 @@ CARP <- function(X,
 
   crv_message("Post-processing")
 
-  post_processing_results <- ConvexClusteringPostProcess(X = t(X), # Uses a correctly-oriented X
-                                                         edge_matrix      = PreCompList$E,
+  post_processing_results <- ConvexClusteringPostProcess(X = X,
+                                                         edge_matrix      = edge_list,
                                                          lambda_path      = carp.sol.path$lambda.path,
                                                          u_path           = carp.sol.path$u.path,
                                                          v_path           = carp.sol.path$v.path,

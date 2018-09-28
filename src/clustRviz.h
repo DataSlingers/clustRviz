@@ -39,4 +39,4 @@ Eigen::VectorXd ProxL2(const Eigen::VectorXd&, int,
                        const Eigen::VectorXd&, const Eigen::MatrixXi&);
 Eigen::VectorXd ProxL1(const Eigen::VectorXd&, int, double,
                        const Eigen::VectorXd& weights);
-
+double soft_thresh(double, double);
