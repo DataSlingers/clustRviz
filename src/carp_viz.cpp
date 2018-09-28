@@ -146,7 +146,7 @@ Rcpp::List CARP_VIZcpp(const Eigen::VectorXd& x,
       // TODO- Document this check: what are we trying to do here?
       for(int l = 0; l < num_edges; l++){
         Eigen::VectorXi v_index = IndMat.row(l);
-        if(extract(v_new, v_index).sum() == 0){
+        if(extract(v_new, v_index).cwiseAbs().sum() == 0){
           vZeroIndsnew(l) = 1;
         }
       }

@@ -206,7 +206,7 @@ Rcpp::List CBASScpp(const Eigen::VectorXd& x,
     // Count number of row fusions
     for(int l = 0; l < num_edges_row; l++){
       Eigen::VectorXi v_index_row = IndMat_row.row(l);
-      if(extract(v_new_row, v_index_row).sum() == 0){
+      if(extract(v_new_row, v_index_row).cwiseAbs().sum() == 0){
         vZeroIndsnew_row(l) = 1;
       }
     }
@@ -215,7 +215,7 @@ Rcpp::List CBASScpp(const Eigen::VectorXd& x,
     // Count number of column fusions
     for(int l = 0; l < num_edges_col; l++){
       Eigen::VectorXi v_index_col = IndMat_col.row(l);
-      if(extract(v_new_col, v_index_col).sum() == 0){
+      if(extract(v_new_col, v_index_col).cwiseAbs().sum() == 0){
         vZeroIndsnew_col(l) = 1;
       }
     }
