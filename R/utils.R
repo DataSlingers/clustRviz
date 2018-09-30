@@ -343,8 +343,8 @@ ConvexClusteringPostProcess <- function(X,
                                         dendrogram_scale,
                                         npcs){
 
-  n.obs     <- NROW(X)
-  p.var     <- NCOL(X)
+  n         <- NROW(X)
+  p         <- NCOL(X)
   num_edges <- NROW(edge_matrix)
 
   cluster_path <- ISP(sp.path     = t(v_zero_indices),
@@ -353,7 +353,7 @@ ConvexClusteringPostProcess <- function(X,
                       lambda.path = lambda_path,
                       cardE       = num_edges)
 
-  cluster_path[["clust.path"]] <- get_cluster_assignments(edge_matrix, cluster_path$sp.path.inter, n.obs)
+  cluster_path[["clust.path"]] <- get_cluster_assignments(edge_matrix, cluster_path$sp.path.inter, n)
   cluster_path[["clust.path.dups"]] <- duplicated(cluster_path[["clust.path"]], fromList = FALSE)
 
   cvx_dendrogram <- CreateDendrogram(cluster_path, labels, dendrogram_scale)
@@ -361,14 +361,14 @@ ConvexClusteringPostProcess <- function(X,
   X_pca <- stats::prcomp(X, scale. = FALSE, center = FALSE)
   X_pca_rotation <- X_pca$rotation[, seq_len(npcs)]
 
-  U_projected <- crossprod(matrix(cluster_path$u.path.inter, nrow = p.var), X_pca_rotation)
+  U_projected <- crossprod(matrix(cluster_path$u.path.inter, nrow = p), X_pca_rotation)
   colnames(U_projected) <- paste0("PC", seq_len(npcs))
 
   cluster_path_vis <- as_tibble(U_projected) %>%
-                         mutate(Iter = rep(seq_along(cluster_path$clust.path), each = n.obs),
-                                Obs  = rep(seq_len(n.obs), times = length(cluster_path$clust.path)),
-                                Cluster = as.vector(vapply(cluster_path$clust.path, function(x) x$membership, double(n.obs))),
-                                Lambda = rep(cluster_path$lambda.path.inter, each = n.obs),
+                         mutate(Iter = rep(seq_along(cluster_path$clust.path), each = n),
+                                Obs  = rep(seq_len(n), times = length(cluster_path$clust.path)),
+                                Cluster = as.vector(vapply(cluster_path$clust.path, function(x) x$membership, double(n))),
+                                Lambda = rep(cluster_path$lambda.path.inter, each = n),
                                 ObsLabel = rep(labels, times = length(cluster_path$clust.path))) %>%
                          group_by(.data$Iter) %>%
                          mutate(NCluster = n_distinct(.data$Cluster)) %>%

@@ -105,11 +105,11 @@ Let's begin by loading our package and the dataset:
 library(clustRviz)
 data("presidential_speech")
 Xdat <- presidential_speech
-obs.labels <- rownames(Xdat)
-var.labels <- colnames(Xdat)
+row_labels <- rownames(Xdat)
+col_labels <- colnames(Xdat)
 Xdat[1:5,1:5]
-head(obs.labels)
-head(var.labels)
+head(row_labels)
+head(col_labels)
 ```
 
 ## Preprocessing 
@@ -125,7 +125,7 @@ so we do not scale our data matrix.
 
 ```{r}
 # Centering data before computing the CARP solution path
-Xdat.preprocessed <- scale(Xdat,center=TRUE,scale=FALSE)
+Xdat.preprocessed <- scale(Xdat, center=TRUE, scale=FALSE)
 ```
 
 In the `CARP` function this preprocessing is done via the `X.center` and `X.scale`
@@ -317,19 +317,19 @@ Simiarly to `CARP` objects, `CBASS` clustering solutions may also be extracted v
 three accessor functions. The `CBASS` methods allow one of three parameters to be
 used to specify the solution:
 
-- `k.obs`: the number of observation clusters
-- `k.var`: the number of variable (feature) clusters
+- `k.row`: the number of row clusters
+- `k.col`: the number of column clusters
 - `percent`: the percent of total regularization
 
 Other than this, the behavior of `get_cluster_labels`, and `get_clustered_data`
 is roughly the same:
 
 ```{r}
-# CBASS Cluster Labels for observations (default)
-get_cluster_labels(cbass.fit, percent = 0.85, type = "obs")
+# CBASS Cluster Labels for rows (observations = default)
+get_cluster_labels(cbass.fit, percent = 0.85, type = "row")
 
-# CBASS Cluster Labels for features
-get_cluster_labels(cbass.fit, percent = 0.85, type = "var")
+# CBASS Cluster Labels for columns (features)
+get_cluster_labels(cbass.fit, percent = 0.85, type = "col")
 
 # CBASS Solution - naive centroids
 get_clustered_data(cbass.fit, percent = 0.85)
@@ -339,8 +339,8 @@ get_clustered_data(cbass.fit, percent = 0.85, refit = FALSE)
 ```
 
 The `get_cluster_centroids` function returns a $k_1$-by-$k_2$ matrix, giving
-the (scalar) centroids at a solution with $k_1$ observation clusters and $k_2$
-variable clusters:
+the (scalar) centroids at a solution with $k_1$ row clusters and $k_2$
+column clusters:
 
 ```{r}
 get_cluster_centroids(cbass.fit, percent = 0.85)
@@ -367,7 +367,7 @@ the fusions between observations as regulaization increases.
 To obtain a snapshot we again specify the percent of regularization.
 
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
-plot(carp.fit,type = 'path',percent=.5)
+plot(carp.fit, type = 'path', percent = .5)
 ```
 
 Owing to the CARP-VIZ algorithm, we are also ensured a
@@ -375,7 +375,7 @@ dendrogram representation for the resulting path. In the
 figure below we display the dendrogram of CARP-VIZ:
 
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
-plot(carp.fit,type = 'dendrogram')
+plot(carp.fit, type = 'dendrogram')
 ```
 
 Additional static visualization are available for
@@ -383,7 +383,7 @@ CBASS objects, allowing both static heatmaps and
 dendrograms for observations and variables.
 
 ```{r,echo=TRUE,eval=FALSE}
-plot(cbass.fit,type='var.dendrogram')
+plot(cbass.fit, type = 'col.dendrogram')
 ```
 
 ## Dynamic
@@ -393,17 +393,18 @@ Via the use of Shiny applications, dynamic displays of dendrograms,
 clustering solution paths, and biclustering heatmaps may be easily obtained.
 
 ```{r,echo=TRUE,eval=FALSE}
-plot(carp.fit,type='interactive')
+plot(carp.fit, type = 'interactive')
 ```
 
 ```{r,echo=FALSE,eval=TRUE,out.width='100%'}
-knitr::include_url(url="https://clustrviz.shinyapps.io/PathShiny/",height='850px')
+knitr::include_url(url = "https://clustrviz.shinyapps.io/PathShiny/", 
+                   height = '850px')
 ```
 
 Also for CBASS:
 
 ```{r,echo=TRUE,eval=FALSE}
-plot(cbass.fit,type='interactive')
+plot(cbass.fit, type = 'interactive')
 ```
 
 ## Saving

@@ -5,8 +5,8 @@ test_that("print.CBASS works for default settings", {
   cbass_print <- capture_print(cbass_fit)
 
   expect_str_contains(cbass_print, "Algorithm:[ ]+CBASS-VIZ")
-  expect_str_contains(cbass_print, "Number of Observations:[ ]+44")
-  expect_str_contains(cbass_print, "Number of Variables:[ ]+75")
+  expect_str_contains(cbass_print, "Number of Rows:[ ]+44")
+  expect_str_contains(cbass_print, "Number of Columns:[ ]+75")
   expect_str_contains(cbass_print, "Global centering:[ ]+TRUE")
   expect_str_contains(cbass_print, "Source: Radial Basis Function Kernel Weights")
   expect_str_contains(cbass_print, "Distance Metric: Euclidean")

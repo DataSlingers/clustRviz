@@ -6,9 +6,7 @@
 #' Algorithmic Regularization Paths. A seqeunce of biclustering
 #' solutions is returned along with several visualizations.
 #'
-#' @param X The data matrix (\eqn{X \in R^{n \times p}}{X}): rows correspond to
-#'          the observations (to be clustered) and columns to the variables (which
-#'          will not be clustered).
+#' @param X The data matrix (\eqn{X \in R^{n \times p}}{X})
 #' @param row_weights One of the following: \itemize{
 #'                    \item A function which, when called with argument \code{X},
 #'                          returns a n-by-n matrix of fusion weights.
@@ -52,8 +50,8 @@
 #' @return An object of class \code{CBASS} containing the following elements (among others):
 #'         \itemize{
 #'         \item \code{X}: the original data matrix
-#'         \item \code{n.obs}: the number of observations (rows of \code{X})
-#'         \item \code{p.var}: the number of variables (columns of \code{X})
+#'         \item \code{n}: the number of observations (rows of \code{X})
+#'         \item \code{p}: the number of variables (columns of \code{X})
 #'         \item \code{alg.type}: the \code{CBASS} variant used
 #'         \item \code{X.center.global}: a logical indicating whether \code{X}
 #'                                       was globally centered before clustering
@@ -63,18 +61,18 @@
 #'                                       fusion weights for the observations
 #'         \item \code{burn.in}: an integer indicating the number of "burn-in"
 #'                               iterations performed
-#'         \item \code{carp.dend.obs}: a dendrogram (object of class
+#'         \item \code{carp.dend.row}: a dendrogram (object of class
 #'                                     \code{\link[stats]{hclust}}) containing
-#'                                     the clustering solution path for the observations
-#'         \item \code{carp.dend.var}: a dendrogram (object of class
+#'                                     the clustering solution path for the rows
+#'         \item \code{carp.dend.col}: a dendrogram (object of class
 #'                                     \code{\link[stats]{hclust}}) containing
-#'                                     the clustering solution path for the variables
-#'         \item \code{cbass.cluster.path.obs}: The \code{CBASS} solution path for the observations
-#'         \item \code{cbass.cluster.path.var}: The \code{CBASS} solution path for the variables
-#'         \item \code{obs.labels}: a character vector of length \code{n.obs} containing
-#'                                  observation (row) labels
-#'         \item \code{var.labels}: a character vector of length \code{p.var} containing
-#'                                  variable (column) labels
+#'                                     the clustering solution path for the columns
+#'         \item \code{cbass.cluster.path.row}: The \code{CBASS} solution path for the rows
+#'         \item \code{cbass.cluster.path.col}: The \code{CBASS} solution path for the columns
+#'         \item \code{row.labels}: a character vector of length \code{n} containing
+#'                                  row (observation) labels
+#'         \item \code{col.labels}: a character vector of length \code{p} containing
+#'                                  column (feature) labels
 #'         }
 #' @export
 #' @examples
@@ -194,8 +192,8 @@ CBASS <- function(X,
 
   colnames(X) <- col_labels <- make.unique(as.character(col_labels), sep = "_")
 
-  n.obs <- NROW(X)
-  p.var <- NCOL(X)
+  n <- NROW(X)
+  p <- NCOL(X)
 
   # Preprocess X
   X.orig <- X
@@ -287,15 +285,15 @@ CBASS <- function(X,
   ##
   ## It is important that the observation (col) weights sum to 1/sqrt(p)
   ## and the feature/variable (row) weights sum to 1/sqrt(n).
-  row_weights <- row_weights / (sum(row_weights) * sqrt(n.obs))
-  col_weights <- col_weights / (sum(col_weights) * sqrt(p.var))
+  row_weights <- row_weights / (sum(row_weights) * sqrt(n))
+  col_weights <- col_weights / (sum(col_weights) * sqrt(p))
 
   row_weight_matrix_ut <- row_weight_matrix * upper.tri(row_weight_matrix);
 
   row_edge_list <- which(row_weight_matrix_ut != 0, arr.ind = TRUE)
   row_edge_list <- row_edge_list[order(row_edge_list[, 1], row_edge_list[, 2]), ]
   num_edge_rows <- NROW(row_edge_list)
-  D_row <- matrix(0, ncol = n.obs, nrow = num_edge_rows)
+  D_row <- matrix(0, ncol = n, nrow = num_edge_rows)
   D_row[cbind(seq_len(num_edge_rows), row_edge_list[,1])] <-  1
   D_row[cbind(seq_len(num_edge_rows), row_edge_list[,2])] <- -1
 
@@ -304,7 +302,7 @@ CBASS <- function(X,
   col_edge_list <- which(col_weight_matrix_ut != 0, arr.ind = TRUE)
   col_edge_list <- col_edge_list[order(col_edge_list[, 1], col_edge_list[, 2]), ]
   num_edge_cols <- NROW(col_edge_list)
-  D_col <- matrix(0, ncol = num_edge_cols, nrow = p.var)
+  D_col <- matrix(0, ncol = num_edge_cols, nrow = p)
   D_col[cbind(col_edge_list[,1], seq_len(num_edge_cols))] <-  1
   D_col[cbind(col_edge_list[,2], seq_len(num_edge_cols))] <- -1
 
@@ -372,21 +370,21 @@ CBASS <- function(X,
 
   cbass.fit <- list(
     X = X.orig,
-    n.obs = n.obs,
-    p.var = p.var,
+    n = n,
+    p = p,
     cbass.sol.path = cbass.sol.path,
     # Column-wise (variable) results
-    cbass.cluster.path.var = post_processing_results_col$raw_path,
-    cbass.cluster.path.vis.var = post_processing_results_col$paths,
-    cbass.dend.var = post_processing_results_col$dendrogram,
-    var_weight_type = col_weight_type,
-    var.labels = col_labels,
+    cbass.cluster.path.col = post_processing_results_col$raw_path,
+    cbass.cluster.path.vis.col = post_processing_results_col$paths,
+    cbass.dend.col = post_processing_results_col$dendrogram,
+    col_weight_type = col_weight_type,
+    col.labels = col_labels,
     # Row-wise (observation) results
-    cbass.cluster.path.obs = post_processing_results_row$raw_path,
-    cbass.cluster.path.vis.obs = post_processing_results_row$paths,
-    cbass.dend.obs = post_processing_results_row$dendrogram,
-    obs_weight_type = row_weight_type,
-    obs.labels = row_labels,
+    cbass.cluster.path.row = post_processing_results_row$raw_path,
+    cbass.cluster.path.vis.row = post_processing_results_row$paths,
+    cbass.dend.row = post_processing_results_row$dendrogram,
+    row_weight_type = row_weight_type,
+    row.labels = row_labels,
     # General flags
     burn.in = burn.in,
     alg.type = alg.type,
@@ -405,7 +403,7 @@ CBASS <- function(X,
 #'
 #' Prints a brief descripton of a fitted \code{CBASS} object.
 #'
-#' Reports number of observations and variables of dataset, any preprocessing
+#' Reports number of row and columns of dataset, any preprocessing
 #' done by the \code{\link{CBASS}} function, regularization weight information,
 #' and the variant of \code{CBASS}.
 #'
@@ -427,20 +425,20 @@ print.CBASS <- function(x, ...) {
   cat("Algorithm:", alg_string, "\n")
   cat("Time:", sprintf("%2.3f %s", x$time, attr(x$time, "units")), "\n\n")
 
-  cat("Number of Observations:", x$n.obs, "\n")
-  cat("Number of Variables:   ", x$p.var, "\n\n")
+  cat("Number of Rows:", x$n, "\n")
+  cat("Number of Columns:", x$p, "\n\n")
 
   cat("Pre-processing options:\n")
   cat(" - Global centering:", x$X.center.global, "\n\n")
 
-  cat("Observation Weights:\n")
-  print(x$obs_weight_type)
+  cat("Row Weights:\n")
+  print(x$row_weight_type)
 
-  cat("Feature Weights:\n")
-  print(x$var_weight_type)
+  cat("Column Weights:\n")
+  print(x$col_weight_type)
 
   cat("Raw Data:\n")
-  print(x$X[1:min(5, x$n.obs), 1:min(5, x$p.var)])
+  print(x$X[1:min(5, x$n), 1:min(5, x$p)])
 
   invisible(x)
 }

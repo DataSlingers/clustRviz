@@ -262,9 +262,9 @@ the raw data matrix.
 
 ### Setting `CBASS` Weights
 
-`CBASS` requires two sets of weights, one for observations and one for features.
-The interface is the same as for `CARP`, but we now can supply the `obs_weights` and
-`var_weights` arguments separately. The former will be used as the `weights`
+`CBASS` requires two sets of weights, one for rows and one for columns.
+The interface is the same as for `CARP`, but we now can supply the `row_weights` and
+`col_weights` arguments separately. The former will be used as the `weights`
 argument to `CARP`; the latter will be used called on the *transpose* of the
 pre-processed data, since it is used to calculate column weights. The weights are
 computed independently (with possibly different choices of $\phi$ and $k$) and
@@ -272,8 +272,8 @@ can be controlled separately: *e.g.*
 
 ```{r message=FALSE}
 CBASS(presidential_speech,
-      var_weights = sparse_rbf_kernel_weights(dist.method = "canberra", k = 4),
-      obs_weights = sparse_rbf_kernel_weights(dist.method = "maximum", phi = 2))
+      col_weights = sparse_rbf_kernel_weights(dist.method = "canberra", k = 4),
+      row_weights = sparse_rbf_kernel_weights(dist.method = "maximum", phi = 2))
 ```
 
 As mentioned above, `CBASS` rescales the resulting weights to ensure proper biclustering.
@@ -342,12 +342,12 @@ Writing the weight scheme as a function is particularly useful for biclustering,
 
 ```{r}
 cbass_chain_fit <- CBASS(presidential_speech,
-                         obs_weights = chain_weights,
-                         var_weights = chain_weights)
+                         row_weights = chain_weights,
+                         col_weights = chain_weights)
 ```
 
 ```{r}
-plot(cbass_chain_fit, type="var.dendrogram")
+plot(cbass_chain_fit, type="col.dendrogram")
 ```
 
 Note that the print method for `CARP` and `CBASS` knows that the weights were

@@ -117,8 +117,8 @@ saveviz.CARP <- function(x,
 #'                If \code{TRUE}, a dynamic visualization which varies along the
 #'                \code{CARP} solution path at a grid given by \code{percent.seq}
 #'                is produced (as a \code{GIF}). If \code{FALSE}, a fixed visualization
-#'                at a single solution (determined by \code{percent}, \code{k.obs} or
-#'                \code{k.var} if supplied) is produced.
+#'                at a single solution (determined by \code{percent}, \code{k.row} or
+#'                \code{k.col} if supplied) is produced.
 #' @param percent.seq A grid of values of \code{percent} along which to generate
 #'                    dynamic visualizations (if \code{dynamic == TRUE})
 #' @param width The width of the output, given in \code{unit}s
@@ -133,15 +133,15 @@ saveviz.CARP <- function(x,
 #' @export
 saveviz.CBASS <- function(x,
                           file.name,
-                          type = c("heatmap", "obs.dendrogram", "var.dendrogram"),
+                          type = c("heatmap", "row.dendrogram", "col.dendrogram"),
                           dynamic = TRUE,
                           dend.branch.width = 2,
                           dend.labels.cex = .6,
                           heatrow.label.cex = 1.5,
                           heatcol.label.cex = 1.5,
                           percent,
-                          k.obs,
-                          k.var,
+                          k.row,
+                          k.col,
                           percent.seq = seq(from = 0, to = 1, by = .05),
                           width = 8,
                           height = 5,
@@ -167,33 +167,33 @@ saveviz.CBASS <- function(x,
              cbass_heatmap_plot(x,
                                 ...,
                                 percent = percent,
-                                k.obs = k.obs,
-                                k.var = k.var,
+                                k.row = k.row,
+                                k.col = k.col,
                                 heatrow.label.cex = heatrow.label.cex,
                                 heatcol.label.cex = heatcol.label.cex)
              dev.off()
            },
-           obs.dendrogram = {
+           row.dendrogram = {
              crv_new_dev_static(file.name, width = width, height = height, units = units)
              cbass_dendro_plot(x,
                                percent = percent,
-                               k.obs = k.obs,
-                               k.var = k.var,
+                               k.row = k.row,
+                               k.col = k.col,
                                dend.branch.width = dend.branch.width,
                                dend.labels.cex = dend.labels.cex,
-                               type = "obs",
+                               type = "row",
                                ...)
              dev.off()
            },
-           var.dendrogram = {
+           col.dendrogram = {
              crv_new_dev_static(file.name, width = width, height = height, units = units)
              cbass_dendro_plot(x,
                                percent = percent,
-                               k.obs = k.obs,
-                               k.var = k.var,
+                               k.row = k.row,
+                               k.col = k.col,
                                dend.branch.width = dend.branch.width,
                                dend.labels.cex = dend.labels.cex,
-                               type = "var",
+                               type = "col",
                                ...)
              dev.off()
            })
@@ -232,35 +232,35 @@ saveviz.CBASS <- function(x,
          clean = TRUE)
       invisible(file.name)
     },
-    obs.dendrogram = {
+    row.dendrogram = {
       animation::saveGIF({
         for (pct in percent.seq) {
           cbass_dendro_plot(x,
                             percent = pct,
                             dend.branch.width = dend.branch.width,
                             dend.labels.cex = dend.labels.cex,
-                            type = "obs",
+                            type = "row",
                             ...)
         }
       }, movie.name = file.name,
-         img.name = "cbass_observation_dendrogram",
+         img.name = "cbass_row_dendrogram",
          ani.width  = convert_units(width, from = units, to = "px"),
          ani.height = convert_units(height, from = units, to = "px"),
          clean = TRUE)
       invisible(file.name)
     },
-    var.dendrogram = {
+    col.dendrogram = {
       animation::saveGIF({
         for (pct in percent.seq) {
           cbass_dendro_plot(x,
                             percent = pct,
                             dend.branch.width = dend.branch.width,
                             dend.labels.cex = dend.labels.cex,
-                            type = "obs",
+                            type = "col",
                             ...)
         }
       }, movie.name = file.name,
-         img.name = "cbass_variable_dendrogram",
+         img.name = "cbass_column_dendrogram",
          ani.width  = convert_units(width, from = units, to = "px"),
          ani.height = convert_units(height, from = units, to = "px"),
          clean = TRUE)

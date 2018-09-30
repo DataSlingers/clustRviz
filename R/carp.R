@@ -42,8 +42,8 @@
 #' @return An object of class \code{CARP} containing the following elements (among others):
 #'         \itemize{
 #'         \item \code{X}: the original data matrix
-#'         \item \code{n.obs}: the number of observations (rows of \code{X})
-#'         \item \code{p.var}: the number of variables (columns of \code{X})
+#'         \item \code{n}: the number of observations (rows of \code{X})
+#'         \item \code{p}: the number of variables (columns of \code{X})
 #'         \item \code{alg.type}: the \code{CARP} variant used
 #'         \item \code{X.center}: a logical indicating whether \code{X} was centered
 #'                                column-wise before clustering
@@ -167,8 +167,8 @@ CARP <- function(X,
 
   rownames(X) <- labels <- make.unique(as.character(labels), sep="_")
 
-  n.obs <- NROW(X)
-  p.var <- NCOL(X)
+  n <- NROW(X)
+  p <- NCOL(X)
 
   # Center and scale X
   X.orig <- X
@@ -176,8 +176,8 @@ CARP <- function(X,
     X <- scale(X, center = X.center, scale = X.scale)
   }
 
-  scale_vector  <- attr(X, "scaled:scale", exact=TRUE)  %||% rep(1, p.var)
-  center_vector <- attr(X, "scaled:center", exact=TRUE) %||% rep(0, p.var)
+  scale_vector  <- attr(X, "scaled:scale", exact=TRUE)  %||% rep(1, p)
+  center_vector <- attr(X, "scaled:center", exact=TRUE) %||% rep(0, p)
 
   crv_message("Pre-computing weights and edge sets")
 
@@ -222,7 +222,7 @@ CARP <- function(X,
   edge_list <- which(weight_matrix_ut != 0, arr.ind = TRUE)
   edge_list <- edge_list[order(edge_list[, 1], edge_list[, 2]), ]
   cardE <- NROW(edge_list)
-  D <- matrix(0, ncol = n.obs, nrow = cardE)
+  D <- matrix(0, ncol = n, nrow = cardE)
   D[cbind(seq_len(cardE), edge_list[,1])] <-  1
   D[cbind(seq_len(cardE), edge_list[,2])] <- -1
 
@@ -280,8 +280,8 @@ CARP <- function(X,
     carp.cluster.path.vis = post_processing_results$paths,
     carp.sol.path = carp.sol.path,
     cardE = cardE,
-    n.obs = n.obs,
-    p.var = p.var,
+    n = n,
+    p = p,
     weight_type = weight_type,
     burn.in = burn.in,
     alg.type = alg.type,
@@ -324,8 +324,8 @@ print.CARP <- function(x, ...) {
   cat("Algorithm:", alg_string, "\n")
   cat("Time:", sprintf("%2.3f %s", x$time, attr(x$time, "units")), "\n\n")
 
-  cat("Number of Observations:", x$n.obs, "\n")
-  cat("Number of Variables:   ", x$p.var, "\n\n")
+  cat("Number of Observations:", x$n, "\n")
+  cat("Number of Variables:   ", x$p, "\n\n")
 
   cat("Pre-processing options:\n")
   cat(" - Columnwise centering:", x$X.center, "\n")
@@ -335,7 +335,7 @@ print.CARP <- function(x, ...) {
   print(x$weight_type)
 
   cat("Raw Data:\n")
-  print(x$X[1:min(5, x$n.obs), 1:min(5, x$p.var)])
+  print(x$X[1:min(5, x$n), 1:min(5, x$p)])
 
   invisible(x)
 }

@@ -180,7 +180,7 @@ biclustering solutions, and its usage is similar to `CARP`.
 We fit the biclustering solution path as follows:
 
 ```{r}
-cbass.fit <- CBASS(X=Xdat, obs_labels = petrol$No)
+cbass.fit <- CBASS(X=Xdat, row_labels = petrol$No)
 ```
 
 Once fitted, vizualizations are displayed again via the `plot` function.
@@ -191,18 +191,18 @@ of the observations induced by the CBASS solution path.
 plot(cbass.fit)
 ```
 
-Since both observations and variables are clustered simultaneously, a
-cluster dendrogram for the variables may also be plotted:
+Since both rows (observations) and columns (variables) are clustered simultaneously,
+a cluster dendrogram for the columns may also be plotted:
 
-```{r,eval=FALSE}
-plot(cbass.fit,type='var.dendrogram')
+```{r, eval=FALSE}
+plot(cbass.fit, type='col.dendrogram')
 ```
 
 Additionally both dendrograms and the associated cluster heatmap 
 can be viewed by passing the `heatmap` arguement.
 
 ```{r,fig.width=10,fig.height=10,fig.align='center'}
-plot(cbass.fit,type='heatmap')
+plot(cbass.fit, type='heatmap')
 ```
 
 As was the case of `CARP`, interactive visualizations may also be displayed:
@@ -217,26 +217,26 @@ cluster heatmap and dendrogram solutions along the path.
 As was the case with `CARP`, clustering solutions are obtained via the
 `get_cluster_labels` function. The desired clustering solution is specified by:
 
-- the number of observation clusters (`k.obs`);
-- the number of variable clusters (`k.var`); or
+- the number of row clusters (`k.row`);
+- the number of col clusters (`k.col`); or
 - the percent of regularization (`percent`).
 
 In the example below we obtain the biclustering solution
-which obtains $3$ observation clusters:
+which obtains $3$ row clusters:
 
 ```{r}
-# How are the observations clustered at the 3 observation cluster solution?
-table(get_cluster_labels(cbass.fit, k.obs = 3))
+# How are the rows (observations) clustered at the 3 row cluster solution?
+table(get_cluster_labels(cbass.fit, k.row = 3))
 
-# How are the features clustered at the 3 observation cluster solution?
-table(get_cluster_labels(cbass.fit, k.obs = 3, type = "var"))
+# How are the columns (features) clustered at the 3 row cluster solution?
+table(get_cluster_labels(cbass.fit, k.row = 3, type = "col"))
 ```
 
 We can also investigate the bi-clustered data matrix (with the raw data replaced
 by estimated centroids) with the `get_clustered_data` function:
 
 ```{r}
-get_clustered_data(cbass.fit, k.obs = 3)
+get_clustered_data(cbass.fit, k.row = 3)
 ```
 
 Finally we demonstrate how to save the visualizations
@@ -248,21 +248,21 @@ path may be saved via:
 
 ```{r,eval=FALSE}
 saveviz(x=cbass.fit,
-        file.name = 'cbass_vardend_dynamic.png',
-        plot.type = 'var.dendrogram',
+        file.name = 'cbass_column_dendrogram_dynamic.gif',
+        plot.type = 'col.dendrogram',
         image.type = 'dynamic'
 )
 ```
 
 Similarly, a static snapshot of the bicluster heatmap at the moment
-along the path when $4$ observation clusters are formed may be
+along the path when $4$ row clusters are formed may be
 saved also:
 
 ```{r,eval=FALSE}
 saveviz(x=cbass.fit,
-        file.name = 'cbass_heatmap_static_kobs.png',
+        file.name = 'cbass_heatmap_static.png',
         plot.type = 'heatmap',
         image.type = 'static',
-        k.obs = 4
+        k.row = 4
 )
 ```
