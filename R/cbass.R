@@ -9,14 +9,14 @@
 #' @param X The data matrix (\eqn{X \in R^{n \times p}}{X}): rows correspond to
 #'          the observations (to be clustered) and columns to the variables (which
 #'          will not be clustered).
-#' @param obs_weights One of the following: \itemize{
+#' @param row_weights One of the following: \itemize{
 #'                    \item A function which, when called with argument \code{X},
 #'                          returns a n-by-n matrix of fusion weights.
 #'                    \item A matrix of size n-by-ncontaining fusion weights
 #'                    }
 #'                    Note that the weights will be renormalized to sum to
 #'                    \eqn{1/\sqrt{n}} internally.
-#' @param var_weights One of the following: \itemize{
+#' @param col_weights One of the following: \itemize{
 #'                    \item A function which, when called with argument \code{t(X)},
 #'                          returns a p-by-p matrix of fusion weights. (Note the
 #'                          transpose.)
@@ -24,8 +24,8 @@
 #'                    }
 #'                    Note that the weights will be renormalized to sum to
 #'                    \eqn{1/\sqrt{p}} internally.
-#' @param obs_labels A character vector of length \eqn{n}: observations (row) labels
-#' @param var_labels A character vector of length \eqn{p}: variable (column) labels
+#' @param row_labels A character vector of length \eqn{n}: row (observation) labels
+#' @param col_labels A character vector of length \eqn{p}: column (variable) labels
 #' @param X.center.global A logical: Should \code{X} be centered globally?
 #'                        \emph{I.e.}, should the global mean of \code{X} be subtracted?
 #' @param rho For advanced users only (not advisable to change): the penalty
@@ -85,16 +85,16 @@
 #' }
 CBASS <- function(X,
                   ...,
-                  var_weights = sparse_rbf_kernel_weights(k = "auto",
+                  row_weights = sparse_rbf_kernel_weights(k = "auto",
                                                           phi = "auto",
                                                           dist.method = "euclidean",
                                                           p = 2),
-                  obs_weights = sparse_rbf_kernel_weights(k = "auto",
+                  col_weights = sparse_rbf_kernel_weights(k = "auto",
                                                           phi = "auto",
                                                           dist.method = "euclidean",
                                                           p = 2),
-                  obs_labels = rownames(X),
-                  var_labels = colnames(X),
+                  row_labels = rownames(X),
+                  col_labels = colnames(X),
                   X.center.global = TRUE,
                   rho = 1.0,
                   t = 1.01,
@@ -173,26 +173,26 @@ CBASS <- function(X,
   }
 
   ## Get row (observation) labels
-  if (is.null(obs_labels)) {
-    obs_labels <- paste0("Obs", seq_len(NROW(X)))
+  if (is.null(row_labels)) {
+    row_labels <- paste0("Row", seq_len(NROW(X)))
   }
 
-  if ( length(obs_labels) != NROW(X) ){
-    crv_error(sQuote("obs_labels"), " must be of length ", sQuote("NROW(X)."))
+  if ( length(row_labels) != NROW(X) ){
+    crv_error(sQuote("row_labels"), " must be of length ", sQuote("NROW(X)."))
   }
 
-  rownames(X) <- obs_labels <- make.unique(as.character(obs_labels), sep = "_")
+  rownames(X) <- row_labels <- make.unique(as.character(row_labels), sep = "_")
 
   ## Get column (variable) labels
-  if (is.null(var_labels)) {
-    var_labels <- paste0("Var", seq_len(NCOL(X)))
+  if (is.null(col_labels)) {
+    col_labels <- paste0("Col", seq_len(NCOL(X)))
   }
 
-  if ( length(var_labels) != NCOL(X) ){
-    crv_error(sQuote("var_labels"), " must be of length ", sQuote("NCOL(X)."))
+  if ( length(col_labels) != NCOL(X) ){
+    crv_error(sQuote("col_labels"), " must be of length ", sQuote("NCOL(X)."))
   }
 
-  colnames(X) <- var_labels <- make.unique(as.character(var_labels), sep = "_")
+  colnames(X) <- col_labels <- make.unique(as.character(col_labels), sep = "_")
 
   n.obs <- NROW(X)
   p.var <- NCOL(X)
@@ -206,90 +206,82 @@ CBASS <- function(X,
     mean_adjust <- 0
   }
 
-  ## Transform to a form suitable for down-stream computation
-  X <- t(X) ## TODO: Ask JN why we keep this. (It matches the convention in Chi, Allen, Baraniuk)
+  crv_message("Pre-computing column weights and edge sets")
+  # Calculate column (variable/feature)-clustering weights
+  if (is.function(col_weights)) { # Usual case, `col_weights` is a function which calculates the weight matrix
+    col_weight_result <- col_weights(t(X))
+
+    if (is.matrix(col_weight_result)) {
+      col_weight_matrix <- col_weight_result
+      col_weight_type   <- UserFunction()
+    } else {
+      col_weight_matrix <- col_weight_result$weight_mat
+      col_weight_type   <- col_weight_result$type
+    }
+  } else if (is.matrix(col_weights)) {
+
+    if (!is_square(col_weights)) {
+      crv_error(sQuote("col_weights"), " must be a square matrix.")
+    }
+
+    if (NROW(col_weights) != NCOL(X)) {
+      crv_error(sQuote("NROW(col_weights)"), " must be equal to ", sQuote("NCOL(X)."))
+    }
+
+    col_weight_matrix <- col_weights
+    col_weight_type   <- UserMatrix()
+  } else {
+    crv_error(sQuote("CBASS"), " does not know how to handle ", sQuote("col_weights"),
+              " of class ", class(col_weights)[1], ".")
+  }
+
+  if (any(col_weight_matrix < 0) || anyNA(col_weight_matrix)) {
+    crv_error("All column fusion weights must be positive or zero.")
+  }
+
+  if (!is_connected_adj_mat(col_weight_matrix != 0)) {
+    crv_error("Weights for columns do not imply a connected graph. Biclustering will not succeed.")
+  }
 
   crv_message("Pre-computing row weights and edge sets")
+  # Calculate row (observation)-clustering weights
+  if (is.function(row_weights)) { # Usual case, `row_weights` is a function which calculates the weight matrix
+    row_weight_result <- row_weights(X)
 
-  # Calculate variable/feature (row)-clustering weights
-  if (is.function(var_weights)) { # Usual case, `var_weights` is a function which calculates the weight matrix
-    var_weight_result <- var_weights(X)
-
-    if (is.matrix(var_weight_result)) {
-      var_weight_matrix <- var_weight_result
-      var_weight_type   <- UserFunction()
+    if (is.matrix(row_weight_result)) {
+      row_weight_matrix <- row_weight_result
+      row_weight_type   <- UserFunction()
     } else {
-      var_weight_matrix <- var_weight_result$weight_mat
-      var_weight_type   <- var_weight_result$type
+      row_weight_matrix <- row_weight_result$weight_mat
+      row_weight_type   <- row_weight_result$type
     }
-  } else if (is.matrix(var_weights)) {
+  } else if (is.matrix(row_weights)) {
 
-    if (!is_square(var_weights)) {
-      crv_error(sQuote("var_weights"), " must be a square matrix.")
-    }
-
-    if (NROW(var_weights) != NROW(X)) {
-      crv_error(sQuote("NROW(var_weights)"), " must be equal to ", sQuote("NROW(X)."))
+    if (!is_square(row_weights)) {
+      crv_error(sQuote("row_weights"), " must be a square matrix.")
     }
 
-    var_weight_matrix <- var_weights
-    var_weight_type   <- UserMatrix()
+    if (NROW(row_weights) != NROW(X)) {
+      crv_error(sQuote("NROW(row_weights)"), " must be equal to ", sQuote("NROW(X)."))
+    }
+
+    row_weight_matrix <- row_weights
+    row_weight_type   <- UserMatrix()
   } else {
-    crv_error(sQuote("CBASS"), " does not know how to handle ", sQuote("var_weights"),
-         " of class ", class(var_weights)[1], ".")
+    crv_error(sQuote("CBASS"), " does not know how to handle ", sQuote("row_weights"),
+              " of class ", class(row_weights)[1], ".")
   }
 
-  if (any(var_weight_matrix < 0) || anyNA(var_weight_matrix)) {
-    crv_error("All fusion weights for variables must be positive or zero.")
+  if (any(row_weight_matrix < 0) || anyNA(row_weight_matrix)) {
+    crv_error("All row fusion weights must be positive or zero.")
   }
 
-  if (!is_connected_adj_mat(var_weight_matrix != 0)) {
-    crv_error("Weights for variables do not imply a connected graph. Biclustering will not succeed.")
+  if (!is_connected_adj_mat(row_weight_matrix != 0)) {
+    crv_error("Weights for rows do not imply a connected graph. Biclustering will not succeed.")
   }
 
-  crv_message("Pre-computing column weights and edge sets")
-
-  # Calculate observation (column)-clustering weights
-  if (is.function(obs_weights)) { # Usual case, `obs_weights` is a function which calculates the weight matrix
-    obs_weight_result <- obs_weights(t(X))
-
-    if (is.matrix(obs_weight_result)) {
-      obs_weight_matrix <- obs_weight_result
-      obs_weight_type   <- UserFunction()
-    } else {
-      obs_weight_matrix <- obs_weight_result$weight_mat
-      obs_weight_type   <- obs_weight_result$type
-    }
-  } else if (is.matrix(obs_weights)) {
-
-    if (!is_square(obs_weights)) {
-      crv_error(sQuote("obs_weights"), " must be a square matrix.")
-    }
-
-    if (NROW(obs_weights) != NCOL(X)) {
-      crv_error(sQuote("NROW(obs_weights)"), " must be equal to ", sQuote("NCOL(X)."))
-    }
-
-    obs_weight_matrix <- obs_weights
-    obs_weight_type   <- UserMatrix()
-  } else {
-    crv_error(sQuote("CBASS"), " does not know how to handle ", sQuote("obs_weights"),
-              " of class ", class(obs_weights)[1], ".")
-  }
-
-  if (any(obs_weight_matrix < 0) || anyNA(obs_weight_matrix)) {
-    crv_error("All fusion weights for observations must be positive or zero.")
-  }
-
-  if (!is_connected_adj_mat(obs_weight_matrix != 0)) {
-    crv_error("Weights for observations do not imply a connected graph. Clustering will not succeed.")
-  }
-
-  ## NB: We are following Chi, Allen, and Baraniuk so "row" here refers to
-  ##     features (variables) instead of the more typical observations
-  ##     and vice versa for columns
-  row_weights <- weight_mat_to_vec(var_weight_matrix)
-  col_weights <- weight_mat_to_vec(obs_weight_matrix)
+  row_weights <- weight_mat_to_vec(row_weight_matrix)
+  col_weights <- weight_mat_to_vec(col_weight_matrix)
 
   ## Rescale to ensure coordinated fusions
   ##
@@ -298,38 +290,33 @@ CBASS <- function(X,
   row_weights <- row_weights / (sum(row_weights) * sqrt(n.obs))
   col_weights <- col_weights / (sum(col_weights) * sqrt(p.var))
 
-  PreCompList.row <- ConvexClusteringPreCompute(X = t(X),
-                                                weights = row_weights,
-                                                rho = rho)
-  cardE.row <- NROW(PreCompList.row$E)
+  row_weight_matrix_ut <- row_weight_matrix * upper.tri(row_weight_matrix);
 
-  PreCompList.col <- ConvexClusteringPreCompute(X = X,
-                                                weights = col_weights,
-                                                rho = rho)
+  row_edge_list <- which(row_weight_matrix_ut != 0, arr.ind = TRUE)
+  row_edge_list <- row_edge_list[order(row_edge_list[, 1], row_edge_list[, 2]), ]
+  num_edge_rows <- NROW(row_edge_list)
+  D_row <- matrix(0, ncol = n.obs, nrow = num_edge_rows)
+  D_row[cbind(seq_len(num_edge_rows), row_edge_list[,1])] <-  1
+  D_row[cbind(seq_len(num_edge_rows), row_edge_list[,2])] <- -1
 
-  cardE.col <- NROW(PreCompList.col$E)
+  col_weight_matrix_ut <- col_weight_matrix * upper.tri(col_weight_matrix);
+
+  col_edge_list <- which(col_weight_matrix_ut != 0, arr.ind = TRUE)
+  col_edge_list <- col_edge_list[order(col_edge_list[, 1], col_edge_list[, 2]), ]
+  num_edge_cols <- NROW(col_edge_list)
+  D_col <- matrix(0, ncol = num_edge_cols, nrow = p.var)
+  D_col[cbind(col_edge_list[,1], seq_len(num_edge_cols))] <-  1
+  D_col[cbind(col_edge_list[,2], seq_len(num_edge_cols))] <- -1
 
   crv_message("Computing CBASS Path")
 
   if (alg.type %in% c("cbassviz", "cbassvizl1")) {
-    cbass.sol.path <- CBASS_VIZcpp(x = X[TRUE],
-                                   n = as.integer(n.obs),
-                                   p = as.integer(p.var),
+    cbass.sol.path <- CBASS_VIZcpp(X,
+                                   D_row,
+                                   D_col,
                                    lambda_init = 1e-6,
                                    weights_row = row_weights[row_weights != 0],
                                    weights_col = col_weights[col_weights != 0],
-                                   uinit_row = as.matrix(PreCompList.row$uinit),
-                                   uinit_col = as.matrix(PreCompList.col$uinit),
-                                   vinit_row = as.matrix(PreCompList.row$vinit),
-                                   vinit_col = as.matrix(PreCompList.col$vinit),
-                                   premat_row = PreCompList.row$PreMat,
-                                   premat_col = PreCompList.col$PreMat,
-                                   IndMat_row = PreCompList.row$ind.mat,
-                                   IndMat_col = PreCompList.col$ind.mat,
-                                   EOneIndMat_row = PreCompList.row$E1.ind.mat,
-                                   EOneIndMat_col = PreCompList.col$E1.ind.mat,
-                                   ETwoIndMat_row = PreCompList.row$E2.ind.mat,
-                                   ETwoIndMat_col = PreCompList.col$E2.ind.mat,
                                    rho = rho,
                                    max_iter = as.integer(max.iter),
                                    burn_in = burn.in,
@@ -338,25 +325,13 @@ CBASS <- function(X,
                                    keep = 10,
                                    l1 = (alg.type == "cbassvizl1"))
   } else {
-    cbass.sol.path <- CBASScpp(x = X[TRUE],
-                               n = as.integer(n.obs),
-                               p = as.integer(p.var),
+    cbass.sol.path <- CBASScpp(X,
+                               D_row,
+                               D_col,
                                lambda_init = 1e-6,
                                t = t,
                                weights_row = row_weights[row_weights != 0],
                                weights_col = col_weights[col_weights != 0],
-                               uinit_row = as.matrix(PreCompList.row$uinit),
-                               uinit_col = as.matrix(PreCompList.col$uinit),
-                               vinit_row = as.matrix(PreCompList.row$vinit),
-                               vinit_col = as.matrix(PreCompList.col$vinit),
-                               premat_row = PreCompList.row$PreMat,
-                               premat_col = PreCompList.col$PreMat,
-                               IndMat_row = PreCompList.row$ind.mat,
-                               IndMat_col = PreCompList.col$ind.mat,
-                               EOneIndMat_row = PreCompList.row$E1.ind.mat,
-                               EOneIndMat_col = PreCompList.col$E1.ind.mat,
-                               ETwoIndMat_row = PreCompList.row$E2.ind.mat,
-                               ETwoIndMat_col = PreCompList.col$E2.ind.mat,
                                rho = rho,
                                max_iter = as.integer(max.iter),
                                burn_in = burn.in,
@@ -374,24 +349,24 @@ CBASS <- function(X,
   crv_message("Post-processing rows")
 
   post_processing_results_row <- ConvexClusteringPostProcess(X = X,
-                                                             edge_matrix      = PreCompList.row$E,
+                                                             edge_matrix      = row_edge_list,
                                                              lambda_path      = cbass.sol.path$lambda.path,
                                                              u_path           = cbass.sol.path$u.path,
                                                              v_path           = cbass.sol.path$v.row.path,
                                                              v_zero_indices   = cbass.sol.path$v.row.zero.inds,
-                                                             labels           = var_labels,
+                                                             labels           = row_labels,
                                                              dendrogram_scale = dendrogram.scale,
                                                              npcs             = npcs)
 
   crv_message("Post-processing columns")
 
   post_processing_results_col <- ConvexClusteringPostProcess(X = t(X),
-                                                             edge_matrix      = PreCompList.col$E,
+                                                             edge_matrix      = col_edge_list,
                                                              lambda_path      = cbass.sol.path$lambda.path,
                                                              u_path           = cbass.sol.path$u.path,
                                                              v_path           = cbass.sol.path$v.col.path,
                                                              v_zero_indices   = cbass.sol.path$v.col.zero.inds,
-                                                             labels           = obs_labels,
+                                                             labels           = col_labels,
                                                              dendrogram_scale = dendrogram.scale,
                                                              npcs             = npcs)
 
@@ -400,18 +375,18 @@ CBASS <- function(X,
     n.obs = n.obs,
     p.var = p.var,
     cbass.sol.path = cbass.sol.path,
-    # Rowwise (variable) results
-    cbass.cluster.path.var = post_processing_results_row$raw_path,
-    cbass.cluster.path.vis.var = post_processing_results_row$paths,
-    cbass.dend.var = post_processing_results_row$dendrogram,
-    var_weight_type = var_weight_type,
-    var.labels = var_labels,
-    # Columnwise (observation) results
-    cbass.cluster.path.obs = post_processing_results_col$raw_path,
-    cbass.cluster.path.vis.obs = post_processing_results_col$paths,
-    cbass.dend.obs = post_processing_results_col$dendrogram,
-    obs_weight_type = obs_weight_type,
-    obs.labels = obs_labels,
+    # Column-wise (variable) results
+    cbass.cluster.path.var = post_processing_results_col$raw_path,
+    cbass.cluster.path.vis.var = post_processing_results_col$paths,
+    cbass.dend.var = post_processing_results_col$dendrogram,
+    var_weight_type = col_weight_type,
+    var.labels = col_labels,
+    # Row-wise (observation) results
+    cbass.cluster.path.obs = post_processing_results_row$raw_path,
+    cbass.cluster.path.vis.obs = post_processing_results_row$paths,
+    cbass.dend.obs = post_processing_results_row$dendrogram,
+    obs_weight_type = row_weight_type,
+    obs.labels = row_labels,
     # General flags
     burn.in = burn.in,
     alg.type = alg.type,

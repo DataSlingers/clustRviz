@@ -4,24 +4,12 @@
 // Most of the internal logic is the same (modulo back-tracking vs fixed step size)
 
 // [[Rcpp::export]]
-Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
-                        int n,
-                        int p,
+Rcpp::List CBASS_VIZcpp(const Eigen::MatrixXd& X,
+                        const Eigen::MatrixXd& D_row,
+                        const Eigen::MatrixXd& D_col,
                         double lambda_init, // TODO: Change to gamma_init
                         const Eigen::VectorXd& weights_col,
                         const Eigen::VectorXd& weights_row,
-                        const Eigen::VectorXd& uinit_row, // TODO: Change to u_init_row
-                        const Eigen::VectorXd& uinit_col, // TODO: Change to u_init_col
-                        const Eigen::VectorXd& vinit_row, // TODO: Change to v_init_row
-                        const Eigen::VectorXd& vinit_col, // TODO: Change to v_init_col
-                        const Eigen::SparseMatrix<double>& premat_row,
-                        const Eigen::SparseMatrix<double>& premat_col,
-                        const Eigen::MatrixXi& IndMat_row,
-                        const Eigen::MatrixXi& IndMat_col,
-                        const Eigen::MatrixXi& EOneIndMat_row,
-                        const Eigen::MatrixXi& EOneIndMat_col,
-                        const Eigen::MatrixXi& ETwoIndMat_row,
-                        const Eigen::MatrixXi& ETwoIndMat_col,
                         double rho         = 1,
                         int max_iter       = 10000,
                         int burn_in        = 50,
@@ -30,10 +18,13 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
                         int keep           = 10,
                         bool l1            = false){
 
+  Eigen::Index n = X.rows();
+  Eigen::Index p = X.cols();
+
   // Typically, our weights are "sparse" (i.e., mostly zeros) because we
   // drop small weights to achieve performance.
-  Eigen::Index num_edges_row = EOneIndMat_row.rows();
-  Eigen::Index num_edges_col = EOneIndMat_col.rows();
+  Eigen::Index num_row_edges = D_row.rows();
+  Eigen::Index num_col_edges = D_col.cols();
 
   /// Set-up storage for CBASS iterates
 
@@ -45,83 +36,64 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
   Eigen::Index buffer_size = 1.5 * (n + p);
 
   // Primal variable
-  Eigen::VectorXd u_new(n * p);              // Working copies
-  Eigen::VectorXd u_old(n * p);
-  u_new = x;
+  Eigen::MatrixXd U = X;
   Eigen::MatrixXd UPath(n * p, buffer_size); // Storage (for values to return to R)
-  UPath.col(0) = uinit_col;
+  // We cannot directly copy matrices into columns of our return object since
+  // a matrix isn't a vector, so we map the same storage into a vector which we
+  // can then insert into the storage matrix to be returned to R
+  Eigen::Map<Eigen::VectorXd> u_vec = Eigen::Map<Eigen::VectorXd>(U.data(), n * p);
 
-  // 'Split' variable for row fusions
-  Eigen::VectorXd v_new_row(n * num_edges_row);              // Working copies
-  Eigen::VectorXd v_old_row(n * num_edges_row);
-  v_new_row = vinit_row;
-  Eigen::MatrixXd VPath_row(n * num_edges_row, buffer_size); // Storage (for values to return to R)
-  VPath_row.col(0) = vinit_row;
+  // 'Split' variable for row ADMM
+  Eigen::MatrixXd V_row = D_row * X;
+  Eigen::MatrixXd V_rowPath(p * num_row_edges, buffer_size); // Storage (for values to return to R)
+  Eigen::Map<Eigen::VectorXd> v_row_vec = Eigen::Map<Eigen::VectorXd>(V_row.data(), p * num_row_edges);
 
-  // 'Split' variable for column fusions
-  Eigen::VectorXd v_new_col(p * num_edges_col);              // Working copies
-  Eigen::VectorXd v_old_col(p * num_edges_col);
-  v_new_col = vinit_col;
-  Eigen::MatrixXd VPath_col(p * num_edges_col, buffer_size); // Storage (for values to return to R)
-  VPath_col.col(0) = vinit_col;
+  // (Scaled) dual variable for row ADMM
+  Eigen::MatrixXd Z_row = V_row;
 
-  // (Scaled) dual variable for row fusions
-  Eigen::VectorXd z_new_row(p * num_edges_row);
-  Eigen::VectorXd z_old_row(p * num_edges_row);
-  z_new_row = v_new_row;
+  // 'Split' variable for column ADMM
+  Eigen::MatrixXd V_col = D_col.transpose() * X.transpose();
+  Eigen::MatrixXd V_colPath(n * num_col_edges, buffer_size); // Storage (for values to return to R)
+  Eigen::Map<Eigen::VectorXd> v_col_vec = Eigen::Map<Eigen::VectorXd>(V_col.data(), n * num_col_edges);
 
-  // (Scaled) dual variable for column fusions
-  Eigen::VectorXd z_new_col(p * num_edges_col);
-  Eigen::VectorXd z_old_col(p * num_edges_col);
-  z_new_col = v_new_col;
+  // (Scaled) dual variable for row ADMM
+  Eigen::MatrixXd Z_col = V_col;
+
+  U.transposeInPlace(); // See note on transpositions below
+  UPath.col(0) = u_vec;
+  U.transposeInPlace();
+  V_row.transposeInPlace();
+  V_rowPath.col(0) = v_row_vec;
+  V_row.transposeInPlace();
+  V_col.transposeInPlace();
+  V_colPath.col(0) = v_col_vec;
+  V_col.transposeInPlace();
 
   // Regularization level
-  double gamma = lambda_init;              // Working copies
+  double gamma     = lambda_init;          // Working copy
   double gamma_old = lambda_init;
   Eigen::VectorXd gamma_path(buffer_size); // Storage (to be returned to R)
   gamma_path(0) = lambda_init;
 
-  // Row Fusions -- TODO: Confirm the semantics of these objects with JN
-  Eigen::VectorXd vZeroIndsnew_row = Eigen::VectorXd::Zero(num_edges_row);         // Working copies
-  Eigen::VectorXd vZeroIndsold_row(num_edges_row);                                 // (we begin with no fusions)
-  Eigen::MatrixXd vZeroIndsPath_row = Eigen::MatrixXd(num_edges_row, buffer_size); // Storage (to be returned to R)
-  vZeroIndsPath_row.col(0) = vZeroIndsnew_row;
-
-  // Column Fusions -- TODO: Confirm the semantics of these objects with JN
-  Eigen::VectorXd vZeroIndsnew_col = Eigen::VectorXd::Zero(num_edges_col);         // Working copies
-  Eigen::VectorXd vZeroIndsold_col(num_edges_col);                                 // (we begin with no fusions)
-  Eigen::MatrixXd vZeroIndsPath_col = Eigen::MatrixXd(num_edges_col, buffer_size); // Storage (to be returned to R)
-  vZeroIndsPath_col.col(0) = vZeroIndsnew_col;
-
-  // The COBRA algorithm for Convex Bi-Clustering (on which CBASS is based)
-  // introduces extra variables Y, P, Q which are necessary to keep the row-
-  // and column-fusions appropriately coupled.
-  //
-  // See Chi, Allen, Baraniuk (2017) for details
-  //
-  // Since we are working in "vec" form, instead of matrix form, we use the
-  // `restride()` function to re-organize a vector from an ordering appropriate
-  // for the row-based steps to an ordering for the column-based steps and vice versa
-  //
-  // Note that we use a different notational convention here (capital P vs lower-case p)
-  // to distinguish this "p" from the "p" that gives the problem dimension
-  //
-  // Y is not carried forward from one iteration to the next, so we declare it in-loop below
-  Eigen::VectorXd P_new = Eigen::VectorXd::Zero(n * p);
-  Eigen::VectorXd P_old(n * p);
-  Eigen::VectorXd Q_new = Eigen::VectorXd::Zero(n * p);
-  Eigen::VectorXd Q_old(n * p);
+  // Fusions
+  Eigen::MatrixXi v_row_zeros_path(num_row_edges, buffer_size); // Storage (to be returned to R)
+  v_row_zeros_path.col(0).setZero();
+  Eigen::MatrixXi v_col_zeros_path(num_col_edges, buffer_size); // Storage (to be returned to R)
+  v_col_zeros_path.col(0).setZero();
 
   /// END Preallocations
 
-  // At each iteration, we need to calculate A^{-1}B_k for some (sparse) A [one for rows and one for cols]
-  // This is a relatively expensive iteration, but the core cost is a sparse LU
-  // factorization of A which can be amortized over iterations so we pre-compute them here
-  Eigen::SparseLU<Eigen::SparseMatrix<double> > premat_solver_row;
-  premat_solver_row.compute(premat_row);
+  // PreCompute chol(I_n + rho D_row^T D_row) and chol(I_p + rho D_col D_col^T) for easy inversions in the ADMM primal update steps
+  Eigen::MatrixXd IDTD_row = rho * D_row.transpose() * D_row + Eigen::MatrixXd::Identity(n, n);
+  Eigen::LLT<Eigen::MatrixXd> row_primal_solver; row_primal_solver.compute(IDTD_row);
 
-  Eigen::SparseLU<Eigen::SparseMatrix<double> > premat_solver_col;
-  premat_solver_col.compute(premat_col);
+  Eigen::MatrixXd IDDT_col = rho * D_col * D_col.transpose()  + Eigen::MatrixXd::Identity(p, p);
+  Eigen::LLT<Eigen::MatrixXd> col_primal_solver; col_primal_solver.compute(IDDT_col);
+
+  // The DLPA (on which CBASS is based) adds two auxiliary variables -- P & Q --
+  // with the same dimensions as the optimization variable, initialized to zero
+  Eigen::MatrixXd P = Eigen::MatrixXd::Zero(n, p);
+  Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(n, p);
 
   // Book-keeping variables
   // Number of iterations stored, total iteration count, number of column fusions, number of row fusions
@@ -132,31 +104,33 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
   Eigen::Index nzeros_old_col = 0;
   Eigen::Index nzeros_new_col = 0;
 
+  Eigen::ArrayXi v_row_zeros_old(num_row_edges); // 0/1 arrays indicating edge fusion
+  Eigen::ArrayXi v_row_zeros_new(num_row_edges);
+  Eigen::ArrayXi v_col_zeros_old(num_col_edges);
+  Eigen::ArrayXi v_col_zeros_new(num_col_edges);
+
   // We begin CBASS-VIZ by taking relatively large step sizes (t = 1.1)
   // but once we get to an "interesting" part of the path, we switch to
   // smaller step sizes (as determined by t_switch)
   double t = 1.1;
 
-  while( ((nzeros_new_row < num_edges_row) | (nzeros_new_col < num_edges_col)) & (iter < max_iter)){
+  while( ((nzeros_new_row < num_row_edges) | (nzeros_new_col < num_col_edges)) & (iter < max_iter) ){
     ClustRVizLogger::info("Beginning iteration k = ") << iter + 1;
     ClustRVizLogger::debug("gamma = ") << gamma;
-    // Begin iteration - move updated values to "_old" values
-    //
-    // TODO -- Do this as a swap and avoid full copies if possible
-    u_old = u_new;                       // Primal
-    v_old_row = v_new_row;               // Split
-    v_old_col = v_new_col;
-    z_old_row = z_new_row;               // Dual
-    z_old_col = z_new_col;
-    nzeros_old_row = nzeros_new_row;     // Fusion counts
-    nzeros_old_col = nzeros_new_col;
-    vZeroIndsold_row = vZeroIndsnew_row; // Fusion indices
-    vZeroIndsold_col = vZeroIndsnew_col;
 
-    P_old = P_new;
-    Q_old = Q_new;
-    Eigen::VectorXd P_old_t = restride(P_old, p);
-    Eigen::VectorXd u_old_t = restride(u_old, p);
+    nzeros_old_row = nzeros_new_row; // Update fusion counts
+    nzeros_old_col = nzeros_new_col;
+    v_row_zeros_old = v_row_zeros_new;
+    v_col_zeros_old = v_col_zeros_new;
+
+    // Keep previous U, P, Q, V, and Z variables to use in back-tracking
+    Eigen::MatrixXd U_old     = U;
+    Eigen::MatrixXd P_old     = P;
+    Eigen::MatrixXd Q_old     = Q;
+    Eigen::MatrixXd V_row_old = V_row;
+    Eigen::MatrixXd Z_row_old = Z_row;
+    Eigen::MatrixXd V_col_old = V_col;
+    Eigen::MatrixXd Z_col_old = Z_col;
 
     // VIZ book-keeping
     bool rep_iter = true;
@@ -174,77 +148,60 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
     //
     while(rep_iter){
       /// Row-fusion iterations
-      // U-update
-      Eigen::VectorXd solver_input_row = DtMatOpv2(rho * v_old_row - z_old_row, p, n, IndMat_row, EOneIndMat_row, ETwoIndMat_row);
-      solver_input_row += P_old_t + u_old_t;
-      solver_input_row /= rho;
-      Eigen::VectorXd Y_t = premat_solver_row.solve(solver_input_row);
+      // Primal Update
+      Eigen::MatrixXd T = row_primal_solver.solve(U_old + P_old + rho * D_row.transpose() * (V_row_old - Z_row_old));
+      Eigen::MatrixXd DT = D_row * T;
+      ClustRVizLogger::debug("T = ") << T;
 
-      ClustRVizLogger::debug("y^T = ") << Y_t;
+      // Copy Update
+      Eigen::MatrixXd DTZ = DT + Z_row_old;
+      MatrixProx(DTZ, V_row, gamma / rho, weights_row, l1);
+      ClustRVizLogger::debug("V_row = ") << V_row;
 
-      // V-update
-      Eigen::VectorXd prox_argument_row = DMatOpv2(Y_t,n, IndMat_row, EOneIndMat_row, ETwoIndMat_row) + (1/rho)*z_old_row;
-      if(l1){
-        v_new_row = ProxL1(prox_argument_row, n, (1/rho) * gamma, weights_row);
-      } else {
-        v_new_row = ProxL2(prox_argument_row, n, (1/rho) * weights_row * gamma, IndMat_row);
-      }
-
-      ClustRVizLogger::debug("v_row = ") << v_new_row;
-
-      // Z-update
-      z_new_row = z_old_row + rho*(DMatOpv2(Y_t, n, IndMat_row, EOneIndMat_row, ETwoIndMat_row) - v_new_row);
-
-      ClustRVizLogger::debug("z_row = ") << z_new_row;
+      // Dual Update
+      Z_row = Z_row_old + DT - V_row;
+      ClustRVizLogger::debug("Z_row = ") << Z_row;
       /// END Row-fusion iterations
 
-      Eigen::VectorXd Y = restride(Y_t, n);
-      P_new = u_old + P_old - Y;
+      P = P_old + U_old - T;
+      Eigen::MatrixXd TQT = T + Q_old; TQT.transposeInPlace();
 
       /// Column-fusion iterations
-      // U-update
-      Eigen::VectorXd solver_input_col = DtMatOpv2(rho * v_old_col - z_old_col, n, p, IndMat_col, EOneIndMat_col, ETwoIndMat_col);
-      solver_input_col += Y + Q_old;
-      solver_input_col /= rho;
-      u_new = premat_solver_col.solve(solver_input_col);
+      // Primal Update
+      Eigen::MatrixXd S = col_primal_solver.solve(TQT + rho * D_col * (V_col_old - Z_col_old));
+      Eigen::MatrixXd DTS = D_col.transpose() * S;
+      ClustRVizLogger::debug("S = ") << S;
 
-      ClustRVizLogger::debug("u = ") << u_new;
+      // Copy Update
+      Eigen::MatrixXd DTSZ = DTS + Z_col_old;
+      MatrixProx(DTSZ, V_col, gamma / rho, weights_col, l1);
+      ClustRVizLogger::debug("V_col = ") << V_col;
 
-      // V-update
-      Eigen::VectorXd prox_argument_col = DMatOpv2(u_new, p, IndMat_col, EOneIndMat_col, ETwoIndMat_col) + (1/rho)*z_old_col;
-      if(l1){
-        v_new_col = ProxL1(prox_argument_col, p, (1/rho) * gamma, weights_col);
-      } else {
-        v_new_col = ProxL2(prox_argument_col, p, (1/rho) * weights_col * gamma, IndMat_col);
-      }
-
-      ClustRVizLogger::debug("v_col = ") << v_new_col;
-
-      // Z-update
-      z_new_col = z_old_col + rho*(DMatOpv2(u_new, p, IndMat_col, EOneIndMat_col, ETwoIndMat_col)-v_new_col);
-
-      ClustRVizLogger::debug("z_col = ") << z_new_col;
+      // Dual Update
+      Z_col = Z_col_old + DTS - V_col;
+      ClustRVizLogger::debug("Z_col = ") << Z_col;
       /// END Column-fusion iterations
 
-      Q_new = Y + Q_old - u_new;
+      U = S.transpose();
+      Q = Q_old + T - U;
 
-      // Count number of row fusions
-      for(int l = 0; l < num_edges_row; l++){
-        Eigen::VectorXi v_index_row = IndMat_row.row(l);
-        if(extract(v_new_row, v_index_row).cwiseAbs().sum() == 0){
-          vZeroIndsnew_row(l) = 1;
-        }
-      }
-      nzeros_new_row = vZeroIndsnew_row.sum();
+      // Identify row fusions (rows of V_row which have gone to zero)
+      Eigen::VectorXd v_row_norms = V_row.rowwise().squaredNorm();
 
-      // Count number of column fusions
-      for(int l = 0; l < num_edges_col; l++){
-        Eigen::VectorXi v_index_col = IndMat_col.row(l);
-        if(extract(v_new_col, v_index_col).cwiseAbs().sum() == 0){
-          vZeroIndsnew_col(l) = 1;
-        }
+      for(Eigen::Index i = 0; i < num_row_edges; i++){
+        v_row_zeros_new(i) = v_row_norms(i) == 0;
       }
-      nzeros_new_col = vZeroIndsnew_col.sum();
+      nzeros_new_row = v_row_zeros_new.sum();
+
+      // Identify column fusions (rows of V_col which have gone to zero)
+      // Remember, V_col and Z_col are internal to the "transposed prox" sub-problem
+      // so everything is reversed of what we'd expect
+      Eigen::VectorXd v_col_norms = V_col.rowwise().squaredNorm();
+
+      for(Eigen::Index i = 0; i < num_col_edges; i++){
+        v_col_zeros_new(i) = v_col_norms(i) == 0;
+      }
+      nzeros_new_col = v_col_zeros_new.sum();
 
       ClustRVizLogger::debug("Number of row fusions identified ") << nzeros_new_row;
       ClustRVizLogger::debug("Number of column fusions identified ") << nzeros_new_col;
@@ -269,8 +226,8 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
         // out which one occured first
         // (NB: we don't need a 'cross' ordering of row and global fusions, so we
         //  use a separate check for each, instead of a check on the sum)
-        vZeroIndsnew_col = vZeroIndsold_col;
-        vZeroIndsnew_row = vZeroIndsold_row;
+        v_col_zeros_new = v_col_zeros_old;
+        v_row_zeros_new = v_row_zeros_old;
         if(try_iter == 1){
           gamma = 0.5 * (gamma_lower + gamma_upper);
         } else{
@@ -280,8 +237,8 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
         ClustRVizLogger::debug("Too many fusions -- backtracking.");
       } else if( (nzeros_new_row == nzeros_old_row) & (nzeros_new_col == nzeros_old_col) ){
         // If we don't observe any new fusions, we take another iteration without
-        vZeroIndsnew_col = vZeroIndsold_col;
-        vZeroIndsnew_row = vZeroIndsold_row;
+        v_col_zeros_new = v_col_zeros_old;
+        v_row_zeros_new = v_row_zeros_old;
         gamma_lower = gamma;
         gamma = 0.5 * (gamma_lower + gamma_upper);
         ClustRVizLogger::debug("Fusion not isolated -- moving forward.");
@@ -309,20 +266,33 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
         ClustRVizLogger::info("Resizing storage from ") << buffer_size << " to " << 2 * buffer_size << " iterations.";
         buffer_size *= 2; // Double our buffer sizes
         UPath.conservativeResize(UPath.rows(), buffer_size);
-        VPath_row.conservativeResize(VPath_row.rows(), buffer_size);
-        VPath_col.conservativeResize(VPath_col.rows(), buffer_size);
+        V_rowPath.conservativeResize(V_rowPath.rows(), buffer_size);
+        V_colPath.conservativeResize(V_colPath.rows(), buffer_size);
         gamma_path.conservativeResize(buffer_size);
-        vZeroIndsPath_row.conservativeResize(vZeroIndsPath_row.rows(), buffer_size);
-        vZeroIndsPath_col.conservativeResize(vZeroIndsPath_col.rows(), buffer_size);
+        v_row_zeros_path.conservativeResize(v_row_zeros_path.rows(), buffer_size);
+        v_col_zeros_path.conservativeResize(v_col_zeros_path.rows(), buffer_size);
       }
 
       // Store values
-      UPath.col(path_iter)             = u_new;
-      VPath_row.col(path_iter)         = v_new_row;
-      VPath_col.col(path_iter)         = v_new_col;
-      gamma_path(path_iter)            = gamma;
-      vZeroIndsPath_row.col(path_iter) = vZeroIndsnew_row;
-      vZeroIndsPath_col.col(path_iter) = vZeroIndsnew_col;
+      //
+      // FIXME -- The post-processing code assumes output in the form of
+      //          Chi, Allen, Baraniuk (Biometrics '17) which more or less is equivalent
+      //          to vec(U^T) and vec(V^T) instead of what we're using internally
+      //          here.
+      //
+      //          It should be re-written, but until it is, we can achieve the
+      //          same result by transposing and un-transposing the data internally
+      //          before copying it to our storage buffers
+      //
+      //          Obviously, this burns some cycles so it would be better to avoid this
+      U.transposeInPlace(); V_row.transposeInPlace(); V_col.transposeInPlace();
+      UPath.col(path_iter)            = u_vec;
+      V_rowPath.col(path_iter)        = v_row_vec;
+      V_colPath.col(path_iter)        = v_col_vec;
+      gamma_path(path_iter)           = gamma;
+      v_row_zeros_path.col(path_iter) = v_row_zeros_new;
+      v_col_zeros_path.col(path_iter) = v_col_zeros_new;
+      U.transposeInPlace(); V_row.transposeInPlace(); V_col.transposeInPlace();
 
       path_iter++;
 
@@ -348,17 +318,17 @@ Rcpp::List CBASS_VIZcpp(const Eigen::VectorXd& x,
   //
   // See explanatory comment in carp_viz.cpp
   UPath.conservativeResize(UPath.rows(), path_iter);
-  VPath_row.conservativeResize(VPath_row.rows(), path_iter);
-  VPath_col.conservativeResize(VPath_col.rows(), path_iter);
+  V_rowPath.conservativeResize(V_rowPath.rows(), path_iter);
+  V_colPath.conservativeResize(V_colPath.rows(), path_iter);
   gamma_path.conservativeResize(path_iter);
-  vZeroIndsPath_row.conservativeResize(vZeroIndsPath_row.rows(), path_iter);
-  vZeroIndsPath_col.conservativeResize(vZeroIndsPath_col.rows(), path_iter);
+  v_row_zeros_path.conservativeResize(v_row_zeros_path.rows(), path_iter);
+  v_col_zeros_path.conservativeResize(v_col_zeros_path.rows(), path_iter);
 
   // Wrap up our results and pass them to R
   return Rcpp::List::create(Rcpp::Named("u.path")          = UPath,
-                            Rcpp::Named("v.row.path")      = VPath_row,
-                            Rcpp::Named("v.col.path")      = VPath_col,
-                            Rcpp::Named("v.row.zero.inds") = vZeroIndsPath_row,
-                            Rcpp::Named("v.col.zero.inds") = vZeroIndsPath_col,
-                            Rcpp::Named("lambda.path")      = gamma_path); // TODO - Change lambda -> gamma in R code
+                            Rcpp::Named("v.row.path")      = V_rowPath,
+                            Rcpp::Named("v.col.path")      = V_colPath,
+                            Rcpp::Named("v.row.zero.inds") = v_row_zeros_path,
+                            Rcpp::Named("v.col.zero.inds") = v_col_zeros_path,
+                            Rcpp::Named("lambda.path")     = gamma_path); // TODO - Change lambda -> gamma in R code
 }
