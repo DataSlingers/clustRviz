@@ -12,62 +12,6 @@ if (getRversion() >= "2.15.1") utils::globalVariables(c("."))
 #' @source \url{http://www.presidency.ucsb.edu}
 "presidential_speech"
 
-#' @importMethodsFrom Matrix which tcrossprod kronecker
-#' @importFrom Matrix Diagonal
-ConvexClusteringPreCompute <- function(X, weights, rho) {
-  ## This function works using the convention of Chi and Lange (JCGS, 2015) or
-  ## Chi, Allen, and Baraniuk (2017, Biometrics) where X is transposed from our
-  ## usual convention and is a p-by-n matrix instead of n-by-p.
-
-  n <- ncol(X)
-  p <- nrow(X)
-
-  # Calcuate edge set
-  weight.adj <- WeightAdjacency(weights, n)
-  cardE <- sum(weight.adj)
-  E <- which(weight.adj != 0, arr.ind = TRUE)
-  E <- E[order(E[, 1], E[, 2]), ]
-
-  # Precompute indicies
-  crv_info("Calculating edge indices")
-  ind.mat <- matrix(seq(0, cardE * p - 1), byrow = TRUE, ncol = p)
-
-  crv_info("Calculating E1")
-  E1.ind.mat <- outer(p * (E[, 1] - 1), seq(0, p - 1), `+`)
-
-  crv_info("Calculating E2")
-  E2.ind.mat <- outer(p * (E[, 2] - 1), seq(0, p - 1), `+`)
-
-  crv_info("Calculating U-Update PreMat")
-  # Precompute U-update matrix
-  D <- Reduce(`+`, lapply(seq_len(cardE), function(l){
-    pos.ind <- E[l, 1]
-    neg.ind <- E[l, 2]
-
-    d <- matrix(0, nrow = n, ncol = 1)
-    d[pos.ind, 1] <- 1
-    d[neg.ind, 1] <- -1
-    tcrossprod(d)
-  }))
-  PreMat <- kronecker(D, Matrix::Diagonal(p)) + (1 / rho) * Matrix::Diagonal(n * p)
-
-  uinit <- Matrix::Matrix(X[TRUE], nrow = p, ncol = n)
-
-  crv_info("Calculating initial values for V")
-  Vmat <- uinit[, E[, 1]] - uinit[, E[, 2]]
-  vinit <- as.vector(Vmat)
-
-  list(
-    ind.mat = ind.mat,
-    E = E,
-    E1.ind.mat = E1.ind.mat,
-    E2.ind.mat = E2.ind.mat,
-    PreMat = PreMat,
-    uinit = uinit,
-    vinit = vinit
-  )
-}
-
 #' @importFrom dplyr tbl_df
 #' @importFrom dplyr mutate
 #' @importFrom dplyr select

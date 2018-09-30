@@ -1,30 +1,4 @@
-#' Construct adjacency matrix induced by weights
-#'
-#' @param weights a vector of weights such as returned by \code{SparseWeights}
-#' @param nobs the number of observations being clustered
-#' @param weighted a logical. If \code{FALSE} created unweighted adjacency matrix
-#' determined by support of weight vector. If TRUE create weighted adjacency;
-#' default is FALSE.
-#' @param upper a logical. If \code{TRUE} only return upper triangular of matrix.
-#' If \code{FALSE} return symmetric adjacency
-#' @return adj a sparse adjacency matrix
-#' @keywords internal
-#' @importFrom Matrix Matrix
-#' @importFrom Matrix t
-WeightAdjacency <- function(weights, nobs, weighted = FALSE, upper = TRUE) {
-  adj <- Matrix::Matrix(data = 0, nrow = nobs, ncol = nobs, sparse = TRUE)
-  if (!weighted) {
-    adj[lower.tri(adj, diag = FALSE)] <- as.numeric(weights != 0)
-  } else {
-    adj[lower.tri(adj, diag = FALSE)] <- weights
-  }
-  adj <- Matrix::t(adj)
-  if (!upper) {
-    adj <- adj + Matrix::t(adj)
-  }
-  adj
-}
-
+# Helper types to hold onto weight selection details
 RBFWeights <- function(phi = phi,
                        user_phi = user_phi,
                        dist.method = dist.method,
