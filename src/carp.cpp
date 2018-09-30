@@ -85,31 +85,11 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
 
     // V-update
     Eigen::MatrixXd DUZ = DU + Z;
-
-    if(l1){
-      for(Eigen::Index i = 0; i < num_edges; i++){
-        for(Eigen::Index j = 0; j < p; j++){
-          V(i, j) = soft_thresh(DUZ(i, j), gamma / rho * weights(i));
-        }
-      }
-    } else {
-      for(Eigen::Index i = 0; i < num_edges; i++){
-        Eigen::VectorXd DUZ_i = DUZ.row(i);
-        double scale_factor = 1 - gamma * weights(i) / (rho * DUZ_i.norm());
-
-        if(scale_factor > 0){
-          V.row(i) = DUZ_i * scale_factor;
-        } else {
-          V.row(i).setZero();
-        }
-      }
-    }
-
+    MatrixProx(DUZ, V, gamma / rho, weights, l1);
     ClustRVizLogger::debug("V = ") << V;
 
     // Z-update
     Z += DU - V;
-
     ClustRVizLogger::debug("Z = ") << Z;
 
     // Identify cluster fusions (rows of V which have gone to zero)

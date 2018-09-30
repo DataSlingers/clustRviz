@@ -166,3 +166,49 @@ Eigen::VectorXd ProxL1(const Eigen::VectorXd& delta,
 
   return ret;
 }
+
+// Modify in place version for internal use
+void MatrixProx(const Eigen::MatrixXd& X,
+                Eigen::MatrixXd& V,
+                double lambda,
+                const Eigen::VectorXd& weights,
+                bool l1 = true){
+
+  Eigen::Index n = X.rows();
+  Eigen::Index p = X.cols();
+
+  if(l1){
+    for(Eigen::Index i = 0; i < n; i++){
+      for(Eigen::Index j = 0; j < p; j++){
+        V(i, j) = soft_thresh(X(i, j), lambda * weights(i));
+      }
+    }
+  } else {
+    for(Eigen::Index i = 0; i < n; i++){
+      Eigen::VectorXd X_i = X.row(i);
+      double scale_factor = 1 - lambda * weights(i) / X_i.norm();
+
+      if(scale_factor > 0){
+        V.row(i) = X_i * scale_factor;
+      } else {
+        V.row(i).setZero();
+      }
+    }
+  }
+}
+
+// Version for testing C++ code
+// [[Rcpp::export]]
+Eigen::MatrixXd MatrixProx(const Eigen::MatrixXd& X,
+                           double lambda,
+                           const Eigen::VectorXd& weights,
+                           bool l1 = true){
+  Eigen::Index n = X.rows();
+  Eigen::Index p = X.cols();
+
+  Eigen::MatrixXd V = Eigen::MatrixXd::Zero(n, p);
+
+  MatrixProx(X, V, lambda, weights, l1);
+
+  return V;
+}
