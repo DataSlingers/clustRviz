@@ -12,28 +12,14 @@ if (getRversion() >= "2.15.1") utils::globalVariables(c("."))
 #' @source \url{http://www.presidency.ucsb.edu}
 "presidential_speech"
 
-#' @importFrom dplyr tbl_df
-#' @importFrom dplyr mutate
-#' @importFrom dplyr select
-#' @importFrom dplyr slice
-#' @importFrom dplyr filter
-#' @importFrom dplyr arrange
-#' @importFrom dplyr left_join
-#' @importFrom dplyr full_join
-#' @importFrom dplyr group_by
-#' @importFrom dplyr ungroup
-#' @importFrom dplyr tibble
-#' @importFrom dplyr bind_rows
-#' @importFrom dplyr lead
-#' @importFrom dplyr n
-#' @importFrom tidyr gather
-#' @importFrom tidyr nest
-#' @importFrom tidyr unnest
-#' @importFrom purrr map
-#' @importFrom purrr map2
+#' @importFrom dplyr tbl_df mutate select slice filter arrange left_join full_join
+#' @importFrom dplyr group_by ungroup tibble bind_rows lead n
+#' @importFrom tidyr gather nest unnest
+#' @importFrom purrr map map2
 #' @importFrom stringr str_replace
 #' @importFrom stats na.omit
 #' @importFrom zoo na.locf
+#' @importFrom rlang .data
 ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
   ColLab <- NULL
   SpValue <- NULL
@@ -102,9 +88,10 @@ ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
     tidyr::nest() %>%
     dplyr::mutate(
       tst = purrr::map2(.x = Iter, .y = data, .f = function(x, y) {
-        prev.mags <- apply(matrix(v.path[, x - 1], ncol = cardE)[, y$ColIndNum], 2, function(x) {
-          sum(x^2)
-        })
+        ## We get the magnitude of the previous row differences by reconstructing V
+        ## at the `x = Iter` iteration here. Note that, V = DX so the rows are the pairwise
+        ## difference of interest, even though we refer to "Col" indices - this is a FIXME
+        prev.mags <- rowSums(matrix(v.path[, x - 1], nrow = cardE)[y$ColIndNum,]^2)
         data.frame(
           ColIndNum = y$ColIndNum,
           Rank = order(prev.mags)
@@ -135,9 +122,10 @@ ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
           tidyr::nest() %>%
           dplyr::mutate(
             tst = purrr::map2(.x = Iter, .y = data, .f = function(x, y) {
-              prev.mags <- apply(matrix(v.path[, x - 1], ncol = cardE)[, y$ColIndNum], 2, function(x) {
-                sum(x^2)
-              })
+              ## We get the magnitude of the previous row differences by reconstructing V
+              ## at the `x = Iter` iteration here. Note that, V = DX so the rows are the pairwise
+              ## difference of interest, even though we refer to "Col" indices - this is a FIXME
+              prev.mags <- rowSums(matrix(v.path[, x - 1], nrow = cardE)[y$ColIndNum,]^2)
               data.frame(
                 ColIndNum = y$ColIndNum,
                 Rank = order(prev.mags)

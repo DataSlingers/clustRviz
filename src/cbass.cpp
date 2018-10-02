@@ -58,12 +58,8 @@ Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
   U.transposeInPlace(); // See note on transpositions below
   UPath.col(0) = u_vec;
   U.transposeInPlace();
-  V_row.transposeInPlace();
   V_rowPath.col(0) = v_row_vec;
-  V_row.transposeInPlace();
-  V_col.transposeInPlace();
   V_colPath.col(0) = v_col_vec;
-  V_col.transposeInPlace();
 
   // Regularization level
   double gamma = epsilon;                  // Working copy
@@ -184,24 +180,21 @@ Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
 
       // Store values
       //
-      // FIXME -- The post-processing code assumes output in the form of
-      //          Chi, Allen, Baraniuk (Biometrics '17) which more or less is equivalent
-      //          to vec(U^T) and vec(V^T) instead of what we're using internally
-      //          here.
-      //
-      //          It should be re-written, but until it is, we can achieve the
-      //          same result by transposing and un-transposing the data internally
-      //          before copying it to our storage buffers
-      //
-      //          Obviously, this burns some cycles so it would be better to avoid this
-      U.transposeInPlace(); V_row.transposeInPlace(); V_col.transposeInPlace();
+      // FIXME -- The projection onto principal components seems easier if we store
+      //          U as vec(U^T) rather than vec(U), so we transpose it here for brevity.
+      //          Obviously, this burns some cycles so it would be better to avoid this,
+      //          but it's not clear how to avoid more expensive manipulations on the R
+      //          side.
+      // NB -- and this is confusing -- the V paths are vec(V_row) and vec(V_col)
+      //       with no tranposes...
+      U.transposeInPlace();
       UPath.col(path_iter)            = u_vec;
       V_rowPath.col(path_iter)        = v_row_vec;
       V_colPath.col(path_iter)        = v_col_vec;
       gamma_path(path_iter)           = gamma;
       v_row_zeros_path.col(path_iter) = v_row_zeros;
       v_col_zeros_path.col(path_iter) = v_col_zeros;
-      U.transposeInPlace(); V_row.transposeInPlace(); V_col.transposeInPlace();
+      U.transposeInPlace();
 
       path_iter++;
     }

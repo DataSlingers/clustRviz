@@ -43,9 +43,7 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
   U.transposeInPlace(); // See note on transpositions below
   UPath.col(0) = u_vec;
   U.transposeInPlace();
-  V.transposeInPlace();
   VPath.col(0) = v_vec;
-  V.transposeInPlace();
 
   // (Scaled) dual variable
   Eigen::MatrixXd Z = V;
@@ -117,25 +115,21 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
       }
 
       // Store values
-
-      // FIXME -- The post-processing code assumes output in the form of
-      //          Chi and Lange (JCGS, 2015) which more or less is equivalent
-      //          to vec(U^T) and vec(V^T) instead of what we're using internally
-      //          here.
       //
-      //          It should be re-written, but until it is, we can achieve the
-      //          same result by transposing and un-transposing the data internally
-      //          before copying it to our storage buffers
-      //
-      //          Obviously, this burns some cycles so it would be better to avoid this
-      U.transposeInPlace(); V.transposeInPlace();
+      // FIXME -- The projection onto principal components seems easier if we store
+      //          U as vec(U^T) rather than vec(U), so we transpose it here for brevity.
+      //          Obviously, this burns some cycles so it would be better to avoid this,
+      //          but it's not clear how to avoid more expensive manipulations on the R
+      //          side.
+      // NB -- and this is confusing -- the V paths is vec(V) with no tranpose...
+      U.transposeInPlace();
 
       UPath.col(path_iter)          = u_vec;
       VPath.col(path_iter)          = v_vec;
       gamma_path(path_iter)         = gamma;
       v_zeros_path.col(path_iter)   = v_zeros;
 
-      U.transposeInPlace(); V.transposeInPlace();
+      U.transposeInPlace();
 
       path_iter++;
     }
