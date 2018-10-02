@@ -4,7 +4,7 @@
 Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
                     const Eigen::MatrixXd& D_row,
                     const Eigen::MatrixXd& D_col,
-                    double lambda_init, // TODO: Change to gamma_init
+                    double epsilon,
                     double t,
                     const Eigen::VectorXd& weights_row,
                     const Eigen::VectorXd& weights_col,
@@ -66,9 +66,9 @@ Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
   V_col.transposeInPlace();
 
   // Regularization level
-  double gamma = lambda_init;              // Working copy
+  double gamma = epsilon;                  // Working copy
   Eigen::VectorXd gamma_path(buffer_size); // Storage (to be returned to R)
-  gamma_path(0) = lambda_init;
+  gamma_path(0) = epsilon;
 
   // Fusions
   Eigen::MatrixXi v_row_zeros_path(num_row_edges, buffer_size); // Storage (to be returned to R)

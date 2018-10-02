@@ -383,10 +383,12 @@ ConvexClusteringPostProcess <- function(X,
 # From ?is.integer:
 is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
 
-is_logical_scalar <- function(x) {is.logical(x) && (length(x) == 1L) && (!is.na(x))}
-is_numeric_scalar <- function(x) {is.numeric(x) && (length(x) == 1L) && (!is.na(x))}
-is_integer_scalar <- function(x) is_numeric_scalar(x) && is.wholenumber(x)
-is_percent_scalar <- function(x) is_numeric_scalar(x) && (x >= 0) && (x <= 1)
+is_logical_scalar  <- function(x) {is.logical(x) && (length(x) == 1L) && (!is.na(x))}
+is_numeric_scalar  <- function(x) {is.numeric(x) && (length(x) == 1L) && (!is.na(x))}
+is_integer_scalar  <- function(x) is_numeric_scalar(x) && is.wholenumber(x)
+is_percent_scalar  <- function(x) is_numeric_scalar(x) && (x >= 0) && (x <= 1)
+is_positive_scalar <- function(x) is_numeric_scalar(x) && (x > 0)
+is_positive_integer_scalar <- function(x) is_integer_scalar(x) && (x > 0)
 
 is_square <- function(x) {is.matrix(x) && (NROW(x) == NCOL(x))}
 

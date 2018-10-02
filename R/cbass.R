@@ -26,11 +26,6 @@
 #' @param col_labels A character vector of length \eqn{p}: column (variable) labels
 #' @param X.center.global A logical: Should \code{X} be centered globally?
 #'                        \emph{I.e.}, should the global mean of \code{X} be subtracted?
-#' @param rho For advanced users only (not advisable to change): the penalty
-#'            parameter used for the augmented Lagrangian.
-#' @param max.iter An integer: the maximum number of \code{CBASS} iterations to perform.
-#' @param burn.in An integer: the number of initial iterations at a fixed
-#'                (small) value of \eqn{\lambda}
 #' @param alg.type Which \code{CBASS} variant to use. Allowed values are \itemize{
 #'        \item \code{"cbass"} - The standard \code{CBASS} algorithm with \eqn{L2} penalty;
 #'        \item \code{"cbassviz"} - The back-tracking \code{CBASS} algorithm with \eqn{L2} penalty;
@@ -94,10 +89,7 @@ CBASS <- function(X,
                   row_labels = rownames(X),
                   col_labels = colnames(X),
                   X.center.global = TRUE,
-                  rho = 1.0,
                   t = 1.01,
-                  max.iter = 1000000L,
-                  burn.in = 50L,
                   alg.type = c("cbassviz", "cbassvizl1", "cbass", "cbassl1"),
                   npcs = min(4L, NCOL(X), NROW(X)),
                   dendrogram.scale = NULL) {
@@ -142,10 +134,6 @@ CBASS <- function(X,
     crv_error(sQuote("X.center.global"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
   }
 
-  if ( (!is_numeric_scalar(rho)) || (rho <= 0)) {
-    crv_error(sQuote("rho"), "must be a positive scalar (vector of length 1).")
-  }
-
   if (!is.null(dendrogram.scale)) {
     if (dendrogram.scale %not.in% c("original", "log")) {
       crv_error("If not NULL, ", sQuote("dendrogram.scale"), " must be either ", sQuote("original"), " or ", sQuote("log."))
@@ -154,14 +142,6 @@ CBASS <- function(X,
 
   if ( (!is_integer_scalar(npcs)) || (npcs < 2) || (npcs > NCOL(X)) || (npcs > NROW(X)) ){
     crv_error(sQuote("npcs"), " must be an integer scalar between 2 and ", sQuote("min(dim(X))."))
-  }
-
-  if ( (!is_integer_scalar(max.iter)) || (max.iter <= 1L) ) {
-    crv_error(sQuote("max.iter"), " must be a positive integer scalar and at least 2.")
-  }
-
-  if ( (!is_integer_scalar(burn.in)) || (burn.in <= 0L) || (burn.in >= max.iter) ) {
-    crv_error(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
   }
 
   alg.type <- match.arg(alg.type)
@@ -312,28 +292,29 @@ CBASS <- function(X,
     cbass.sol.path <- CBASS_VIZcpp(X,
                                    D_row,
                                    D_col,
-                                   lambda_init = 1e-6,
+                                   epsilon = .clustRvizOptionsEnv[["epsilon"]],
                                    weights_row = row_weights[row_weights != 0],
                                    weights_col = col_weights[col_weights != 0],
-                                   rho = rho,
-                                   max_iter = as.integer(max.iter),
-                                   burn_in = burn.in,
-                                   ti = 10,
-                                   t_switch = 1.01,
-                                   keep = 10,
+                                   rho = .clustRvizOptionsEnv[["rho"]],
+                                   max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                                   burn_in = .clustRvizOptionsEnv[["burn_in"]],
+                                   viz_max_inner_iter = .clustRvizOptionsEnv[["viz_max_inner_iter"]],
+                                   viz_initial_step = .clustRvizOptionsEnv[["viz_initial_step"]],
+                                   viz_small_step = .clustRvizOptionsEnv[["viz_small_step"]],
+                                   keep = .clustRvizOptionsEnv[["keep"]],
                                    l1 = (alg.type == "cbassvizl1"))
   } else {
     cbass.sol.path <- CBASScpp(X,
                                D_row,
                                D_col,
-                               lambda_init = 1e-6,
+                               epsilon = .clustRvizOptionsEnv[["epsilon"]],
                                t = t,
                                weights_row = row_weights[row_weights != 0],
                                weights_col = col_weights[col_weights != 0],
-                               rho = rho,
-                               max_iter = as.integer(max.iter),
-                               burn_in = burn.in,
-                               keep = 10,
+                               rho = .clustRvizOptionsEnv[["rho"]],
+                               max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                               burn_in = .clustRvizOptionsEnv[["burn_in"]],
+                               keep = .clustRvizOptionsEnv[["keep"]],
                                l1 = (alg.type == "cbassl1"))
   }
 
@@ -386,7 +367,7 @@ CBASS <- function(X,
     row_weight_type = row_weight_type,
     row.labels = row_labels,
     # General flags
-    burn.in = burn.in,
+    burn.in = .clustRvizOptionsEnv[["burn_in"]],
     alg.type = alg.type,
     t = t,
     X.center.global = X.center.global,

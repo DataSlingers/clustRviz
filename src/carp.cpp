@@ -3,7 +3,7 @@
 // [[Rcpp::export]]
 Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
                    const Eigen::MatrixXd& D,
-                   double lambda_init, // TODO: Change to gamma_init
+                   double epsilon,
                    double t,
                    const Eigen::VectorXd& weights,
                    double rho   = 1,
@@ -51,9 +51,9 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
   Eigen::MatrixXd Z = V;
 
   // Regularization level
-  double gamma = lambda_init;              // Working copy
+  double gamma = epsilon;                  // Working copy
   Eigen::VectorXd gamma_path(buffer_size); // Storage (to be returned to R)
-  gamma_path(0) = lambda_init;
+  gamma_path(0) = epsilon;
 
   // Fusions
   Eigen::MatrixXi v_zeros_path(num_edges, buffer_size); // Storage (to be returned to R)

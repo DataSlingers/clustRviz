@@ -12,11 +12,6 @@
 #' @param labels A character vector of length \eqn{n}: observations (row) labels
 #' @param X.center A logical: Should \code{X} be centered columnwise?
 #' @param X.scale A logical: Should \code{X} be scaled columnwise?
-#' @param rho For advanced users only (not advisable to change): the penalty
-#'            parameter used for the augmented Lagrangian.
-#' @param max.iter An integer: the maximum number of \code{CARP} iterations.
-#' @param burn.in An integer: the number of initial iterations at a fixed
-#'                (small) value of \eqn{\lambda}
 #' @param alg.type Which \code{CARP} variant to use. Allowed values are \itemize{
 #'        \item \code{"carp"} - The standard \code{CARP} algorithm with \eqn{L2} penalty;
 #'        \item \code{"carpviz"} - The back-tracking \code{CARP} algorithm with \eqn{L2} penalty;
@@ -76,9 +71,6 @@ CARP <- function(X,
                  labels = rownames(X),
                  X.center = TRUE,
                  X.scale = FALSE,
-                 rho = 1.0,
-                 max.iter = 1000000L,
-                 burn.in = 50L,
                  alg.type = c("carpviz", "carpvizl1", "carp", "carpl1"),
                  t = 1.05,
                  npcs = min(4L, NCOL(X), NROW(X)),
@@ -126,18 +118,6 @@ CARP <- function(X,
 
   if (!is_logical_scalar(X.scale)) {
     crv_error(sQuote("X.scale"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
-  }
-
-  if ( (!is_numeric_scalar(rho)) || (rho <= 0)) {
-    crv_error(sQuote("rho"), "must be a positive scalar (vector of length 1).")
-  }
-
-  if ( (!is_integer_scalar(max.iter)) || (max.iter <= 1L) ) {
-    crv_error(sQuote("max.iter"), " must be a positive integer scalar and at least 2.")
-  }
-
-  if ( (!is_integer_scalar(burn.in)) || (burn.in <= 0L) || (burn.in >= max.iter) ) {
-    crv_error(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
   }
 
   alg.type <- match.arg(alg.type)
@@ -233,25 +213,26 @@ CARP <- function(X,
   if (alg.type %in% c("carpvizl1", "carpviz")) {
       carp.sol.path <- CARP_VIZcpp(X,
                                    D,
-                                   lambda_init = 1e-8,
+                                   epsilon = .clustRvizOptionsEnv[["epsilon"]],
                                    weights = weight_vec[weight_vec != 0],
-                                   rho = rho,
-                                   max_iter = as.integer(max.iter),
-                                   burn_in = as.integer(burn.in),
-                                   ti = 10,
-                                   t_switch = 1.01,
-                                   keep = 1,
+                                   rho = .clustRvizOptionsEnv[["rho"]],
+                                   max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                                   burn_in = .clustRvizOptionsEnv[["burn_in"]],
+                                   viz_max_inner_iter = .clustRvizOptionsEnv[["viz_max_inner_iter"]],
+                                   viz_initial_step = .clustRvizOptionsEnv[["viz_initial_step"]],
+                                   viz_small_step = .clustRvizOptionsEnv[["viz_small_step"]],
+                                   keep = .clustRvizOptionsEnv[["keep"]],
                                    l1 = (alg.type == "carpvizl1"))
   } else {
       carp.sol.path <- CARPcpp(X,
                                D,
-                               lambda_init = 1e-8,
+                               epsilon = .clustRvizOptionsEnv[["epsilon"]],
                                t = t,
                                weights = weight_vec[weight_vec != 0],
-                               rho = rho,
-                               max_iter = as.integer(max.iter),
-                               burn_in = as.integer(burn.in),
-                               keep = 1,
+                               rho = .clustRvizOptionsEnv[["rho"]],
+                               max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                               burn_in = .clustRvizOptionsEnv[["burn_in"]],
+                               keep = .clustRvizOptionsEnv[["keep"]],
                                l1 = (alg.type == "carpl1"))
   }
 
@@ -283,7 +264,7 @@ CARP <- function(X,
     n = n,
     p = p,
     weight_type = weight_type,
-    burn.in = burn.in,
+    burn.in = .clustRvizOptionsEnv[["burn_in"]],
     alg.type = alg.type,
     t = t,
     X.center = X.center,

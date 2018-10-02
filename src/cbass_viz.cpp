@@ -7,16 +7,17 @@
 Rcpp::List CBASS_VIZcpp(const Eigen::MatrixXd& X,
                         const Eigen::MatrixXd& D_row,
                         const Eigen::MatrixXd& D_col,
-                        double lambda_init, // TODO: Change to gamma_init
+                        double epsilon,
                         const Eigen::VectorXd& weights_col,
                         const Eigen::VectorXd& weights_row,
-                        double rho         = 1,
-                        int max_iter       = 10000,
-                        int burn_in        = 50,
-                        int ti             = 15,
-                        double t_switch    = 1.01,
-                        int keep           = 10,
-                        bool l1            = false){
+                        double rho              = 1,
+                        int max_iter            = 10000,
+                        int burn_in             = 50,
+                        int keep                = 10,
+                        int viz_max_inner_iter  = 15,
+                        double viz_initial_step = 1.1,
+                        double viz_small_step   = 1.01,
+                        bool l1                 = false){
 
   Eigen::Index n = X.rows();
   Eigen::Index p = X.cols();
@@ -70,10 +71,10 @@ Rcpp::List CBASS_VIZcpp(const Eigen::MatrixXd& X,
   V_col.transposeInPlace();
 
   // Regularization level
-  double gamma     = lambda_init;          // Working copy
-  double gamma_old = lambda_init;
+  double gamma     = epsilon;              // Working copy
+  double gamma_old = epsilon;
   Eigen::VectorXd gamma_path(buffer_size); // Storage (to be returned to R)
-  gamma_path(0) = lambda_init;
+  gamma_path(0) = epsilon;
 
   // Fusions
   Eigen::MatrixXi v_row_zeros_path(num_row_edges, buffer_size); // Storage (to be returned to R)
@@ -109,10 +110,10 @@ Rcpp::List CBASS_VIZcpp(const Eigen::MatrixXd& X,
   Eigen::ArrayXi v_col_zeros_old(num_col_edges);
   Eigen::ArrayXi v_col_zeros_new(num_col_edges);
 
-  // We begin CBASS-VIZ by taking relatively large step sizes (t = 1.1)
+  // We begin CBASS-VIZ by taking relatively large step sizes (e.g., t = 1.1)
   // but once we get to an "interesting" part of the path, we switch to
-  // smaller step sizes (as determined by t_switch)
-  double t = 1.1;
+  // smaller step sizes (as determined by viz_small_step)
+  double t = viz_initial_step;
 
   while( ((nzeros_new_row < num_row_edges) | (nzeros_new_col < num_col_edges)) & (iter < max_iter) ){
     ClustRVizLogger::info("Beginning iteration k = ") << iter + 1;
@@ -211,7 +212,7 @@ Rcpp::List CBASS_VIZcpp(const Eigen::MatrixXd& X,
       try_iter++; // Increment internal iteration count (used to check stopping below)
 
       // Safety check - only so many iterations of the inner loop before we move on
-      if(try_iter > ti){
+      if(try_iter > viz_max_inner_iter){
         break;
       }
 
@@ -254,7 +255,7 @@ Rcpp::List CBASS_VIZcpp(const Eigen::MatrixXd& X,
     // If we have gotten to the "lots of fusions" part of the solution space, start
     // taking smaller step sizes.
     if( (nzeros_new_col > 0) | (nzeros_new_row >0) ){
-      t = t_switch;
+      t = viz_small_step;
     }
 
     // If we have seen a fusion or are otherwise interested in keeping this iteration,

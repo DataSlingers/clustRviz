@@ -8,10 +8,12 @@ capitalize_string <- function(x){
 }
 
 test_that("Validators work", {
-  is_logical_scalar <- clustRviz:::is_logical_scalar
-  is_numeric_scalar <- clustRviz:::is_numeric_scalar
-  is_integer_scalar <- clustRviz:::is_integer_scalar
-  is_percent_scalar <- clustRviz:::is_percent_scalar
+  is_logical_scalar  <- clustRviz:::is_logical_scalar
+  is_numeric_scalar  <- clustRviz:::is_numeric_scalar
+  is_integer_scalar  <- clustRviz:::is_integer_scalar
+  is_percent_scalar  <- clustRviz:::is_percent_scalar
+  is_positive_scalar <- clustRviz:::is_positive_scalar
+  is_positive_integer_scalar <- clustRviz:::is_positive_integer_scalar
 
   expect_true(is_logical_scalar(TRUE))
   expect_true(is_logical_scalar(FALSE))
@@ -44,6 +46,23 @@ test_that("Validators work", {
   expect_false(is_percent_scalar(NA))
   expect_false(is_percent_scalar(c(0.2, 0.5)))
   expect_false(is_percent_scalar("a"))
+
+  expect_true(is_positive_scalar(0.3))
+  expect_true(is_positive_scalar(1))
+  expect_false(is_positive_scalar(0))
+  expect_true(is_positive_scalar(1.5))
+  expect_false(is_positive_scalar(-1.5))
+  expect_false(is_positive_scalar(NA))
+  expect_false(is_positive_scalar(c(0.2, 0.5)))
+  expect_false(is_positive_scalar("a"))
+
+  expect_true(is_positive_integer_scalar(3))
+  expect_false(is_positive_integer_scalar(3.5))
+  expect_false(is_positive_integer_scalar(0))
+  expect_false(is_positive_integer_scalar(-4))
+  expect_false(is_positive_integer_scalar(NA))
+  expect_false(is_positive_integer_scalar(c(2, 5)))
+  expect_false(is_positive_integer_scalar("a"))
 
   is_square <- clustRviz:::is_square
   expect_true(is_square(matrix(1, 5, 5)))

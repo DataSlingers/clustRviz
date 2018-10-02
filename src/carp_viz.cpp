@@ -6,16 +6,17 @@
 // [[Rcpp::export]]
 Rcpp::List CARP_VIZcpp(const Eigen::MatrixXd& X,
                        const Eigen::MatrixXd& D,
-                       double lambda_init, // TODO: Change to gamma_init
+                       double epsilon,
                        const Eigen::VectorXd& weights,
-                       double rho      = 1,
-                       int max_iter    = 10000,
-                       int burn_in     = 50,
-                       double back     = 0.5,
-                       int ti          = 15,
-                       double t_switch = 1.01,
-                       int keep        = 10,
-                       bool l1         = false){
+                       double rho              = 1,
+                       int max_iter            = 10000,
+                       int burn_in             = 50,
+                       double back             = 0.5,
+                       int keep                = 10,
+                       int viz_max_inner_iter  = 15,
+                       double viz_initial_step = 1.1,
+                       double viz_small_step   = 1.01,
+                       bool l1                 = false){
 
   Eigen::Index n = X.rows();
   Eigen::Index p = X.cols();
@@ -56,10 +57,10 @@ Rcpp::List CARP_VIZcpp(const Eigen::MatrixXd& X,
   Eigen::MatrixXd Z = V;
 
   // Regularization level
-  double gamma     = lambda_init;              // Working copy
-  double gamma_old = lambda_init;
+  double gamma     = epsilon;              // Working copy
+  double gamma_old = epsilon;
   Eigen::VectorXd gamma_path(buffer_size); // Storage (to be returned to R)
-  gamma_path(0) = lambda_init;
+  gamma_path(0) = epsilon;
 
   // Fusions
   Eigen::MatrixXi v_zeros_path(num_edges, buffer_size); // Storage (to be returned to R)
@@ -81,10 +82,10 @@ Rcpp::List CARP_VIZcpp(const Eigen::MatrixXd& X,
   Eigen::ArrayXi v_zeros_old(num_edges); // 0/1 arrays indicating edge fusion
   Eigen::ArrayXi v_zeros_new(num_edges);
 
-  // We begin CARP-VIZ by taking relatively large step sizes (t = 1.1)
+  // We begin CARP-VIZ by taking relatively large step sizes (e.g., t = 1.1)
   // but once we get to an "interesting" part of the path, we switch to
-  // smaller step sizes (as determined by t_switch)
-  double t = 1.1;
+  // smaller step sizes (as determined by viz_small_step)
+  double t = viz_initial_step;
 
   while( (iter < max_iter) & (nzeros_new < num_edges) ){
     ClustRVizLogger::info("Beginning iteration k = ") << iter + 1;
@@ -138,7 +139,7 @@ Rcpp::List CARP_VIZcpp(const Eigen::MatrixXd& X,
       try_iter++; // Increment internal iteration count (used to check for stopping below)
 
       // Safety check - only so many iterations of inner loop before we move on
-      if(try_iter > ti){
+      if(try_iter > viz_max_inner_iter){
         break;
       }
 
@@ -177,7 +178,7 @@ Rcpp::List CARP_VIZcpp(const Eigen::MatrixXd& X,
     // If we have gotten to the "lots of fusions" part of the solution space, start
     // taking smaller step sizes.
     if(nzeros_new > 0){
-      t = t_switch;
+      t = viz_small_step;
     }
 
     // If we have seen a fusion or are otherwise interested in keeping this iteration,
