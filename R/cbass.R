@@ -392,7 +392,7 @@ CBASS <- function(X,
 #' @param ... Additional unused arguments
 #' @export
 #' @examples
-#' cbass_fit <- CBASS(X=presidential_speech[1:10,1:4])
+#' cbass_fit <- CBASS(X=presidential_speech)
 #' print(cbass_fit)
 print.CBASS <- function(x, ...) {
   alg_string <- switch(x$alg.type,
@@ -417,9 +417,6 @@ print.CBASS <- function(x, ...) {
 
   cat("Column Weights:\n")
   print(x$col_weight_type)
-
-  cat("Raw Data:\n")
-  print(x$X[1:min(5, x$n), 1:min(5, x$p)])
 
   invisible(x)
 }

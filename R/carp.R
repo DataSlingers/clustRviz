@@ -291,7 +291,7 @@ CARP <- function(X,
 #' @param ... Additional unused arguments
 #' @export
 #' @examples
-#' carp_fit <- CARP(presidential_speech[1:10,1:4])
+#' carp_fit <- CARP(presidential_speech)
 #' print(carp_fit)
 print.CARP <- function(x, ...) {
   alg_string <- switch(x$alg.type,
@@ -314,9 +314,6 @@ print.CARP <- function(x, ...) {
 
   cat("Weights:\n")
   print(x$weight_type)
-
-  cat("Raw Data:\n")
-  print(x$X[1:min(5, x$n), 1:min(5, x$p)])
 
   invisible(x)
 }
