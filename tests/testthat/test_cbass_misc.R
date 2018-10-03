@@ -16,8 +16,8 @@ test_that("CBASS creates unique names if needed", {
 test_that("CBASS supports factor labels", {
   X <- matrix(rnorm(9), 3, 3)
 
-  cbass_fit <- CBASS(X, obs_labels = factor(c("a", "b", "c")),
-                        var_labels = factor(c("d", "e", "f")))
+  cbass_fit <- CBASS(X, row_labels = factor(c("a", "b", "c")),
+                        col_labels = factor(c("d", "e", "f")))
 
   expect_equal(rownames(cbass_fit$X), c("a", "b", "c"))
   expect_equal(colnames(cbass_fit$X), c("d", "e", "f"))

@@ -1,0 +1,251 @@
+---
+title: "`clustRviz` Computational Details"
+author:
+ - name: Michael Weylandt
+   affiliation: Department of Statistics, Rice University
+   email: michael.weylandt@rice.edu
+ - name: John Nagorski
+   affiliation: Department of Statistics, Rice University
+ - name: Genevera I. Allen
+   affiliation: | 
+     | Departments of Statistics, Computer Science, and Electical and Computer Engineering, Rice University
+     | Jan and Dan Duncan Neurological Research Institute, Baylor College of Medicine
+   email: gallen@rice.edu
+date: "Last Updated: September 29, 2018"
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+bibliography: vignettes.bib
+vignette: >
+  %\VignetteIndexEntry{Computational Details of the CARP and CBASS Algorithms}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Convex Clustering
+
+`CARP` begins with the convex clustering problem originally posed by 
+Hocking *et al.* [-@Hocking:2011]:^[Here, we consider the case of uniform weights
+to simplify some of the notation, but the general case is essentially the same.
+The general formulation of `CARP` is given below.]
+
+\[\text{arg min}_{U} \frac{1}{2}\|U - X\|_F^2 + \lambda\sum_{(i, j) \in \mathcal{E}} \|U_{i\cdot} - U_{j\cdot}\|_q\]
+
+Note that the second term can be written as $\|DU\|_{q, 1} = \sum_l \|(DU)_{l\cdot}\|_q$
+where 
+
+\[D_{l\cdot} \text{ is a vector of zeros except having a 1 where edge $l$ starts and a $-1$ where it ends} \]
+
+giving the problem 
+
+\[\text{arg min}_{U} \frac{1}{2}\|U - X\|_F^2 + \lambda\|DU\|_q\]
+
+As noted by Chi and Lange [-@Chi:2015], this formulation suggests the use of an
+operator splitting method. We consider an ADMM algorithm [@Boyd:2011], beginning
+by introducing a copy variable $V = DU$ to reformulate the problem as:
+
+\[\text{arg min}_{U} \frac{1}{2}\|U - X\|_F^2 + \lambda\|V\|_{q, 1} \text{ subject to } DU - V = 0\]
+
+In our experiments, we have found that working in matrix notation, rather than the
+vectorized approach of Chi and Lange [-@Chi:2015], yields code which is faster as
+well as more easily maintained.
+
+We then analyze this problem in a matrix analogue of the scaled form ADMM presented
+in Section 3.1.1 of Boyd *et al* [-@Boyd:2011]: 
+
+\[\begin{align*}
+U^{(k + 1)} &= \text{arg min}_U \frac{1}{2}\|U - X\|_F^2 + \frac{\rho}{2}\|DU - V^{(k)} + Z^{(k)}\|_F^2 \\
+V^{(k + 1)} &= \text{arg min}_V \lambda\|V\|_{q, 1} + \frac{\rho}{2}\|DU^{(k + 1)} - V + Z^{(k)}\|_F^2 \\
+Z^{(k + 1)} &= Z^{(k)} + DU^{(k+1)} - V^{(k+1)}
+\end{align*}\]
+
+Note that our matrix variables $U, V, Z$ correspond to Boyd *et al.*'s vector variables
+$x, z, u$. 
+
+The first problem can be solved exactly by relatively simple algebra. We note that 
+the Frobenius norm terms can be combined to express the problem as 
+\[\begin{align*}
+\text{arg min}_U & \frac{1}{2}\|U - X\|_F^2 + \frac{1}{2}\|\sqrt{\rho} * (DU - V^{(k)} + Z^{(k)})\|_F^2 \\
+\text{arg min}_U & \frac{1}{2}\left\|\begin{pmatrix} I \\ \sqrt{\rho}D\end{pmatrix} U - \begin{pmatrix} X \\ \sqrt{\rho}(V^{(k)} - Z^{(k)}) \end{pmatrix}\right\|_F^2
+\end{align*}\]
+
+This latter term is essentially a multi-response (ridge) regression problem and has
+an analytical solution given by: 
+\[\left(\begin{pmatrix} I \\ \sqrt{\rho}D \end{pmatrix}^T\begin{pmatrix} I \\ \sqrt{\rho}D \end{pmatrix}\right)^{-1}\begin{pmatrix} I \\ \sqrt{\rho}D \end{pmatrix}^T\begin{pmatrix} X \\ \sqrt{\rho}(V^{(k)} - Z^{(k)}) \end{pmatrix} = \left(I + \rho D^TD\right)^{-1}\left[X + \rho D^T\left(V^{(k)} - Z^{(k)}\right)\right]\]
+
+Next, we note that the $V^{(k)}$ can be expressed in terms of a proximal operator: 
+\[\text{arg min}_V \lambda \|V\|_{q, 1} + \frac{\rho}{2}\|DU^{(k + 1)} - V + Z^{(k)}\|_F^2 = \textsf{prox}_{\|\cdot\|_{q, 1} * \lambda/\rho}(DU^{(k + 1)} + Z^{(k)})\]
+where the matrix norm $\|\cdot\|_{q, 1}$ is the sum of the $\ell_q$-norm of each row.
+Since this norm is separable across rows, evaluation of the overall proximal operator
+can be reduced to evaluation of the proximal operator of the $\ell_q$-norm. 
+
+`clustRviz` currently only supports the $q = 1, 2$ cases, which have closed form solutions: 
+\[V^{(k +1)}_{ij} = \textsf{SoftThresh}_{\lambda/\rho}\left((DU^{(k+1)} + Z^{(k)})_{ij}\right) \text{ when } q = 1\]
+and 
+\[V^{(k +1)}_{i\cdot} = \left(1 - \frac{\lambda}{\rho \|(DU^{(k + 1)} + Z^{(k)})_{i\cdot}\|_2}\right)_+(DU^{(k + 1)} + Z^{(k)})_{i\cdot}\text{ when } q = 2\]
+
+
+The $Z^{(k)}$ update is trivial.
+
+The combined algorithm is thus given by: 
+\[\begin{align*}
+U^{(k + 1)} &= (I + \rho D^TD)^{-1}\left[X + \rho D^T*(V^{(k)} - Z^{(k)})\right]\\
+V^{(k + 1)} &= \textsf{SoftThresh}_{\lambda / \rho}((DU^{(k + 1)} + Z^{(k)})) \\
+Z^{(k + 1)} &= Z^{(k)} + DU^{(k +1)} - V^{(k + 1)}
+\end{align*}\]
+in the $\ell_1$ case and
+\[\begin{align*}
+U^{(k + 1)} &= (I + \rho D^TD)^{-1}\left[X + \rho D^T*(V^{(k)} - Z^{(k)})\right]\\
+V^{(k + 1)}_{i\cdot} &= \left(1 - \frac{\lambda}{\rho \|(DU^{(k + 1)} + Z^{(k)})_{i\cdot}\|_2}\right)_+(DU^{(k + 1)} + Z^{(k)})_{i\cdot} \qquad \text{ for each } i \\
+Z^{(k + 1)} &= Z^{(k)} + DU^{(k +1)} - V^{(k + 1)}
+\end{align*}\] in the $\ell_2$ case.
+
+In practice, we pre-compute a Cholesky factorization of $I + \rho D^TD$ which can 
+be used in each $U$ update.
+
+We use these updates in an algorithmic regularization scheme, as described in
+Hu, Chi, and Allen [-@Hu:2016] to obtain the standard (non-backtracking) `CARP` algorithm: 
+
+- Input:
+    - Data Matrix: $X \in \mathbb{R}^{n \times p}$
+    - Weighted edge set: $\mathcal{E} = \{(e_l, w_l)\}$
+    - Relaxation Parameter: $\rho \in \mathbb{R}_{> 0}$
+- Precompute: 
+    - Difference matrix $D \in \mathbb{R}^{|\mathcal{E}| \times n}$
+    - Cholesky factor $L = \textsf{chol}(I + \rho D^TD) \in \mathbb{R}^{n \times n}$
+- Initialize: 
+    - $U^{(0)} = X$, $V^{(0)} = DX$, $Z^{(0)} = V^{(0)}$, $\gamma^{(1)} = \epsilon$, $k = 1$
+- Repeat until $\|V^{(k - 1)}\| = 0$
+    - $U^{(k)} = L^{-T}L^{-1}\left[X + \rho D^T(V^{(k - 1)} - Z^{(k - 1)})\right]$
+    - If $q = 1$, for all $(i, j)$: \[V_{ij}^{(k)} = \textsf{SoftThreshold}_{w_i \gamma^{(k)}/ \rho}((DU^{(k)} + Z^{(k - 1)})_{ij})\]
+    - If $q = 2$, for all $l$: \[V^{(k)}_{l\cdot} = \left(1 - \frac{\gamma^{(k)} w_l}{\rho\|(DU^{(k)} + Z^{(k - 1)})_{l\cdot}\|_2}\right)_+(DU^{(k)} + Z^{(k - 1)})_{l\cdot}\]
+    - $Z^{(k)} = Z^{(k - 1)} + DU^{(k)} - V^{(k)}$
+    - $\gamma^{(k + 1)} = t \gamma^{(k)}$
+    - $k := k + 1$
+- Return $\{(U^{(l)}, V^{(l)}\}_{l = 0}^{k - 1}$
+
+In `clustRviz`, we do not return the $Z^{(k)}$ iterates, but we do return the 
+$U^{(k)}$ and $V^{(k)}$ iterates, as well as the zero pattern of the latter
+(which is useful for identifying clusters and forming dendrograms).
+
+## Convex Bi-Clustering
+
+`CBASS` begins with the convex biclustering problem originally posed by 
+Chi, Allen, and Baraniuk [-@Chi:2017]:^[Again, we consider the case of uniform weights
+to simplify some of the notation and give the general case at the end of this
+section.]
+
+\[\text{arg min}_{U} \frac{1}{2}\|U - X\|_F^2 + \lambda\left(\sum_{(i, j) \in \mathcal{E_1}} \|U_{i\cdot} - U_{j\cdot}\|_q + \sum_{(k, l) \in \mathcal{E_2}}\|U_{\cdot k} - U_{\cdot l}\|_q\right)\]
+
+As before, we simplify notation by introducing two difference matrices $D_{\text{row}}, D_{\text{col}}$
+to write the problem as: 
+
+\[\text{arg min}_{U} \frac{1}{2}\|U - X\|_F^2 + \lambda\left(\|D_{\text{row}}U\|_{q, 1} + \|UD_{\text{col}}\|_{1, q}\right)\]
+
+We recognize this as the proximal operator of the function $f(U) = \|D_{\text{row}}U\|_{q, 1} + \|UD_{\text{col}}\|_{1, q}$.
+Despite the simplicity of the proximal operators of the individual terms,
+the proximal operator of the sum cannot be computed explicitly. To address this
+difficulty, we use the Dykstra-Like Proximal Algorithm (DLPA) of Bauschke and Combettes
+[-@Bauschke:2008; see also @Combettes:2011] which allows us to evaluate the proximal
+operator of the sum by repeated evaluation of the proximal operators of the summands.
+
+DLPA works by repeating the following iterates until convergence: 
+
+- $T           = \textsf{prox}_{\lambda \|D_{\text{row}}\cdot\|_{q, 1}}(U^{(n)} + P^{(n)})$
+- $P^{(n + 1)} = P^{(n)} + U^{(n)} - T$
+- $U^{(n + 1)} = \textsf{prox}_{\lambda \|\cdot D_{\text{col}}\|_{1, q}}(T + Q^{(n)})$
+- $Q^{(n + 1)} = Q^{(n)} + T - U^{(n + 1)}$
+
+where we initialize $U^{(0)} = X$ and $P^{(0)} = Q^{(0)} = 0$.
+
+The reader may consider $T$ as an intermediate $U$-iterate and denote it as $T = U^{(n + 1/2)}$
+to make its role more clear.
+
+We note that the two proximal operators are non-trivial and require use of an iterative
+algorithm at each evaluation. Thankfully, we have already addressed these problems.
+The first proximal operator can be written as: 
+
+\[\text{arg min}_X \frac{1}{2}\|X - (U^{(n)} + P^{(n)})\|_F^2 + \lambda\|D_{\text{row}}X\|_{q, 1}\]
+
+This is exactly the form of convex clustering, with $X$ serving as the free variable 
+and $U^{(n)} + P^{(n)}$ playing the role of the data. Similarly, the second proximal
+operator can be written as
+
+\[\text{arg min}_X \frac{1}{2}\|X - (T + Q^{(n)})\|_F^2 + \lambda\|XD_{\text{col}}\|_{1, q}\]
+
+This is not quite the problem previously considered, but by transposing everything, 
+noting the invariance of the Frobenius norm under transposition and the duality of the
+$\|\cdot\|_{q, 1}$ and $\|\cdot\|_{1, q}$ norms under transposition, we see that this
+problem is equivalent to: 
+
+\[\text{arg min}_{X^T} \frac{1}{2}\|X^T - (T + Q^{(n)})^T\|_F^2 + \lambda\|D_{\text{col}}^TX^T\|_{q, 1} = \textsf{prox}_{\|D_{\text{col}}^T\cdot\|_{q, 1}}\left[(T + Q^{(n)})^T\right]\]
+
+which is convex clustering of $(T + Q^{(n)})^T$ with the difference matrix $D_{\text{col}}^T$.
+Note also that, since we are minimizing over $X^T$, we are principally interested
+in the transpose of the value of the proximal operator. Putting this together,
+we have the DLPA updates: 
+
+- $T           = \textsf{prox}_{\lambda \|D_{\text{row}}\cdot\|_{q, 1}}(U^{(n)} + P^{(n)})$
+- $P^{(n + 1)} = P^{(n)} + U^{(n)} - T$
+- $U^{(n + 1)} = (\textsf{prox}_{\lambda \|D_{\text{col}}^T\cdot\|_{q, 1}}\left[(T + Q^{(n)})^T\right])^T$
+- $Q^{(n + 1)} = Q^{(n)} + T - U^{(n + 1)}$
+
+In the `CBASS` context, we use an operating splitting scheme to deal with the
+complexity of the $\|A\cdot\|_{q, 1}$-norm proximal operators. In particular, we
+use a single ADMM step, rather than solving the subproblems to convergence, yielding
+the `CBASS` iterates: 
+
+- $T = (I + \rho D_{\text{row}}^TD_{\text{row}})^{-1}\left[U^{(n)} + P^{(n)} + \rho D_{\text{row}}^T\left(V_{\text{row}}^{(n)} - Z_{\text{row}}^{(n)}\right)\right]$ (Row ADMM Primal Update)
+- $V_{\text{row}}^{(n+1)} = \textsf{prox}_{\lambda / \rho\|\cdot\|_{q, 1}}(D_{\text{row}}T + Z_{\text{row}}^{(n)})$ (Row ADMM Copy Update)
+- $Z_{\text{row}}^{(n+1)} = Z^{(n)}_{\text{row}} + D_{\text{row}}T - V^{(n+1)}_{\text{row}}$ (Row ADMM Dual Update)
+- $P^{(n + 1)} = P^{(n)} + U^{(n)} - T$
+- $S = (I + \rho D_{\text{col}}D_{\text{col}}^T)^{-1}\left[(T + Q^{(n)})^T + \rho D_{\text{col}}\left(V_{\text{col}}^{(n)} - Z_{\text{col}}^{(n)}\right)\right]$ (Column ADMM Primal Update)
+- $V_{\text{col}}^{(n+1)} = \textsf{prox}_{\lambda / \rho\|\cdot\|_{q, 1}}(D_{\text{col}}^TS + Z_{\text{col}}^{(n)})$ (Column ADMM Copy Update)
+- $Z_{\text{col}}^{(n+1)} = Z^{(n)}_{\text{col}} + D_{\text{col}}^TS - V^{(n+1)}_{\text{col}}$ (Column ADMM Dual Update)
+- $U^{(n + 1)} = S^T$
+- $Q^{(n + 1)} = Q^{(n)} + T - U^{(n + 1)}$
+
+In practice, we can obtain speed-ups by caching Cholesky factorizations of
+$(I + \rho D_{\text{row}}^TD_{\text{row}})$ and $(I + \rho D_{\text{col}}D_{\text{col}}^T)$
+for repeated use.
+
+Using these updates in an algorthmic regularization scheme [@Hu:2016], we obtain the standard
+(non-backtracking) `CBASS` algorithm:
+
+- Input:
+    - Data Matrix: $X \in \mathbb{R}^{n \times p}$
+    - Weighted edge sets: $\mathcal{E}_{\text{row}} = \{(e_l, w_l)\}$ and $\mathcal{E}_{\text{column}} = \{(e_l, w_l)\}$
+    - Relaxation Parameter: $\rho \in \mathbb{R}_{> 0}$
+- Precompute: 
+    - Row difference matrix $D_{\text{row}} \in \mathbb{R}^{|\mathcal{E}_{\text{row}}| \times n}$
+    - Column difference matrix $D_{\text{col}} \in \mathbb{R}^{p \times |\mathcal{E}_{\text{col}}|}$
+    - Row Cholesky factor $L_{\text{row}} = \textsf{chol}(I + \rho D_{\text{row}}^TD_{\text{row}}) \in \mathbb{R}^{n \times n}$
+    - Column Cholesky factor $L_{\text{col}} = \textsf{chol}(I + \rho D_{\text{col}}D_{\text{col}}^T) \in \mathbb{R}^{p \times p}$
+- Initialize: 
+    - $U^{(0)} = X$, $V^{(0)}_{\text{row}} = D_{\text{row}}X$, $Z^{(0)}_{\text{row}} = V^{(0)}_{\text{row}}$, $V^{(0)}_{\text{col}} = (XD_{\text{col}})^T = D_{\text{col}}^TX^T$, $Z^{(0)}_{\text{col}} = V^{(0)}_{\text{col}}$, $P^{(0)} = Q^{(0)} = 0$, $\gamma^{(1)} = \epsilon$, $k = 0$
+- Repeat until $\|V^{(k - 1)}_{\text{row}}\| = \|V^{(k - 1)}_{\text{col}}\| = 0$
+    - Row Updates: 
+        - $T = L^{-T}_{\text{row}}L^{-1}_{\text{row}}\left[U^{(k)} + P^{(k)} + \rho D^T_{\text{row}}(V^{(k - 1)}_{\text{row}} - Z^{(k - 1)}_{\text{row}})\right]$
+        - If $q = 1$, for all $(i, j)$: \[(V^{(k)}_{\text{row}})_{ij} = \textsf{SoftThreshold}_{w^{\text{row}}_i \gamma^{(k)}/ \rho}((D_{\text{row}}T + Z^{(k - 1)}_{\text{row}})_{ij})\]
+        - If $q = 2$, for all $l$: \[(V^{(k)}_{\text{row}})_{l\cdot} = \left(1 - \frac{\gamma^{(k)} w_l}{\rho\|(D_{\text{row}}T + Z^{(k - 1)}_{\text{row}})_{l\cdot}\|_2}\right)_+(D_{\text{row}}T + Z^{(k - 1)}_{\text{row}})_{l\cdot}\]
+        - $Z^{(k)}_{\text{row}} = Z^{(k - 1)}_{\text{row}} + D_{\text{row}}T - V^{(k)}_{\text{row}}$
+    - $P^{(k)} = P^{(k - 1)} + U^{(k - 1)} - T$
+    - Column Updates: 
+        - $S = L^{-T}_{\text{col}}L^{-1}_{\text{col}}\left[(T + Q^{(k)})^T + \rho D_{\text{col}}(V^{(k - 1)}_{\text{col}} - Z^{(k - 1)}_{\text{col}})\right]$
+        - If $q = 1$, for all $(i, j)$: \[(V^{(k)}_{\text{col}})_{ij} = \textsf{SoftThreshold}_{w^{\text{col}}_i \gamma^{(k)}/ \rho}((D_{\text{col}}^TS + Z^{(k - 1)}_{\text{col}})_{ij})\]
+        - If $q = 2$, for all $l$: \[(V^{(k)}_{\text{col}})_{l\cdot} = \left(1 - \frac{\gamma^{(k)} w_l}{\rho\|(D_{\text{col}}^TS + Z^{(k - 1)}_{\text{col}})_{l\cdot}\|_2}\right)_+(D_{\text{col}}^TS + Z^{(k - 1)}_{\text{col}})_{l\cdot}\]
+        - $Z^{(k)}_{\text{col}} = Z^{(k - 1)}_{\text{col}} + D_{\text{col}}^TS - V^{(k)}_{\text{col}}$
+    - $U^{(k)} = S^T$
+    - $Q^{(k)} = Q^{(k - 1)} + T - U^{(k)}$
+    - $\gamma^{(k + 1)} = t \gamma^{(k)}$
+    - $k := k + 1$
+- Return $\{(U^{(l)}, V^{(l)}_{\text{row}}, V^{(l)}_{\text{col}})\}_{l = 0}^{k - 1}$
+
+Note that, unlike in the `COBRA` algorithm of Chi *et al.* [-@Chi:2017] or the 
+DLPA on which it is based [@Bauschke:2008], we keep the auxiliary ADMM variables 
+$V_{\text{row}}, Z_{\text{row}}, V_{\text{col}}, Z_{\text{col}}$ from one iteration
+to the next, rather than starting each sub-problem *de novo*.
+
+## References

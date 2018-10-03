@@ -1,27 +1,22 @@
 #include "clustRviz.h"
 
 // [[Rcpp::export]]
-Rcpp::List CARPcpp(const Eigen::VectorXd& x,
-                   int n,
-                   int p,
-                   double lambda_init, // TODO: Change to gamma_init
+Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
+                   const Eigen::MatrixXd& D,
+                   double epsilon,
                    double t,
                    const Eigen::VectorXd& weights,
-                   const Eigen::VectorXd& uinit, // TODO: Change to u_init
-                   const Eigen::VectorXd& vinit, // TODO: Change to v_init
-                   const Eigen::SparseMatrix<double>& premat,
-                   const Eigen::MatrixXi& IndMat,
-                   const Eigen::MatrixXi& EOneIndMat,
-                   const Eigen::MatrixXi& ETwoIndMat,
                    double rho   = 1,
                    int max_iter = 10000,
                    int burn_in  = 50,
                    int keep     = 10,
                    bool l1      = false){
 
+  Eigen::Index n = X.rows();
+  Eigen::Index p = X.cols();
   // Typically, our weights are "sparse" (i.e., mostly zeros) because we
   // drop small weights to achieve performance.
-  Eigen::Index num_edges = EOneIndMat.rows();
+  Eigen::Index num_edges = D.rows();
 
   /// Set-up storage for CARP iterates
 
@@ -32,43 +27,43 @@ Rcpp::List CARPcpp(const Eigen::VectorXd& x,
   // storage objects, so we use 1.5n for now
   Eigen::Index buffer_size = 1.5 * n;
 
-  // Primal variable (corresponds to u in the notation of Chi & Lange (JCGS, 2015))
-  Eigen::VectorXd u_new(n * p);              // Working copies
-  Eigen::VectorXd u_old(n * p);
-  u_new = uinit;
+  // Primal variable
+  Eigen::MatrixXd U = X;
   Eigen::MatrixXd UPath(n * p, buffer_size); // Storage (for values to return to R)
-  UPath.col(0) = uinit;
+  // We cannot directly copy matrices into columns of our return object since
+  // a matrix isn't a vector, so we map the same storage into a vector which we
+  // can then insert into the storage matrix to be returned to R
+  Eigen::Map<Eigen::VectorXd> u_vec = Eigen::Map<Eigen::VectorXd>(U.data(), n * p);
 
-  // 'Split' variable (corresponds to v in the notation of Chi & Lange (JCGS, 2015))
-  Eigen::VectorXd v_new(p * num_edges);              // Working copies
-  Eigen::VectorXd v_old(p * num_edges);
-  v_new = vinit;
+  // 'Split' variable
+  Eigen::MatrixXd V = D * U;
   Eigen::MatrixXd VPath(p * num_edges, buffer_size); // Storage (for values to return to R)
-  VPath.col(0) = vinit;
+  Eigen::Map<Eigen::VectorXd> v_vec = Eigen::Map<Eigen::VectorXd>(V.data(), p * num_edges);
 
-  // (Scaled) dual variable (corresponds to lambda in the notation of Chi and Lange (JCGS, 2015))
-  Eigen::VectorXd z_new(p * num_edges); // Working copy
-  Eigen::VectorXd z_old(p * num_edges); // No storage needed since these aren't of direct interest
-  z_new = v_new;
+  U.transposeInPlace(); // See note on transpositions below
+  UPath.col(0) = u_vec;
+  U.transposeInPlace();
+  V.transposeInPlace();
+  VPath.col(0) = v_vec;
+  V.transposeInPlace();
+
+  // (Scaled) dual variable
+  Eigen::MatrixXd Z = V;
 
   // Regularization level
-  double gamma = lambda_init;              // Working copy
+  double gamma = epsilon;                  // Working copy
   Eigen::VectorXd gamma_path(buffer_size); // Storage (to be returned to R)
-  gamma_path(0) = lambda_init;
+  gamma_path(0) = epsilon;
 
-  // Fusions -- TODO: Confirm the semantics of these objects with JN
-  Eigen::VectorXd vZeroIndsnew = Eigen::VectorXd::Zero(num_edges);          // Working copies
-  Eigen::VectorXd vZeroIndsold(num_edges);                                  // (we begin with no fusions)
-  Eigen::MatrixXd vZeroInds_Path = Eigen::MatrixXd(num_edges, buffer_size); // Storage (to be returned to R)
-  vZeroInds_Path.col(0) = vZeroIndsnew;
+  // Fusions
+  Eigen::MatrixXi v_zeros_path(num_edges, buffer_size); // Storage (to be returned to R)
+  v_zeros_path.col(0).setZero();
 
   /// END Preallocations
 
-  // At each iteration, we need to calculate A^{-1}B_k for some (sparse) A
-  // This is a relatively expensive iteration, but the core cost is a sparse LU
-  // factorization of A which can be amortized over iterations so we pre-compute it here
-  Eigen::SparseLU<Eigen::SparseMatrix<double> > premat_solver;
-  premat_solver.compute(premat);
+  // PreCompute chol(I + rho D^TD) for easy inversions in the U update step
+  Eigen::MatrixXd IDTD = rho * D.transpose() * D + Eigen::MatrixXd::Identity(n, n);
+  Eigen::LLT<Eigen::MatrixXd> u_step_solver; u_step_solver.compute(IDTD);
 
   // Book-keeping variables
   // Number of iterations stored, total iteration count, number of fusions
@@ -80,57 +75,37 @@ Rcpp::List CARPcpp(const Eigen::VectorXd& x,
   while( (iter < max_iter) & (nzeros_new < num_edges) ){
     ClustRVizLogger::info("Beginning iteration k = ") << iter + 1;
     ClustRVizLogger::debug("gamma = ") << gamma;
-    // Begin iteration - move updated values to "_old" values
-    //
-    // TODO -- Confirm that these use "move semantics" to avoid full copies
-    u_old        = u_new;
-    v_old        = v_new;
-    z_old        = z_new;
-    vZeroIndsold = vZeroIndsnew;
-    nzeros_old   = nzeros_new;
+
+    nzeros_old = nzeros_new;
 
     // U-update
-    // TODO - Document what is happening here
-    Eigen::VectorXd solver_input = DtMatOpv2(rho * v_old - z_old, n, p, IndMat, EOneIndMat, ETwoIndMat);
-    solver_input += x;
-    solver_input /= rho;
-    u_new = premat_solver.solve(solver_input);
-
-    ClustRVizLogger::debug("u = ") << u_new;
+    U = u_step_solver.solve(X + rho * D.transpose() * (V - Z));
+    Eigen::MatrixXd DU = D * U;
+    ClustRVizLogger::debug("U = ") << U;
 
     // V-update
-    // TODO - Document what is happening here
-    Eigen::VectorXd prox_argument = DMatOpv2(u_new, p, IndMat, EOneIndMat, ETwoIndMat) + (1/rho)*z_old;
-
-    if(l1){
-      v_new = ProxL1(prox_argument, p, (1/rho) * gamma, weights);
-    } else {
-      v_new = ProxL2(prox_argument, p, (1/rho) * weights * gamma, IndMat);
-    }
-
-    ClustRVizLogger::debug("v = ") << v_new;
+    Eigen::MatrixXd DUZ = DU + Z;
+    MatrixProx(DUZ, V, gamma / rho, weights, l1);
+    ClustRVizLogger::debug("V = ") << V;
 
     // Z-update
-    // TODO - Document what is happening here
-    z_new = z_old + rho*(DMatOpv2(u_new, p, IndMat, EOneIndMat, ETwoIndMat) - v_new);
+    Z += DU - V;
+    ClustRVizLogger::debug("Z = ") << Z;
 
-    ClustRVizLogger::debug("z = ") << z_new;
+    // Identify cluster fusions (rows of V which have gone to zero)
+    Eigen::VectorXd v_norms = V.rowwise().squaredNorm();
+    Eigen::ArrayXi  v_zeros(num_edges);
 
-    // TODO- Document this check: what are we trying to do here?
-    for(int l = 0; l < num_edges; l++){
-      Eigen::VectorXi v_index = IndMat.row(l);
-      if(extract(v_new, v_index).sum() == 0){
-        vZeroIndsnew(l) = 1;
-      }
+    for(Eigen::Index i = 0; i < num_edges; i++){
+      v_zeros(i) = v_norms(i) == 0;
     }
-    nzeros_new = vZeroIndsnew.sum();
+    nzeros_new = v_zeros.sum();
 
     ClustRVizLogger::debug("Number of fusions identified ") << nzeros_new;
 
     // If we have seen a fusion or are otherwise interested in keeping this iteration,
     // add values to our storage buffers
     if( (nzeros_new != nzeros_old) | (iter % keep == 0) ) {
-
       // Before we can store values, we need to make sure we have enough buffer space
       if(path_iter >= buffer_size){
         ClustRVizLogger::info("Resizing storage from ") << buffer_size << " to " << 2 * buffer_size << " iterations.";
@@ -138,14 +113,29 @@ Rcpp::List CARPcpp(const Eigen::VectorXd& x,
         UPath.conservativeResize(UPath.rows(), buffer_size);
         VPath.conservativeResize(VPath.rows(), buffer_size);
         gamma_path.conservativeResize(buffer_size);
-        vZeroInds_Path.conservativeResize(vZeroInds_Path.rows(), buffer_size);
+        v_zeros_path.conservativeResize(v_zeros_path.rows(), buffer_size);
       }
 
       // Store values
-      UPath.col(path_iter)          = u_new;
-      VPath.col(path_iter)          = v_new;
+
+      // FIXME -- The post-processing code assumes output in the form of
+      //          Chi and Lange (JCGS, 2015) which more or less is equivalent
+      //          to vec(U^T) and vec(V^T) instead of what we're using internally
+      //          here.
+      //
+      //          It should be re-written, but until it is, we can achieve the
+      //          same result by transposing and un-transposing the data internally
+      //          before copying it to our storage buffers
+      //
+      //          Obviously, this burns some cycles so it would be better to avoid this
+      U.transposeInPlace(); V.transposeInPlace();
+
+      UPath.col(path_iter)          = u_vec;
+      VPath.col(path_iter)          = v_vec;
       gamma_path(path_iter)         = gamma;
-      vZeroInds_Path.col(path_iter) = vZeroIndsnew;
+      v_zeros_path.col(path_iter)   = v_zeros;
+
+      U.transposeInPlace(); V.transposeInPlace();
 
       path_iter++;
     }
@@ -170,11 +160,11 @@ Rcpp::List CARPcpp(const Eigen::VectorXd& x,
   UPath.conservativeResize(UPath.rows(), path_iter);
   VPath.conservativeResize(VPath.rows(), path_iter);
   gamma_path.conservativeResize(path_iter);
-  vZeroInds_Path.conservativeResize(vZeroInds_Path.rows(), path_iter);
+  v_zeros_path.conservativeResize(v_zeros_path.rows(), path_iter);
 
   // Wrap up our results and pass them to R
   return Rcpp::List::create(Rcpp::Named("u.path")      = UPath,
                             Rcpp::Named("v.path")      = VPath,
-                            Rcpp::Named("v.zero.inds") = vZeroInds_Path,
-                            Rcpp::Named("lambda.path")  = gamma_path); // TODO - Change lambda -> gamma in R code
+                            Rcpp::Named("v.zero.inds") = v_zeros_path,
+                            Rcpp::Named("lambda.path") = gamma_path); // TODO - Change lambda -> gamma in R code
 }

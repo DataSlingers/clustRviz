@@ -12,62 +12,6 @@ if (getRversion() >= "2.15.1") utils::globalVariables(c("."))
 #' @source \url{http://www.presidency.ucsb.edu}
 "presidential_speech"
 
-#' @importMethodsFrom Matrix which tcrossprod kronecker
-#' @importFrom Matrix Diagonal
-ConvexClusteringPreCompute <- function(X, weights, rho) {
-  ## This function works using the convention of Chi and Lange (JCGS, 2015) or
-  ## Chi, Allen, and Baraniuk (2017, Biometrics) where X is transposed from our
-  ## usual convention and is a p-by-n matrix instead of n-by-p.
-
-  n <- ncol(X)
-  p <- nrow(X)
-
-  # Calcuate edge set
-  weight.adj <- WeightAdjacency(weights, n)
-  cardE <- sum(weight.adj)
-  E <- which(weight.adj != 0, arr.ind = TRUE)
-  E <- E[order(E[, 1], E[, 2]), ]
-
-  # Precompute indicies
-  crv_info("Calculating edge indices")
-  ind.mat <- matrix(seq(0, cardE * p - 1), byrow = TRUE, ncol = p)
-
-  crv_info("Calculating E1")
-  E1.ind.mat <- outer(p * (E[, 1] - 1), seq(0, p - 1), `+`)
-
-  crv_info("Calculating E2")
-  E2.ind.mat <- outer(p * (E[, 2] - 1), seq(0, p - 1), `+`)
-
-  crv_info("Calculating U-Update PreMat")
-  # Precompute U-update matrix
-  D <- Reduce(`+`, lapply(seq_len(cardE), function(l){
-    pos.ind <- E[l, 1]
-    neg.ind <- E[l, 2]
-
-    d <- matrix(0, nrow = n, ncol = 1)
-    d[pos.ind, 1] <- 1
-    d[neg.ind, 1] <- -1
-    tcrossprod(d)
-  }))
-  PreMat <- kronecker(D, Matrix::Diagonal(p)) + (1 / rho) * Matrix::Diagonal(n * p)
-
-  uinit <- Matrix::Matrix(X[TRUE], nrow = p, ncol = n)
-
-  crv_info("Calculating initial values for V")
-  Vmat <- uinit[, E[, 1]] - uinit[, E[, 2]]
-  vinit <- as.vector(Vmat)
-
-  list(
-    ind.mat = ind.mat,
-    E = E,
-    E1.ind.mat = E1.ind.mat,
-    E2.ind.mat = E2.ind.mat,
-    PreMat = PreMat,
-    uinit = uinit,
-    vinit = vinit
-  )
-}
-
 #' @importFrom dplyr tbl_df
 #' @importFrom dplyr mutate
 #' @importFrom dplyr select
@@ -399,8 +343,8 @@ ConvexClusteringPostProcess <- function(X,
                                         dendrogram_scale,
                                         npcs){
 
-  n.obs     <- NROW(X)
-  p.var     <- NCOL(X)
+  n         <- NROW(X)
+  p         <- NCOL(X)
   num_edges <- NROW(edge_matrix)
 
   cluster_path <- ISP(sp.path     = t(v_zero_indices),
@@ -409,7 +353,7 @@ ConvexClusteringPostProcess <- function(X,
                       lambda.path = lambda_path,
                       cardE       = num_edges)
 
-  cluster_path[["clust.path"]] <- get_cluster_assignments(edge_matrix, cluster_path$sp.path.inter, n.obs)
+  cluster_path[["clust.path"]] <- get_cluster_assignments(edge_matrix, cluster_path$sp.path.inter, n)
   cluster_path[["clust.path.dups"]] <- duplicated(cluster_path[["clust.path"]], fromList = FALSE)
 
   cvx_dendrogram <- CreateDendrogram(cluster_path, labels, dendrogram_scale)
@@ -417,14 +361,14 @@ ConvexClusteringPostProcess <- function(X,
   X_pca <- stats::prcomp(X, scale. = FALSE, center = FALSE)
   X_pca_rotation <- X_pca$rotation[, seq_len(npcs)]
 
-  U_projected <- crossprod(matrix(cluster_path$u.path.inter, nrow = p.var), X_pca_rotation)
+  U_projected <- crossprod(matrix(cluster_path$u.path.inter, nrow = p), X_pca_rotation)
   colnames(U_projected) <- paste0("PC", seq_len(npcs))
 
   cluster_path_vis <- as_tibble(U_projected) %>%
-                         mutate(Iter = rep(seq_along(cluster_path$clust.path), each = n.obs),
-                                Obs  = rep(seq_len(n.obs), times = length(cluster_path$clust.path)),
-                                Cluster = as.vector(vapply(cluster_path$clust.path, function(x) x$membership, double(n.obs))),
-                                Lambda = rep(cluster_path$lambda.path.inter, each = n.obs),
+                         mutate(Iter = rep(seq_along(cluster_path$clust.path), each = n),
+                                Obs  = rep(seq_len(n), times = length(cluster_path$clust.path)),
+                                Cluster = as.vector(vapply(cluster_path$clust.path, function(x) x$membership, double(n))),
+                                Lambda = rep(cluster_path$lambda.path.inter, each = n),
                                 ObsLabel = rep(labels, times = length(cluster_path$clust.path))) %>%
                          group_by(.data$Iter) %>%
                          mutate(NCluster = n_distinct(.data$Cluster)) %>%
@@ -439,10 +383,12 @@ ConvexClusteringPostProcess <- function(X,
 # From ?is.integer:
 is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
 
-is_logical_scalar <- function(x) {is.logical(x) && (length(x) == 1L) && (!is.na(x))}
-is_numeric_scalar <- function(x) {is.numeric(x) && (length(x) == 1L) && (!is.na(x))}
-is_integer_scalar <- function(x) is_numeric_scalar(x) && is.wholenumber(x)
-is_percent_scalar <- function(x) is_numeric_scalar(x) && (x >= 0) && (x <= 1)
+is_logical_scalar  <- function(x) {is.logical(x) && (length(x) == 1L) && (!is.na(x))}
+is_numeric_scalar  <- function(x) {is.numeric(x) && (length(x) == 1L) && (!is.na(x))}
+is_integer_scalar  <- function(x) is_numeric_scalar(x) && is.wholenumber(x)
+is_percent_scalar  <- function(x) is_numeric_scalar(x) && (x >= 0) && (x <= 1)
+is_positive_scalar <- function(x) is_numeric_scalar(x) && (x > 0)
+is_positive_integer_scalar <- function(x) is_integer_scalar(x) && (x > 0)
 
 is_square <- function(x) {is.matrix(x) && (NROW(x) == NCOL(x))}
 

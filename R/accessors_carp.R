@@ -228,8 +228,8 @@ get_U.CARP <- function(x, ..., percent, k){
   index <- which.min(abs(x$carp.sol.path$lambda.path - percent * max(x$carp.sol.path$lambda.path)))[1]
 
   raw_u <- matrix(x$carp.sol.path$u.path[, index],
-                  nrow = x$n.obs,
-                  ncol = x$p.var,
+                  nrow = x$n,
+                  ncol = x$p,
                   byrow = TRUE) # byrow = TRUE because we get u by vectorizing t(X), not X
 
   U <- unscale_matrix(raw_u, scale = x$scale_vector, center = x$center_vector)

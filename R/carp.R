@@ -12,11 +12,6 @@
 #' @param labels A character vector of length \eqn{n}: observations (row) labels
 #' @param X.center A logical: Should \code{X} be centered columnwise?
 #' @param X.scale A logical: Should \code{X} be scaled columnwise?
-#' @param rho For advanced users only (not advisable to change): the penalty
-#'            parameter used for the augmented Lagrangian.
-#' @param max.iter An integer: the maximum number of \code{CARP} iterations.
-#' @param burn.in An integer: the number of initial iterations at a fixed
-#'                (small) value of \eqn{\lambda}
 #' @param alg.type Which \code{CARP} variant to use. Allowed values are \itemize{
 #'        \item \code{"carp"} - The standard \code{CARP} algorithm with \eqn{L2} penalty;
 #'        \item \code{"carpviz"} - The back-tracking \code{CARP} algorithm with \eqn{L2} penalty;
@@ -42,8 +37,8 @@
 #' @return An object of class \code{CARP} containing the following elements (among others):
 #'         \itemize{
 #'         \item \code{X}: the original data matrix
-#'         \item \code{n.obs}: the number of observations (rows of \code{X})
-#'         \item \code{p.var}: the number of variables (columns of \code{X})
+#'         \item \code{n}: the number of observations (rows of \code{X})
+#'         \item \code{p}: the number of variables (columns of \code{X})
 #'         \item \code{alg.type}: the \code{CARP} variant used
 #'         \item \code{X.center}: a logical indicating whether \code{X} was centered
 #'                                column-wise before clustering
@@ -76,9 +71,6 @@ CARP <- function(X,
                  labels = rownames(X),
                  X.center = TRUE,
                  X.scale = FALSE,
-                 rho = 1.0,
-                 max.iter = 1000000L,
-                 burn.in = 50L,
                  alg.type = c("carpviz", "carpvizl1", "carp", "carpl1"),
                  t = 1.05,
                  npcs = min(4L, NCOL(X), NROW(X)),
@@ -128,18 +120,6 @@ CARP <- function(X,
     crv_error(sQuote("X.scale"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
   }
 
-  if ( (!is_numeric_scalar(rho)) || (rho <= 0)) {
-    crv_error(sQuote("rho"), "must be a positive scalar (vector of length 1).")
-  }
-
-  if ( (!is_integer_scalar(max.iter)) || (max.iter <= 1L) ) {
-    crv_error(sQuote("max.iter"), " must be a positive integer scalar and at least 2.")
-  }
-
-  if ( (!is_integer_scalar(burn.in)) || (burn.in <= 0L) || (burn.in >= max.iter) ) {
-    crv_error(sQuote("burn.in"), " must be a positive integer less than ", sQuote("max.iter."))
-  }
-
   alg.type <- match.arg(alg.type)
 
   if ( (!is_numeric_scalar(t)) || (t <= 1) ) {
@@ -167,8 +147,8 @@ CARP <- function(X,
 
   rownames(X) <- labels <- make.unique(as.character(labels), sep="_")
 
-  n.obs <- NROW(X)
-  p.var <- NCOL(X)
+  n <- NROW(X)
+  p <- NCOL(X)
 
   # Center and scale X
   X.orig <- X
@@ -176,8 +156,8 @@ CARP <- function(X,
     X <- scale(X, center = X.center, scale = X.scale)
   }
 
-  scale_vector  <- attr(X, "scaled:scale", exact=TRUE)  %||% rep(1, p.var)
-  center_vector <- attr(X, "scaled:center", exact=TRUE) %||% rep(0, p.var)
+  scale_vector  <- attr(X, "scaled:scale", exact=TRUE)  %||% rep(1, p)
+  center_vector <- attr(X, "scaled:center", exact=TRUE) %||% rep(0, p)
 
   crv_message("Pre-computing weights and edge sets")
 
@@ -217,54 +197,42 @@ CARP <- function(X,
     crv_error("Weights do not imply a connected graph. Clustering will not succeed.")
   }
 
-  ## Transform to a form suitable for down-stream computation
-  X <- t(X) ## TODO: Ask JN why we did this
+  weight_matrix_ut <- weight_matrix * upper.tri(weight_matrix);
+
+  edge_list <- which(weight_matrix_ut != 0, arr.ind = TRUE)
+  edge_list <- edge_list[order(edge_list[, 1], edge_list[, 2]), ]
+  cardE <- NROW(edge_list)
+  D <- matrix(0, ncol = n, nrow = cardE)
+  D[cbind(seq_len(cardE), edge_list[,1])] <-  1
+  D[cbind(seq_len(cardE), edge_list[,2])] <- -1
+
   weight_vec <- weight_mat_to_vec(weight_matrix)
-
-  PreCompList <- ConvexClusteringPreCompute(X = X,
-                                            weights = weight_vec,
-                                            rho = rho)
-
-  cardE <- NROW(PreCompList$E)
 
   crv_message("Computing CARP Path")
 
   if (alg.type %in% c("carpvizl1", "carpviz")) {
-      carp.sol.path <- CARP_VIZcpp(x = X[TRUE],
-                                   n = as.integer(n.obs),
-                                   p = as.integer(p.var),
-                                   lambda_init = 1e-8,
+      carp.sol.path <- CARP_VIZcpp(X,
+                                   D,
+                                   epsilon = .clustRvizOptionsEnv[["epsilon"]],
                                    weights = weight_vec[weight_vec != 0],
-                                   uinit = as.matrix(PreCompList$uinit),
-                                   vinit = as.matrix(PreCompList$vinit),
-                                   premat = PreCompList$PreMat,
-                                   IndMat = PreCompList$ind.mat,
-                                   EOneIndMat = PreCompList$E1.ind.mat,
-                                   ETwoIndMat = PreCompList$E2.ind.mat,
-                                   rho = rho,
-                                   max_iter = as.integer(max.iter),
-                                   burn_in = as.integer(burn.in),
-                                   ti = 10,
-                                   t_switch = 1.01,
-                                   keep = 1,
+                                   rho = .clustRvizOptionsEnv[["rho"]],
+                                   max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                                   burn_in = .clustRvizOptionsEnv[["burn_in"]],
+                                   viz_max_inner_iter = .clustRvizOptionsEnv[["viz_max_inner_iter"]],
+                                   viz_initial_step = .clustRvizOptionsEnv[["viz_initial_step"]],
+                                   viz_small_step = .clustRvizOptionsEnv[["viz_small_step"]],
+                                   keep = .clustRvizOptionsEnv[["keep"]],
                                    l1 = (alg.type == "carpvizl1"))
   } else {
-      carp.sol.path <- CARPcpp(x = X[TRUE],
-                               n = as.integer(n.obs),
-                               p = as.integer(p.var),
-                               lambda_init = 1e-8,
+      carp.sol.path <- CARPcpp(X,
+                               D,
+                               epsilon = .clustRvizOptionsEnv[["epsilon"]],
                                t = t,
                                weights = weight_vec[weight_vec != 0],
-                               uinit = as.matrix(PreCompList$uinit),
-                               vinit = as.matrix(PreCompList$vinit),
-                               premat = PreCompList$PreMat,
-                               IndMat = PreCompList$ind.mat,
-                               EOneIndMat = PreCompList$E1.ind.mat,
-                               ETwoIndMat = PreCompList$E2.ind.mat,
-                               rho = rho,
-                               max_iter = as.integer(max.iter),
-                               burn_in = as.integer(burn.in),
-                               keep = 1,
+                               rho = .clustRvizOptionsEnv[["rho"]],
+                               max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                               burn_in = .clustRvizOptionsEnv[["burn_in"]],
+                               keep = .clustRvizOptionsEnv[["keep"]],
                                l1 = (alg.type == "carpl1"))
   }
 
@@ -277,8 +245,8 @@ CARP <- function(X,
 
   crv_message("Post-processing")
 
-  post_processing_results <- ConvexClusteringPostProcess(X = t(X), # Uses a correctly-oriented X
-                                                         edge_matrix      = PreCompList$E,
+  post_processing_results <- ConvexClusteringPostProcess(X = X,
+                                                         edge_matrix      = edge_list,
                                                          lambda_path      = carp.sol.path$lambda.path,
                                                          u_path           = carp.sol.path$u.path,
                                                          v_path           = carp.sol.path$v.path,
@@ -293,10 +261,10 @@ CARP <- function(X,
     carp.cluster.path.vis = post_processing_results$paths,
     carp.sol.path = carp.sol.path,
     cardE = cardE,
-    n.obs = n.obs,
-    p.var = p.var,
+    n = n,
+    p = p,
     weight_type = weight_type,
-    burn.in = burn.in,
+    burn.in = .clustRvizOptionsEnv[["burn_in"]],
     alg.type = alg.type,
     t = t,
     X.center = X.center,
@@ -323,7 +291,7 @@ CARP <- function(X,
 #' @param ... Additional unused arguments
 #' @export
 #' @examples
-#' carp_fit <- CARP(presidential_speech[1:10,1:4])
+#' carp_fit <- CARP(presidential_speech)
 #' print(carp_fit)
 print.CARP <- function(x, ...) {
   alg_string <- switch(x$alg.type,
@@ -337,8 +305,8 @@ print.CARP <- function(x, ...) {
   cat("Algorithm:", alg_string, "\n")
   cat("Time:", sprintf("%2.3f %s", x$time, attr(x$time, "units")), "\n\n")
 
-  cat("Number of Observations:", x$n.obs, "\n")
-  cat("Number of Variables:   ", x$p.var, "\n\n")
+  cat("Number of Observations:", x$n, "\n")
+  cat("Number of Variables:   ", x$p, "\n\n")
 
   cat("Pre-processing options:\n")
   cat(" - Columnwise centering:", x$X.center, "\n")
@@ -346,9 +314,6 @@ print.CARP <- function(x, ...) {
 
   cat("Weights:\n")
   print(x$weight_type)
-
-  cat("Raw Data:\n")
-  print(x$X[1:min(5, x$n.obs), 1:min(5, x$p.var)])
 
   invisible(x)
 }

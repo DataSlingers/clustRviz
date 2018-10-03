@@ -3,14 +3,14 @@
 #' \code{plot.CBASS} provides a range of ways to visualize the results of convex
 #' clustering, including: \itemize{
 #' \item Dendrograms, illustrating the nested cluster hierarchy inferred from
-#'       the convex clustering solution path (\code{type = "obs.dendrogram"} and
-#'       \code{type = "var.dendrogram"} for the observation and feature / variable
-#'       clusterings, respectively);
+#'       the convex clustering solution path (\code{type = "row.dendrogram"} and
+#'       \code{type = "col.dendrogram"} for the row (observation) and column
+#'       (feature / variable) clusterings, respectively);
 #' \item Path plots, showing the coalescence of the estimated cluster centroids
-#'       as the regularization parameter is increased (\code{type = "obs.dendrogram"}
-#'       and \code{type = "var.dendrogram"} for the observation and feature / variable
-#'       clusterings, respectively);
-#' \item A cluster heatmap, displaying observation and feature histograms, as well
+#'       as the regularization parameter is increased (\code{type = "row.dendrogram"}
+#'       and \code{type = "col.dendrogram"} for the row (observation) and column
+#'       (feature / variable) clusterings, respectively);
+#' \item A cluster heatmap, displaying row and column histograms, as well
 #'       as the clustered data matrix in a single graphic (\code{type = "heatmap"}); and
 #' \item A \code{\link[shiny]{shiny}} app, which can display the clustering solutions
 #'       as a "movie" or allow for interactive exploration (\code{type = "interactive"}).
@@ -26,24 +26,24 @@
 #'                a fraction of the final regularization level used) at which to
 #'                assign clusters in the static (\code{type = "dendrogram"} or \code{type = "path"})
 #'                plots.
-#' @param k.obs An integer indicating the desired number of observation clusters to be displayed
-#'              in the static plots. (If plotting variables, the regularization level
-#'              giving \code{k.obs} observation clusters is used.)
-#' @param k.var An integer indicating the desired number of feature clusters to be displayed
-#'              in the static plots. (If plotting variables, the regularization level
-#'              giving \code{k.var} feature clusters is used.)
+#' @param k.row An integer indicating the desired number of row clusters to be displayed
+#'              in the static plots. (If plotting columns, the regularization level
+#'              giving \code{k.row} rows clusters is used.)
+#' @param k.col An integer indicating the desired number of column clusters to be displayed
+#'              in the static plots. (If plotting rows, the regularization level
+#'              giving \code{k.col} column clusters is used.)
 #' @param ... Additional arguments. Currently an error when \code{type} is not
-#'            \code{"obs.dendrogram"} or \code{"var.dendrogram"}; passed to
-#'            \code{\link[stats]{plot.dendrogram}} when \code{type == "obs.dendrogram"}
-#'            or \code{type == "var.dendrogram"}.
+#'            \code{"row.dendrogram"} or \code{"col.dendrogram"}; passed to
+#'            \code{\link[stats]{plot.dendrogram}} when \code{type == "row.dendrogram"}
+#'            or \code{type == "col.dendrogram"}.
 #' @param dend.branch.width a positive number. Line width on dendrograms.
 #' @param dend.labels.cex a positive number. Label size on dendrograms.
 #' @param heatrow.label.cex heatmap row label size
 #' @param heatcol.label.cex heatmap column label size
 #' @return The value of the return type depends on the \code{type} argument:\itemize{
-#'  \item if \code{type \%in\% c("obs.dendrogram", "var.dendrogram", "heatmap")},
+#'  \item if \code{type \%in\% c("row.dendrogram", "col.dendrogram", "heatmap")},
 #'         \code{x} is returned invisibly;
-#'  \item if \code{type \%in\% c("obs.path", "var.path")}, an object of class
+#'  \item if \code{type \%in\% c("row.path", "col.path")}, an object of class
 #'        \code{\link[ggplot2]{ggplot}} which can be plotted directly (by invoking
 #'        its print method) or modified further by the user is returned;
 #'  \item if \code{type = "interactive"}, a \code{\link[shiny]{shiny}} app which can be activated
@@ -51,7 +51,7 @@
 #' } \code{saveviz.CBASS} always returns \code{file.name} invisibly.
 #' @details The \code{\link{saveviz.CBASS}} function provides a unified interface
 #'          for exporting \code{CBASS} visualizations to files. For all plots,
-#'          at most one of \code{percent}, \code{k.obs}, and \code{k.var} must be supplied.
+#'          at most one of \code{percent}, \code{k.row}, and \code{k.col} must be supplied.
 #' @importFrom shiny shinyApp fluidPage titlePanel tabsetPanel fluidRow animationOptions
 #' @importFrom shiny tags column plotOutput renderPlot sliderInput
 #' @importFrom stats as.dendrogram as.hclust quantile
@@ -66,14 +66,14 @@
 plot.CBASS <- function(x,
                        ...,
                        type = c("heatmap",
-                                "obs.dendrogram",
-                                "var.dendrogram",
-                                "obs.path",
-                                "var.path",
+                                "row.dendrogram",
+                                "col.dendrogram",
+                                "row.path",
+                                "col.path",
                                 "interactive"),
                        percent,
-                       k.obs,
-                       k.var,
+                       k.row,
+                       k.col,
                        dend.branch.width = 2,
                        dend.labels.cex = .6,
                        heatrow.label.cex = 1.5,
@@ -84,50 +84,50 @@ plot.CBASS <- function(x,
 
   switch(
     type,
-    obs.dendrogram = {
+    row.dendrogram = {
       cbass_dendro_plot(x,
                         percent = percent,
-                        k.obs = k.obs,
-                        k.var = k.var,
+                        k.row = k.row,
+                        k.col = k.col,
                         dend.branch.width = dend.branch.width,
                         dend.labels.cex = dend.labels.cex,
-                        type = "obs",
+                        type = "row",
                         ...)
     },
-    var.dendrogram = {
+    col.dendrogram = {
       cbass_dendro_plot(x,
                         percent = percent,
-                        k.obs = k.obs,
-                        k.var = k.var,
+                        k.row = k.row,
+                        k.col = k.col,
                         dend.branch.width = dend.branch.width,
                         dend.labels.cex = dend.labels.cex,
-                        type = "var",
+                        type = "col",
                         ...)
     },
-    obs.path = {
+    row.path = {
       cbass_path_plot(x,
                      axis = axis,
                      percent = percent,
-                     k.obs = k.obs,
-                     k.var = k.var,
+                     k.row = k.row,
+                     k.col = k.col,
                      ...,
-                     type = "obs")
+                     type = "row")
     },
-    var.path = {
+    col.path = {
       cbass_path_plot(x,
                       axis = axis,
                       percent = percent,
-                      k.obs = k.obs,
-                      k.var = k.var,
+                      k.row = k.row,
+                      k.col = k.col,
                       ...,
-                      type = "var")
+                      type = "col")
     },
     heatmap = {
       cbass_heatmap_plot(x,
                          ...,
                          percent = percent,
-                         k.obs = k.obs,
-                         k.var = k.var,
+                         k.row = k.row,
+                         k.col = k.col,
                          heatrow.label.cex = heatrow.label.cex,
                          heatcol.label.cex = heatcol.label.cex)
     },
@@ -181,8 +181,8 @@ plot.CBASS <- function(x,
             X.heat <- t(x$X)
             X <- t(x$X)
           }
-          colnames(X.heat) <- x$obs.labels
-          rownames(X.heat) <- x$var.labels
+          colnames(X.heat) <- x$row.labels
+          rownames(X.heat) <- x$col.labels
           x$cbass.sol.path$lambda.path %>% as.vector() -> lam.seq
           lam.prop.seq <- lam.seq / max(lam.seq)
           nbreaks <- 50
@@ -197,15 +197,15 @@ plot.CBASS <- function(x,
             cur.lam <- x$cbass.sol.path$lambda.path[plt.iter]
             cur.lam
             # find lambda closest in column path
-            cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.obs$lambda.path.inter - cur.lam))
+            cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.row$lambda.path.inter - cur.lam))
             # find clustering solution in column path
-            cur.col.clust.assignment <- x$cbass.cluster.path.obs$clust.path[[cur.col.lam.ind]]$membership
+            cur.col.clust.assignment <- x$cbass.cluster.path.row$clust.path[[cur.col.lam.ind]]$membership
             cur.col.clust.labels <- unique(cur.col.clust.assignment)
             cur.col.nclust <- length(cur.col.clust.labels)
             # find lambda closest in row path
-            cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.var$lambda.path.inter - cur.lam))
+            cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.col$lambda.path.inter - cur.lam))
             # find clustering solution in row path
-            cur.row.clust.assignment <- x$cbass.cluster.path.var$clust.path[[cur.row.lam.ind]]$membership
+            cur.row.clust.assignment <- x$cbass.cluster.path.col$clust.path[[cur.row.lam.ind]]$membership
             cur.row.clust.labels <- unique(cur.row.clust.assignment)
             cur.row.nclust <- length(cur.row.clust.labels)
             for (col.label.ind in seq_along(cur.col.clust.labels)) {
@@ -221,16 +221,16 @@ plot.CBASS <- function(x,
             my.heatmap.2(
               x = X.heat,
               scale = "none",
-              Colv = stats::as.dendrogram(x$cbass.dend.obs),
-              Rowv = stats::as.dendrogram(x$cbass.dend.var),
+              Colv = stats::as.dendrogram(x$cbass.dend.row),
+              Rowv = stats::as.dendrogram(x$cbass.dend.col),
               trace = "none",
               density.info = "none",
               key = FALSE,
               breaks = breaks,
               col = heatcols,
               symkey = F,
-              Row.hclust = x$cbass.dend.var %>% stats::as.hclust(),
-              Col.hclust = x$cbass.dend.obs %>% stats::as.hclust(),
+              Row.hclust = x$cbass.dend.col %>% stats::as.hclust(),
+              Col.hclust = x$cbass.dend.row %>% stats::as.hclust(),
               k.col = cur.col.nclust,
               k.row = cur.row.nclust,
               my.col.vec = my.cols,
@@ -254,9 +254,9 @@ cbass_path_plot <- function(x,
                             ...,
                             axis,
                             percent,
-                            k.obs,
-                            k.var,
-                            type = c("obs", "var")){
+                            k.row,
+                            k.col,
+                            type = c("row", "col")){
 
   type <- match.arg(type)
 
@@ -272,16 +272,16 @@ cbass_path_plot <- function(x,
   }
 
   has_percent <- !missing(percent)
-  has_k.obs   <- !missing(k.obs)
-  has_k.var   <- !missing(k.var)
+  has_k.row   <- !missing(k.row)
+  has_k.col   <- !missing(k.col)
 
-  n_args <- has_percent + has_k.obs + has_k.var
+  n_args <- has_percent + has_k.row + has_k.col
 
   show_clusters <- (n_args == 1)
 
   if(n_args > 1){
-    crv_error("At most one of ", sQuote("percent"), " ", sQuote("k.obs"), " and ",
-              sQuote("k.var"), " may be supplied.")
+    crv_error("At most one of ", sQuote("percent"), " ", sQuote("k.row"), " and ",
+              sQuote("k.col"), " may be supplied.")
   }
 
   if (n_args == 0L) {
@@ -299,7 +299,7 @@ cbass_path_plot <- function(x,
     "LambdaPercent"
   )
 
-  path_obj <- if(type == "obs") x$cbass.cluster.path.vis.obs else x$cbass.cluster.path.vis.var
+  path_obj <- if(type == "row") x$cbass.cluster.path.vis.row else x$cbass.cluster.path.vis.col
 
   if (any(plot_cols %not.in% colnames(path_obj))) {
     missing_col <- plot_cols[which(plot_cols %not.in% colnames(path_obj))][1]
@@ -310,45 +310,45 @@ cbass_path_plot <- function(x,
                                   filter(.data$Iter > x$burn.in)
   names(plot_frame_full)[1:2] <- c("V1", "V2")
 
-  if(has_k.obs){
+  if(has_k.row){
 
-    if ( !is_integer_scalar(k.obs) ){
+    if ( !is_integer_scalar(k.row) ){
       crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
     }
 
-    if( k.obs <= 0 ) {
-      crv_error(sQuote("k.obs"), " must be positive.")
+    if( k.row <= 0 ) {
+      crv_error(sQuote("k.row"), " must be positive.")
     }
 
-    if( k.obs > NROW(x$X) ){
-      crv_error(sQuote("k.obs"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
+    if( k.row > NROW(x$X) ){
+      crv_error(sQuote("k.row"), " cannot be more than the rows in the original data set (", NROW(x$X), ").")
     }
 
-    percent <- x$cbass.cluster.path.vis.obs %>%
+    percent <- x$cbass.cluster.path.vis.row %>%
       select(.data$LambdaPercent, .data$NCluster) %>%
-      filter(.data$NCluster <= k.obs) %>%
+      filter(.data$NCluster <= k.row) %>%
       select(.data$LambdaPercent) %>%
       summarize(percent = min(.data$LambdaPercent)) %>%
       pull
   }
 
-  if(has_k.var){
+  if(has_k.col){
 
-    if ( !is_integer_scalar(k.var) ){
+    if ( !is_integer_scalar(k.col) ){
       crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
     }
 
-    if( k.var <= 0 ) {
-      crv_error(sQuote("k.var"), " must be positive.")
+    if( k.col <= 0 ) {
+      crv_error(sQuote("k.col"), " must be positive.")
     }
 
-    if( k.var > NCOL(x$X) ){
-      crv_error(sQuote("k.var"), " cannot be more than the features in the original data set (", NCOL(x$X), ").")
+    if( k.col > NCOL(x$X) ){
+      crv_error(sQuote("k.col"), " cannot be more than the columns in the original data set (", NCOL(x$X), ").")
     }
 
-    percent <- x$cbass.cluster.path.vis.var %>%
+    percent <- x$cbass.cluster.path.vis.col %>%
       select(.data$LambdaPercent, .data$NCluster) %>%
-      filter(.data$NCluster <= k.var) %>%
+      filter(.data$NCluster <= k.col) %>%
       select(.data$LambdaPercent) %>%
       summarize(percent = min(.data$LambdaPercent)) %>%
       pull
@@ -398,11 +398,11 @@ cbass_path_plot <- function(x,
 #' @importFrom grDevices adjustcolor
 cbass_dendro_plot <- function(x,
                              percent,
-                             k.obs,
-                             k.var,
+                             k.row,
+                             k.col,
                              dend.branch.width = 2,
                              dend.labels.cex = .6,
-                             type = c("obs", "var"),
+                             type = c("row", "col"),
                              ...){
 
   type <- match.arg(type)
@@ -416,18 +416,18 @@ cbass_dendro_plot <- function(x,
   }
 
   has_percent <- !missing(percent)
-  has_k.obs   <- !missing(k.obs)
-  has_k.var   <- !missing(k.var)
-  n_args      <- has_percent + has_k.obs + has_k.var
+  has_k.row   <- !missing(k.row)
+  has_k.col   <- !missing(k.col)
+  n_args      <- has_percent + has_k.row + has_k.col
 
   show_clusters <- (n_args == 1)
 
   if(n_args > 1){
-    crv_error("At most one of ", sQuote("percent"), " ", sQuote("k.obs"), " and ",
-         sQuote("k.var"), " may be supplied.")
+    crv_error("At most one of ", sQuote("percent"), " ", sQuote("k.row"), " and ",
+         sQuote("k.col"), " may be supplied.")
   }
 
-  dend <- if(type == "obs") x$cbass.dend.obs else x$cbass.dend.var
+  dend <- if(type == "row") x$cbass.dend.row else x$cbass.dend.col
 
   ## Set better default margins
   par(mar = c(14, 7, 2, 1))
@@ -438,7 +438,7 @@ cbass_dendro_plot <- function(x,
            plot(ylab = "Amount of Regularization", cex.lab = 1.5, ...)
 
   if(show_clusters){
-    labels <- get_cluster_labels(x, k.obs = k.obs, k.var = k.var, percent = percent, type = type)
+    labels <- get_cluster_labels(x, k.row = k.row, k.col = k.col, percent = percent, type = type)
     n_clusters <- nlevels(labels)
 
     my.cols <- adjustcolor(c("grey", "black"), alpha.f = .2)
@@ -453,8 +453,8 @@ cbass_dendro_plot <- function(x,
 cbass_heatmap_plot <- function(x,
                                ...,
                                percent,
-                               k.obs,
-                               k.var,
+                               k.row,
+                               k.col,
                                heatrow.label.cex,
                                heatcol.label.cex,
                                breaks = NULL,
@@ -467,24 +467,25 @@ cbass_heatmap_plot <- function(x,
   }
 
   has_percent <- !missing(percent)
-  has_k.obs   <- !missing(k.obs)
-  has_k.var   <- !missing(k.var)
+  has_k.row   <- !missing(k.row)
+  has_k.col   <- !missing(k.col)
 
-  n_args <- has_percent + has_k.obs + has_k.var
+  n_args <- has_percent + has_k.row + has_k.col
 
   if(n_args >= 2){
-    crv_error("At most one of ", sQuote("percent,"), " ", sQuote("k.obs"), " and ",
-              sQuote("k.var"), " may be supplied.")
+    crv_error("At most one of ", sQuote("percent,"), " ", sQuote("k.row"), " and ",
+              sQuote("k.col"), " may be supplied.")
   }
 
   if(n_args == 0){
     U     <- get_clustered_data(x, percent = 0, refit = TRUE)
-    k.col <- NCOL(U) ## FIXME - why is this backwards?
-    k.row <- NROW(U)
+    n.row <- NROW(U)
+    n.col <- NCOL(U)
   } else {
-    U <- get_clustered_data(x, percent = percent, k.obs = k.obs, k.var = k.var, refit = TRUE)
-    k.row <- nlevels(get_cluster_labels(x, percent = percent, k.obs = k.obs, k.var = k.var, type = "obs"))
-    k.col <- nlevels(get_cluster_labels(x, percent = percent, k.obs = k.obs, k.var = k.var, type = "var"))
+    U <- get_clustered_data(x, percent = percent, k.row = k.row, k.col = k.col, refit = TRUE)
+    # Note that we can't assign n.row / n.col here since we might confuse it with user-supplied arguments
+    n.row <- nlevels(get_cluster_labels(x, percent = percent, k.row = k.row, k.col = k.col, type = "row"))
+    n.col <- nlevels(get_cluster_labels(x, percent = percent, k.row = k.row, k.col = k.col, type = "col"))
   }
 
   if (heatrow.label.cex < 0) {
@@ -498,7 +499,9 @@ cbass_heatmap_plot <- function(x,
   if (is.null(breaks)) {
     nbreaks <- 50
     quant.probs <- seq(0, 1, length.out = nbreaks)
-    breaks <- unique(quantile(as.vector(U), probs = quant.probs))
+    ## Rarely (when there are ties involved) the result of unique(quantile(...))
+    ## isn't quite sorted, so we fix things up manually
+    breaks <- sort(unique(quantile(as.vector(U), probs = quant.probs)))
   }
 
   if (is.null(heatmap_col)) {
@@ -511,18 +514,18 @@ cbass_heatmap_plot <- function(x,
   my.heatmap.2(
     x = U,
     scale = "none",
-    Rowv = as.dendrogram(x$cbass.dend.obs),
-    Colv = as.dendrogram(x$cbass.dend.var),
+    Rowv = as.dendrogram(x$cbass.dend.row),
+    Colv = as.dendrogram(x$cbass.dend.col),
     trace = "none",
     density.info = "none",
     key = FALSE,
     breaks = breaks,
     col = heatmap_col,
     symkey = FALSE,
-    Row.hclust = as.hclust(x$cbass.dend.obs),
-    Col.hclust = as.hclust(x$cbass.dend.var),
-    k.col = k.col,
-    k.row = k.row,
+    Row.hclust = as.hclust(x$cbass.dend.row),
+    Col.hclust = as.hclust(x$cbass.dend.col),
+    k.col = n.col,
+    k.row = n.row,
     my.col.vec = my.cols,
     cexRow = heatrow.label.cex,
     cexCol = heatcol.label.cex,

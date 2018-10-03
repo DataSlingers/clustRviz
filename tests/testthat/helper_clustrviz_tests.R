@@ -20,6 +20,18 @@ expect_str_contains <- function(object, expected, info=NULL, label=NULL){
               info=info, label=label)
 }
 
+expect_zero <- function(object, ..., info=NULL, label=NULL, expected.label=NULL){
+  expect_equal(object, 0, ..., info=info, label=label, expected.label=expected.label)
+}
+
+expect_zeros <- function(object, ..., info=NULL, label=NULL, expected.label=NULL){
+  expect_equal(object, rep(0, length(object)), ..., info=info, label=label, expected.label=expected.label)
+}
+
+expect_ones <- function(object, ..., info=NULL, label=NULL, expected.label=NULL){
+  expect_equal(object, rep(1, length(object)), ..., info=info, label=label, expected.label=expected.label)
+}
+
 capture_print <- function(x, ...){
   paste(capture.output(print(x, ...)), collapse="\n")
 }
