@@ -100,7 +100,7 @@ with a cluster heatmap, with the regularization set to give 3 observation cluste
 
 ```{r cbass}
 cbass_fit <- CBASS(presidential_speech)
-plot(cbass_fit, k.obs = 3)
+plot(cbass_fit, k.row = 3)
 ```
 
 More details about the use and mathematical formulation of `CARP` and `CBASS`
