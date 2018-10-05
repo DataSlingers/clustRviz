@@ -62,8 +62,6 @@
 #'         \item \code{carp.dend.col}: a dendrogram (object of class
 #'                                     \code{\link[stats]{hclust}}) containing
 #'                                     the clustering solution path for the columns
-#'         \item \code{cbass.cluster.path.row}: The \code{CBASS} solution path for the rows
-#'         \item \code{cbass.cluster.path.col}: The \code{CBASS} solution path for the columns
 #'         \item \code{row.labels}: a character vector of length \code{n} containing
 #'                                  row (observation) labels
 #'         \item \code{col.labels}: a character vector of length \code{p} containing
@@ -355,13 +353,11 @@ CBASS <- function(X,
     p = p,
     cbass.sol.path = cbass.sol.path,
     # Column-wise (variable) results
-    cbass.cluster.path.col = post_processing_results_col$raw_path,
     cbass.cluster.path.vis.col = post_processing_results_col$paths,
     cbass.dend.col = post_processing_results_col$dendrogram,
     col_weight_type = col_weight_type,
     col.labels = col_labels,
     # Row-wise (observation) results
-    cbass.cluster.path.row = post_processing_results_row$raw_path,
     cbass.cluster.path.vis.row = post_processing_results_row$paths,
     cbass.dend.row = post_processing_results_row$dendrogram,
     row_weight_type = row_weight_type,

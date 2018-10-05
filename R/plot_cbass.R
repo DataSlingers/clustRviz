@@ -170,74 +170,23 @@ plot.CBASS <- function(x,
           )
         ),
         server = function(input, output) {
-          if (x$X.center.global) {
-            X.heat <- x$X
-            X.heat <- X.heat - mean(X.heat)
-            X.heat <- t(X.heat)
-            X <- x$X
-            X <- X - mean(X)
-            X <- t(X)
-          } else {
-            X.heat <- t(x$X)
-            X <- t(x$X)
-          }
-          colnames(X.heat) <- x$row.labels
-          rownames(X.heat) <- x$col.labels
-          x$cbass.sol.path$lambda.path %>% as.vector() -> lam.seq
-          lam.prop.seq <- lam.seq / max(lam.seq)
-          nbreaks <- 50
+          ## Calculate breaks and colors on the raw data so that they are consitent
+          ## across frames. (If we use cbass_heatmap_plot's internal fitting, it will
+          ## only look at the gradient for a single frame.)
+          nbreaks     <- 50
           quant.probs <- seq(0, 1, length.out = nbreaks)
-          breaks <- unique(stats::quantile(X[TRUE], probs = quant.probs))
-          nbreaks <- length(breaks)
-          heatcols <- grDevices::colorRampPalette(c("blue", "yellow"))(nbreaks - 1)
-          my.cols <- grDevices::adjustcolor(c("black", "grey"), alpha.f = .3)
+          breaks      <- unique(quantile(x$X[TRUE], probs = quant.probs))
+          nbreaks     <- length(breaks)
+          heatmap_col <- colorRampPalette(c("blue", "yellow"))(nbreaks - 1)
+
           output$heatmap <- shiny::renderPlot({
-            plt.iter <- which.min(abs(input$regcent - lam.prop.seq))
-            # find lambda at iter
-            cur.lam <- x$cbass.sol.path$lambda.path[plt.iter]
-            cur.lam
-            # find lambda closest in column path
-            cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.row$lambda.path.inter - cur.lam))
-            # find clustering solution in column path
-            cur.col.clust.assignment <- x$cbass.cluster.path.row$clust.path[[cur.col.lam.ind]]$membership
-            cur.col.clust.labels <- unique(cur.col.clust.assignment)
-            cur.col.nclust <- length(cur.col.clust.labels)
-            # find lambda closest in row path
-            cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.col$lambda.path.inter - cur.lam))
-            # find clustering solution in row path
-            cur.row.clust.assignment <- x$cbass.cluster.path.col$clust.path[[cur.row.lam.ind]]$membership
-            cur.row.clust.labels <- unique(cur.row.clust.assignment)
-            cur.row.nclust <- length(cur.row.clust.labels)
-            for (col.label.ind in seq_along(cur.col.clust.labels)) {
-              cur.col.label <- cur.col.clust.labels[col.label.ind]
-              col.inds <- which(cur.col.clust.assignment == cur.col.label)
-              for (row.label.ind in seq_along(cur.row.clust.labels)) {
-                cur.row.label <- cur.row.clust.labels[row.label.ind]
-                row.inds <- which(cur.row.clust.assignment == cur.row.label)
-                mean.value <- mean(X[row.inds, col.inds])
-                X.heat[row.inds, col.inds] <- mean.value
-              }
-            }
-            my.heatmap.2(
-              x = X.heat,
-              scale = "none",
-              Colv = stats::as.dendrogram(x$cbass.dend.row),
-              Rowv = stats::as.dendrogram(x$cbass.dend.col),
-              trace = "none",
-              density.info = "none",
-              key = FALSE,
-              breaks = breaks,
-              col = heatcols,
-              symkey = F,
-              Row.hclust = x$cbass.dend.col %>% stats::as.hclust(),
-              Col.hclust = x$cbass.dend.row %>% stats::as.hclust(),
-              k.col = cur.col.nclust,
-              k.row = cur.row.nclust,
-              my.col.vec = my.cols,
-              cexRow = heatrow.label.cex,
-              cexCol = heatcol.label.cex,
-              margins = c(10, 10)
-            )
+            cbass_heatmap_plot(x,
+                               percent = input$regcent,
+                               heatrow.label.cex = heatrow.label.cex,
+                               heatcol.label.cex = heatcol.label.cex,
+                               ...,
+                               breaks = breaks,
+                               heatmap_col = heatmap_col)
           })
         }
       )

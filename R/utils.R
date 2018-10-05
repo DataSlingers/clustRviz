@@ -363,7 +363,7 @@ ConvexClusteringPostProcess <- function(X,
                          ungroup() %>%
                          mutate(LambdaPercent = .data$Lambda / max(.data$Lambda))
 
-  list(paths = cluster_path_vis, dendrogram = cvx_dendrogram, raw_path = cluster_path)
+  list(paths = cluster_path_vis, dendrogram = cvx_dendrogram)
 }
 
 `%not.in%` <- Negate(`%in%`)
