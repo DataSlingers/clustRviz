@@ -318,7 +318,7 @@ CreateDendrogram <- function(carp_cluster_path, n_labels, scale = NULL) {
 #' @noRd
 #' @importFrom rlang .data
 #' @importFrom stats prcomp
-#' @importFrom dplyr as_tibble %>% mutate group_by ungroup n_distinct
+#' @importFrom dplyr tibble %>% mutate group_by ungroup n_distinct
 # Post-Process CARP and CBASS results
 # This function takes a "correctly" oriented X
 ConvexClusteringPostProcess <- function(X,
@@ -344,26 +344,26 @@ ConvexClusteringPostProcess <- function(X,
   cluster_path[["clust.path"]] <- get_cluster_assignments(edge_matrix, cluster_path$sp.path.inter, n)
   cluster_path[["clust.path.dups"]] <- duplicated(cluster_path[["clust.path"]], fromList = FALSE)
 
+  U <- array(cluster_path$u.path.inter, dim = c(n, p, length(cluster_path[["clust.path.dups"]])))
   cvx_dendrogram <- CreateDendrogram(cluster_path, labels, dendrogram_scale)
 
   X_pca <- stats::prcomp(X, scale. = FALSE, center = FALSE)
-  X_pca_rotation <- X_pca$rotation[, seq_len(npcs)]
+  rotation_matrix <- X_pca$rotation[, seq_len(npcs)]
 
-  U_projected <- crossprod(matrix(cluster_path$u.path.inter, nrow = p), X_pca_rotation)
-  colnames(U_projected) <- paste0("PC", seq_len(npcs))
-
-  cluster_path_vis <- as_tibble(U_projected) %>%
-                         mutate(Iter = rep(seq_along(cluster_path$clust.path), each = n),
-                                Obs  = rep(seq_len(n), times = length(cluster_path$clust.path)),
-                                Cluster = as.vector(vapply(cluster_path$clust.path, function(x) x$membership, double(n))),
-                                Lambda = rep(cluster_path$lambda.path.inter, each = n),
-                                ObsLabel = rep(labels, times = length(cluster_path$clust.path))) %>%
+  membership_info <- tibble(Iter = rep(seq_along(cluster_path$clust.path), each = n),
+                            Obs  = rep(seq_len(n), times = length(cluster_path$clust.path)),
+                            Cluster = as.vector(vapply(cluster_path$clust.path, function(x) x$membership, double(n))),
+                            Lambda = rep(cluster_path$lambda.path.inter, each = n),
+                            ObsLabel = rep(labels, times = length(cluster_path$clust.path))) %>%
                          group_by(.data$Iter) %>%
                          mutate(NCluster = n_distinct(.data$Cluster)) %>%
                          ungroup() %>%
                          mutate(LambdaPercent = .data$Lambda / max(.data$Lambda))
 
-  list(paths = cluster_path_vis, dendrogram = cvx_dendrogram)
+  list(U               = U,
+       rotation_matrix = rotation_matrix,
+       membership_info = membership_info,
+       dendrogram      = cvx_dendrogram)
 }
 
 `%not.in%` <- Negate(`%in%`)

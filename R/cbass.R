@@ -48,24 +48,14 @@
 #'         \item \code{n}: the number of observations (rows of \code{X})
 #'         \item \code{p}: the number of variables (columns of \code{X})
 #'         \item \code{alg.type}: the \code{CBASS} variant used
-#'         \item \code{X.center.global}: a logical indicating whether \code{X}
-#'                                       was globally centered before clustering
-#'         \item \code{var_weight_type}: a record of the scheme used to create
-#'                                       fusion weights for the variables
-#'         \item \code{obs_weight_type}: a record of the scheme used to create
-#'                                       fusion weights for the observations
+#'         \item \code{row_fusions}: A record of row fusions - see the documentation
+#'                                   of \code{\link{CARP}} for details of what this
+#'                                   may include.
+#'         \item \code{col_fusions}: A record of column fusions - see the documentation
+#'                                   of \code{\link{CARP}} for details of what this
+#'                                   may include.
 #'         \item \code{burn.in}: an integer indicating the number of "burn-in"
 #'                               iterations performed
-#'         \item \code{carp.dend.row}: a dendrogram (object of class
-#'                                     \code{\link[stats]{hclust}}) containing
-#'                                     the clustering solution path for the rows
-#'         \item \code{carp.dend.col}: a dendrogram (object of class
-#'                                     \code{\link[stats]{hclust}}) containing
-#'                                     the clustering solution path for the columns
-#'         \item \code{row.labels}: a character vector of length \code{n} containing
-#'                                  row (observation) labels
-#'         \item \code{col.labels}: a character vector of length \code{p} containing
-#'                                  column (feature) labels
 #'         }
 #' @export
 #' @examples
@@ -351,17 +341,24 @@ CBASS <- function(X,
     X = X.orig,
     n = n,
     p = p,
-    cbass.sol.path = cbass.sol.path,
-    # Column-wise (variable) results
-    cbass.cluster.path.vis.col = post_processing_results_col$paths,
-    cbass.dend.col = post_processing_results_col$dendrogram,
-    col_weight_type = col_weight_type,
-    col.labels = col_labels,
-    # Row-wise (observation) results
-    cbass.cluster.path.vis.row = post_processing_results_row$paths,
-    cbass.dend.row = post_processing_results_row$dendrogram,
-    row_weight_type = row_weight_type,
-    row.labels = row_labels,
+    row_fusions = list(
+      labels = row_labels,
+      weight_type = row_weight_type,
+      U = post_processing_results_row$U,
+      D = D_row,
+      dendrogram = post_processing_results_row$dendrogram,
+      rotation_matrix = post_processing_results_row$rotation_matrix,
+      cluster_membership = post_processing_results_row$membership_info
+    ),
+    col_fusions = list(
+      labels = col_labels,
+      weight_type = col_weight_type,
+      U = post_processing_results_col$U,
+      D = D_col,
+      dendrogram = post_processing_results_col$dendrogram,
+      rotation_matrix = post_processing_results_col$rotation_matrix,
+      cluster_membership = post_processing_results_col$membership_info
+    ),
     # General flags
     burn.in = .clustRvizOptionsEnv[["burn_in"]],
     alg.type = alg.type,
@@ -409,10 +406,10 @@ print.CBASS <- function(x, ...) {
   cat(" - Global centering:", x$X.center.global, "\n\n")
 
   cat("Row Weights:\n")
-  print(x$row_weight_type)
+  print(x$row_fusions$weight_type)
 
   cat("Column Weights:\n")
-  print(x$col_weight_type)
+  print(x$col_fusions$weight_type)
 
   invisible(x)
 }

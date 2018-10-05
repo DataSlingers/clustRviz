@@ -55,9 +55,8 @@ Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
   // (Scaled) dual variable for row ADMM
   Eigen::MatrixXd Z_col = V_col;
 
-  U.transposeInPlace(); // See note on transpositions below
+  // Store initial values
   UPath.col(0) = u_vec;
-  U.transposeInPlace();
   V_rowPath.col(0) = v_row_vec;
   V_colPath.col(0) = v_col_vec;
 
@@ -179,22 +178,12 @@ Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
       }
 
       // Store values
-      //
-      // FIXME -- The projection onto principal components seems easier if we store
-      //          U as vec(U^T) rather than vec(U), so we transpose it here for brevity.
-      //          Obviously, this burns some cycles so it would be better to avoid this,
-      //          but it's not clear how to avoid more expensive manipulations on the R
-      //          side.
-      // NB -- and this is confusing -- the V paths are vec(V_row) and vec(V_col)
-      //       with no tranposes...
-      U.transposeInPlace();
       UPath.col(path_iter)            = u_vec;
       V_rowPath.col(path_iter)        = v_row_vec;
       V_colPath.col(path_iter)        = v_col_vec;
       gamma_path(path_iter)           = gamma;
       v_row_zeros_path.col(path_iter) = v_row_zeros;
       v_col_zeros_path.col(path_iter) = v_col_zeros;
-      U.transposeInPlace();
 
       path_iter++;
     }

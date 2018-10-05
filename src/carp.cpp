@@ -40,9 +40,8 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
   Eigen::MatrixXd VPath(p * num_edges, buffer_size); // Storage (for values to return to R)
   Eigen::Map<Eigen::VectorXd> v_vec = Eigen::Map<Eigen::VectorXd>(V.data(), p * num_edges);
 
-  U.transposeInPlace(); // See note on transpositions below
+  // Store initial values
   UPath.col(0) = u_vec;
-  U.transposeInPlace();
   VPath.col(0) = v_vec;
 
   // (Scaled) dual variable
@@ -115,21 +114,10 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
       }
 
       // Store values
-      //
-      // FIXME -- The projection onto principal components seems easier if we store
-      //          U as vec(U^T) rather than vec(U), so we transpose it here for brevity.
-      //          Obviously, this burns some cycles so it would be better to avoid this,
-      //          but it's not clear how to avoid more expensive manipulations on the R
-      //          side.
-      // NB -- and this is confusing -- the V paths is vec(V) with no tranpose...
-      U.transposeInPlace();
-
       UPath.col(path_iter)          = u_vec;
       VPath.col(path_iter)          = v_vec;
       gamma_path(path_iter)         = gamma;
       v_zeros_path.col(path_iter)   = v_zeros;
-
-      U.transposeInPlace();
 
       path_iter++;
     }
