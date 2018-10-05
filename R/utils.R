@@ -345,6 +345,9 @@ ConvexClusteringPostProcess <- function(X,
   cluster_path[["clust.path.dups"]] <- duplicated(cluster_path[["clust.path"]], fromList = FALSE)
 
   U <- array(cluster_path$u.path.inter, dim = c(n, p, length(cluster_path[["clust.path.dups"]])))
+  rownames(U) <- rownames(X)
+  colnames(U) <- colnames(X)
+
   cvx_dendrogram <- CreateDendrogram(cluster_path, labels, dendrogram_scale)
 
   X_pca <- stats::prcomp(X, scale. = FALSE, center = FALSE)
@@ -377,6 +380,9 @@ is_integer_scalar  <- function(x) is_numeric_scalar(x) && is.wholenumber(x)
 is_percent_scalar  <- function(x) is_numeric_scalar(x) && (x >= 0) && (x <= 1)
 is_positive_scalar <- function(x) is_numeric_scalar(x) && (x > 0)
 is_positive_integer_scalar <- function(x) is_integer_scalar(x) && (x > 0)
+
+is_character_scalar <- function(x) {is.character(x) && (length(x) == 1L) && (!is.na(x))}
+is_nonempty_character_scalar <- function(x) {is_character_scalar(x) && nzchar(x)}
 
 is_square <- function(x) {is.matrix(x) && (NROW(x) == NCOL(x))}
 

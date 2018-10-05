@@ -395,7 +395,7 @@ plot.CARP <- function(x,
 
 #' @noRd
 #' @importFrom rlang .data
-#' @importFrom dplyr filter select left_join pull
+#' @importFrom dplyr filter select left_join pull rename
 #' @importFrom ggplot2 ggplot geom_path aes geom_point guides theme element_text xlab ylab
 #' @importFrom ggrepel geom_text_repel
 carp_path_plot <- function(x, ..., axis, percent, k){
@@ -427,25 +427,8 @@ carp_path_plot <- function(x, ..., axis, percent, k){
     has_percent <- TRUE # We've now set the percent (whole path) for display
   }
 
-  plot_cols <- c(
-    axis,
-    "Iter",
-    "Obs",
-    "Cluster",
-    "Lambda",
-    "ObsLabel",
-    "NCluster",
-    "LambdaPercent"
-  )
-
-  if (any(plot_cols %not.in% colnames(x$carp.cluster.path.vis))) {
-    missing_col <- plot_cols[which(plot_cols %not.in% colnames(x$carp.cluster.path.vis))][1]
-    crv_error(sQuote(missing_col), " is not available for plotting.")
-  }
-
-  plot_frame_full <- x$carp.cluster.path.vis %>% select(plot_cols) %>%
-                                                 filter(.data$Iter > x$burn.in)
-  names(plot_frame_full)[1:2] <- c("V1", "V2")
+  plot_frame_full <- get_feature_paths(x, axis) %>% filter(.data$Iter > x$burn.in) %>%
+                                                    rename(V1 = axis[1], V2 = axis[2])
 
   if (has_percent) {
     if (!is_percent_scalar(percent)) {
@@ -539,7 +522,7 @@ carp_dendro_plot <- function(x,
   ## Set better default borders
   par(mar = c(14, 7, 2, 1))
 
-  x$carp.dend %>%
+  x$dendrogram %>%
     as.dendrogram() %>%
     set("branches_lwd", dend.branch.width) %>%
     set("labels_cex", dend.labels.cex) %>%
@@ -556,10 +539,10 @@ carp_dendro_plot <- function(x,
         return(invisible(x))
       }
 
-      k <- x$carp.cluster.path.vis %>% filter(.data$LambdaPercent <= percent) %>%
-                                       select(.data$NCluster) %>%
-                                       summarize(NCluster = min(.data$NCluster)) %>%
-                                       pull
+      k <- get_feature_paths(x, features = character()) %>% filter(.data$LambdaPercent <= percent) %>%
+                                                            select(.data$NCluster) %>%
+                                                            summarize(NCluster = min(.data$NCluster)) %>%
+                                                            pull
     } else {
       if (!is_integer_scalar(k)) {
         crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
@@ -573,7 +556,7 @@ carp_dendro_plot <- function(x,
     }
 
     my.cols <- adjustcolor(c("grey", "black"), alpha.f = .2)
-    my.rect.hclust(x$carp.dend, k = k, border = 2, my.col.vec = my.cols, lwd = 3)
+    my.rect.hclust(x$dendrogram, k = k, border = 2, my.col.vec = my.cols, lwd = 3)
   }
 
   invisible(x)
@@ -588,17 +571,8 @@ carp_dendro_plot <- function(x,
 #' @importFrom gganimate transition_manual
 carp_dynamic_path_plot <- function(x, axis, percent.seq){
   ## TODO - Combine this and carp_path_plot as much as possible
-
-  plot_cols <- c(axis, "Iter", "Obs", "ObsLabel", "Lambda", "LambdaPercent")
-
-  if (any(plot_cols %not.in% colnames(x$carp.cluster.path.vis))) {
-    missing_col <- plot_cols[which(plot_cols %not.in% colnames(x$carp.cluster.path.vis))][1]
-    crv_error(sQuote(missing_col), " is not available for plotting.")
-  }
-
-  plot_frame_full <- x$carp.cluster.path.vis %>% select(plot_cols) %>%
-                                                 filter(.data$Iter > x$burn.in)
-  names(plot_frame_full)[1:2] <- c("V1", "V2")
+  plot_frame_full <- get_feature_paths(x, axis) %>% filter(.data$Iter > x$burn.in) %>%
+                                                    rename(V1 = axis[1], V2 = axis[2])
 
   plot_frame_first <- plot_frame_full %>% filter(.data$Iter == min(.data$Iter)) %>%
                                           select(.data$Obs, .data$V1, .data$V2, .data$ObsLabel) %>%

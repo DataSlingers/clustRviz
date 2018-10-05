@@ -201,12 +201,8 @@ get_U.CARP <- function(x, ..., percent, k){
 
   if(has_k){
 
-    if ( !is_integer_scalar(k) ){
-      crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
-    }
-
-    if( k <= 0 ) {
-      crv_error(sQuote("k"), " must be positive.")
+    if ( !is_positive_integer_scalar(k) ){
+      crv_error(sQuote("k"), " must be a positive integer scalar (vector of length 1).")
     }
 
     if( k > NROW(x$X) ){
@@ -240,4 +236,77 @@ get_U.CARP <- function(x, ..., percent, k){
   rownames(U) <- rownames(x$X)
 
   U
+}
+
+#' @noRd
+is_raw_feature <- function(x, f, ...){
+  UseMethod("is_raw_feature")
+}
+
+is_raw_feature.CARP <- function(x, f, ...){
+  f %in% colnames(x$X)
+}
+
+
+#' @noRd
+is_pc_feature <- function(x, f, ...){
+  UseMethod("is_pc_feature")
+}
+
+is_pc_feature.CARP <- function(x, f, ...){
+  ## First check if the feature name is of the form "PC###" or ".PC###"
+  ## If so, check that the implied PC is less than the number of singular vectors we kept
+  (grepl(pattern = "[.]?PC[0123456789]+", f)) && (as.integer(gsub("[^0123456789]", "", f)) <= NCOL(x$rotation_matrix))
+}
+
+#' @noRd
+get_pc_path <- function(x, f, ...){
+  UseMethod("get_pc_path")
+}
+
+get_pc_path.CARP <- function(x, f, ...){
+  pc_num <- as.integer(gsub("[^0123456789]", "", f))
+
+  as.vector(tensor_projection(x$U, x$rotation_matrix[, pc_num, drop = FALSE]))
+}
+
+#' @noRd
+get_feature_paths <- function(x, features, ...){
+  UseMethod("get_feature_paths")
+}
+
+#' @noRd
+get_feature_paths.CARP <- function(x, features, ...){
+  dots <- list(...)
+  if (length(dots)) {
+    crv_error("Unknown arguments passed to", sQuote("get_feature_paths.CARP."))
+  }
+
+  path_info <- x$cluster_membership
+
+  ## Avoid duplicates
+  if (anyDuplicated(features)) {
+    crv_warning("Some features requested multiple times - omitting duplicates.")
+    features <- unique(features)
+  }
+
+  for(f in features){
+    ## Check that `f` is a valid feature
+    if (!is_nonempty_character_scalar(f)) {
+      crv_error(sQuote(f), " is not a valid feature name.")
+    }
+
+    ## Find f
+    if (is_raw_feature(x, f)) {
+      ## Get the path for `f` and add it to `path_info`
+      path_info[[f]] <- as.vector(x$U[,f,])
+    } else if (is_pc_feature(x, f)) {
+      ## Get the path for `f` and add it to `path_info`
+      path_info[[f]] <- get_pc_path(x, f)
+    } else {
+      crv_error(sQuote(f), " is not an original feature or principal component.")
+    }
+  }
+
+  path_info
 }

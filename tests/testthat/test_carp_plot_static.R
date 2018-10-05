@@ -11,11 +11,8 @@ test_that("CARP path plot works", {
   ## Main settings work
   expect_no_error(plot(carp_fit, type = "path"))
   expect_is(plot(carp_fit, type = "path"), "gg")
-
-  ## Can only plot pre-calculated PCs right now
-  ## FIXME -- See GH #24
-  expect_error(plot(carp_fit, type = "path", k = 3, axis = c("amount", "appropri")))
-  expect_error(plot(carp_fit, type = "path", k = 3, axis = c("PC1", "PC5")))
+  expect_no_error(plot(carp_fit, type = "path", k = 3, axis = c("amount", "appropri")))
+  expect_no_error(plot(carp_fit, type = "path", k = 3, axis = c("PC1", "PC3")))
 
   ## Must give at most one of `percent` or `k`
   expect_error(plot(carp_fit, type = "path", percent = 0.5, k = 3))
