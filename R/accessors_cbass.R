@@ -92,7 +92,7 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.row, k.col, type = c("ro
       crv_error(sQuote("k.row"), " cannot be more than the rows in the original data set (", NROW(x$X), ").")
     }
 
-    percent <- x$cbass.cluster.path.vis.row %>%
+    percent <- x$row_fusions$cluster_membership %>%
       select(.data$LambdaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k.row) %>%
       select(.data$LambdaPercent) %>%
@@ -114,7 +114,7 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.row, k.col, type = c("ro
       crv_error(sQuote("k.col"), " cannot be more than the columns in the original data set (", NCOL(x$X), ").")
     }
 
-    percent <- x$cbass.cluster.path.vis.col %>%
+    percent <- x$col_fusions$cluster_membership %>%
       select(.data$LambdaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k.col) %>%
       select(.data$LambdaPercent) %>%
@@ -127,7 +127,7 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.row, k.col, type = c("ro
   }
 
   if(type == "row"){
-    cluster_labels_df <- x$cbass.cluster.path.vis.row %>%
+    cluster_labels_df <- x$row_fusions$cluster_membership %>%
       select(.data$LambdaPercent,
              .data$ObsLabel,
              .data$Obs,
@@ -144,7 +144,7 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.row, k.col, type = c("ro
                      labels = paste("cluster", seq_len(n_clusters), sep="_"))
     names(labels) <- cluster_labels_df$ObsLabel
   } else {
-    cluster_labels_df <- x$cbass.cluster.path.vis.col %>%
+    cluster_labels_df <- x$col_fusions$cluster_membership %>%
       select(.data$LambdaPercent,
              .data$ObsLabel,
              .data$Obs,
@@ -268,7 +268,7 @@ get_U.CBASS <- function(x, ..., percent, k.row, k.col){
       crv_error(sQuote("k.row"), " cannot be more than the rows in the original data set (", NROW(x$X), ").")
     }
 
-    percent <- x$cbass.cluster.path.vis.row %>%
+    percent <- x$row_fusions$cluster_membership %>%
       select(.data$LambdaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k.row) %>%
       select(.data$LambdaPercent) %>%
@@ -290,7 +290,7 @@ get_U.CBASS <- function(x, ..., percent, k.row, k.col){
       crv_error(sQuote("k.col"), " cannot be more than the columns in the original data set (", NCOL(x$X), ").")
     }
 
-    percent <- x$cbass.cluster.path.vis.col %>%
+    percent <- x$col_fusions$cluster_membership %>%
       select(.data$LambdaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k.col) %>%
       select(.data$LambdaPercent) %>%
@@ -302,12 +302,13 @@ get_U.CBASS <- function(x, ..., percent, k.row, k.col){
     crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
   }
 
-  index <- which.min(abs(x$cbass.sol.path$lambda.path - percent * max(x$cbass.sol.path$lambda.path)))[1]
-
-  raw_u <- matrix(x$cbass.sol.path$u.path[, index],
-                  nrow = x$n,
-                  ncol = x$p,
-                  byrow = TRUE) # byrow = TRUE because we get u by vectorizing t(X), not X
+  ## Pull out the iter for the closest value of "LambdaPercent" to the desired percent
+  ## slice(which.min(...)[1]) will pull the "which.min(...)[1]"-th element
+  index <- x$row_fusions$cluster_membership %>%
+              slice(which.min(abs(.data$LambdaPercent - percent))[1]) %>% pull(.data$Iter)
+  raw_u <- x$row_fusions$U[, , index] ## The choice of row_fusions here is a bit arbitrary
+                                      ## It would be better to improve post-processing to
+                                      ## do simultaneous interpolation for rows and columns
 
   U <- raw_u + x$mean_adjust
 

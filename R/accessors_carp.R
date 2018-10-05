@@ -87,7 +87,7 @@ get_cluster_labels.CARP <- function(x, ..., percent, k){
       crv_error(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
     }
 
-    percent <- x$carp.cluster.path.vis %>%
+    percent <- x$cluster_membership %>%
                  select(.data$LambdaPercent, .data$NCluster) %>%
                  filter(.data$NCluster <= k) %>%
                  select(.data$LambdaPercent) %>%
@@ -99,7 +99,7 @@ get_cluster_labels.CARP <- function(x, ..., percent, k){
     crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
   }
 
-  cluster_labels_df <- x$carp.cluster.path.vis %>%
+  cluster_labels_df <- x$cluster_membership %>%
                          select(.data$LambdaPercent,
                                 .data$ObsLabel,
                                 .data$Obs,
@@ -213,7 +213,7 @@ get_U.CARP <- function(x, ..., percent, k){
       crv_error(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
     }
 
-    percent <- x$carp.cluster.path.vis %>%
+    percent <- x$cluster_membership %>%
       select(.data$LambdaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k) %>%
       select(.data$LambdaPercent) %>%
@@ -225,12 +225,13 @@ get_U.CARP <- function(x, ..., percent, k){
     crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
   }
 
-  index <- which.min(abs(x$carp.sol.path$lambda.path - percent * max(x$carp.sol.path$lambda.path)))[1]
+  lambda_path <- x$cluster_membership %>% select(.data$Iter, .data$LambdaPercent) %>%
+                                          distinct
 
-  raw_u <- matrix(x$carp.sol.path$u.path[, index],
-                  nrow = x$n,
-                  ncol = x$p,
-                  byrow = TRUE) # byrow = TRUE because we get u by vectorizing t(X), not X
+  ## Pull out the iter for the closest value of "LambdaPercent" to the desired percent
+  ## slice(which.min(...)[1]) will pull the "which.min(...)[1]"-th element
+  index <- lambda_path %>% slice(which.min(abs(.data$LambdaPercent - percent))[1]) %>% pull(.data$Iter)
+  raw_u <- x$U[, , index]
 
   U <- unscale_matrix(raw_u, scale = x$scale_vector, center = x$center_vector)
 
