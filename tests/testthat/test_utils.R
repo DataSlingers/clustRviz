@@ -122,3 +122,18 @@ test_that("ensure_gif works", {
   expect_equal("~/plot.gif", suppressWarnings(ensure_gif("~/plot.jpg")))
   expect_equal("/my/long/path/plot.gif", suppressWarnings(ensure_gif("/my/long/path/plot.jpg")))
 })
+
+test_that("connectedness check works", {
+  is_connected_adj_mat <- clustRviz:::is_connected_adj_mat
+
+  eye <- function(n) diag(1, nrow = n, ncol = n)
+
+  expect_true(is_connected_adj_mat(eye(1)))
+  expect_false(is_connected_adj_mat(eye(5)))
+
+  A <- eye(3); A[1,2] <- A[2,3] <- A[2,1] <- A[3,2] <- 1
+  expect_true(is_connected_adj_mat(A))
+
+  A <- eye(3); A[1,2] <- A[2,1] <- 1
+  expect_false(is_connected_adj_mat(A))
+})
