@@ -13,6 +13,7 @@ int sgn(double x){
   }
   return(ret);
 }
+
 double soft_thresh(double x, double lambda){
   if(std::abs(x) < lambda){
     return 0;
@@ -67,4 +68,38 @@ Eigen::MatrixXd MatrixProx(const Eigen::MatrixXd& X,
   MatrixProx(X, V, lambda, weights, l1);
 
   return V;
+}
+
+// Some basic cheap checks that a weight
+// matrix can lead to a connected graph
+//
+// Right now, the only check is that every observation
+// has a connection (at some weight) to another observation
+//
+// [[Rcpp::export]]
+void check_weight_matrix(const Eigen::MatrixXd& weight_matrix){
+  Eigen::Index n = weight_matrix.rows();
+  Eigen::Index p = weight_matrix.cols();
+
+  if(n != p){
+    ClustRVizLogger::error("Clustering weight matrix is not square.");
+  }
+
+  // Start at i = 1, so we don't check first corner of triangular matrix
+  // since there are no neighbors considered
+  for(int i = 1; i < n; i++){
+    bool neighbor_found = false;
+
+    for(int j = 0; j < i; j++){
+      if (weight_matrix(i, j) != 0){
+        neighbor_found = true;
+        break;
+      }
+    }
+
+    if (!neighbor_found) {
+      ClustRVizLogger::error("No neighbor found for observation ") << i + 1 <<
+         " -- convex clustering cannot succeed. You may need to rescale your data.";
+    }
+  }
 }

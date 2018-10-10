@@ -79,6 +79,8 @@ make_sparse_weights_func <- function(weight_func){
       dense_weights <- dense_fit$weight_mat
       fit_type      <- dense_fit$type
 
+      check_weight_matrix(dense_weights)
+
       user_k <- (k != "auto")
 
       if (k == "auto") {
@@ -160,7 +162,7 @@ make_sparse_weights_func <- function(weight_func){
 #' weight_func <- dense_rbf_kernel_weights()
 #' weight_func(presidential_speech)
 #'
-#' weight_func <- dense_rbf_kernel_weights(phi=1, dist.method="canberra")
+#' weight_func <- dense_rbf_kernel_weights(phi=0.1, dist.method="canberra")
 #' weight_func(presidential_speech)
 #'
 #' weight_func <- sparse_rbf_kernel_weights()
@@ -214,6 +216,8 @@ dense_rbf_kernel_weights <- function(phi = "auto",
 
     dist_mat <- as.matrix(dist(X, method = dist.method, p = p))
     dist_mat <- exp(-1 * phi * dist_mat^2)
+
+    check_weight_matrix(dist_mat)
 
     diag(dist_mat) <- 0
 

@@ -115,3 +115,21 @@ test_that("Print method works - User-Matrix", {
   expect_str_contains(capture_print(clustRviz:::UserMatrix()),
                       "Source: User-Provided Matrix")
 })
+
+test_that("Dense weights connectedness check works", {
+  check_weight_matrix <- clustRviz:::check_weight_matrix
+  eye <- function(n) diag(1, nrow = n, ncol = n)
+
+  W <- eye(3)
+  expect_error(check_weight_matrix(W))
+
+  W <- matrix(1, 3, 3)
+  expect_no_error(check_weight_matrix(W))
+
+  W <- matrix(1, 3, 3); W[1,2] <- W[2,1] <- W[1,3] <- W[3,1] <- 0
+  ## No check for first ob since we are only checking lower triangle
+  expect_error(check_weight_matrix(W), regexp = "observation 2")
+
+  W <- matrix(1, 3, 4)
+  expect_error(check_weight_matrix(W), regexp = "square")
+})
