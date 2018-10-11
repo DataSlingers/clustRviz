@@ -79,6 +79,8 @@ make_sparse_weights_func <- function(weight_func){
       dense_weights <- dense_fit$weight_mat
       fit_type      <- dense_fit$type
 
+      check_weight_matrix(dense_weights)
+
       user_k <- (k != "auto")
 
       if (k == "auto") {
@@ -160,7 +162,7 @@ make_sparse_weights_func <- function(weight_func){
 #' weight_func <- dense_rbf_kernel_weights()
 #' weight_func(presidential_speech)
 #'
-#' weight_func <- dense_rbf_kernel_weights(phi=1, dist.method="canberra")
+#' weight_func <- dense_rbf_kernel_weights(phi=0.1, dist.method="canberra")
 #' weight_func(presidential_speech)
 #'
 #' weight_func <- sparse_rbf_kernel_weights()
@@ -215,6 +217,8 @@ dense_rbf_kernel_weights <- function(phi = "auto",
     dist_mat <- as.matrix(dist(X, method = dist.method, p = p))
     dist_mat <- exp(-1 * phi * dist_mat^2)
 
+    check_weight_matrix(dist_mat)
+
     diag(dist_mat) <- 0
 
     list(weight_mat = dist_mat,
@@ -234,49 +238,20 @@ sparse_rbf_kernel_weights <- make_sparse_weights_func(dense_rbf_kernel_weights)
 
 #' Check if an adjacency matrix encodes a connected graph.
 #'
-#' We use the fact that that if \eqn{A} is the adjacency matrix of a graph,
-#' then \eqn{(A^k)_{ij}} is non-zero if and only if there is a path of exactly length
-#' \eqn{k} from $i$ to $j$. If we include the diagonal of \eqn{A}, then
-#' \eqn{(A^k)_{ij}} is non-zero if and only if there is a path of length at most
-#' \eqn{k} from $i$ to $j$
-#'
-#' We only deal with symmetric adjacency matrices (undirected graphs)
-#'
-#' We square \eqn{A} repeatedly (yielding \eqn{A}, \eqn{A^2}, \eqn{A^4}, \eqn{A^8})
-#' checking for a fully connected (entirely non-zero) graph, or stopping when
-#' we have exceeded the dimension of \eqn{A}.
+#' We re-use our cluster assignment code: if all the edges are "on" and imply
+#' that all the points are clustered together, then we have a fully connected graph.
 #'
 #' @noRd
 #' @importFrom Matrix nnzero
 #' @importMethodsFrom Matrix t
 is_connected_adj_mat <- function(adjacency_matrix){
-  diag(adjacency_matrix) <- 1
+  adjacency_matrix_ut <- adjacency_matrix * upper.tri(adjacency_matrix);
 
-  N <- NCOL(adjacency_matrix)
+  edge_list <- which(adjacency_matrix_ut != 0, arr.ind = TRUE)
 
-  n <- 1
-  num_connected <- nnzero(adjacency_matrix)
-
-  if (num_connected == N^2) {
-    return(TRUE)
-  }
-
-  while (n < N) {
-    adjacency_matrix <- crossprod(adjacency_matrix)
-    n <- 2 * n
-    num_connected_old <- num_connected
-    num_connected <- nnzero(adjacency_matrix)
-
-    if (num_connected_old == num_connected) {
-      return(FALSE)
-    }
-
-    if (num_connected == N^2) {
-      return(TRUE)
-    }
-  }
-
-  return(nnzero(adjacency_matrix) == N^2)
+  get_cluster_assignments(edge_list,
+                          matrix(TRUE, ncol = NROW(edge_list), nrow = 1),
+                          NROW(adjacency_matrix))[[1]]$no == 1
 }
 
 #' @noRd
