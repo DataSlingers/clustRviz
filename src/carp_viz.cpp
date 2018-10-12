@@ -180,7 +180,7 @@ Rcpp::List CARP_VIZcpp(const Eigen::MatrixXd& X,
 
     // If we have seen a fusion or are otherwise interested in keeping this iteration,
     // add values to our storage buffers
-    if( (nzeros_new != nzeros_old) | (iter % keep == 0) ){
+    if( (nzeros_new != nzeros_old) | ((iter % keep == 0) & (iter > burn_in)) ){
       // Before we can store values, we need to make sure we have enough buffer space
       if(path_iter >= buffer_size){
         ClustRVizLogger::info("Resizing storage from ") << buffer_size << " to " << 2 * buffer_size << " iterations.";
@@ -204,7 +204,9 @@ Rcpp::List CARP_VIZcpp(const Eigen::MatrixXd& X,
     }
 
     iter++;
-    gamma *= t;
+    if(iter > burn_in){
+      gamma *= t;
+    }
 
     if((iter % CLUSTRVIZ_CHECK_USER_INTERRUPT_RATE) == 0){
       Rcpp::checkUserInterrupt();

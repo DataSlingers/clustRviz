@@ -54,8 +54,6 @@
 #'         \item \code{col_fusions}: A record of column fusions - see the documentation
 #'                                   of \code{\link{CARP}} for details of what this
 #'                                   may include.
-#'         \item \code{burn.in}: an integer indicating the number of "burn-in"
-#'                               iterations performed
 #'         }
 #' @export
 #' @examples
@@ -360,7 +358,6 @@ CBASS <- function(X,
       cluster_membership = post_processing_results_col$membership_info
     ),
     # General flags
-    burn.in = .clustRvizOptionsEnv[["burn_in"]],
     alg.type = alg.type,
     t = t,
     X.center.global = X.center.global,

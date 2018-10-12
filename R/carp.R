@@ -44,8 +44,6 @@
 #'                                column-wise before clustering
 #'         \item \code{X.scale}: a logical indicating whether \code{X} was scaled
 #'                               column-wise before centering
-#'         \item \code{burn.in}: an integer indicating the number of "burn-in"
-#'                               iterations performed
 #'         \item \code{weight_type}: a record of the scheme used to create
 #'                                   fusion weights
 #'         \item \code{carp.dend}: a dendrogram (object of class
@@ -266,7 +264,6 @@ CARP <- function(X,
     n = n,
     p = p,
     weight_type = weight_type,
-    burn.in = .clustRvizOptionsEnv[["burn_in"]],
     alg.type = alg.type,
     t = t,
     X.center = X.center,

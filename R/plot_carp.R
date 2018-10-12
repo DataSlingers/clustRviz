@@ -427,8 +427,8 @@ carp_path_plot <- function(x, ..., axis, percent, k){
     has_percent <- TRUE # We've now set the percent (whole path) for display
   }
 
-  plot_frame_full <- get_feature_paths(x, axis) %>% filter(.data$Iter > x$burn.in) %>%
-                                                    rename(V1 = axis[1], V2 = axis[2])
+  plot_frame_full <- get_feature_paths(x, axis) %>% rename(V1 = axis[1], V2 = axis[2])
+  plot_frame_init <- plot_frame_full %>% filter(.data$Iter == min(.data$Iter))
 
   if (has_percent) {
     if (!is_percent_scalar(percent)) {
@@ -458,7 +458,7 @@ carp_path_plot <- function(x, ..., axis, percent, k){
     plot_frame_full <- plot_frame_full %>% filter(.data$Iter <= iter_first_k)
   }
 
-  plot_frame_init  <- plot_frame_full %>% filter(.data$Iter == min(.data$Iter))
+
   plot_frame_final <- plot_frame_full %>% filter(.data$Iter == max(.data$Iter)) %>%
                                           mutate(final_cluster = factor(.data$Cluster))
 
@@ -571,8 +571,7 @@ carp_dendro_plot <- function(x,
 #' @importFrom gganimate transition_manual
 carp_dynamic_path_plot <- function(x, axis, percent.seq){
   ## TODO - Combine this and carp_path_plot as much as possible
-  plot_frame_full <- get_feature_paths(x, axis) %>% filter(.data$Iter > x$burn.in) %>%
-                                                    rename(V1 = axis[1], V2 = axis[2])
+  plot_frame_full <- get_feature_paths(x, axis) %>% rename(V1 = axis[1], V2 = axis[2])
 
   plot_frame_first <- plot_frame_full %>% filter(.data$Iter == min(.data$Iter)) %>%
                                           select(.data$Obs, .data$V1, .data$V2, .data$ObsLabel) %>%

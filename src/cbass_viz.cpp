@@ -255,7 +255,7 @@ Rcpp::List CBASS_VIZcpp(const Eigen::MatrixXd& X,
 
     // If we have seen a fusion or are otherwise interested in keeping this iteration,
     // add values to our storage buffers
-    if( (nzeros_new_row != nzeros_old_row) | (nzeros_new_col != nzeros_old_col) | (iter % keep == 0) ){
+    if( (nzeros_new_row != nzeros_old_row) | (nzeros_new_col != nzeros_old_col) | ((iter % keep == 0) & (iter > burn_in)) ){
 
       // Before we can store values, we need to make sure we have enough buffer space
       if(path_iter >= buffer_size){

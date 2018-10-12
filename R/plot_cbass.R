@@ -255,8 +255,7 @@ cbass_path_plot <- function(x,
     crv_error(sQuote(missing_col), " is not available for plotting.")
   }
 
-  plot_frame_full <- path_obj %>% select(plot_cols) %>%
-                                  filter(.data$Iter > x$burn.in)
+  plot_frame_full <- path_obj %>% select(plot_cols)
   names(plot_frame_full)[1:2] <- c("V1", "V2")
 
   if(has_k.row){
