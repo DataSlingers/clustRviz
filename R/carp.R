@@ -46,10 +46,6 @@
 #'                               column-wise before centering
 #'         \item \code{weight_type}: a record of the scheme used to create
 #'                                   fusion weights
-#'         \item \code{carp.dend}: a dendrogram (object of class
-#'                                 \code{\link[stats]{hclust}}) containing
-#'                                 the clustering solution path
-#'         \item \code{carp.cluster.path.vis}: The \code{CARP} solution path
 #'         }
 #' @importFrom utils data
 #' @importFrom dplyr %>% mutate group_by ungroup as_tibble n_distinct
@@ -260,7 +256,6 @@ CARP <- function(X,
     dendrogram = post_processing_results$dendrogram,
     rotation_matrix = post_processing_results$rotation_matrix,
     cluster_membership = post_processing_results$membership_info,
-    cardE = cardE,
     n = n,
     p = p,
     weight_type = weight_type,
@@ -272,6 +267,10 @@ CARP <- function(X,
     scale_vector = scale_vector,
     time = Sys.time() - tic
   )
+
+  if (.clustRvizOptionsEnv[["keep_debug_info"]]) {
+    carp.fit[["debug"]] <- post_processing_results[["debug"]]
+  }
 
   class(carp.fit) <- "CARP"
 

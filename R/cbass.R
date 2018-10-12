@@ -366,6 +366,11 @@ CBASS <- function(X,
     time = Sys.time() - tic
   )
 
+  if (.clustRvizOptionsEnv[["keep_debug_info"]]) {
+    cbass.fit[["debug"]] <- list(col = post_processing_results_col[["debug"]],
+                                 row = post_processing_results_row[["debug"]])
+  }
+
   class(cbass.fit) <- "CBASS"
 
   return(cbass.fit)

@@ -379,7 +379,10 @@ ConvexClusteringPostProcess <- function(X,
   list(U               = U,
        rotation_matrix = rotation_matrix,
        membership_info = membership_info,
-       dendrogram      = cvx_dendrogram)
+       dendrogram      = cvx_dendrogram,
+       debug           = list(cluster_path = cluster_path,
+                              v_path       = v_path,
+                              v_zero_indices = v_zero_indices))
 }
 
 `%not.in%` <- Negate(`%in%`)
