@@ -405,3 +405,17 @@ unscale_matrix <- function(X,
 
   X * matrix(scale, n, p, byrow=TRUE) + matrix(center, n, p, byrow=TRUE)
 }
+
+## A very thin wrapper around RColorBrewer::brewer.pal that doesn't warn with
+## a few colors
+#' @noRd
+#' @importFrom RColorBrewer brewer.pal
+my_palette <- function(n){
+  if(n > 9){
+    crv_warning("clustRviz default palette only has nine colors")
+  }
+
+  brewer.pal(9, "Set1")[seq_len(n)]
+
+
+}

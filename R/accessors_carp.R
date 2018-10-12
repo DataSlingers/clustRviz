@@ -239,6 +239,15 @@ get_U.CARP <- function(x, ..., percent, k){
 }
 
 #' @noRd
+available_features <- function(x, ...){
+  UseMethod("available_features")
+}
+
+available_features.CARP <- function(x, ...){
+  c(paste0("PC", seq_len(NCOL(x$rotation_matrix))), colnames(x$X))
+}
+
+#' @noRd
 is_raw_feature <- function(x, f, ...){
   UseMethod("is_raw_feature")
 }
