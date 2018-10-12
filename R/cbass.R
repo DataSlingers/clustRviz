@@ -333,7 +333,8 @@ CBASS <- function(X,
                                                              v_zero_indices   = cbass.sol.path$v.col.zero.inds,
                                                              labels           = col_labels,
                                                              dendrogram_scale = dendrogram.scale,
-                                                             npcs             = npcs)
+                                                             npcs             = npcs,
+                                                             internal_transpose = TRUE)
 
   cbass.fit <- list(
     X = X.orig,

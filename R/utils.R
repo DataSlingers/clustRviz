@@ -329,7 +329,8 @@ ConvexClusteringPostProcess <- function(X,
                                         v_zero_indices,
                                         labels,
                                         dendrogram_scale,
-                                        npcs){
+                                        npcs,
+                                        internal_transpose = FALSE){
 
   n         <- NROW(X)
   p         <- NCOL(X)
@@ -347,6 +348,18 @@ ConvexClusteringPostProcess <- function(X,
   U <- array(cluster_path$u.path.inter, dim = c(n, p, length(cluster_path[["clust.path.dups"]])))
   rownames(U) <- rownames(X)
   colnames(U) <- colnames(X)
+
+  if (internal_transpose) {
+    ## When looking at the column fusions from CBASS, we want U to be
+    ## a 3 tensor of size p by n by K, each slice of which is really U^T
+    ##
+    ## It's not 100% clear to me why this combination of resizes and transposes works, but
+    ## it does, so we're sticking with it...
+    dim(U) <- c(p, n, dim(U)[3])
+    U <- aperm(U, c(2, 1, 3))
+    rownames(U) <- rownames(X)
+    colnames(U) <- colnames(X)
+  }
 
   cvx_dendrogram <- CreateDendrogram(cluster_path, labels, dendrogram_scale)
 
@@ -416,6 +429,4 @@ my_palette <- function(n){
   }
 
   brewer.pal(9, "Set1")[seq_len(n)]
-
-
 }

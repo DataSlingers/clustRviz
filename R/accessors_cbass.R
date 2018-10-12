@@ -80,12 +80,8 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.row, k.col, type = c("ro
 
   if(has_k.row){
 
-    if ( !is_integer_scalar(k.row) ){
-      crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
-    }
-
-    if( k.row <= 0 ) {
-      crv_error(sQuote("k.row"), " must be positive.")
+    if ( !is_positive_integer_scalar(k.row) ){
+      crv_error(sQuote("k"), " must be a positive integer scalar (vector of length 1).")
     }
 
     if( k.row > NROW(x$X) ){
@@ -102,12 +98,8 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.row, k.col, type = c("ro
 
   if(has_k.col){
 
-    if ( !is_integer_scalar(k.col) ){
-      crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
-    }
-
-    if( k.col <= 0 ) {
-      crv_error(sQuote("k.col"), " must be positive.")
+    if ( !is_positive_integer_scalar(k.col) ){
+      crv_error(sQuote("k"), " must be a positive integer scalar (vector of length 1).")
     }
 
     if( k.col > NCOL(x$X) ){
@@ -256,12 +248,8 @@ get_U.CBASS <- function(x, ..., percent, k.row, k.col){
 
   if(has_k.row){
 
-    if ( !is_integer_scalar(k.row) ){
-      crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
-    }
-
-    if( k.row <= 0 ) {
-      crv_error(sQuote("k.row"), " must be positive.")
+    if ( !is_positive_integer_scalar(k.row) ){
+      crv_error(sQuote("k"), " must be a positive integer scalar (vector of length 1).")
     }
 
     if( k.row > NROW(x$X) ){
@@ -278,12 +266,8 @@ get_U.CBASS <- function(x, ..., percent, k.row, k.col){
 
   if(has_k.col){
 
-    if ( !is_integer_scalar(k.col) ){
-      crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
-    }
-
-    if( k.col <= 0 ) {
-      crv_error(sQuote("k.col"), " must be positive.")
+    if ( !is_positive_integer_scalar(k.col) ){
+      crv_error(sQuote("k"), " must be a positive integer scalar (vector of length 1).")
     }
 
     if( k.col > NCOL(x$X) ){
@@ -317,4 +301,81 @@ get_U.CBASS <- function(x, ..., percent, k.row, k.col){
   rownames(U) <- rownames(x$X)
 
   U
+}
+
+
+is_raw_feature.CBASS <- function(x, f, type = c("row", "col"), ...){
+  type <- match.arg(type)
+
+  ## This is a bit confusing, but if we are clustering rows, our "feature" are
+  ## columns (the usual case), while if we are clustering columns, our features are now
+  ## the rows
+  if (type == "row") {
+    f %in% colnames(x$X)
+  } else {
+    f %in% rownames(x$X)
+  }
+}
+
+is_pc_feature.CBASS <- function(x, f, type = c("row", "col"), ...){
+  type <- match.arg(type)
+
+  ## First check if the feature name is of the form "PC###" or ".PC###"
+  ## If so, check that the implied PC is less than the number of singular vectors we kept
+
+  if (type == "row") {
+    (grepl(pattern = "[.]?PC[0123456789]+", f)) && (as.integer(gsub("[^0123456789]", "", f)) <= NCOL(x$row_fusions$rotation_matrix))
+  } else {
+    (grepl(pattern = "[.]?PC[0123456789]+", f)) && (as.integer(gsub("[^0123456789]", "", f)) <= NCOL(x$col_fusions$rotation_matrix))
+  }
+}
+
+get_pc_path.CBASS <- function(x, f, type = c("row", "col"), ...){
+  type <- match.arg(type)
+  pc_num <- as.integer(gsub("[^0123456789]", "", f))
+
+  if (type == "row") {
+    as.vector(tensor_projection(x$row_fusions$U, x$row_fusions$rotation_matrix[, pc_num, drop = FALSE]))
+  } else {
+    as.vector(tensor_projection(x$col_fusions$U, x$col_fusions$rotation_matrix[, pc_num, drop = FALSE]))
+  }
+}
+
+get_feature_paths.CBASS <- function(x, features, type = c("row", "col"), ...){
+
+  dots <- list(...)
+  if (length(dots)) {
+    crv_error("Unknown arguments passed to", sQuote("get_feature_paths.CBASS."))
+  }
+
+  type <- match.arg(type)
+
+  path_info <- x[[if(type == "row") "row_fusions" else "col_fusions"]]$cluster_membership
+
+  ## Avoid duplicates
+  if (anyDuplicated(features)) {
+    crv_warning("Some features requested multiple times - omitting duplicates.")
+    features <- unique(features)
+  }
+  for(f in features){
+    ## Check that `f` is a valid feature
+    if (!is_nonempty_character_scalar(f)) {
+      crv_error(sQuote(f), " is not a valid feature name.")
+    }
+    ## Find f
+    if (is_raw_feature(x, f, type = type)) {
+      ## Get the path for `f` and add it to `path_info`
+      if(type == "row"){
+        path_info[[f]] <- as.vector(x$row_fusions$U[,f,])
+      } else {
+        path_info[[f]] <- as.vector(x$col_fusions$U[,f,])
+      }
+    } else if (is_pc_feature(x, f)) {
+      ## Get the path for `f` and add it to `path_info`
+      path_info[[f]] <- get_pc_path(x, f, type = type)
+    } else {
+      crv_error(sQuote(f), " is not an original feature or principal component.")
+    }
+  }
+  path_info
 }
