@@ -18,8 +18,6 @@ Depends: R (>= 2.10)
 Remotes:
     thomasp85/gganimate
 Imports:
-    RcppEigen,
-    Rcpp, 
     stats,
     graphics,
     dplyr,
