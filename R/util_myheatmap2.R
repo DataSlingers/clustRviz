@@ -7,26 +7,9 @@
 #
 # Author of Changes: John Nagorski
 # Date: 9-11-18
-#' @importFrom stats dist
-#' @importFrom stats hclust
-#' @importFrom stats median
-#' @importFrom stats reorder
-#' @importFrom stats density
-#' @importFrom stats sd
-#' @importFrom stats as.dendrogram
-#' @importFrom graphics abline
-#' @importFrom graphics axis
-#' @importFrom graphics hist
-#' @importFrom graphics image
-#' @importFrom graphics layout
-#' @importFrom graphics lines
-#' @importFrom graphics mtext
-#' @importFrom graphics plot
-#' @importFrom graphics plot.new
-#' @importFrom graphics strheight
-#' @importFrom graphics strwidth
-#' @importFrom graphics text
-#' @importFrom graphics title
+#' @importFrom stats dist hclust median reorder density sd as.dendrogram order.dendrogram
+#' @importFrom graphics abline axis hist image layout lines mtext plot plot.new
+#' @importFrom graphics strheight strwidth text title
 #' @importFrom gtools invalid
 my.heatmap.2 <- function(x, Rowv = TRUE,
                          Colv = if (symm) "Rowv" else TRUE,
