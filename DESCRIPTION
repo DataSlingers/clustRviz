@@ -6,7 +6,6 @@ Authors@R: c(
   person("John", "Nagorski", role = c("aut", "cre"), email = "jn13@rice.edu"),
   person("Michael", "Weylandt", role = "aut", email = "Michael.Weylandt@rice.edu"),
   person("Genevera", "Allen", role = c("ths", "aut"), email = "gallen@rice.edu"),
-  person("Galili", "Tal", role = "cph", comment = "R/util_rect_dendrogram.R"),
   person("Warnes", "Gregory", role = "cph", comment = "R/util_myheatmap2.R"),
   person("Lewis", "Brian W.", role = "cph", comment = "R/util_hcs.R"),
   person("R Core Team", role = "cph", comment = "R/util_myrecthclust.R"))
@@ -18,8 +17,6 @@ Depends: R (>= 2.10)
 Remotes:
     thomasp85/gganimate
 Imports:
-    RcppEigen,
-    Rcpp, 
     stats,
     graphics,
     dplyr,

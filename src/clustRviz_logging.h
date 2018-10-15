@@ -21,11 +21,11 @@ enum class ClustRVizLoggerLevel {
 // See http://gallery.rcpp.org/articles/quiet-stop-and-warning/
 inline void warningNoCall(const std::string& s) {
     Rf_warningcall(R_NilValue, s.c_str());
-};
+}
 
 inline void NORET stopNoCall(const std::string& s) {
     throw Rcpp::exception(s.c_str(), false);
-};
+}
 
 // Logger structure loosely based on https://github.com/PennEcon/RcppLogger
 class ClustRVizLoggerMessage {
