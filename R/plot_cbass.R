@@ -245,10 +245,10 @@ cbass_path_plot <- function(x,
     }
 
     percent <- get_feature_paths(x, features = character(), type = "row") %>%
-      select(.data$LambdaPercent, .data$NCluster) %>%
+      select(.data$GammaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k.row) %>%
-      select(.data$LambdaPercent) %>%
-      summarize(percent = min(.data$LambdaPercent)) %>%
+      select(.data$GammaPercent) %>%
+      summarize(percent = min(.data$GammaPercent)) %>%
       pull
   }
 
@@ -267,10 +267,10 @@ cbass_path_plot <- function(x,
     }
 
     percent <- get_feature_paths(x, features = character(), type = "col") %>%
-      select(.data$LambdaPercent, .data$NCluster) %>%
+      select(.data$GammaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k.col) %>%
-      select(.data$LambdaPercent) %>%
-      summarize(percent = min(.data$LambdaPercent)) %>%
+      select(.data$GammaPercent) %>%
+      summarize(percent = min(.data$GammaPercent)) %>%
       pull
   }
 
@@ -278,9 +278,9 @@ cbass_path_plot <- function(x,
     crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
   }
 
-  ## If percent == min(LambdaPercent), keep some (unshrunken) data to plot
+  ## If percent == min(GammaPercent), keep some (unshrunken) data to plot
   ## This comes up in static path plots when percent = 0 is given
-  plot_frame_full <- plot_frame_full %>% filter(.data$LambdaPercent <= max(percent, min(.data$LambdaPercent)))
+  plot_frame_full <- plot_frame_full %>% filter(.data$GammaPercent <= max(percent, min(.data$GammaPercent)))
 
   plot_frame_init  <- plot_frame_full %>% filter(.data$Iter == min(.data$Iter))
   plot_frame_final <- plot_frame_full %>% filter(.data$Iter == max(.data$Iter)) %>%

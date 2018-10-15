@@ -274,10 +274,10 @@ carp_path_plot <- function(x,
       crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
     }
 
-    ## If percent == min(LambdaPercent), keep some (unshrunken) data to plot
+    ## If percent == min(GammaPercent), keep some (unshrunken) data to plot
     ## This comes up in the default settings for the Shiny app or static when
     ## percent = 0
-    plot_frame_full <- plot_frame_full %>% filter(.data$LambdaPercent <= max(percent, min(.data$LambdaPercent)))
+    plot_frame_full <- plot_frame_full %>% filter(.data$GammaPercent <= max(percent, min(.data$GammaPercent)))
   } else {
     # Get the first iteration at which we have k (or fewer) clusters
     # to avoid plotting "beyond" what we want
@@ -395,7 +395,7 @@ carp_dendro_plot <- function(x,
         return(invisible(x))
       }
 
-      k <- get_feature_paths(x, features = character()) %>% filter(.data$LambdaPercent <= percent) %>%
+      k <- get_feature_paths(x, features = character()) %>% filter(.data$GammaPercent <= percent) %>%
                                                             select(.data$NCluster) %>%
                                                             summarize(NCluster = min(.data$NCluster)) %>%
                                                             pull
@@ -437,7 +437,7 @@ carp_dynamic_path_plot <- function(x, axis, percent.seq){
 
   plot_frame_animation <- bind_rows(lapply(percent.seq, function(pct){
     ## Make a list of things to plot at each "percent" and then combine
-    plot_frame_full %>% filter(.data$LambdaPercent <= pct) %>%
+    plot_frame_full %>% filter(.data$GammaPercent <= pct) %>%
                         mutate(percent = pct)
   }))
 

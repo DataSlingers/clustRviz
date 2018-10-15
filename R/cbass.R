@@ -303,21 +303,21 @@ CBASS <- function(X,
                                l1 = (alg.type == "cbassl1"))
   }
 
-  ## FIXME - Convert lambda.path to a single column matrix instead of a vector
+  ## FIXME - Convert gamma.path to a single column matrix instead of a vector
   ##         RcppArmadillo returns a arma::vec as a n-by-1 matrix
   ##         RcppEigen returns an Eigen::VectorXd as a n-length vector
   ##         Something downstream cares about the difference, so just change
   ##         the type here for now
-  cbass.sol.path$lambda.path <- matrix(cbass.sol.path$lambda.path, ncol=1)
+  cbass.sol.path$gamma_path <- matrix(cbass.sol.path$gamma_path, ncol=1)
 
   crv_message("Post-processing rows")
 
   post_processing_results_row <- ConvexClusteringPostProcess(X = X,
                                                              edge_matrix      = row_edge_list,
-                                                             lambda_path      = cbass.sol.path$lambda.path,
-                                                             u_path           = cbass.sol.path$u.path,
-                                                             v_path           = cbass.sol.path$v.row.path,
-                                                             v_zero_indices   = cbass.sol.path$v.row.zero.inds,
+                                                             gamma_path       = cbass.sol.path$gamma_path,
+                                                             u_path           = cbass.sol.path$u_path,
+                                                             v_path           = cbass.sol.path$v_row_path,
+                                                             v_zero_indices   = cbass.sol.path$v_row_zero_inds,
                                                              labels           = row_labels,
                                                              dendrogram_scale = dendrogram.scale,
                                                              npcs             = npcs)
@@ -326,10 +326,10 @@ CBASS <- function(X,
 
   post_processing_results_col <- ConvexClusteringPostProcess(X = t(X),
                                                              edge_matrix      = col_edge_list,
-                                                             lambda_path      = cbass.sol.path$lambda.path,
-                                                             u_path           = cbass.sol.path$u.path,
-                                                             v_path           = cbass.sol.path$v.col.path,
-                                                             v_zero_indices   = cbass.sol.path$v.col.zero.inds,
+                                                             gamma_path       = cbass.sol.path$gamma_path,
+                                                             u_path           = cbass.sol.path$u_path,
+                                                             v_path           = cbass.sol.path$v_col_path,
+                                                             v_zero_indices   = cbass.sol.path$v_col_zero_inds,
                                                              labels           = col_labels,
                                                              dendrogram_scale = dendrogram.scale,
                                                              npcs             = npcs,

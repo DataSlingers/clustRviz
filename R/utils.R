@@ -20,7 +20,7 @@ if (getRversion() >= "2.15.1") utils::globalVariables(c("."))
 #' @importFrom stats na.omit
 #' @importFrom zoo na.locf
 #' @importFrom rlang .data
-ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
+ISP <- function(sp.path, v.path, u.path, gamma.path, cardE) {
   ColLab <- NULL
   SpValue <- NULL
   Iter <- NULL
@@ -33,8 +33,8 @@ ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
   ColIndNum.x <- NULL
   ColIndNum.y <- NULL
   ColInd <- NULL
-  Lambda <- NULL
-  NewLambda <- NULL
+  Gamma <- NULL
+  NewGamma <- NULL
   NewU <- NULL
   U <- NULL
 
@@ -71,14 +71,14 @@ ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
   change.frame %>%
     ungroup() %>%
     filter(
-      Iter == length(lambda.path)
+      Iter == length(gamma.path)
     ) %>%
     distinct(NChanges) %>%
     unlist() %>%
     unname() -> max.lam.changes
   if (length(max.lam.changes) > 0) {
     if ((max.lam.changes > 1)) {
-      lambda.path <- rbind(lambda.path, 1.05 * lambda.path[length(lambda.path)])
+      gamma.path <- rbind(gamma.path, 1.05 * gamma.path[length(gamma.path)])
       u.path <- cbind(u.path, u.path[, ncol(u.path)])
     }
   }
@@ -101,7 +101,7 @@ ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
 
   if (nrow(mc.frame) == 0) {
     dplyr::tibble(
-      Iter = 1:length(lambda.path)
+      Iter = 1:length(gamma.path)
     ) %>%
       dplyr::left_join(
         change.frame %>%
@@ -113,7 +113,7 @@ ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
       select(Iter, ColIndNum) -> IterRankCols
   } else {
     dplyr::tibble(
-      Iter = 1:length(lambda.path)
+      Iter = 1:length(gamma.path)
     ) %>%
       dplyr::left_join(
         change.frame %>%
@@ -172,32 +172,32 @@ ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
 
   if (nrow(mc.frame) == 0) {
     dplyr::tibble(
-      Iter = 1:length(lambda.path),
-      Lambda = lambda.path[Iter]
+      Iter = 1:length(gamma.path),
+      Gamma = gamma.path[Iter]
     ) %>%
       dplyr::mutate(
         Iter = 1:n()
       ) %>%
-      dplyr::select(Lambda) %>%
+      dplyr::select(Gamma) %>%
       unlist() %>%
-      unname() -> lambda.path.inter2
+      unname() -> gamma.path.inter2
   } else {
     dplyr::tibble(
-      Iter = 1:length(lambda.path),
-      Lambda = lambda.path[Iter]
+      Iter = 1:length(gamma.path),
+      Gamma = gamma.path[Iter]
     ) %>%
       dplyr::left_join(
         change.frame %>%
           dplyr::mutate(
-            Lambda = lambda.path[Iter]
+            Gamma = gamma.path[Iter]
           ) %>%
           dplyr::filter(NChanges > 1) %>%
           dplyr::group_by(Iter) %>%
           tidyr::nest() %>%
           dplyr::mutate(
-            NewLambda = purrr::map2(.x = Iter, .y = data, .f = function(x, y) {
-              cur.lam <- unique(y$Lambda)
-              next.lam <- lambda.path[x + 1]
+            NewGamma = purrr::map2(.x = Iter, .y = data, .f = function(x, y) {
+              cur.lam <- unique(y$Gamma)
+              next.lam <- gamma.path[x + 1]
               lam.seq <- seq(from = cur.lam, to = next.lam, length.out = nrow(y) + 1)
               lam.seq <- lam.seq[-length(lam.seq)]
               lam.seq
@@ -209,12 +209,12 @@ ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
         by = c("Iter")
       ) %>%
       dplyr::mutate(
-        Lambda = ifelse(is.na(NewLambda), Lambda, NewLambda),
+        Gamma = ifelse(is.na(NewGamma), Gamma, NewGamma),
         Iter = 1:n()
       ) %>%
-      dplyr::select(Lambda) %>%
+      dplyr::select(Gamma) %>%
       unlist() %>%
-      unname() -> lambda.path.inter2
+      unname() -> gamma.path.inter2
   }
 
   if (nrow(mc.frame) == 0) {
@@ -277,7 +277,7 @@ ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
       do.call(cbind, .) -> u.path.inter2
   }
 
-  list(sp.path.inter = sp.path.inter2, lambda.path.inter = lambda.path.inter2, u.path.inter = u.path.inter2)
+  list(sp.path.inter = sp.path.inter2, gamma.path.inter = gamma.path.inter2, u.path.inter = u.path.inter2)
 }
 
 CreateDendrogram <- function(carp_cluster_path, n_labels, scale = NULL) {
@@ -291,7 +291,7 @@ CreateDendrogram <- function(carp_cluster_path, n_labels, scale = NULL) {
   }) -> cl.list
   cvx.hclust <- cvxhc(
     clust.path = cl.list,
-    gamma.path = carp_cluster_path$lambda.path.inter[!carp_cluster_path$clust.path.dups],
+    gamma.path = carp_cluster_path$gamma.path.inter[!carp_cluster_path$clust.path.dups],
     labels = n_labels
   )
 
@@ -323,7 +323,7 @@ CreateDendrogram <- function(carp_cluster_path, n_labels, scale = NULL) {
 # This function takes a "correctly" oriented X
 ConvexClusteringPostProcess <- function(X,
                                         edge_matrix,
-                                        lambda_path,
+                                        gamma_path,
                                         u_path,
                                         v_path,
                                         v_zero_indices,
@@ -339,7 +339,7 @@ ConvexClusteringPostProcess <- function(X,
   cluster_path <- ISP(sp.path     = t(v_zero_indices),
                       u.path      = u_path,
                       v.path      = v_path,
-                      lambda.path = lambda_path,
+                      gamma.path  = gamma_path,
                       cardE       = num_edges)
 
   cluster_path[["clust.path"]] <- get_cluster_assignments(edge_matrix, cluster_path$sp.path.inter, n)
@@ -369,12 +369,12 @@ ConvexClusteringPostProcess <- function(X,
   membership_info <- tibble(Iter = rep(seq_along(cluster_path$clust.path), each = n),
                             Obs  = rep(seq_len(n), times = length(cluster_path$clust.path)),
                             Cluster = as.vector(vapply(cluster_path$clust.path, function(x) x$membership, double(n))),
-                            Lambda = rep(cluster_path$lambda.path.inter, each = n),
+                            Gamma = rep(cluster_path$gamma.path.inter, each = n),
                             ObsLabel = rep(labels, times = length(cluster_path$clust.path))) %>%
                          group_by(.data$Iter) %>%
                          mutate(NCluster = n_distinct(.data$Cluster)) %>%
                          ungroup() %>%
-                         mutate(LambdaPercent = .data$Lambda / max(.data$Lambda))
+                         mutate(GammaPercent = .data$Gamma / max(.data$Gamma))
 
   list(U               = U,
        rotation_matrix = rotation_matrix,

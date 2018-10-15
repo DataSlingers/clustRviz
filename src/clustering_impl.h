@@ -142,10 +142,10 @@ public:
     gamma_path.conservativeResize(storage_index);
     v_zeros_path.conservativeResize(v_zeros_path.rows(), storage_index);
 
-    return Rcpp::List::create(Rcpp::Named("u.path")      = UPath,
-                              Rcpp::Named("v.path")      = VPath,
-                              Rcpp::Named("v.zero.inds") = v_zeros_path,
-                              Rcpp::Named("lambda.path") = gamma_path); // TODO - Change lambda -> gamma in R code
+    return Rcpp::List::create(Rcpp::Named("u_path")      = UPath,
+                              Rcpp::Named("v_path")      = VPath,
+                              Rcpp::Named("v_zero_inds") = v_zeros_path,
+                              Rcpp::Named("gamma_path")  = gamma_path);
   }
 
 private:

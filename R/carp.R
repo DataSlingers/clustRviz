@@ -229,21 +229,21 @@ CARP <- function(X,
                                l1 = (alg.type == "carpl1"))
   }
 
-  ## FIXME - Convert lambda.path to a single column matrix instead of a vector
+  ## FIXME - Convert gamma.path to a single column matrix instead of a vector
   ##         RcppArmadillo returns a arma::vec as a n-by-1 matrix
   ##         RcppEigen returns an Eigen::VectorXd as a n-length vector
   ##         Something downstream cares about the difference, so just change
   ##         the type here for now
-  carp.sol.path$lambda.path <- matrix(carp.sol.path$lambda.path, ncol=1)
+  carp.sol.path$gamma_path <- matrix(carp.sol.path$gamma_path, ncol=1)
 
   crv_message("Post-processing")
 
   post_processing_results <- ConvexClusteringPostProcess(X = X,
                                                          edge_matrix      = edge_list,
-                                                         lambda_path      = carp.sol.path$lambda.path,
-                                                         u_path           = carp.sol.path$u.path,
-                                                         v_path           = carp.sol.path$v.path,
-                                                         v_zero_indices   = carp.sol.path$v.zero.inds,
+                                                         gamma_path       = carp.sol.path$gamma_path,
+                                                         u_path           = carp.sol.path$u_path,
+                                                         v_path           = carp.sol.path$v_path,
+                                                         v_zero_indices   = carp.sol.path$v_zero_inds,
                                                          labels           = labels,
                                                          dendrogram_scale = dendrogram.scale,
                                                          npcs             = npcs)
