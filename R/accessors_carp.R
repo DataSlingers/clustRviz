@@ -87,7 +87,7 @@ get_cluster_labels.CARP <- function(x, ..., percent, k){
       crv_error(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
     }
 
-    percent <- x$carp.cluster.path.vis %>%
+    percent <- x$cluster_membership %>%
                  select(.data$LambdaPercent, .data$NCluster) %>%
                  filter(.data$NCluster <= k) %>%
                  select(.data$LambdaPercent) %>%
@@ -99,7 +99,7 @@ get_cluster_labels.CARP <- function(x, ..., percent, k){
     crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
   }
 
-  cluster_labels_df <- x$carp.cluster.path.vis %>%
+  cluster_labels_df <- x$cluster_membership %>%
                          select(.data$LambdaPercent,
                                 .data$ObsLabel,
                                 .data$Obs,
@@ -201,19 +201,15 @@ get_U.CARP <- function(x, ..., percent, k){
 
   if(has_k){
 
-    if ( !is_integer_scalar(k) ){
-      crv_error(sQuote("k"), " must be an integer scalar (vector of length 1).")
-    }
-
-    if( k <= 0 ) {
-      crv_error(sQuote("k"), " must be positive.")
+    if ( !is_positive_integer_scalar(k) ){
+      crv_error(sQuote("k"), " must be a positive integer scalar (vector of length 1).")
     }
 
     if( k > NROW(x$X) ){
       crv_error(sQuote("k"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
     }
 
-    percent <- x$carp.cluster.path.vis %>%
+    percent <- x$cluster_membership %>%
       select(.data$LambdaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k) %>%
       select(.data$LambdaPercent) %>%
@@ -225,12 +221,13 @@ get_U.CARP <- function(x, ..., percent, k){
     crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
   }
 
-  index <- which.min(abs(x$carp.sol.path$lambda.path - percent * max(x$carp.sol.path$lambda.path)))[1]
+  lambda_path <- x$cluster_membership %>% select(.data$Iter, .data$LambdaPercent) %>%
+                                          distinct
 
-  raw_u <- matrix(x$carp.sol.path$u.path[, index],
-                  nrow = x$n,
-                  ncol = x$p,
-                  byrow = TRUE) # byrow = TRUE because we get u by vectorizing t(X), not X
+  ## Pull out the iter for the closest value of "LambdaPercent" to the desired percent
+  ## slice(which.min(...)[1]) will pull the "which.min(...)[1]"-th element
+  index <- lambda_path %>% slice(which.min(abs(.data$LambdaPercent - percent))[1]) %>% pull(.data$Iter)
+  raw_u <- x$U[, , index]
 
   U <- unscale_matrix(raw_u, scale = x$scale_vector, center = x$center_vector)
 
@@ -239,4 +236,86 @@ get_U.CARP <- function(x, ..., percent, k){
   rownames(U) <- rownames(x$X)
 
   U
+}
+
+#' @noRd
+available_features <- function(x, ...){
+  UseMethod("available_features")
+}
+
+available_features.CARP <- function(x, ...){
+  c(paste0("PC", seq_len(NCOL(x$rotation_matrix))), colnames(x$X))
+}
+
+#' @noRd
+is_raw_feature <- function(x, f, ...){
+  UseMethod("is_raw_feature")
+}
+
+is_raw_feature.CARP <- function(x, f, ...){
+  f %in% colnames(x$X)
+}
+
+
+#' @noRd
+is_pc_feature <- function(x, f, ...){
+  UseMethod("is_pc_feature")
+}
+
+is_pc_feature.CARP <- function(x, f, ...){
+  ## First check if the feature name is of the form "PC###" or ".PC###"
+  ## If so, check that the implied PC is less than the number of singular vectors we kept
+  (grepl(pattern = "[.]?PC[0123456789]+", f)) && (as.integer(gsub("[^0123456789]", "", f)) <= NCOL(x$rotation_matrix))
+}
+
+#' @noRd
+get_pc_path <- function(x, f, ...){
+  UseMethod("get_pc_path")
+}
+
+get_pc_path.CARP <- function(x, f, ...){
+  pc_num <- as.integer(gsub("[^0123456789]", "", f))
+
+  as.vector(tensor_projection(x$U, x$rotation_matrix[, pc_num, drop = FALSE]))
+}
+
+#' @noRd
+get_feature_paths <- function(x, features, ...){
+  UseMethod("get_feature_paths")
+}
+
+#' @noRd
+get_feature_paths.CARP <- function(x, features, ...){
+  dots <- list(...)
+  if (length(dots)) {
+    crv_error("Unknown arguments passed to", sQuote("get_feature_paths.CARP."))
+  }
+
+  path_info <- x$cluster_membership
+
+  ## Avoid duplicates
+  if (anyDuplicated(features)) {
+    crv_warning("Some features requested multiple times - omitting duplicates.")
+    features <- unique(features)
+  }
+
+  for(f in features){
+    ## Check that `f` is a valid feature
+    if (!is_nonempty_character_scalar(f)) {
+      crv_error(sQuote(f), " is not a valid feature name.")
+    }
+
+    ## Find f
+    if (is_raw_feature(x, f)) {
+      ## Get the path for `f` and add it to `path_info`
+      path_info[[f]] <- as.vector(x$U[,f,])
+    } else if (is_pc_feature(x, f)) {
+      ## Get the path for `f` and add it to `path_info`
+      path_info[[f]] <- get_pc_path(x, f)
+    } else {
+      crv_error(sQuote(f), " is not an original feature or principal component.")
+    }
+  }
+
+  path_info
 }

@@ -211,3 +211,86 @@ test_that("CARP cluster centroids are correctly calculated with refit = FALSE", 
     }
   }
 })
+
+test_that("get_U error handling works", {
+  get_U <- clustRviz:::get_U
+  carp_fit <- CARP(presidential_speech)
+
+  expect_error(get_U(carp_fit, 3))
+  expect_error(get_U(carp_fit, fish = 3), regexp = "fish")
+  expect_error(get_U(carp_fit, percent = 0.5, k = 10))
+  expect_error(get_U(carp_fit, k = 0))
+  expect_error(get_U(carp_fit, k = -10))
+  expect_error(get_U(carp_fit, k = NROW(presidential_speech) + 1))
+  expect_error(get_U(carp_fit, percent = 1.25))
+  expect_error(get_U(carp_fit, percent = -0.75))
+})
+
+test_that("get_U works and preserves dimnames", {
+  get_U <- clustRviz:::get_U
+  carp_fit <- CARP(presidential_speech)
+
+  # First iter is original data
+  U1 <- get_U(carp_fit, percent = 0)
+  expect_equal(U1, presidential_speech)
+
+  expect_equal(rownames(presidential_speech), rownames(get_U(carp_fit, k = 5)))
+  expect_equal(colnames(presidential_speech), colnames(get_U(carp_fit, percent = 0.5)))
+  expect_equal(dim(presidential_speech), dim(get_U(carp_fit, k = 25)))
+})
+
+test_that("is_raw_feature works", {
+  is_raw_feature <- clustRviz:::is_raw_feature
+  carp_fit <- CARP(presidential_speech)
+
+  expect_true(is_raw_feature(carp_fit, colnames(presidential_speech)[5]))
+  expect_false(is_raw_feature(carp_fit, "notfeature"))
+  expect_false(is_raw_feature(carp_fit, "PC5"))
+})
+
+test_that("is_pc_feature works", {
+  is_pc_feature <- clustRviz:::is_pc_feature
+  carp_fit <- CARP(presidential_speech, npcs = 5)
+
+  expect_false(is_pc_feature(carp_fit, colnames(presidential_speech)[5]))
+  expect_false(is_pc_feature(carp_fit, "notfeature"))
+  expect_true(is_pc_feature(carp_fit, "PC3"))
+  expect_true(is_pc_feature(carp_fit, ".PC3"))
+  expect_false(is_pc_feature(carp_fit, ".PCA3"))
+  expect_false(is_pc_feature(carp_fit, "PC6")) ## We didn't store this many PCs
+})
+
+test_that("get_feature_paths works", {
+  get_feature_paths <- clustRviz:::get_feature_paths
+  carp_fit <- CARP(presidential_speech)
+
+  # With no features, just return the path info
+  expect_equal(get_feature_paths(carp_fit, features = character()),
+               carp_fit$cluster_membership)
+
+  ## Get PC features
+  tensor_projection <- clustRviz:::tensor_projection
+  pc_paths <- get_feature_paths(carp_fit, features = c("PC1", "PC2", "PC3"))
+  for(k in c(1, 2, 3)){
+    expect_equal(as.vector(tensor_projection(carp_fit$U,
+                                             carp_fit$rotation_matrix[, k,drop = FALSE])),
+                 as.vector(pc_paths[[paste0("PC", k)]]))
+  }
+
+  ## Get raw features
+  nm <- colnames(presidential_speech)[1]
+  feature_paths <- get_feature_paths(carp_fit, features = nm)
+  expect_equal(as.vector(feature_paths[[nm]]), as.vector(carp_fit$U[,1,]))
+
+  ## Error on unknown features
+  expect_error(get_feature_paths(carp_fit, features = "nonfeature"))
+  expect_error(get_feature_paths(carp_fit, features = NA))
+  expect_error(get_feature_paths(carp_fit, features = ""))
+
+  ## Error on unknown args
+  expect_error(get_feature_paths(carp_fit, "unknown_argument"))
+  expect_error(get_feature_paths(carp_fit, formal = "unknown_argument"))
+
+  ## Warn on duplicate features
+  expect_warning(get_feature_paths(carp_fit, features = c("PC1", "PC3", "PC1")))
+})

@@ -14,6 +14,8 @@ test_that("Validators work", {
   is_percent_scalar  <- clustRviz:::is_percent_scalar
   is_positive_scalar <- clustRviz:::is_positive_scalar
   is_positive_integer_scalar <- clustRviz:::is_positive_integer_scalar
+  is_character_scalar <- clustRviz:::is_character_scalar
+  is_nonempty_character_scalar <- clustRviz:::is_nonempty_character_scalar
 
   expect_true(is_logical_scalar(TRUE))
   expect_true(is_logical_scalar(FALSE))
@@ -63,6 +65,24 @@ test_that("Validators work", {
   expect_false(is_positive_integer_scalar(NA))
   expect_false(is_positive_integer_scalar(c(2, 5)))
   expect_false(is_positive_integer_scalar("a"))
+
+  expect_false(is_character_scalar(3))
+  expect_false(is_character_scalar(3.5))
+  expect_false(is_character_scalar(0))
+  expect_false(is_character_scalar(-4))
+  expect_false(is_character_scalar(NA))
+  expect_false(is_character_scalar(c(2, 5)))
+  expect_true(is_character_scalar(""))
+  expect_true(is_character_scalar("a"))
+
+  expect_false(is_nonempty_character_scalar(3))
+  expect_false(is_nonempty_character_scalar(3.5))
+  expect_false(is_nonempty_character_scalar(0))
+  expect_false(is_nonempty_character_scalar(-4))
+  expect_false(is_nonempty_character_scalar(NA))
+  expect_false(is_nonempty_character_scalar(c(2, 5)))
+  expect_false(is_nonempty_character_scalar(""))
+  expect_true(is_nonempty_character_scalar("a"))
 
   is_square <- clustRviz:::is_square
   expect_true(is_square(matrix(1, 5, 5)))

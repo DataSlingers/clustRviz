@@ -325,5 +325,144 @@ test_that("CBASS cluster centroids are correctly calculated with refit = FALSE",
                    mean(get_clustered_data(cbass_fit, percent = pct, refit = FALSE)))
     }
   }
+})
 
+test_that("get_U error handling works", {
+  get_U <- clustRviz:::get_U
+  cbass_fit <- CBASS(presidential_speech)
+
+  expect_error(get_U(cbass_fit, 3))
+  expect_error(get_U(cbass_fit, fish = 3), regexp = "fish")
+  expect_error(get_U(cbass_fit, percent = 0.5, k = 10))
+  expect_error(get_U(cbass_fit, k.row = 0))
+  expect_error(get_U(cbass_fit, k.row = -10))
+  expect_error(get_U(cbass_fit, k.row = NROW(presidential_speech) + 1))
+  expect_error(get_U(cbass_fit, k.col = 0))
+  expect_error(get_U(cbass_fit, k.col = -10))
+  expect_error(get_U(cbass_fit, k.col = NCOL(presidential_speech) + 1))
+  expect_error(get_U(cbass_fit, percent = 1.25))
+  expect_error(get_U(cbass_fit, percent = -0.75))
+})
+
+test_that("get_U works and preserves dimnames", {
+  get_U <- clustRviz:::get_U
+  cbass_fit <- CBASS(presidential_speech)
+
+  # First iter is original data
+  U1 <- get_U(cbass_fit, percent = 0)
+  expect_equal(U1, presidential_speech)
+
+  expect_equal(rownames(presidential_speech), rownames(get_U(cbass_fit, k.row = 5)))
+  expect_equal(rownames(presidential_speech), rownames(get_U(cbass_fit, k.col = 5)))
+  expect_equal(colnames(presidential_speech), colnames(get_U(cbass_fit, percent = 0.5)))
+  expect_equal(dim(presidential_speech), dim(get_U(cbass_fit, k.row = 25)))
+  expect_equal(dim(presidential_speech), dim(get_U(cbass_fit, k.col = 25)))
+})
+
+test_that("is_raw_feature works", {
+  is_raw_feature <- clustRviz:::is_raw_feature
+  cbass_fit <- CBASS(presidential_speech)
+
+  expect_error(is_raw_feature(cbass_fit, "feature", type = "wrong"))
+
+  expect_true(is_raw_feature(cbass_fit, colnames(presidential_speech)[5], type = "row"))
+  expect_false(is_raw_feature(cbass_fit, "notfeature", type = "row"))
+  expect_false(is_raw_feature(cbass_fit, "PC5", type = "row"))
+
+  expect_true(is_raw_feature(cbass_fit, rownames(presidential_speech)[5], type = "col"))
+  expect_false(is_raw_feature(cbass_fit, "notfeature", type = "col"))
+  expect_false(is_raw_feature(cbass_fit, "PC5", type = "col"))
+})
+
+test_that("is_pc_feature works", {
+  is_pc_feature <- clustRviz:::is_pc_feature
+  cbass_fit <- CBASS(presidential_speech, npcs = 5)
+
+  expect_false(is_pc_feature(cbass_fit, colnames(presidential_speech)[5], type = "row"))
+  expect_false(is_pc_feature(cbass_fit, "notfeature", type = "row"))
+  expect_true(is_pc_feature(cbass_fit, "PC3", type = "row"))
+  expect_true(is_pc_feature(cbass_fit, ".PC3", type = "row"))
+  expect_false(is_pc_feature(cbass_fit, ".PCA3", type = "row"))
+  expect_false(is_pc_feature(cbass_fit, "PC6", type = "row")) ## We didn't store this many PCs
+
+  expect_false(is_pc_feature(cbass_fit, rownames(presidential_speech)[5], type = "col"))
+  expect_false(is_pc_feature(cbass_fit, "notfeature", type = "col"))
+  expect_true(is_pc_feature(cbass_fit, "PC3", type = "col"))
+  expect_true(is_pc_feature(cbass_fit, ".PC3", type = "col"))
+  expect_false(is_pc_feature(cbass_fit, ".PCA3", type = "col"))
+  expect_false(is_pc_feature(cbass_fit, "PC6", type = "col")) ## We didn't store this many PCs
+})
+
+test_that("get_feature_paths works for row fusions", {
+  get_feature_paths <- clustRviz:::get_feature_paths
+  cbass_fit <- CBASS(presidential_speech)
+
+  expect_error(get_feature_paths(cbass_fit, feathres = character(), type = "unknown"))
+
+  # With no features, just return the path info
+  expect_equal(get_feature_paths(cbass_fit, features = character(), type = "row"),
+               cbass_fit$row_fusions$cluster_membership)
+
+  ## Get PC features
+  tensor_projection <- clustRviz:::tensor_projection
+  pc_paths <- get_feature_paths(cbass_fit, features = c("PC1", "PC2", "PC3"), type = "row")
+  for(k in c(1, 2, 3)){
+    expect_equal(as.vector(tensor_projection(cbass_fit$row_fusions$U,
+                                             cbass_fit$row_fusions$rotation_matrix[, k, drop = FALSE])),
+                 as.vector(pc_paths[[paste0("PC", k)]]))
+  }
+
+  ## Get raw features
+  nm <- colnames(presidential_speech)[1]
+  feature_paths <- get_feature_paths(cbass_fit, features = nm, type = "row")
+  expect_equal(as.vector(feature_paths[[nm]]), as.vector(cbass_fit$row_fusions$U[,1,]))
+
+  ## Error on unknown features
+  expect_error(get_feature_paths(cbass_fit, features = "nonfeature", type = "row"))
+  expect_error(get_feature_paths(cbass_fit, features = NA, type = "row"))
+  expect_error(get_feature_paths(cbass_fit, features = "", type = "row"))
+
+  ## Error on unknown args
+  expect_error(get_feature_paths(cbass_fit, "unknown_argument", type = "row"))
+  expect_error(get_feature_paths(cbass_fit, formal = "unknown_argument", type = "row"))
+
+  ## Warn on duplicate features
+  expect_warning(get_feature_paths(cbass_fit, features = c("PC1", "PC3", "PC1"), type = "row"))
+})
+
+test_that("get_feature_paths works for col fusions", {
+  get_feature_paths <- clustRviz:::get_feature_paths
+  cbass_fit <- CBASS(presidential_speech)
+
+  expect_error(get_feature_paths(cbass_fit, feathres = character(), type = "unknown"))
+
+  # With no features, just return the path info
+  expect_equal(get_feature_paths(cbass_fit, features = character(), type = "col"),
+               cbass_fit$col_fusions$cluster_membership)
+
+  ## Get PC features
+  tensor_projection <- clustRviz:::tensor_projection
+  pc_paths <- get_feature_paths(cbass_fit, features = c("PC1", "PC2", "PC3"), type = "col")
+  for(k in c(1, 2, 3)){
+    expect_equal(as.vector(tensor_projection(cbass_fit$col_fusions$U,
+                                             cbass_fit$col_fusions$rotation_matrix[, k, drop = FALSE])),
+                 as.vector(pc_paths[[paste0("PC", k)]]))
+  }
+
+  ## Get raw features
+  nm <- rownames(presidential_speech)[1]
+  feature_paths <- get_feature_paths(cbass_fit, features = nm, type = "col")
+  expect_equal(as.vector(feature_paths[[nm]]), as.vector(cbass_fit$col_fusions$U[,1,]))
+
+  ## Error on unknown features
+  expect_error(get_feature_paths(cbass_fit, features = "nonfeature", type = "col"))
+  expect_error(get_feature_paths(cbass_fit, features = NA, type = "col"))
+  expect_error(get_feature_paths(cbass_fit, features = "", type = "col"))
+
+  ## Error on unknown args
+  expect_error(get_feature_paths(cbass_fit, "unknown_argument", type = "col"))
+  expect_error(get_feature_paths(cbass_fit, formal = "unknown_argument", type = "col"))
+
+  ## Warn on duplicate features
+  expect_warning(get_feature_paths(cbass_fit, features = c("PC1", "PC3", "PC1"), type = "col"))
 })

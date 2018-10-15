@@ -7,7 +7,8 @@ clustRviz_default_options <- list(rho                = 1.0,
                                   viz_small_step     = 1.01,
                                   viz_max_inner_iter = 15L,
                                   keep               = 10L,
-                                  epsilon            = 0.000001)
+                                  epsilon            = 0.000001,
+                                  keep_debug_info    = FALSE)
 
 .clustRvizOptionsEnv <- list2env(clustRviz_default_options)
 
@@ -37,6 +38,8 @@ clustRviz_default_options <- list(rho                = 1.0,
 #'                     the expense of returning a finer grid.
 #'   \item \code{rho} For advanced users only (not advisable to change): the penalty
 #'                    parameter used for the augmented Lagrangian.
+#'   \item \code{keep_debug_info}: Should additional debug info (currently only the V-path)
+#'                                 be kept?
 #' }
 #' @rdname options
 #' @export
@@ -80,6 +83,10 @@ clustRviz_options <- function(...){
     } else if (nm %in% c("burn_in", "max_iter", "viz_burn_in", "viz_max_inner_iter", "keep")) {
       if (!is_positive_integer_scalar(opt) ){
         crv_error(sQuote(nm), " must be a positive integer.")
+      }
+    } else if (nm %in% "keep_debug_info") {
+      if (!is_logical_scalar(opt)) {
+        crv_error(sQuote(nm), " must be a logical scalar.")
       }
     }
 

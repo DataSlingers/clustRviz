@@ -103,3 +103,43 @@ void check_weight_matrix(const Eigen::MatrixXd& weight_matrix){
     }
   }
 }
+
+// Tensor projection along the second mode
+//
+// Given a 3D tensor X in R^{n-by-p-by-q} (observations by features by iterations)
+// and a rotation matrix Y in R^{p-by-k} (features by principal components), we
+// want to get a projected array in R^{n-by-k-by-q} giving the path of the principal
+// components
+//
+// This is straightforward, but "loopy" so we implement it in Rcpp / RcppEigen for speed
+// [[Rcpp::export]]
+Rcpp::NumericVector tensor_projection(Rcpp::NumericVector X, const Eigen::MatrixXd& Y){
+
+  // Validate X
+  Rcpp::IntegerVector X_dims = X.attr("dim");
+  if(X_dims.size() != 3){
+    ClustRVizLogger::error("X must be a three rank tensor.");
+  }
+  int n = X_dims(0);
+  int p = X_dims(1);
+  int q = X_dims(2);
+
+  // Validate Y
+  if(Y.rows() != p){
+    ClustRVizLogger::error("The dimensions of X and Y do not match -- ") << p << " != " << Y.rows();
+  }
+
+  int k = Y.cols();
+
+  Rcpp::NumericVector result(n * k * q);
+  Rcpp::IntegerVector result_dims{n, k, q};
+  result.attr("dim") = result_dims;
+
+  for(int i = 0; i < q; i++){
+    Eigen::MatrixXd X_slice = Eigen::Map<Eigen::MatrixXd>(&X[n * p * i], n, p);
+    Eigen::MatrixXd X_slice_projected = X_slice * Y;
+    Eigen::Map<Eigen::MatrixXd>(&result[n * k * i], n, k) = X_slice_projected;
+  }
+
+  return result;
+}

@@ -60,15 +60,10 @@ Rcpp::List CBASS_VIZcpp(const Eigen::MatrixXd& X,
   // (Scaled) dual variable for row ADMM
   Eigen::MatrixXd Z_col = V_col;
 
-  U.transposeInPlace(); // See note on transpositions below
+  // Store initial values
   UPath.col(0) = u_vec;
-  U.transposeInPlace();
-  V_row.transposeInPlace();
   V_rowPath.col(0) = v_row_vec;
-  V_row.transposeInPlace();
-  V_col.transposeInPlace();
   V_colPath.col(0) = v_col_vec;
-  V_col.transposeInPlace();
 
   // Regularization level
   double gamma     = epsilon;              // Working copy
@@ -260,7 +255,7 @@ Rcpp::List CBASS_VIZcpp(const Eigen::MatrixXd& X,
 
     // If we have seen a fusion or are otherwise interested in keeping this iteration,
     // add values to our storage buffers
-    if( (nzeros_new_row != nzeros_old_row) | (nzeros_new_col != nzeros_old_col) | (iter % keep == 0) ){
+    if( (nzeros_new_row != nzeros_old_row) | (nzeros_new_col != nzeros_old_col) | ((iter % keep == 0) & (iter > burn_in)) ){
 
       // Before we can store values, we need to make sure we have enough buffer space
       if(path_iter >= buffer_size){
@@ -275,25 +270,12 @@ Rcpp::List CBASS_VIZcpp(const Eigen::MatrixXd& X,
       }
 
       // Store values
-      //
-      // FIXME -- The post-processing code assumes output in the form of
-      //          Chi, Allen, Baraniuk (Biometrics '17) which more or less is equivalent
-      //          to vec(U^T) and vec(V^T) instead of what we're using internally
-      //          here.
-      //
-      //          It should be re-written, but until it is, we can achieve the
-      //          same result by transposing and un-transposing the data internally
-      //          before copying it to our storage buffers
-      //
-      //          Obviously, this burns some cycles so it would be better to avoid this
-      U.transposeInPlace(); V_row.transposeInPlace(); V_col.transposeInPlace();
       UPath.col(path_iter)            = u_vec;
       V_rowPath.col(path_iter)        = v_row_vec;
       V_colPath.col(path_iter)        = v_col_vec;
       gamma_path(path_iter)           = gamma;
       v_row_zeros_path.col(path_iter) = v_row_zeros_new;
       v_col_zeros_path.col(path_iter) = v_col_zeros_new;
-      U.transposeInPlace(); V_row.transposeInPlace(); V_col.transposeInPlace();
 
       path_iter++;
 

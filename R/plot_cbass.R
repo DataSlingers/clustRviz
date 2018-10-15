@@ -137,107 +137,41 @@ plot.CBASS <- function(x,
         crv_error("Unknown arguments passed to ", sQuote("plot.CARP."))
       }
 
-      shiny::shinyApp(
-        ui = shiny::fluidPage(
-          shiny::tags$style(
-            type = "text/css",
-            ".recalculating { opacity: 1.0; }"
-          ),
-
-
-          shiny::titlePanel("BiClustering"),
-          shiny::tabsetPanel(
-            shiny::tabPanel(
-              "Heatmap",
-              shiny::fluidRow(
-                shiny::column(
-                  3,
-                  shiny::sliderInput(
-                    "regcent",
-                    "Amount of Regularization",
-                    min = 0,
-                    max = 1,
-                    value = .5,
-                    step = .03, animate = shiny::animationOptions(interval = 300, loop = T)
-                  )
-                ),
-                shiny::column(
-                  9,
-                  shiny::plotOutput("heatmap", height = "900px", width = "1200px")
-                )
-              )
-            )
-          )
-        ),
+      shinyApp(
+        ui = fluidPage(tags$style(type = "text/css",
+                                  ".recalculating { opacity: 1.0; }"),
+                       titlePanel("CBASS Results [Convex BiClustering]"),
+                       fluidRow(column(width = 2,
+                                       sliderInput("regcent",
+                                                   "Amount of Regularization",
+                                                   min = 0,
+                                                   max = 1,
+                                                   value = 0.5,
+                                                   step = 0.03,
+                                                   animate = animationOptions(interval = 400,
+                                                                              loop = TRUE))),
+                                column(width = 10,
+                                       plotOutput("heatmap",
+                                                  height = "900px",
+                                                  width = "1200px")))),
         server = function(input, output) {
-          if (x$X.center.global) {
-            X.heat <- x$X
-            X.heat <- X.heat - mean(X.heat)
-            X.heat <- t(X.heat)
-            X <- x$X
-            X <- X - mean(X)
-            X <- t(X)
-          } else {
-            X.heat <- t(x$X)
-            X <- t(x$X)
-          }
-          colnames(X.heat) <- x$row.labels
-          rownames(X.heat) <- x$col.labels
-          x$cbass.sol.path$lambda.path %>% as.vector() -> lam.seq
-          lam.prop.seq <- lam.seq / max(lam.seq)
-          nbreaks <- 50
+          ## Calculate breaks and colors on the raw data so that they are consitent
+          ## across frames. (If we use cbass_heatmap_plot's internal fitting, it will
+          ## only look at the gradient for a single frame.)
+          nbreaks     <- 50
           quant.probs <- seq(0, 1, length.out = nbreaks)
-          breaks <- unique(stats::quantile(X[TRUE], probs = quant.probs))
-          nbreaks <- length(breaks)
-          heatcols <- grDevices::colorRampPalette(c("blue", "yellow"))(nbreaks - 1)
-          my.cols <- grDevices::adjustcolor(c("black", "grey"), alpha.f = .3)
-          output$heatmap <- shiny::renderPlot({
-            plt.iter <- which.min(abs(input$regcent - lam.prop.seq))
-            # find lambda at iter
-            cur.lam <- x$cbass.sol.path$lambda.path[plt.iter]
-            cur.lam
-            # find lambda closest in column path
-            cur.col.lam.ind <- which.min(abs(x$cbass.cluster.path.row$lambda.path.inter - cur.lam))
-            # find clustering solution in column path
-            cur.col.clust.assignment <- x$cbass.cluster.path.row$clust.path[[cur.col.lam.ind]]$membership
-            cur.col.clust.labels <- unique(cur.col.clust.assignment)
-            cur.col.nclust <- length(cur.col.clust.labels)
-            # find lambda closest in row path
-            cur.row.lam.ind <- which.min(abs(x$cbass.cluster.path.col$lambda.path.inter - cur.lam))
-            # find clustering solution in row path
-            cur.row.clust.assignment <- x$cbass.cluster.path.col$clust.path[[cur.row.lam.ind]]$membership
-            cur.row.clust.labels <- unique(cur.row.clust.assignment)
-            cur.row.nclust <- length(cur.row.clust.labels)
-            for (col.label.ind in seq_along(cur.col.clust.labels)) {
-              cur.col.label <- cur.col.clust.labels[col.label.ind]
-              col.inds <- which(cur.col.clust.assignment == cur.col.label)
-              for (row.label.ind in seq_along(cur.row.clust.labels)) {
-                cur.row.label <- cur.row.clust.labels[row.label.ind]
-                row.inds <- which(cur.row.clust.assignment == cur.row.label)
-                mean.value <- mean(X[row.inds, col.inds])
-                X.heat[row.inds, col.inds] <- mean.value
-              }
-            }
-            my.heatmap.2(
-              x = X.heat,
-              scale = "none",
-              Colv = stats::as.dendrogram(x$cbass.dend.row),
-              Rowv = stats::as.dendrogram(x$cbass.dend.col),
-              trace = "none",
-              density.info = "none",
-              key = FALSE,
-              breaks = breaks,
-              col = heatcols,
-              symkey = F,
-              Row.hclust = x$cbass.dend.col %>% stats::as.hclust(),
-              Col.hclust = x$cbass.dend.row %>% stats::as.hclust(),
-              k.col = cur.col.nclust,
-              k.row = cur.row.nclust,
-              my.col.vec = my.cols,
-              cexRow = heatrow.label.cex,
-              cexCol = heatcol.label.cex,
-              margins = c(10, 10)
-            )
+          breaks      <- unique(quantile(x$X[TRUE], probs = quant.probs))
+          nbreaks     <- length(breaks)
+          heatmap_col <- colorRampPalette(c("blue", "yellow"))(nbreaks - 1)
+
+          output$heatmap <- renderPlot({
+            cbass_heatmap_plot(x,
+                               percent = input$regcent,
+                               heatrow.label.cex = heatrow.label.cex,
+                               heatcol.label.cex = heatcol.label.cex,
+                               ...,
+                               breaks = breaks,
+                               heatmap_col = heatmap_col)
           })
         }
       )
@@ -247,7 +181,7 @@ plot.CBASS <- function(x,
 
 #' @noRd
 #' @importFrom rlang .data
-#' @importFrom dplyr filter select left_join pull
+#' @importFrom dplyr filter select left_join pull rename
 #' @importFrom ggplot2 ggplot geom_path aes geom_point guides theme element_text xlab ylab
 #' @importFrom ggrepel geom_text_repel
 cbass_path_plot <- function(x,
@@ -288,27 +222,7 @@ cbass_path_plot <- function(x,
     percent <- 1 ## By default, show the whole path
   }
 
-  plot_cols <- c(
-    axis,
-    "Iter",
-    "Obs",
-    "Cluster",
-    "Lambda",
-    "ObsLabel",
-    "NCluster",
-    "LambdaPercent"
-  )
-
-  path_obj <- if(type == "row") x$cbass.cluster.path.vis.row else x$cbass.cluster.path.vis.col
-
-  if (any(plot_cols %not.in% colnames(path_obj))) {
-    missing_col <- plot_cols[which(plot_cols %not.in% colnames(path_obj))][1]
-    crv_error(sQuote(missing_col), " is not available for plotting.")
-  }
-
-  plot_frame_full <- path_obj %>% select(plot_cols) %>%
-                                  filter(.data$Iter > x$burn.in)
-  names(plot_frame_full)[1:2] <- c("V1", "V2")
+  plot_frame_full <- get_feature_paths(x, axis, type = type) %>% rename(V1 = axis[1], V2 = axis[2])
 
   if(has_k.row){
 
@@ -324,7 +238,7 @@ cbass_path_plot <- function(x,
       crv_error(sQuote("k.row"), " cannot be more than the rows in the original data set (", NROW(x$X), ").")
     }
 
-    percent <- x$cbass.cluster.path.vis.row %>%
+    percent <- get_feature_paths(x, features = character(), type = "row") %>%
       select(.data$LambdaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k.row) %>%
       select(.data$LambdaPercent) %>%
@@ -346,7 +260,7 @@ cbass_path_plot <- function(x,
       crv_error(sQuote("k.col"), " cannot be more than the columns in the original data set (", NCOL(x$X), ").")
     }
 
-    percent <- x$cbass.cluster.path.vis.col %>%
+    percent <- get_feature_paths(x, features = character(), type = "col") %>%
       select(.data$LambdaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k.col) %>%
       select(.data$LambdaPercent) %>%
@@ -358,7 +272,9 @@ cbass_path_plot <- function(x,
     crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
   }
 
-  plot_frame_full <- plot_frame_full %>% filter(.data$LambdaPercent <= percent)
+  ## If percent == min(LambdaPercent), keep some (unshrunken) data to plot
+  ## This comes up in static path plots when percent = 0 is given
+  plot_frame_full <- plot_frame_full %>% filter(.data$LambdaPercent <= max(percent, min(.data$LambdaPercent)))
 
   plot_frame_init  <- plot_frame_full %>% filter(.data$Iter == min(.data$Iter))
   plot_frame_final <- plot_frame_full %>% filter(.data$Iter == max(.data$Iter)) %>%
@@ -367,7 +283,6 @@ cbass_path_plot <- function(x,
   plot_frame_full <- left_join(plot_frame_full,
                                plot_frame_final %>% select(.data$Obs, .data$final_cluster),
                                by = "Obs")
-
 
   ## FIXME -- It looks like we don't actually have full fusion in `plot_frame_final`
   ##          (even in points which should be in the same cluster...)
@@ -427,7 +342,7 @@ cbass_dendro_plot <- function(x,
          sQuote("k.col"), " may be supplied.")
   }
 
-  dend <- if(type == "row") x$cbass.dend.row else x$cbass.dend.col
+  dend <- x[[if(type == "row") "row_fusions" else "col_fusions"]]$dendrogram
 
   ## Set better default margins
   par(mar = c(14, 7, 2, 1))
@@ -514,16 +429,16 @@ cbass_heatmap_plot <- function(x,
   my.heatmap.2(
     x = U,
     scale = "none",
-    Rowv = as.dendrogram(x$cbass.dend.row),
-    Colv = as.dendrogram(x$cbass.dend.col),
+    Rowv = as.dendrogram(x$row_fusions$dendrogram),
+    Colv = as.dendrogram(x$col_fusions$dendrogram),
     trace = "none",
     density.info = "none",
     key = FALSE,
     breaks = breaks,
     col = heatmap_col,
     symkey = FALSE,
-    Row.hclust = as.hclust(x$cbass.dend.row),
-    Col.hclust = as.hclust(x$cbass.dend.col),
+    Row.hclust = as.hclust(x$row_fusions$dendrogram),
+    Col.hclust = as.hclust(x$col_fusions$dendrogram),
     k.col = n.col,
     k.row = n.row,
     my.col.vec = my.cols,

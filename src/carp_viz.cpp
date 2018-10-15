@@ -46,12 +46,9 @@ Rcpp::List CARP_VIZcpp(const Eigen::MatrixXd& X,
   Eigen::MatrixXd VPath(p * num_edges, buffer_size); // Storage (for values to return to R)
   Eigen::Map<Eigen::VectorXd> v_vec = Eigen::Map<Eigen::VectorXd>(V.data(), p * num_edges);
 
-  U.transposeInPlace(); // See note on transpositions below
+  // Store initial values
   UPath.col(0) = u_vec;
-  U.transposeInPlace();
-  V.transposeInPlace();
   VPath.col(0) = v_vec;
-  V.transposeInPlace();
 
   // (Scaled) dual variable
   Eigen::MatrixXd Z = V;
@@ -183,7 +180,7 @@ Rcpp::List CARP_VIZcpp(const Eigen::MatrixXd& X,
 
     // If we have seen a fusion or are otherwise interested in keeping this iteration,
     // add values to our storage buffers
-    if( (nzeros_new != nzeros_old) | (iter % keep == 0) ){
+    if( (nzeros_new != nzeros_old) | ((iter % keep == 0) & (iter > burn_in)) ){
       // Before we can store values, we need to make sure we have enough buffer space
       if(path_iter >= buffer_size){
         ClustRVizLogger::info("Resizing storage from ") << buffer_size << " to " << 2 * buffer_size << " iterations.";
@@ -195,25 +192,10 @@ Rcpp::List CARP_VIZcpp(const Eigen::MatrixXd& X,
       }
 
       // Store values
-
-      // FIXME -- The post-processing code assumes output in the form of
-      //          Chi and Lange (JCGS, 2015) which more or less is equivalent
-      //          to vec(U^T) and vec(V^T) instead of what we're using internally
-      //          here.
-      //
-      //          It should be re-written, but until it is, we can achieve the
-      //          same result by transposing and un-transposing the data internally
-      //          before copying it to our storage buffers
-      //
-      //          Obviously, this burns some cycles so it would be better to avoid this
-      U.transposeInPlace(); V.transposeInPlace();
-
       UPath.col(path_iter)          = u_vec;
       VPath.col(path_iter)          = v_vec;
       gamma_path(path_iter)         = gamma;
       v_zeros_path.col(path_iter)   = v_zeros_new;
-
-      U.transposeInPlace(); V.transposeInPlace();
 
       path_iter++;
 
@@ -222,7 +204,9 @@ Rcpp::List CARP_VIZcpp(const Eigen::MatrixXd& X,
     }
 
     iter++;
-    gamma *= t;
+    if(iter > burn_in){
+      gamma *= t;
+    }
 
     if((iter % CLUSTRVIZ_CHECK_USER_INTERRUPT_RATE) == 0){
       Rcpp::checkUserInterrupt();
@@ -248,5 +232,5 @@ Rcpp::List CARP_VIZcpp(const Eigen::MatrixXd& X,
   return Rcpp::List::create(Rcpp::Named("u.path")      = UPath,
                             Rcpp::Named("v.path")      = VPath,
                             Rcpp::Named("v.zero.inds") = v_zeros_path,
-                            Rcpp::Named("lambda.path")  = gamma_path); // TODO - Change lambda -> gamma in R code
+                            Rcpp::Named("lambda.path") = gamma_path); // TODO - Change lambda -> gamma in R code
 }

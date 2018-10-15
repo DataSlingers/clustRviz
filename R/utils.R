@@ -12,28 +12,14 @@ if (getRversion() >= "2.15.1") utils::globalVariables(c("."))
 #' @source \url{http://www.presidency.ucsb.edu}
 "presidential_speech"
 
-#' @importFrom dplyr tbl_df
-#' @importFrom dplyr mutate
-#' @importFrom dplyr select
-#' @importFrom dplyr slice
-#' @importFrom dplyr filter
-#' @importFrom dplyr arrange
-#' @importFrom dplyr left_join
-#' @importFrom dplyr full_join
-#' @importFrom dplyr group_by
-#' @importFrom dplyr ungroup
-#' @importFrom dplyr tibble
-#' @importFrom dplyr bind_rows
-#' @importFrom dplyr lead
-#' @importFrom dplyr n
-#' @importFrom tidyr gather
-#' @importFrom tidyr nest
-#' @importFrom tidyr unnest
-#' @importFrom purrr map
-#' @importFrom purrr map2
+#' @importFrom dplyr tbl_df mutate select slice filter arrange left_join full_join
+#' @importFrom dplyr group_by ungroup tibble bind_rows lead n
+#' @importFrom tidyr gather nest unnest
+#' @importFrom purrr map map2
 #' @importFrom stringr str_replace
 #' @importFrom stats na.omit
 #' @importFrom zoo na.locf
+#' @importFrom rlang .data
 ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
   ColLab <- NULL
   SpValue <- NULL
@@ -102,9 +88,10 @@ ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
     tidyr::nest() %>%
     dplyr::mutate(
       tst = purrr::map2(.x = Iter, .y = data, .f = function(x, y) {
-        prev.mags <- apply(matrix(v.path[, x - 1], ncol = cardE)[, y$ColIndNum], 2, function(x) {
-          sum(x^2)
-        })
+        ## We get the magnitude of the previous row differences by reconstructing V
+        ## at the `x = Iter` iteration here. Note that, V = DX so the rows are the pairwise
+        ## difference of interest, even though we refer to "Col" indices - this is a FIXME
+        prev.mags <- rowSums(matrix(v.path[, x - 1], nrow = cardE)[y$ColIndNum,]^2)
         data.frame(
           ColIndNum = y$ColIndNum,
           Rank = order(prev.mags)
@@ -135,9 +122,10 @@ ISP <- function(sp.path, v.path, u.path, lambda.path, cardE) {
           tidyr::nest() %>%
           dplyr::mutate(
             tst = purrr::map2(.x = Iter, .y = data, .f = function(x, y) {
-              prev.mags <- apply(matrix(v.path[, x - 1], ncol = cardE)[, y$ColIndNum], 2, function(x) {
-                sum(x^2)
-              })
+              ## We get the magnitude of the previous row differences by reconstructing V
+              ## at the `x = Iter` iteration here. Note that, V = DX so the rows are the pairwise
+              ## difference of interest, even though we refer to "Col" indices - this is a FIXME
+              prev.mags <- rowSums(matrix(v.path[, x - 1], nrow = cardE)[y$ColIndNum,]^2)
               data.frame(
                 ColIndNum = y$ColIndNum,
                 Rank = order(prev.mags)
@@ -330,7 +318,7 @@ CreateDendrogram <- function(carp_cluster_path, n_labels, scale = NULL) {
 #' @noRd
 #' @importFrom rlang .data
 #' @importFrom stats prcomp
-#' @importFrom dplyr as_tibble %>% mutate group_by ungroup n_distinct
+#' @importFrom dplyr tibble %>% mutate group_by ungroup n_distinct
 # Post-Process CARP and CBASS results
 # This function takes a "correctly" oriented X
 ConvexClusteringPostProcess <- function(X,
@@ -341,7 +329,8 @@ ConvexClusteringPostProcess <- function(X,
                                         v_zero_indices,
                                         labels,
                                         dendrogram_scale,
-                                        npcs){
+                                        npcs,
+                                        internal_transpose = FALSE){
 
   n         <- NROW(X)
   p         <- NCOL(X)
@@ -356,26 +345,44 @@ ConvexClusteringPostProcess <- function(X,
   cluster_path[["clust.path"]] <- get_cluster_assignments(edge_matrix, cluster_path$sp.path.inter, n)
   cluster_path[["clust.path.dups"]] <- duplicated(cluster_path[["clust.path"]], fromList = FALSE)
 
+  U <- array(cluster_path$u.path.inter, dim = c(n, p, length(cluster_path[["clust.path.dups"]])))
+  rownames(U) <- rownames(X)
+  colnames(U) <- colnames(X)
+
+  if (internal_transpose) {
+    ## When looking at the column fusions from CBASS, we want U to be
+    ## a 3 tensor of size p by n by K, each slice of which is really U^T
+    ##
+    ## It's not 100% clear to me why this combination of resizes and transposes works, but
+    ## it does, so we're sticking with it...
+    dim(U) <- c(p, n, dim(U)[3])
+    U <- aperm(U, c(2, 1, 3))
+    rownames(U) <- rownames(X)
+    colnames(U) <- colnames(X)
+  }
+
   cvx_dendrogram <- CreateDendrogram(cluster_path, labels, dendrogram_scale)
 
   X_pca <- stats::prcomp(X, scale. = FALSE, center = FALSE)
-  X_pca_rotation <- X_pca$rotation[, seq_len(npcs)]
+  rotation_matrix <- X_pca$rotation[, seq_len(npcs)]
 
-  U_projected <- crossprod(matrix(cluster_path$u.path.inter, nrow = p), X_pca_rotation)
-  colnames(U_projected) <- paste0("PC", seq_len(npcs))
-
-  cluster_path_vis <- as_tibble(U_projected) %>%
-                         mutate(Iter = rep(seq_along(cluster_path$clust.path), each = n),
-                                Obs  = rep(seq_len(n), times = length(cluster_path$clust.path)),
-                                Cluster = as.vector(vapply(cluster_path$clust.path, function(x) x$membership, double(n))),
-                                Lambda = rep(cluster_path$lambda.path.inter, each = n),
-                                ObsLabel = rep(labels, times = length(cluster_path$clust.path))) %>%
+  membership_info <- tibble(Iter = rep(seq_along(cluster_path$clust.path), each = n),
+                            Obs  = rep(seq_len(n), times = length(cluster_path$clust.path)),
+                            Cluster = as.vector(vapply(cluster_path$clust.path, function(x) x$membership, double(n))),
+                            Lambda = rep(cluster_path$lambda.path.inter, each = n),
+                            ObsLabel = rep(labels, times = length(cluster_path$clust.path))) %>%
                          group_by(.data$Iter) %>%
                          mutate(NCluster = n_distinct(.data$Cluster)) %>%
                          ungroup() %>%
                          mutate(LambdaPercent = .data$Lambda / max(.data$Lambda))
 
-  list(paths = cluster_path_vis, dendrogram = cvx_dendrogram, raw_path = cluster_path)
+  list(U               = U,
+       rotation_matrix = rotation_matrix,
+       membership_info = membership_info,
+       dendrogram      = cvx_dendrogram,
+       debug           = list(cluster_path = cluster_path,
+                              v_path       = v_path,
+                              v_zero_indices = v_zero_indices))
 }
 
 `%not.in%` <- Negate(`%in%`)
@@ -389,6 +396,9 @@ is_integer_scalar  <- function(x) is_numeric_scalar(x) && is.wholenumber(x)
 is_percent_scalar  <- function(x) is_numeric_scalar(x) && (x >= 0) && (x <= 1)
 is_positive_scalar <- function(x) is_numeric_scalar(x) && (x > 0)
 is_positive_integer_scalar <- function(x) is_integer_scalar(x) && (x > 0)
+
+is_character_scalar <- function(x) {is.character(x) && (length(x) == 1L) && (!is.na(x))}
+is_nonempty_character_scalar <- function(x) {is_character_scalar(x) && nzchar(x)}
 
 is_square <- function(x) {is.matrix(x) && (NROW(x) == NCOL(x))}
 
@@ -410,4 +420,16 @@ unscale_matrix <- function(X,
   p <- NCOL(X)
 
   X * matrix(scale, n, p, byrow=TRUE) + matrix(center, n, p, byrow=TRUE)
+}
+
+## A very thin wrapper around RColorBrewer::brewer.pal that doesn't warn with
+## a few colors
+#' @noRd
+#' @importFrom RColorBrewer brewer.pal
+my_palette <- function(n){
+  if(n > 9){
+    crv_warning("clustRviz default palette only has nine colors")
+  }
+
+  brewer.pal(9, "Set1")[seq_len(n)]
 }

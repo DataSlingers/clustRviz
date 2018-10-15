@@ -62,6 +62,14 @@ test_that("Test option error handling", {
   expect_error(clustRviz_options(keep = "a"))
   expect_error(clustRviz_options(keep = NA))
   expect_error(clustRviz_options(keep = c(500, 600)))
+
+  expect_error(clustRviz_options(keep_debug_info = 0))
+  expect_error(clustRviz_options(keep_debug_info = 3))
+  expect_error(clustRviz_options(keep_debug_info = -5))
+  expect_error(clustRviz_options(keep_debug_info = 35.5))
+  expect_error(clustRviz_options(keep_debug_info = "a"))
+  expect_error(clustRviz_options(keep_debug_info = NA))
+  expect_error(clustRviz_options(keep_debug_info = c(500, 600)))
 })
 
 test_that("clustRviz_reset_options works", {

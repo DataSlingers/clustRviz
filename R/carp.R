@@ -44,14 +44,8 @@
 #'                                column-wise before clustering
 #'         \item \code{X.scale}: a logical indicating whether \code{X} was scaled
 #'                               column-wise before centering
-#'         \item \code{burn.in}: an integer indicating the number of "burn-in"
-#'                               iterations performed
 #'         \item \code{weight_type}: a record of the scheme used to create
 #'                                   fusion weights
-#'         \item \code{carp.dend}: a dendrogram (object of class
-#'                                 \code{\link[stats]{hclust}}) containing
-#'                                 the clustering solution path
-#'         \item \code{carp.cluster.path.vis}: The \code{CARP} solution path
 #'         }
 #' @importFrom utils data
 #' @importFrom dplyr %>% mutate group_by ungroup as_tibble n_distinct
@@ -257,14 +251,14 @@ CARP <- function(X,
 
   carp.fit <- list(
     X = X.orig,
-    carp.dend = post_processing_results$dendrogram,
-    carp.cluster.path.vis = post_processing_results$paths,
-    carp.sol.path = carp.sol.path,
-    cardE = cardE,
+    D = D,
+    U = post_processing_results$U,
+    dendrogram = post_processing_results$dendrogram,
+    rotation_matrix = post_processing_results$rotation_matrix,
+    cluster_membership = post_processing_results$membership_info,
     n = n,
     p = p,
     weight_type = weight_type,
-    burn.in = .clustRvizOptionsEnv[["burn_in"]],
     alg.type = alg.type,
     t = t,
     X.center = X.center,
@@ -273,6 +267,10 @@ CARP <- function(X,
     scale_vector = scale_vector,
     time = Sys.time() - tic
   )
+
+  if (.clustRvizOptionsEnv[["keep_debug_info"]]) {
+    carp.fit[["debug"]] <- post_processing_results[["debug"]]
+  }
 
   class(carp.fit) <- "CARP"
 

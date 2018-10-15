@@ -11,11 +11,8 @@ test_that("CBASS path plot works for rows", {
   ## Main settings work
   expect_no_error(plot(cbass_fit, type = "row.path"))
   expect_is(plot(cbass_fit, type = "row.path"), "gg")
-
-  ## Can only plot pre-calculated PCs right now
-  ## FIXME -- See GH #24
-  expect_error(plot(cbass_fit, type = "row.path", k.row  = 3, axis = c("amount", "appropri")))
-  expect_error(plot(cbass_fit, type = "row.path", k.row  = 3, axis = c("PC1", "PC5")))
+  expect_no_error(plot(cbass_fit, type = "row.path", k.row  = 3, axis = c("amount", "appropri")))
+  expect_no_error(plot(cbass_fit, type = "row.path", k.row  = 3, axis = c("PC1", "PC3")))
 
   ## Must give at most one of `percent`, `k.row`, `k.col`
   expect_error(plot(cbass_fit, type = "row.path", percent = 0.5, k.row = 3))
@@ -49,11 +46,8 @@ test_that("CBASS path plot works for columns", {
   ## Main settings work
   expect_no_error(plot(cbass_fit, type = "col.path", k.row = 3))
   expect_is(plot(cbass_fit, type = "col.path", k.row  = 3), "gg")
-
-  ## Can only plot pre-calculated PCs right now
-  ## FIXME -- See GH #24
-  expect_error(plot(cbass_fit, type = "col.path", k.row  = 3, axis = c("amount", "appropri")))
-  expect_error(plot(cbass_fit, type = "col.path", k.row  = 3, axis = c("PC1", "PC5")))
+  expect_no_error(plot(cbass_fit, type = "col.path", k.row  = 3, axis = c("Barack Obama", "George Washington")))
+  expect_no_error(plot(cbass_fit, type = "col.path", k.row  = 3, axis = c("PC1", "PC3")))
 
   ## Must give at most one of `percent`, `k.row`, `k.col`
   expect_error(plot(cbass_fit, type = "col.path", percent = 0.5, k.row = 3))
