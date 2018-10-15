@@ -35,8 +35,15 @@ reference:
       by `clustRviz`
     contents:
       - presidential_speech
+      - clustRviz_logging
+      - clustRviz_options
 
 nabvar:
   right:
     - icon: fa-github fa-lg
       href: https://github.com/DataSlingers/clustRviz
+
+development:
+  mode: unreleased
+  version_label: info
+  version_tooltip: "clustRviz is not yet on CRAN"
