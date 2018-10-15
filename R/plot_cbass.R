@@ -36,8 +36,12 @@
 #'            \code{"row.dendrogram"} or \code{"col.dendrogram"}; passed to
 #'            \code{\link[stats]{plot.dendrogram}} when \code{type == "row.dendrogram"}
 #'            or \code{type == "col.dendrogram"}.
-#' @param dend.branch.width a positive number. Line width on dendrograms.
-#' @param dend.labels.cex a positive number. Label size on dendrograms.
+#' @param dend.branch.width Branch width for dendrogram plots (ignored for
+#'        other plot types) - must be positive.
+#' @param dend.labels.cex Label size for dendrogram plots (ignored for other plot
+#'        types) - must be positive.
+#' @param dend.ylab.cex Y-axis size for dendrogram plots (ignored for other plot
+#'        types) - must be positive.
 #' @param heatrow.label.cex heatmap row label size
 #' @param heatcol.label.cex heatmap column label size
 #' @return The value of the return type depends on the \code{type} argument:\itemize{
@@ -76,6 +80,7 @@ plot.CBASS <- function(x,
                        k.col,
                        dend.branch.width = 2,
                        dend.labels.cex = .6,
+                       dend.ylab.cex = 1.2,
                        heatrow.label.cex = 1.5,
                        heatcol.label.cex = 1.5,
                        axis = c("PC1", "PC2")) {
@@ -101,6 +106,7 @@ plot.CBASS <- function(x,
                         k.col = k.col,
                         dend.branch.width = dend.branch.width,
                         dend.labels.cex = dend.labels.cex,
+                        dend.ylab.cex = dend.ylab.cex,
                         type = "col",
                         ...)
     },
@@ -317,6 +323,7 @@ cbass_dendro_plot <- function(x,
                              k.col,
                              dend.branch.width = 2,
                              dend.labels.cex = .6,
+                             dend.ylab.cex = 1.2,
                              type = c("row", "col"),
                              ...){
 
@@ -342,13 +349,10 @@ cbass_dendro_plot <- function(x,
          sQuote("k.col"), " may be supplied.")
   }
 
-  ## Set better default margins
-  par(mar = c(14, 7, 2, 1))
-
   as.dendrogram(x, type = type) %>%
            set("branches_lwd", dend.branch.width) %>%
            set("labels_cex", dend.labels.cex) %>%
-           plot(ylab = "Amount of Regularization", cex.lab = 1.5, ...)
+           plot(ylab = "Amount of Regularization", cex.lab = dend.ylab.cex, ...)
 
   if(show_clusters){
     labels <- get_cluster_labels(x, k.row = k.row, k.col = k.col, percent = percent, type = type)

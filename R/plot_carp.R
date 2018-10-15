@@ -34,8 +34,12 @@
 #' to display in the interactive plot.
 #' @param min.nclust a positive value. The minimum number of clusters to
 #' display in the interactive plot.
-#' @param dend.branch.width a positive number. Line width on dendrograms.
-#' @param dend.labels.cex a positive number. Label size on dendrograms.
+#' @param dend.branch.width Branch width for dendrogram plots (ignored for
+#'        other plot types) - must be positive.
+#' @param dend.labels.cex Label size for dendrogram plots (ignored for other plot
+#'        types) - must be positive.
+#' @param dend.ylab.cex Y-axis size for dendrogram plots (ignored for other plot
+#'        types) - must be positive.
 #' @return The value of the return type depends on the \code{type} argument:\itemize{
 #'   \item if \code{type = "dendrogram"}, \code{x} is returned invisibly;
 #'   \item if \code{type = "path"}, an object of class \code{\link[ggplot2]{ggplot}}
@@ -73,6 +77,7 @@ plot.CARP <- function(x,
                       axis = c("PC1", "PC2"),
                       dend.branch.width = 2,
                       dend.labels.cex = .6,
+                      dend.ylab.cex = 1.2,
                       percent,
                       k,
                       percent.seq = seq(0, 1, length.out = 21),
@@ -88,6 +93,7 @@ plot.CARP <- function(x,
                        k = k,
                        dend.branch.width = dend.branch.width,
                        dend.labels.cex = dend.labels.cex,
+                       dend.ylab.cex = dend.ylab.cex,
                        ...)
     },
     path = {
@@ -172,7 +178,12 @@ plot.CARP <- function(x,
           })
 
           output$dendplot_movie <- renderPlot({
-            carp_dendro_plot(x, percent = input$regularization_movie)
+            carp_dendro_plot(x,
+                             percent = input$regularization_movie,
+                             dend.branch.width = dend.branch.width,
+                             dend.labels.cex = dend.labels.cex,
+                             dend.ylab.cex = dend.ylab.cex,
+                             ...)
           })
 
           output$pcapathplot_movie <- renderPlot({
@@ -345,6 +356,7 @@ carp_dendro_plot <- function(x,
                              k,
                              dend.branch.width = 2,
                              dend.labels.cex = .6,
+                             dend.ylab.cex = 1.2,
                              show_clusters = (n_args == 1L),
                              base_colors = c("grey", "black"),
                              ...){
@@ -365,13 +377,12 @@ carp_dendro_plot <- function(x,
     crv_error("At most one of ", sQuote("percent"), " and ", sQuote("k"), " may be supplied.")
   }
 
-  ## Set better default borders
-  par(mar = c(14, 7, 2, 1))
-
   as.dendrogram(x) %>%
     set("branches_lwd", dend.branch.width) %>%
     set("labels_cex", dend.labels.cex) %>%
-    plot(ylab = "Amount of Regularization", cex.lab = 1.5, ...)
+    plot(ylab = "Amount of Regularization",
+         cex.lab = dend.ylab.cex,
+         ...)
 
   if(show_clusters){
 
