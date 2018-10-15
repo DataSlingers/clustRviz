@@ -2,9 +2,8 @@
 #'
 #' \code{CBASS} returns a fast approximation to the Convex BiClustering
 #' solution path along with visualizations such as dendrograms and
-#' heatmaps. \code{CBASS} solves the Convex Biclustering problem via
-#' Algorithmic Regularization Paths. A seqeunce of biclustering
-#' solutions is returned along with several visualizations.
+#' heatmaps. \code{CBASS} solves the Convex Biclustering problem using an efficient
+#' Algorithmic Regularization scheme.
 #'
 #' @param X The data matrix (\eqn{X \in R^{n \times p}}{X})
 #' @param row_weights One of the following: \itemize{
@@ -380,13 +379,15 @@ CBASS <- function(X,
 #'
 #' Prints a brief descripton of a fitted \code{CBASS} object.
 #'
-#' Reports number of row and columns of dataset, any preprocessing
-#' done by the \code{\link{CBASS}} function, regularization weight information,
-#' and the variant of \code{CBASS}.
+#' @details The \code{as.dendrogram} and \code{as.hclust} methods convert the
+#'          \code{CBASS} output to an object of class \code{dendrogram} or \code{hclust}
+#'          respectively.
 #'
-#' @param x an object of class \code{CBASS} as returned by \code{\link{CBASS}}
+#' @param x an object of class \code{CARP} as returned by \code{\link{CARP}}
+#' @param object an object of class \code{CARP} as returned by \code{\link{CARP}}
 #' @param ... Additional unused arguments
 #' @export
+#' @rdname print_cbass
 #' @examples
 #' cbass_fit <- CBASS(X=presidential_speech)
 #' print(cbass_fit)
@@ -415,4 +416,32 @@ print.CBASS <- function(x, ...) {
   print(x$col_fusions$weight_type)
 
   invisible(x)
+}
+
+
+#' @export
+#' @importFrom stats as.dendrogram
+#' @param type Either \code{"row"} or \code{"col"}, indicating whether
+#'             the row or column dendrogram should be returned.
+#' @rdname print_cbass
+as.dendrogram.CBASS <- function(object, ..., type = c("row", "col")){
+  type <- match.arg(type)
+
+  if(type == "row"){
+    as.dendrogram(object$row_fusions$dendrogram)
+  } else {
+    as.dendrogram(object$col_fusions$dendrogram)
+  }
+}
+
+#' @importFrom stats as.hclust
+#' @rdname print_cbass
+as.hclust.CBASS <- function(x, ..., type = c("row", "col")){
+  type <- match.arg(type)
+
+  if(type == "row"){
+    x$row_fusions$dendrogram
+  } else {
+    x$col_fusions$dendrogram
+  }
 }

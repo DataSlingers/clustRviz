@@ -2,9 +2,8 @@
 #'
 #' \code{CARP} returns a fast approximation to the Convex Clustering
 #' solution path along with visualizations such as dendrograms and
-#' cluster paths. \code{CARP} solves the Convex Clustering problem via
-#' Algorithmic Regularization Paths. A seqeunce of clustering
-#' solutions is returned along with several visualizations.
+#' cluster paths. \code{CARP} solves the Convex Clustering problem via an efficient
+#' Algorithmic Regularization scheme.
 #'
 #' @param X The data matrix (\eqn{X \in R^{n \times p}}{X}): rows correspond to
 #'          the observations (to be clustered) and columns to the variables (which
@@ -285,9 +284,15 @@ CARP <- function(X,
 #' done by the \code{\link{CARP}} function, regularization weight information,
 #' and the variant of \code{CARP} used.
 #'
+#' @details The \code{as.dendrogram} and \code{as.hclust} methods convert the
+#'          \code{CBASS} output to an object of class \code{dendrogram} or \code{hclust}
+#'          respectively.
+#'
 #' @param x an object of class \code{CARP} as returned by \code{\link{CARP}}
+#' @param object an object of class \code{CARP} as returned by \code{\link{CARP}}
 #' @param ... Additional unused arguments
 #' @export
+#' @rdname print_carp
 #' @examples
 #' carp_fit <- CARP(presidential_speech)
 #' print(carp_fit)
@@ -314,4 +319,18 @@ print.CARP <- function(x, ...) {
   print(x$weight_type)
 
   invisible(x)
+}
+
+#' @export
+#' @importFrom stats as.dendrogram
+#' @rdname print_carp
+as.dendrogram.CARP <- function(object, ...){
+  as.dendrogram(object$dendrogram)
+}
+
+#' @export
+#' @importFrom stats as.hclust
+#' @rdname print_carp
+as.hclust.CARP <- function(x, ...){
+  x$dendrogram
 }

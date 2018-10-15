@@ -342,12 +342,10 @@ cbass_dendro_plot <- function(x,
          sQuote("k.col"), " may be supplied.")
   }
 
-  dend <- x[[if(type == "row") "row_fusions" else "col_fusions"]]$dendrogram
-
   ## Set better default margins
   par(mar = c(14, 7, 2, 1))
 
-  dend %>% as.dendrogram %>%
+  as.dendrogram(x, type = type) %>%
            set("branches_lwd", dend.branch.width) %>%
            set("labels_cex", dend.labels.cex) %>%
            plot(ylab = "Amount of Regularization", cex.lab = 1.5, ...)
@@ -357,7 +355,7 @@ cbass_dendro_plot <- function(x,
     n_clusters <- nlevels(labels)
 
     my.cols <- adjustcolor(c("grey", "black"), alpha.f = .2)
-    my.rect.hclust(dend, k = n_clusters, border = 2, my.col.vec = my.cols, lwd = 3)
+    my.rect.hclust(as.hclust(x, type = type), k = n_clusters, border = 2, my.col.vec = my.cols, lwd = 3)
   }
 
   invisible(x)
@@ -429,16 +427,16 @@ cbass_heatmap_plot <- function(x,
   my.heatmap.2(
     x = U,
     scale = "none",
-    Rowv = as.dendrogram(x$row_fusions$dendrogram),
-    Colv = as.dendrogram(x$col_fusions$dendrogram),
+    Rowv = as.dendrogram(x, type = "row"),
+    Colv = as.dendrogram(x, type = "col"),
     trace = "none",
     density.info = "none",
     key = FALSE,
     breaks = breaks,
     col = heatmap_col,
     symkey = FALSE,
-    Row.hclust = as.hclust(x$row_fusions$dendrogram),
-    Col.hclust = as.hclust(x$col_fusions$dendrogram),
+    Row.hclust = as.hclust(x, type = "row"),
+    Col.hclust = as.hclust(x, type = "col"),
     k.col = n.col,
     k.row = n.row,
     my.col.vec = my.cols,

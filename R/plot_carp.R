@@ -368,8 +368,7 @@ carp_dendro_plot <- function(x,
   ## Set better default borders
   par(mar = c(14, 7, 2, 1))
 
-  x$dendrogram %>%
-    as.dendrogram() %>%
+  as.dendrogram(x) %>%
     set("branches_lwd", dend.branch.width) %>%
     set("labels_cex", dend.labels.cex) %>%
     plot(ylab = "Amount of Regularization", cex.lab = 1.5, ...)
@@ -402,7 +401,7 @@ carp_dendro_plot <- function(x,
     }
 
     my.cols <- adjustcolor(base_colors, alpha.f = .2)
-    my.rect.hclust(x$dendrogram, k = k, border = 2, my.col.vec = my.cols, lwd = 3)
+    my.rect.hclust(as.hclust(x), k = k, border = 2, my.col.vec = my.cols, lwd = 3)
   }
 
   invisible(x)

@@ -466,3 +466,19 @@ test_that("get_feature_paths works for col fusions", {
   ## Warn on duplicate features
   expect_warning(get_feature_paths(cbass_fit, features = c("PC1", "PC3", "PC1"), type = "col"))
 })
+
+
+test_that("dendrogram and hclust accessors work for CBASS objects", {
+  cbass_fit <- CBASS(presidential_speech)
+
+  for(type in c("row", "col")){
+    expect_s3_class(as.dendrogram(cbass_fit, type = type), "dendrogram")
+    expect_s3_class(as.hclust(cbass_fit, type = type), "hclust")
+    expect_equal(as.dendrogram(as.hclust(cbass_fit, type = type)),
+                 as.dendrogram(cbass_fit, type = type))
+  }
+
+  expect_error(as.dendrogram(cbass_fit, type = "unknown"))
+  expect_error(as.hclust(cbass_fit, type = "unknown"))
+})
+
