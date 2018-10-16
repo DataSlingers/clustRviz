@@ -45,7 +45,7 @@
 #'   \item if \code{type = "path"}, an object of class \code{\link[ggplot2]{ggplot}}
 #'         which can be plotted directly (by invoking its print method) or modified
 #'         further by the user is returned;
-#'   \item if \code{type = "dynamic_path"}, an object of class \code{\link[gganimate:gganimate]{gganim}}
+#'   \item if \code{type = "dynamic_path"}, an object of class \code{\link[gganimate:gganimate-package]{gganim}}
 #'         is returned, and many be further manipulated by the user or plotted directly;
 #'   \item if \code{type = "interactive"}, a \code{\link[shiny]{shiny}} app which can be activated
 #'         by invoking its print method.
