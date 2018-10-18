@@ -88,7 +88,7 @@ public:
 
     // Copy Update
     Eigen::MatrixXd DTZ = DT + Z_row;
-    MatrixProx(DTZ, V_row, gamma / rho, weights_row, l1);
+    V_row = MatrixProx(DTZ, gamma / rho, weights_row, l1);
     ClustRVizLogger::debug("V_row = ") << V_row;
 
     // Dual Update
@@ -108,7 +108,7 @@ public:
 
     // Copy Update
     Eigen::MatrixXd DTSZ = DTS + Z_col;
-    MatrixProx(DTSZ, V_col, gamma / rho, weights_col, l1);
+    V_col = MatrixProx(DTSZ, gamma / rho, weights_col, l1);
     ClustRVizLogger::debug("V_col = ") << V_col;
 
     // Dual Update

@@ -24,15 +24,16 @@ double soft_thresh(double x, double lambda){
   }
 }
 
-// Modify in place version for internal use
-void MatrixProx(const Eigen::MatrixXd& X,
-                Eigen::MatrixXd& V,
-                double lambda,
-                const Eigen::VectorXd& weights,
-                bool l1 = true){
-
+// Apply a row-wise prox operator (with weights) to a matrix
+// [[Rcpp::export]]
+Eigen::MatrixXd MatrixProx(const Eigen::MatrixXd& X,
+                           double lambda,
+                           const Eigen::VectorXd& weights,
+                           bool l1 = true){
   Eigen::Index n = X.rows();
   Eigen::Index p = X.cols();
+
+  Eigen::MatrixXd V(n, p);
 
   if(l1){
     for(Eigen::Index i = 0; i < n; i++){
@@ -52,20 +53,6 @@ void MatrixProx(const Eigen::MatrixXd& X,
       }
     }
   }
-}
-
-// Version for testing C++ code
-// [[Rcpp::export]]
-Eigen::MatrixXd MatrixProx(const Eigen::MatrixXd& X,
-                           double lambda,
-                           const Eigen::VectorXd& weights,
-                           bool l1 = true){
-  Eigen::Index n = X.rows();
-  Eigen::Index p = X.cols();
-
-  Eigen::MatrixXd V = Eigen::MatrixXd::Zero(n, p);
-
-  MatrixProx(X, V, lambda, weights, l1);
 
   return V;
 }

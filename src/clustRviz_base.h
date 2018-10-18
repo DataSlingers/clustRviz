@@ -18,10 +18,9 @@ bool contains(const std::set<T>& container, T element){
 }
 
 // Prototypes - utils.cpp
-void MatrixProx(const Eigen::MatrixXd&,
-                Eigen::MatrixXd&,
-                double,
-                const Eigen::VectorXd&,
-                bool);
+Eigen::MatrixXd MatrixProx(const Eigen::MatrixXd&,
+                           double,
+                           const Eigen::VectorXd&,
+                           bool);
 
 #endif
