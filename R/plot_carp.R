@@ -29,7 +29,8 @@
 #'          clusters is used.
 #' @param ... Additional arguments. Currently an error when \code{type != "dendrogram"}
 #'            and passed to \code{\link[stats]{plot.dendrogram}} when \code{type =
-#'            "dendrogram"}.
+#'            "dendrogram"}. \code{saveviz} passes arguments to the underlying
+#'            plot function.
 #' @param max.nclust a positive integer. The maximum number of clusters
 #' to display in the interactive plot.
 #' @param min.nclust a positive value. The minimum number of clusters to

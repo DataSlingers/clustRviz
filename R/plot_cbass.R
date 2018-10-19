@@ -35,7 +35,8 @@
 #' @param ... Additional arguments. Currently an error when \code{type} is not
 #'            \code{"row.dendrogram"} or \code{"col.dendrogram"}; passed to
 #'            \code{\link[stats]{plot.dendrogram}} when \code{type == "row.dendrogram"}
-#'            or \code{type == "col.dendrogram"}.
+#'            or \code{type == "col.dendrogram"}. \code{saveviz} passes arguments
+#'            to the underlying plot function.
 #' @param dend.branch.width Branch width for dendrogram plots (ignored for
 #'        other plot types) - must be positive.
 #' @param dend.labels.cex Label size for dendrogram plots (ignored for other plot
@@ -44,6 +45,8 @@
 #'        types) - must be positive.
 #' @param heatrow.label.cex heatmap row label size
 #' @param heatcol.label.cex heatmap column label size
+#' @param margins A vector of length 2 specifying margin sizes. See the \code{margin}
+#'                argument to \code{\link[gplots]{heatmap.2}}.
 #' @return The value of the return type depends on the \code{type} argument:\itemize{
 #'  \item if \code{type \%in\% c("row.dendrogram", "col.dendrogram", "heatmap")},
 #'         \code{x} is returned invisibly;
@@ -81,8 +84,9 @@ plot.CBASS <- function(x,
                        dend.branch.width = 2,
                        dend.labels.cex = .6,
                        dend.ylab.cex = 1.2,
-                       heatrow.label.cex = 1.5,
-                       heatcol.label.cex = 1.5,
+                       heatrow.label.cex = 1,
+                       heatcol.label.cex = 1,
+                       margins = c(5, 5),
                        axis = c("PC1", "PC2")) {
 
   type <- match.arg(type)
@@ -135,7 +139,8 @@ plot.CBASS <- function(x,
                          k.row = k.row,
                          k.col = k.col,
                          heatrow.label.cex = heatrow.label.cex,
-                         heatcol.label.cex = heatcol.label.cex)
+                         heatcol.label.cex = heatcol.label.cex,
+                         margins = margins)
     },
     interactive = {
       dots <- list(...)
@@ -177,7 +182,8 @@ plot.CBASS <- function(x,
                                heatcol.label.cex = heatcol.label.cex,
                                ...,
                                breaks = breaks,
-                               heatmap_col = heatmap_col)
+                               heatmap_col = heatmap_col,
+                               margins = margins)
           })
         }
       )
@@ -374,6 +380,7 @@ cbass_heatmap_plot <- function(x,
                                k.col,
                                heatrow.label.cex,
                                heatcol.label.cex,
+                               margins,
                                breaks = NULL,
                                heatmap_col = NULL){
 
@@ -446,7 +453,7 @@ cbass_heatmap_plot <- function(x,
     my.col.vec = my.cols,
     cexRow = heatrow.label.cex,
     cexCol = heatcol.label.cex,
-    margins = c(14, 8)
+    margins = margins
   )
 
   invisible(x)
