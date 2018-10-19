@@ -1,23 +1,10 @@
-#include <RcppEigen.h>
-#include <vector>
-#include <set>
+#include "clustRviz_base.h"
 #include "clustRviz_logging.h"
+#include "clustering_impl.h"
+#include "biclustering_impl.h"
+#include "alg_reg_policies.h"
 
-#define CLUSTRVIZ_CHECK_USER_INTERRUPT_RATE 50
-
-// Helper to determine if STL set contains an element
-//
-// In general, this is not efficient because one wants to do something
-// with the element and/or its location, but here we really only need containment
-template <typename T>
-bool contains(const std::set<T>& container, T element){
-  typename std::set<T>::const_iterator it = container.find(element);
-  return it != container.end();
-}
-
-// Prototypes - utils.cpp
-void MatrixProx(const Eigen::MatrixXd&,
-                Eigen::MatrixXd&,
-                double,
-                const Eigen::VectorXd&,
-                bool);
+typedef AlgorithmicRegularizationFixedStepSizePolicy<ConvexClustering> CARP;
+typedef AlgorithmicRegularizationBacktrackingPolicy<ConvexClustering> CARP_VIZ;
+typedef AlgorithmicRegularizationFixedStepSizePolicy<ConvexBiClustering> CBASS;
+typedef AlgorithmicRegularizationBacktrackingPolicy<ConvexBiClustering> CBASS_VIZ;
