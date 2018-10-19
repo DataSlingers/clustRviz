@@ -89,10 +89,10 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.row, k.col, type = c("ro
     }
 
     percent <- x$row_fusions$cluster_membership %>%
-      select(.data$LambdaPercent, .data$NCluster) %>%
+      select(.data$GammaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k.row) %>%
-      select(.data$LambdaPercent) %>%
-      summarize(percent = min(.data$LambdaPercent)) %>%
+      select(.data$GammaPercent) %>%
+      summarize(percent = min(.data$GammaPercent)) %>%
       pull
   }
 
@@ -107,10 +107,10 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.row, k.col, type = c("ro
     }
 
     percent <- x$col_fusions$cluster_membership %>%
-      select(.data$LambdaPercent, .data$NCluster) %>%
+      select(.data$GammaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k.col) %>%
-      select(.data$LambdaPercent) %>%
-      summarize(percent = min(.data$LambdaPercent)) %>%
+      select(.data$GammaPercent) %>%
+      summarize(percent = min(.data$GammaPercent)) %>%
       pull
   }
 
@@ -120,14 +120,14 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.row, k.col, type = c("ro
 
   if(type == "row"){
     cluster_labels_df <- x$row_fusions$cluster_membership %>%
-      select(.data$LambdaPercent,
+      select(.data$GammaPercent,
              .data$ObsLabel,
              .data$Obs,
              .data$Cluster,
              .data$Iter) %>%
-      filter(.data$LambdaPercent >= percent) %>%
-      filter(.data$LambdaPercent == min(.data$LambdaPercent)) %>%
-      filter(.data$Iter == min(.data$Iter)) %>% # In case we have multiple iterations at same lambda
+      filter(.data$GammaPercent >= percent) %>%
+      filter(.data$GammaPercent == min(.data$GammaPercent)) %>%
+      filter(.data$Iter == min(.data$Iter)) %>% # In case we have multiple iterations at same gamma
       arrange(.data$Obs) %>%
       select(-.data$Obs)
 
@@ -137,14 +137,14 @@ get_cluster_labels.CBASS <- function(x, ..., percent, k.row, k.col, type = c("ro
     names(labels) <- cluster_labels_df$ObsLabel
   } else {
     cluster_labels_df <- x$col_fusions$cluster_membership %>%
-      select(.data$LambdaPercent,
+      select(.data$GammaPercent,
              .data$ObsLabel,
              .data$Obs,
              .data$Cluster,
              .data$Iter) %>%
-      filter(.data$LambdaPercent >= percent) %>%
-      filter(.data$LambdaPercent == min(.data$LambdaPercent)) %>%
-      filter(.data$Iter == min(.data$Iter)) %>% # In case we have multiple iterations at same lambda
+      filter(.data$GammaPercent >= percent) %>%
+      filter(.data$GammaPercent == min(.data$GammaPercent)) %>%
+      filter(.data$Iter == min(.data$Iter)) %>% # In case we have multiple iterations at same gamma
       arrange(.data$Obs) %>%
       select(-.data$Obs)
 
@@ -257,10 +257,10 @@ get_U.CBASS <- function(x, ..., percent, k.row, k.col){
     }
 
     percent <- x$row_fusions$cluster_membership %>%
-      select(.data$LambdaPercent, .data$NCluster) %>%
+      select(.data$GammaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k.row) %>%
-      select(.data$LambdaPercent) %>%
-      summarize(percent = min(.data$LambdaPercent)) %>%
+      select(.data$GammaPercent) %>%
+      summarize(percent = min(.data$GammaPercent)) %>%
       pull
   }
 
@@ -275,10 +275,10 @@ get_U.CBASS <- function(x, ..., percent, k.row, k.col){
     }
 
     percent <- x$col_fusions$cluster_membership %>%
-      select(.data$LambdaPercent, .data$NCluster) %>%
+      select(.data$GammaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k.col) %>%
-      select(.data$LambdaPercent) %>%
-      summarize(percent = min(.data$LambdaPercent)) %>%
+      select(.data$GammaPercent) %>%
+      summarize(percent = min(.data$GammaPercent)) %>%
       pull
   }
 
@@ -286,10 +286,10 @@ get_U.CBASS <- function(x, ..., percent, k.row, k.col){
     crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
   }
 
-  ## Pull out the iter for the closest value of "LambdaPercent" to the desired percent
+  ## Pull out the iter for the closest value of "GammaPercent" to the desired percent
   ## slice(which.min(...)[1]) will pull the "which.min(...)[1]"-th element
   index <- x$row_fusions$cluster_membership %>%
-              slice(which.min(abs(.data$LambdaPercent - percent))[1]) %>% pull(.data$Iter)
+              slice(which.min(abs(.data$GammaPercent - percent))[1]) %>% pull(.data$Iter)
   raw_u <- x$row_fusions$U[, , index] ## The choice of row_fusions here is a bit arbitrary
                                       ## It would be better to improve post-processing to
                                       ## do simultaneous interpolation for rows and columns

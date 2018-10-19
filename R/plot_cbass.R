@@ -35,11 +35,18 @@
 #' @param ... Additional arguments. Currently an error when \code{type} is not
 #'            \code{"row.dendrogram"} or \code{"col.dendrogram"}; passed to
 #'            \code{\link[stats]{plot.dendrogram}} when \code{type == "row.dendrogram"}
-#'            or \code{type == "col.dendrogram"}.
-#' @param dend.branch.width a positive number. Line width on dendrograms.
-#' @param dend.labels.cex a positive number. Label size on dendrograms.
+#'            or \code{type == "col.dendrogram"}. \code{saveviz} passes arguments
+#'            to the underlying plot function.
+#' @param dend.branch.width Branch width for dendrogram plots (ignored for
+#'        other plot types) - must be positive.
+#' @param dend.labels.cex Label size for dendrogram plots (ignored for other plot
+#'        types) - must be positive.
+#' @param dend.ylab.cex Y-axis size for dendrogram plots (ignored for other plot
+#'        types) - must be positive.
 #' @param heatrow.label.cex heatmap row label size
 #' @param heatcol.label.cex heatmap column label size
+#' @param margins A vector of length 2 specifying margin sizes. See the \code{margin}
+#'                argument to \code{\link[gplots]{heatmap.2}}.
 #' @return The value of the return type depends on the \code{type} argument:\itemize{
 #'  \item if \code{type \%in\% c("row.dendrogram", "col.dendrogram", "heatmap")},
 #'         \code{x} is returned invisibly;
@@ -76,8 +83,10 @@ plot.CBASS <- function(x,
                        k.col,
                        dend.branch.width = 2,
                        dend.labels.cex = .6,
-                       heatrow.label.cex = 1.5,
-                       heatcol.label.cex = 1.5,
+                       dend.ylab.cex = 1.2,
+                       heatrow.label.cex = 1,
+                       heatcol.label.cex = 1,
+                       margins = c(5, 5),
                        axis = c("PC1", "PC2")) {
 
   type <- match.arg(type)
@@ -101,6 +110,7 @@ plot.CBASS <- function(x,
                         k.col = k.col,
                         dend.branch.width = dend.branch.width,
                         dend.labels.cex = dend.labels.cex,
+                        dend.ylab.cex = dend.ylab.cex,
                         type = "col",
                         ...)
     },
@@ -129,7 +139,8 @@ plot.CBASS <- function(x,
                          k.row = k.row,
                          k.col = k.col,
                          heatrow.label.cex = heatrow.label.cex,
-                         heatcol.label.cex = heatcol.label.cex)
+                         heatcol.label.cex = heatcol.label.cex,
+                         margins = margins)
     },
     interactive = {
       dots <- list(...)
@@ -171,7 +182,8 @@ plot.CBASS <- function(x,
                                heatcol.label.cex = heatcol.label.cex,
                                ...,
                                breaks = breaks,
-                               heatmap_col = heatmap_col)
+                               heatmap_col = heatmap_col,
+                               margins = margins)
           })
         }
       )
@@ -239,10 +251,10 @@ cbass_path_plot <- function(x,
     }
 
     percent <- get_feature_paths(x, features = character(), type = "row") %>%
-      select(.data$LambdaPercent, .data$NCluster) %>%
+      select(.data$GammaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k.row) %>%
-      select(.data$LambdaPercent) %>%
-      summarize(percent = min(.data$LambdaPercent)) %>%
+      select(.data$GammaPercent) %>%
+      summarize(percent = min(.data$GammaPercent)) %>%
       pull
   }
 
@@ -261,10 +273,10 @@ cbass_path_plot <- function(x,
     }
 
     percent <- get_feature_paths(x, features = character(), type = "col") %>%
-      select(.data$LambdaPercent, .data$NCluster) %>%
+      select(.data$GammaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k.col) %>%
-      select(.data$LambdaPercent) %>%
-      summarize(percent = min(.data$LambdaPercent)) %>%
+      select(.data$GammaPercent) %>%
+      summarize(percent = min(.data$GammaPercent)) %>%
       pull
   }
 
@@ -272,9 +284,9 @@ cbass_path_plot <- function(x,
     crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
   }
 
-  ## If percent == min(LambdaPercent), keep some (unshrunken) data to plot
+  ## If percent == min(GammaPercent), keep some (unshrunken) data to plot
   ## This comes up in static path plots when percent = 0 is given
-  plot_frame_full <- plot_frame_full %>% filter(.data$LambdaPercent <= max(percent, min(.data$LambdaPercent)))
+  plot_frame_full <- plot_frame_full %>% filter(.data$GammaPercent <= max(percent, min(.data$GammaPercent)))
 
   plot_frame_init  <- plot_frame_full %>% filter(.data$Iter == min(.data$Iter))
   plot_frame_final <- plot_frame_full %>% filter(.data$Iter == max(.data$Iter)) %>%
@@ -317,6 +329,7 @@ cbass_dendro_plot <- function(x,
                              k.col,
                              dend.branch.width = 2,
                              dend.labels.cex = .6,
+                             dend.ylab.cex = 1.2,
                              type = c("row", "col"),
                              ...){
 
@@ -342,22 +355,17 @@ cbass_dendro_plot <- function(x,
          sQuote("k.col"), " may be supplied.")
   }
 
-  dend <- x[[if(type == "row") "row_fusions" else "col_fusions"]]$dendrogram
-
-  ## Set better default margins
-  par(mar = c(14, 7, 2, 1))
-
-  dend %>% as.dendrogram %>%
+  as.dendrogram(x, type = type) %>%
            set("branches_lwd", dend.branch.width) %>%
            set("labels_cex", dend.labels.cex) %>%
-           plot(ylab = "Amount of Regularization", cex.lab = 1.5, ...)
+           plot(ylab = "Amount of Regularization", cex.lab = dend.ylab.cex, ...)
 
   if(show_clusters){
     labels <- get_cluster_labels(x, k.row = k.row, k.col = k.col, percent = percent, type = type)
     n_clusters <- nlevels(labels)
 
     my.cols <- adjustcolor(c("grey", "black"), alpha.f = .2)
-    my.rect.hclust(dend, k = n_clusters, border = 2, my.col.vec = my.cols, lwd = 3)
+    my.rect.hclust(as.hclust(x, type = type), k = n_clusters, border = 2, my.col.vec = my.cols, lwd = 3)
   }
 
   invisible(x)
@@ -372,6 +380,7 @@ cbass_heatmap_plot <- function(x,
                                k.col,
                                heatrow.label.cex,
                                heatcol.label.cex,
+                               margins,
                                breaks = NULL,
                                heatmap_col = NULL){
 
@@ -429,22 +438,22 @@ cbass_heatmap_plot <- function(x,
   my.heatmap.2(
     x = U,
     scale = "none",
-    Rowv = as.dendrogram(x$row_fusions$dendrogram),
-    Colv = as.dendrogram(x$col_fusions$dendrogram),
+    Rowv = as.dendrogram(x, type = "row"),
+    Colv = as.dendrogram(x, type = "col"),
     trace = "none",
     density.info = "none",
     key = FALSE,
     breaks = breaks,
     col = heatmap_col,
     symkey = FALSE,
-    Row.hclust = as.hclust(x$row_fusions$dendrogram),
-    Col.hclust = as.hclust(x$col_fusions$dendrogram),
+    Row.hclust = as.hclust(x, type = "row"),
+    Col.hclust = as.hclust(x, type = "col"),
     k.col = n.col,
     k.row = n.row,
     my.col.vec = my.cols,
     cexRow = heatrow.label.cex,
     cexCol = heatcol.label.cex,
-    margins = c(14, 8)
+    margins = margins
   )
 
   invisible(x)

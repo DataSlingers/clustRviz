@@ -294,3 +294,11 @@ test_that("get_feature_paths works", {
   ## Warn on duplicate features
   expect_warning(get_feature_paths(carp_fit, features = c("PC1", "PC3", "PC1")))
 })
+
+test_that("dendrogram and hclust accessors work for CARP objects", {
+  carp_fit <- CARP(presidential_speech)
+
+  expect_s3_class(as.dendrogram(carp_fit), "dendrogram")
+  expect_s3_class(as.hclust(carp_fit), "hclust")
+  expect_equal(as.dendrogram(as.hclust(carp_fit)), as.dendrogram(carp_fit))
+})

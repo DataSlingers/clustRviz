@@ -2,9 +2,8 @@
 #'
 #' \code{CARP} returns a fast approximation to the Convex Clustering
 #' solution path along with visualizations such as dendrograms and
-#' cluster paths. \code{CARP} solves the Convex Clustering problem via
-#' Algorithmic Regularization Paths. A seqeunce of clustering
-#' solutions is returned along with several visualizations.
+#' cluster paths. \code{CARP} solves the Convex Clustering problem via an efficient
+#' Algorithmic Regularization scheme.
 #'
 #' @param X The data matrix (\eqn{X \in R^{n \times p}}{X}): rows correspond to
 #'          the observations (to be clustered) and columns to the variables (which
@@ -230,21 +229,21 @@ CARP <- function(X,
                                l1 = (alg.type == "carpl1"))
   }
 
-  ## FIXME - Convert lambda.path to a single column matrix instead of a vector
+  ## FIXME - Convert gamma.path to a single column matrix instead of a vector
   ##         RcppArmadillo returns a arma::vec as a n-by-1 matrix
   ##         RcppEigen returns an Eigen::VectorXd as a n-length vector
   ##         Something downstream cares about the difference, so just change
   ##         the type here for now
-  carp.sol.path$lambda.path <- matrix(carp.sol.path$lambda.path, ncol=1)
+  carp.sol.path$gamma_path <- matrix(carp.sol.path$gamma_path, ncol=1)
 
   crv_message("Post-processing")
 
   post_processing_results <- ConvexClusteringPostProcess(X = X,
                                                          edge_matrix      = edge_list,
-                                                         lambda_path      = carp.sol.path$lambda.path,
-                                                         u_path           = carp.sol.path$u.path,
-                                                         v_path           = carp.sol.path$v.path,
-                                                         v_zero_indices   = carp.sol.path$v.zero.inds,
+                                                         gamma_path       = carp.sol.path$gamma_path,
+                                                         u_path           = carp.sol.path$u_path,
+                                                         v_path           = carp.sol.path$v_path,
+                                                         v_zero_indices   = carp.sol.path$v_zero_inds,
                                                          labels           = labels,
                                                          dendrogram_scale = dendrogram.scale,
                                                          npcs             = npcs)
@@ -285,9 +284,15 @@ CARP <- function(X,
 #' done by the \code{\link{CARP}} function, regularization weight information,
 #' and the variant of \code{CARP} used.
 #'
+#' @details The \code{as.dendrogram} and \code{as.hclust} methods convert the
+#'          \code{CBASS} output to an object of class \code{dendrogram} or \code{hclust}
+#'          respectively.
+#'
 #' @param x an object of class \code{CARP} as returned by \code{\link{CARP}}
+#' @param object an object of class \code{CARP} as returned by \code{\link{CARP}}
 #' @param ... Additional unused arguments
 #' @export
+#' @rdname print_carp
 #' @examples
 #' carp_fit <- CARP(presidential_speech)
 #' print(carp_fit)
@@ -314,4 +319,18 @@ print.CARP <- function(x, ...) {
   print(x$weight_type)
 
   invisible(x)
+}
+
+#' @export
+#' @importFrom stats as.dendrogram
+#' @rdname print_carp
+as.dendrogram.CARP <- function(object, ...){
+  as.dendrogram(object$dendrogram)
+}
+
+#' @export
+#' @importFrom stats as.hclust
+#' @rdname print_carp
+as.hclust.CARP <- function(x, ...){
+  x$dendrogram
 }

@@ -88,10 +88,10 @@ get_cluster_labels.CARP <- function(x, ..., percent, k){
     }
 
     percent <- x$cluster_membership %>%
-                 select(.data$LambdaPercent, .data$NCluster) %>%
+                 select(.data$GammaPercent, .data$NCluster) %>%
                  filter(.data$NCluster <= k) %>%
-                 select(.data$LambdaPercent) %>%
-                 summarize(percent = min(.data$LambdaPercent)) %>%
+                 select(.data$GammaPercent) %>%
+                 summarize(percent = min(.data$GammaPercent)) %>%
                  pull
   }
 
@@ -100,14 +100,14 @@ get_cluster_labels.CARP <- function(x, ..., percent, k){
   }
 
   cluster_labels_df <- x$cluster_membership %>%
-                         select(.data$LambdaPercent,
+                         select(.data$GammaPercent,
                                 .data$ObsLabel,
                                 .data$Obs,
                                 .data$Cluster,
                                 .data$Iter) %>%
-                         filter(.data$LambdaPercent >= percent) %>%
-                         filter(.data$LambdaPercent == min(.data$LambdaPercent)) %>%
-                         filter(.data$Iter == min(.data$Iter)) %>% # In case we have multiple iterations at same lambda
+                         filter(.data$GammaPercent >= percent) %>%
+                         filter(.data$GammaPercent == min(.data$GammaPercent)) %>%
+                         filter(.data$Iter == min(.data$Iter)) %>% # In case we have multiple iterations at same gamma
                          arrange(.data$Obs) %>%
                          select(-.data$Obs)
 
@@ -210,10 +210,10 @@ get_U.CARP <- function(x, ..., percent, k){
     }
 
     percent <- x$cluster_membership %>%
-      select(.data$LambdaPercent, .data$NCluster) %>%
+      select(.data$GammaPercent, .data$NCluster) %>%
       filter(.data$NCluster <= k) %>%
-      select(.data$LambdaPercent) %>%
-      summarize(percent = min(.data$LambdaPercent)) %>%
+      select(.data$GammaPercent) %>%
+      summarize(percent = min(.data$GammaPercent)) %>%
       pull
   }
 
@@ -221,12 +221,12 @@ get_U.CARP <- function(x, ..., percent, k){
     crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
   }
 
-  lambda_path <- x$cluster_membership %>% select(.data$Iter, .data$LambdaPercent) %>%
-                                          distinct
+  gamma_path <- x$cluster_membership %>% select(.data$Iter, .data$GammaPercent) %>%
+                                         distinct
 
-  ## Pull out the iter for the closest value of "LambdaPercent" to the desired percent
+  ## Pull out the iter for the closest value of "GammaPercent" to the desired percent
   ## slice(which.min(...)[1]) will pull the "which.min(...)[1]"-th element
-  index <- lambda_path %>% slice(which.min(abs(.data$LambdaPercent - percent))[1]) %>% pull(.data$Iter)
+  index <- gamma_path %>% slice(which.min(abs(.data$GammaPercent - percent))[1]) %>% pull(.data$Iter)
   raw_u <- x$U[, , index]
 
   U <- unscale_matrix(raw_u, scale = x$scale_vector, center = x$center_vector)

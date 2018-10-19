@@ -145,6 +145,7 @@ saveviz.CBASS <- function(x,
                           percent.seq = seq(from = 0, to = 1, by = .05),
                           width = 8,
                           height = 5,
+                          margins = c(5, 5),
                           units = c("in", "cm", "mm", "px"),
                           ...) {
 
@@ -170,7 +171,8 @@ saveviz.CBASS <- function(x,
                                 k.row = k.row,
                                 k.col = k.col,
                                 heatrow.label.cex = heatrow.label.cex,
-                                heatcol.label.cex = heatcol.label.cex)
+                                heatcol.label.cex = heatcol.label.cex,
+                                margins = margins)
              dev.off()
            },
            row.dendrogram = {
@@ -223,7 +225,8 @@ saveviz.CBASS <- function(x,
                              heatcol.label.cex = heatcol.label.cex,
                              ...,
                              breaks = breaks,
-                             heatmap_col = heatmap_col)
+                             heatmap_col = heatmap_col,
+                             margins = margins)
         }
       }, movie.name = file.name,
          img.name = "cbass_heatmap",
