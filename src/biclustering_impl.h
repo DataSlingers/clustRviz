@@ -3,6 +3,7 @@
 
 #include "clustRviz_base.h"
 #include "clustRviz_logging.h"
+#include "status.h"
 
 class ConvexBiClustering {
 public:
@@ -14,7 +15,8 @@ public:
                      const Eigen::VectorXd& weights_row_,
                      const Eigen::VectorXd& weights_col_,
                      const double rho_,
-                     const bool  l1_):
+                     const bool l1_,
+                     const bool show_progress_):
     X(X_),
     D_row(D_row_),
     D_col(D_col_),
@@ -25,7 +27,8 @@ public:
     n(X_.rows()),
     p(X_.cols()),
     num_row_edges(D_row_.rows()),
-    num_col_edges(D_col_.cols()){
+    num_col_edges(D_col_.cols()),
+    sp(show_progress_, D_row_.rows() + D_col_.cols()){
 
     // Set initial values for optimization variables
     U = X;
@@ -40,6 +43,8 @@ public:
     v_row_zeros = Eigen::ArrayXi::Zero(num_row_edges);
     v_col_zeros = Eigen::ArrayXi::Zero(num_col_edges);
     gamma = 0;
+
+    sp.set_v_norm_init(V_row.squaredNorm() + V_col.squaredNorm());
 
     // Initialize storage buffers
     buffer_size = 1.5 * (n + p);
@@ -228,6 +233,13 @@ public:
                               Rcpp::Named("gamma_path")      = gamma_path);
   }
 
+  void tick(uint iter){
+    sp.update(nzeros_row + nzeros_col,
+              V_row.squaredNorm() + V_col.squaredNorm(),
+              iter,
+              gamma);
+  }
+
 private:
   // Fixed (non-data-dependent) problem details
   const Eigen::MatrixXd& X; // Data matrix (to be clustered)
@@ -245,6 +257,9 @@ private:
   const int num_col_edges;
   Eigen::LLT<Eigen::MatrixXd> row_primal_solver; // Cached factorizations for primal updates
   Eigen::LLT<Eigen::MatrixXd> col_primal_solver;
+
+  // Progress printer
+  StatusPrinter sp;
 
   // Current copies of ADMM variables
   Eigen::MatrixXd U;     // Primal Variable

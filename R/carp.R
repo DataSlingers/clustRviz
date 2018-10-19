@@ -33,6 +33,7 @@
 #'                      returns an b-by-n matrix of fusion weights.
 #'                \item A matrix of size n-by-n containing fusion weights
 #'                }
+#' @param status Should a status message be printed to the console?
 #' @return An object of class \code{CARP} containing the following elements (among others):
 #'         \itemize{
 #'         \item \code{X}: the original data matrix
@@ -67,7 +68,8 @@ CARP <- function(X,
                  alg.type = c("carpviz", "carpvizl1", "carp", "carpl1"),
                  t = 1.05,
                  npcs = min(4L, NCOL(X), NROW(X)),
-                 dendrogram.scale = NULL) {
+                 dendrogram.scale = NULL,
+                 status = (interactive() && (clustRviz_logger_level() %in% c("MESSAGE", "WARNING", "ERROR")))) {
 
   tic <- Sys.time()
 
@@ -215,7 +217,8 @@ CARP <- function(X,
                                    viz_initial_step = .clustRvizOptionsEnv[["viz_initial_step"]],
                                    viz_small_step = .clustRvizOptionsEnv[["viz_small_step"]],
                                    keep = .clustRvizOptionsEnv[["keep"]],
-                                   l1 = (alg.type == "carpvizl1"))
+                                   l1 = (alg.type == "carpvizl1"),
+                                   show_progress = status)
   } else {
       carp.sol.path <- CARPcpp(X,
                                D,
@@ -226,7 +229,8 @@ CARP <- function(X,
                                max_iter = .clustRvizOptionsEnv[["max_iter"]],
                                burn_in = .clustRvizOptionsEnv[["burn_in"]],
                                keep = .clustRvizOptionsEnv[["keep"]],
-                               l1 = (alg.type == "carpl1"))
+                               l1 = (alg.type == "carpl1"),
+                               show_progress = status)
   }
 
   ## FIXME - Convert gamma.path to a single column matrix instead of a vector

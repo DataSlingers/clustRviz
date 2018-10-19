@@ -42,14 +42,12 @@ public:
         problem.store_values();
       }
 
+      // The progress bar class also checks for user interrupts on ticks
       iter++;
+      problem.tick(iter);
 
       if (iter >= burn_in) {
         problem.gamma *= t;
-      }
-
-      if ((iter % CLUSTRVIZ_CHECK_USER_INTERRUPT_RATE) == 0) {
-        Rcpp::checkUserInterrupt();
       }
     }
 
@@ -193,14 +191,12 @@ public:
         problem.store_values();
       }
 
+      // The progress bar class also checks for user interrupts on ticks
       iter++;
+      problem.tick(iter);
 
       if (iter > burn_in) {
         gamma *= t;
-      }
-
-      if ((iter % CLUSTRVIZ_CHECK_USER_INTERRUPT_RATE) == 0) {
-        Rcpp::checkUserInterrupt();
       }
     }
 
