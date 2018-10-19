@@ -175,6 +175,11 @@ public:
           rep_iter = false;
           ClustRVizLogger::info("Good iteration - continuing to next step.");
         }
+
+        // The progress bar class also checks for user interrupts on ticks
+        // so we do this inside of back-tracking loops so we don't get stuck
+        // uninterruptable on very slow calculations
+        problem.tick(iter);
       }
 
       gamma_old = gamma; // Save this for future back-tracking iterations
@@ -191,9 +196,7 @@ public:
         problem.store_values();
       }
 
-      // The progress bar class also checks for user interrupts on ticks
       iter++;
-      problem.tick(iter);
 
       if (iter > burn_in) {
         gamma *= t;
