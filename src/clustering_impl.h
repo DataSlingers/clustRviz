@@ -116,6 +116,10 @@ public:
     return nzeros > 0;
   }
 
+  bool admm_converged(){
+    return ((V - V_old).squaredNorm() + (Z - Z_old).squaredNorm() < 1e-7);
+  }
+
   void store_values(){
     if(storage_index >= buffer_size){
       ClustRVizLogger::info("Resizing storage from ") << buffer_size << " to " << 2 * buffer_size << " iterations.";

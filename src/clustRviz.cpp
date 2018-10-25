@@ -50,6 +50,23 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
 }
 
 // [[Rcpp::export]]
+Rcpp::List ConvexClusteringADMMcpp(const Eigen::MatrixXd& X,
+                                   const Eigen::MatrixXd& D,
+                                   double epsilon,
+                                   double t,
+                                   const Eigen::VectorXd& weights,
+                                   double rho   = 1,
+                                   int max_iter = 10000,
+                                   bool l1      = false,
+                                   bool show_progress = true){
+
+  ConvexClustering problem(X, D, weights, rho, l1, show_progress);
+  ConvexClusteringADMM admm(problem, epsilon, t, max_iter);
+
+  return admm.build_return_object();
+}
+
+// [[Rcpp::export]]
 Rcpp::List CBASS_VIZcpp(const Eigen::MatrixXd& X,
                         const Eigen::MatrixXd& D_row,
                         const Eigen::MatrixXd& D_col,

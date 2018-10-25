@@ -65,7 +65,7 @@ CARP <- function(X,
                  labels = rownames(X),
                  X.center = TRUE,
                  X.scale = FALSE,
-                 alg.type = c("carpviz", "carp"),
+                 alg.type = c("carpviz", "carp", "admm"),
                  norm = 2,
                  t = 1.05,
                  npcs = min(4L, NCOL(X), NROW(X)),
@@ -226,18 +226,28 @@ CARP <- function(X,
                                    keep = .clustRvizOptionsEnv[["keep"]],
                                    l1 = l1,
                                    show_progress = status)
+  } else if (alg.type == "carp") {
+    carp.sol.path <- CARPcpp(X,
+                             D,
+                             epsilon = .clustRvizOptionsEnv[["epsilon"]],
+                             t = t,
+                             weights = weight_vec[weight_vec != 0],
+                             rho = .clustRvizOptionsEnv[["rho"]],
+                             max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                             burn_in = .clustRvizOptionsEnv[["burn_in"]],
+                             keep = .clustRvizOptionsEnv[["keep"]],
+                             l1 = l1,
+                             show_progress = status)
   } else {
-      carp.sol.path <- CARPcpp(X,
-                               D,
-                               epsilon = .clustRvizOptionsEnv[["epsilon"]],
-                               t = t,
-                               weights = weight_vec[weight_vec != 0],
-                               rho = .clustRvizOptionsEnv[["rho"]],
-                               max_iter = .clustRvizOptionsEnv[["max_iter"]],
-                               burn_in = .clustRvizOptionsEnv[["burn_in"]],
-                               keep = .clustRvizOptionsEnv[["keep"]],
-                               l1 = l1,
-                               show_progress = status)
+    carp.sol.path <- ConvexClusteringADMMcpp(X,
+                                             D,
+                                             epsilon = .clustRvizOptionsEnv[["epsilon"]],
+                                             t = t,
+                                             weights = weight_vec[weight_vec != 0],
+                                             rho = .clustRvizOptionsEnv[["rho"]],
+                                             max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                                             l1 = l1,
+                                             show_progress = status)
   }
 
   ## FIXME - Convert gamma.path to a single column matrix instead of a vector
@@ -312,7 +322,8 @@ CARP <- function(X,
 print.CARP <- function(x, ...) {
   alg_string <- switch(x$alg.type,
                        carp      = paste0("CARP (t = ", round(x$t, 3), ")"),
-                       carpviz   = "CARP-VIZ")
+                       carpviz   = "CARP-VIZ",
+                       admm      = paste0("ADMM (t = ", round(x$t, 3), ")"))
 
   if(x$norm == 1){
     alg_string <- paste(alg_string, "[L1]")
