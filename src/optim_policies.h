@@ -42,6 +42,7 @@ public:
       ClustRVizLogger::info("ADMM converged with gamma = ") << problem.gamma << " after " << iter << " total iterations.";
 
       problem.store_values();
+      problem.reset_aux();
       problem.gamma *= t;
     }
 

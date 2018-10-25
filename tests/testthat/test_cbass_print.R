@@ -18,12 +18,12 @@ test_that("print.CBASS works for other algorithms", {
   expect_str_contains(capture_print(CBASS(presidential_speech, alg.type="cbassviz")),
                       "Algorithm:[ ]+CBASS-VIZ")
 
-  expect_str_contains(capture_print(CBASS(presidential_speech, alg.type="cbassvizl1")),
+  expect_str_contains(capture_print(CBASS(presidential_speech, alg.type="cbassviz", norm = 1)),
                       "Algorithm:[ ]+CBASS-VIZ \\[L1\\]")
 
   expect_str_contains(capture_print(CBASS(presidential_speech, alg.type="cbass", t=1.5)),
                       "Algorithm:[ ]+CBASS \\(t = 1.5\\)")
 
-  expect_str_contains(capture_print(CBASS(presidential_speech, alg.type="cbassl1", t=1.5)),
+  expect_str_contains(capture_print(CBASS(presidential_speech, alg.type="cbass", t=1.5, norm = 1)),
                       "Algorithm:[ ]+CBASS \\(t = 1.5\\) \\[L1\\]")
 })

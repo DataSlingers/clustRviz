@@ -188,6 +188,23 @@ public:
     return (nzeros_row > 0) | (nzeros_col > 0);
   }
 
+  bool admm_converged(){
+    double diff = 0;
+    diff += (V_row - V_row_old).squaredNorm();
+    diff += (V_col - V_col_old).squaredNorm();
+    diff += (Z_row - Z_row_old).squaredNorm();
+    diff += (Z_col - Z_col_old).squaredNorm();
+
+    return diff < 1e-7;
+  }
+
+  void reset_aux(){
+    P.setZero();
+    P_old.setZero();
+    Q.setZero();
+    Q_old.setZero();
+  }
+
   void store_values(){
     if(storage_index >= buffer_size){
       ClustRVizLogger::info("Resizing storage from ") << buffer_size << " to " << 2 * buffer_size << " iterations.";

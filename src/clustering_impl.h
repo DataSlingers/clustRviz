@@ -120,6 +120,10 @@ public:
     return ((V - V_old).squaredNorm() + (Z - Z_old).squaredNorm() < 1e-7);
   }
 
+  void reset_aux(){
+    // No-op for convex clustering since we don't have DLPA auxiliary variables P/Q
+  };
+
   void store_values(){
     if(storage_index >= buffer_size){
       ClustRVizLogger::info("Resizing storage from ") << buffer_size << " to " << 2 * buffer_size << " iterations.";

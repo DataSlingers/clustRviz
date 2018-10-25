@@ -76,7 +76,7 @@ CBASS <- function(X,
                   col_labels = colnames(X),
                   X.center.global = TRUE,
                   t = 1.01,
-                  alg.type = c("cbassviz", "cbass"),
+                  alg.type = c("cbassviz", "cbass", "admm"),
                   norm = 2,
                   npcs = min(4L, NCOL(X), NROW(X)),
                   dendrogram.scale = NULL,
@@ -298,7 +298,7 @@ CBASS <- function(X,
                                    keep = .clustRvizOptionsEnv[["keep"]],
                                    l1 = l1,
                                    show_progress = status)
-  } else {
+  } else if(alg.type == "cbass") {
     cbass.sol.path <- CBASScpp(X,
                                D_row,
                                D_col,
@@ -312,6 +312,18 @@ CBASS <- function(X,
                                keep = .clustRvizOptionsEnv[["keep"]],
                                l1 = l1,
                                show_progress = status)
+  } else {
+    cbass.sol.path <- ConvexBiClusteringADMMcpp(X,
+                                                D_row,
+                                                D_col,
+                                                epsilon = .clustRvizOptionsEnv[["epsilon"]],
+                                                t = t,
+                                                weights_row = row_weights[row_weights != 0],
+                                                weights_col = col_weights[col_weights != 0],
+                                                rho = .clustRvizOptionsEnv[["rho"]],
+                                                max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                                                l1 = l1,
+                                                show_progress = status)
   }
 
   ## FIXME - Convert gamma.path to a single column matrix instead of a vector
@@ -407,8 +419,9 @@ CBASS <- function(X,
 #' print(cbass_fit)
 print.CBASS <- function(x, ...) {
   alg_string <- switch(x$alg.type,
-                       cbass      = paste0("CBASS (t = ", round(x$t, 3), ")"),
-                       cbassviz   = "CBASS-VIZ")
+                       cbass    = paste0("CBASS (t = ", round(x$t, 3), ")"),
+                       cbassviz = "CBASS-VIZ",
+                       admm     = paste0("ADMM (t = ", round(x$t, 3), ")"))
 
   if(x$norm == 1){
     alg_string <- paste(alg_string, "[L1]")

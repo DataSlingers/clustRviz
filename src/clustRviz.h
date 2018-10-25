@@ -10,3 +10,4 @@ typedef AlgorithmicRegularizationBacktrackingPolicy<ConvexClustering> CARP_VIZ;
 typedef AlgorithmicRegularizationFixedStepSizePolicy<ConvexBiClustering> CBASS;
 typedef AlgorithmicRegularizationBacktrackingPolicy<ConvexBiClustering> CBASS_VIZ;
 typedef ADMMPolicy<ConvexClustering> ConvexClusteringADMM;
+typedef ADMMPolicy<ConvexBiClustering> ConvexBiClusteringADMM;
