@@ -76,7 +76,8 @@ CBASS <- function(X,
                   col_labels = colnames(X),
                   X.center.global = TRUE,
                   t = 1.01,
-                  alg.type = c("cbassviz", "cbassvizl1", "cbass", "cbassl1"),
+                  alg.type = c("cbassviz", "cbass"),
+                  norm = 2,
                   npcs = min(4L, NCOL(X), NROW(X)),
                   dendrogram.scale = NULL,
                   status = (interactive() && (clustRviz_logger_level() %in% c("MESSAGE", "WARNING", "ERROR")))) {
@@ -132,6 +133,12 @@ CBASS <- function(X,
   }
 
   alg.type <- match.arg(alg.type)
+
+  if (norm %not.in% c(1, 2)){
+    crv_error(sQuote("norm"), " must be either 1 or 2.")
+  }
+
+  l1 <- (norm == 1)
 
   if ( (!is_numeric_scalar(t)) || (t <= 1) ) {
     crv_error(sQuote("t"), " must be a scalar greater than 1.")
@@ -275,7 +282,7 @@ CBASS <- function(X,
 
   crv_message("Computing CBASS Path")
 
-  if (alg.type %in% c("cbassviz", "cbassvizl1")) {
+  if (alg.type == "cbassviz") {
     cbass.sol.path <- CBASS_VIZcpp(X,
                                    D_row,
                                    D_col,
@@ -289,7 +296,7 @@ CBASS <- function(X,
                                    viz_initial_step = .clustRvizOptionsEnv[["viz_initial_step"]],
                                    viz_small_step = .clustRvizOptionsEnv[["viz_small_step"]],
                                    keep = .clustRvizOptionsEnv[["keep"]],
-                                   l1 = (alg.type == "cbassvizl1"),
+                                   l1 = l1,
                                    show_progress = status)
   } else {
     cbass.sol.path <- CBASScpp(X,
@@ -303,7 +310,7 @@ CBASS <- function(X,
                                max_iter = .clustRvizOptionsEnv[["max_iter"]],
                                burn_in = .clustRvizOptionsEnv[["burn_in"]],
                                keep = .clustRvizOptionsEnv[["keep"]],
-                               l1 = (alg.type == "cbassl1"),
+                               l1 = l1,
                                show_progress = status)
   }
 
@@ -346,6 +353,7 @@ CBASS <- function(X,
     row_fusions = list(
       labels = row_labels,
       weight_type = row_weight_type,
+      weights = row_weight_matrix,
       U = post_processing_results_row$U,
       D = D_row,
       dendrogram = post_processing_results_row$dendrogram,
@@ -355,6 +363,7 @@ CBASS <- function(X,
     col_fusions = list(
       labels = col_labels,
       weight_type = col_weight_type,
+      weights = col_weight_matrix,
       U = post_processing_results_col$U,
       D = D_col,
       dendrogram = post_processing_results_col$dendrogram,
@@ -363,6 +372,7 @@ CBASS <- function(X,
     ),
     # General flags
     alg.type = alg.type,
+    norm = norm,
     t = t,
     X.center.global = X.center.global,
     mean_adjust = mean_adjust,
@@ -398,9 +408,11 @@ CBASS <- function(X,
 print.CBASS <- function(x, ...) {
   alg_string <- switch(x$alg.type,
                        cbass      = paste0("CBASS (t = ", round(x$t, 3), ")"),
-                       cbassl1    = paste0("CBASS (t = ", round(x$t, 3), ") [L1]"),
-                       cbassviz   = "CBASS-VIZ",
-                       cbassvizl1 = "CBASS-VIZ [L1]")
+                       cbassviz   = "CBASS-VIZ")
+
+  if(x$norm == 1){
+    alg_string <- paste(alg_string, "[L1]")
+  }
 
   cat("CBASS Fit Summary\n")
   cat("====================\n\n")

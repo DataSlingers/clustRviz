@@ -65,7 +65,8 @@ CARP <- function(X,
                  labels = rownames(X),
                  X.center = TRUE,
                  X.scale = FALSE,
-                 alg.type = c("carpviz", "carpvizl1", "carp", "carpl1"),
+                 alg.type = c("carpviz", "carp"),
+                 norm = 2,
                  t = 1.05,
                  npcs = min(4L, NCOL(X), NROW(X)),
                  dendrogram.scale = NULL,
@@ -116,6 +117,12 @@ CARP <- function(X,
   }
 
   alg.type <- match.arg(alg.type)
+
+  if (norm %not.in% c(1, 2)){
+    crv_error(sQuote("norm"), " must be either 1 or 2.")
+  }
+
+  l1 <- (norm == 1)
 
   if ( (!is_numeric_scalar(t)) || (t <= 1) ) {
     crv_error(sQuote("t"), " must be a scalar greater than 1.")
@@ -205,7 +212,7 @@ CARP <- function(X,
 
   crv_message("Computing CARP Path")
 
-  if (alg.type %in% c("carpvizl1", "carpviz")) {
+  if (alg.type == "carpviz") {
       carp.sol.path <- CARP_VIZcpp(X,
                                    D,
                                    epsilon = .clustRvizOptionsEnv[["epsilon"]],
@@ -217,7 +224,7 @@ CARP <- function(X,
                                    viz_initial_step = .clustRvizOptionsEnv[["viz_initial_step"]],
                                    viz_small_step = .clustRvizOptionsEnv[["viz_small_step"]],
                                    keep = .clustRvizOptionsEnv[["keep"]],
-                                   l1 = (alg.type == "carpvizl1"),
+                                   l1 = l1,
                                    show_progress = status)
   } else {
       carp.sol.path <- CARPcpp(X,
@@ -229,7 +236,7 @@ CARP <- function(X,
                                max_iter = .clustRvizOptionsEnv[["max_iter"]],
                                burn_in = .clustRvizOptionsEnv[["burn_in"]],
                                keep = .clustRvizOptionsEnv[["keep"]],
-                               l1 = (alg.type == "carpl1"),
+                               l1 = l1,
                                show_progress = status)
   }
 
@@ -261,8 +268,10 @@ CARP <- function(X,
     cluster_membership = post_processing_results$membership_info,
     n = n,
     p = p,
+    weights = weight_matrix,
     weight_type = weight_type,
     alg.type = alg.type,
+    norm = norm,
     t = t,
     X.center = X.center,
     center_vector = center_vector,
@@ -303,9 +312,11 @@ CARP <- function(X,
 print.CARP <- function(x, ...) {
   alg_string <- switch(x$alg.type,
                        carp      = paste0("CARP (t = ", round(x$t, 3), ")"),
-                       carpl1    = paste0("CARP (t = ", round(x$t, 3), ") [L1]"),
-                       carpviz   = "CARP-VIZ",
-                       carpvizl1 = "CARP-VIZ [L1]")
+                       carpviz   = "CARP-VIZ")
+
+  if(x$norm == 1){
+    alg_string <- paste(alg_string, "[L1]")
+  }
 
   cat("CARP Fit Summary\n")
   cat("====================\n\n")
