@@ -12,10 +12,12 @@
 #' @param X.center A logical: Should \code{X} be centered columnwise?
 #' @param X.scale A logical: Should \code{X} be scaled columnwise?
 #' @param alg.type Which \code{CARP} variant to use. Allowed values are \itemize{
-#'        \item \code{"carp"} - The standard \code{CARP} algorithm with \eqn{L2} penalty;
-#'        \item \code{"carpviz"} - The back-tracking \code{CARP} algorithm with \eqn{L2} penalty;
-#'        \item \code{"carpl1"} - The standard \code{CARP} algorithm with \eqn{L1} penalty; and
-#'        \item \code{"carpvizl1"} - The back-tracking \code{CARP} algorithm with \eqn{L1} penalty.}
+#'        \item \code{"carp"} - The standard \code{CARP} algorithm;
+#'        \item \code{"carpviz"} - The back-tracking \code{CARP} algorithm; or
+#'        \item \code{"admm"} - Fully solving the ADMM till convergence
+#' }
+#' @param norm Which norm to use in the fusion penalty? Currently only \code{1}
+#'             and \code{2} (default) are supported.
 #' @param t A number greater than 1: the size of the multiplicative update to
 #'          the cluster fusion regularization parameter (not used by
 #'          back-tracking variants). Typically on the scale of \code{1.005} to \code{1.1}.
@@ -291,7 +293,8 @@ CARP <- function(X,
   )
 
   if (.clustRvizOptionsEnv[["keep_debug_info"]]) {
-    carp.fit[["debug"]] <- post_processing_results[["debug"]]
+    carp.fit[["debug"]] <- list(path = carp.sol.path,
+                                row  = post_processing_results$debug)
   }
 
   class(carp.fit) <- "CARP"

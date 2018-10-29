@@ -26,10 +26,12 @@
 #' @param X.center.global A logical: Should \code{X} be centered globally?
 #'                        \emph{I.e.}, should the global mean of \code{X} be subtracted?
 #' @param alg.type Which \code{CBASS} variant to use. Allowed values are \itemize{
-#'        \item \code{"cbass"} - The standard \code{CBASS} algorithm with \eqn{L2} penalty;
-#'        \item \code{"cbassviz"} - The back-tracking \code{CBASS} algorithm with \eqn{L2} penalty;
-#'        \item \code{"cbassl1"} - The standard \code{CBASS} algorithm with \eqn{L1} penalty; and
-#'        \item \code{"cbassvizl1"} - The back-tracking \code{CBASS} algorithm with \eqn{L1} penalty.}
+#'        \item \code{"cbass"} - The standard \code{CBASS} algorithm;
+#'        \item \code{"cbassviz"} - The back-tracking \code{CBASS} algorithm; or
+#'        \item \code{"admm"} - Fully solving the ADMM till convergence
+#' }
+#' @param norm Which norm to use in the fusion penalty? Currently only \code{1}
+#'             and \code{2} (default) are supported.
 #' @param t A number greater than 1: the size of the multiplicative update to
 #'          the cluster fusion regularization parameter (not used by
 #'          back-tracking variants). Typically on the scale of \code{1.005} to \code{1.1}.
@@ -133,6 +135,10 @@ CBASS <- function(X,
   }
 
   alg.type <- match.arg(alg.type)
+
+  if(alg.type == "admm"){
+    crv_warning("CBASS does not converge to global optimum, even when alg.type is ADMM. Use results with caution.")
+  }
 
   if (norm %not.in% c(1, 2)){
     crv_error(sQuote("norm"), " must be either 1 or 2.")
@@ -392,8 +398,9 @@ CBASS <- function(X,
   )
 
   if (.clustRvizOptionsEnv[["keep_debug_info"]]) {
-    cbass.fit[["debug"]] <- list(col = post_processing_results_col[["debug"]],
-                                 row = post_processing_results_row[["debug"]])
+    cbass.fit[["debug"]] <- list(path = cbass.sol.path,
+                                 col  = post_processing_results_col[["debug"]],
+                                 row  = post_processing_results_row[["debug"]])
   }
 
   class(cbass.fit) <- "CBASS"
