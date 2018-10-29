@@ -40,7 +40,6 @@ public:
   output_supported(is_supported()),
   format(format),
   width(width),
-  use_stderr(default_stderr()),
   last_tick(std::clock()),
   total_fusions(total_fusions),
   fusions(0),
@@ -104,7 +103,6 @@ private:
   const bool output_supported; // Do we support the desired print location?
   std::string format;          // Bar template -- hard coded above
   int width;                   // Width of progress bar (used to set template and control print length)
-  const bool use_stderr;       // Whether to print to stderr
   std::string last_draw;       // Last progress bar drawn
   std::clock_t last_tick;      // Time of last PB tick
 
@@ -117,15 +115,15 @@ private:
   double gamma;            // Current regularization level
 
   void update_format(){
-    if(this->width > 120){
+    if(this->width >= 120){
       this->format = ":spin Iteration :iter. Current Gamma :gamma. Fused :edges / :total edges. Percent fusion achieved :pct%";
-    } else if(this->width > 80){
+    } else if(this->width >= 80){
       this->format = ":spin Iteration :iter. Current Gamma :gamma. Fused :edges / :total edges";
-    } else if(this->width > 40){
+    } else if(this->width >= 40){
       this->format = ":spin Current Iteration :iter. Current Gamma :gamma";
-    } else if(this->width > 20){
+    } else if(this->width >= 20){
       this->format = ":spin Current Iteration :iter";
-    } else if (this->width > 5){
+    } else if (this->width >= 5){
       this->format = ":spin";
     } else {
       this->format = "";
@@ -172,13 +170,9 @@ private:
     replace_all(str, ":spin", spin_symbol());
 
     if (last_draw != str) {
-      if (last_draw.length() > str.length()) { clear_line(use_stderr, width); }
-      cursor_to_start(use_stderr);
-      if (use_stderr) {
-        REprintf(str.c_str());
-      } else {
-        Rprintf(str.c_str());
-      }
+      if (last_draw.length() > str.length()) { clear_line(width); }
+      cursor_to_start();
+      Rprintf(str.c_str());
       last_draw = str;
     }
   }
@@ -190,11 +184,12 @@ private:
     }
 
     // Clean up and exit
-    clear_line(use_stderr, width);
-    cursor_to_start(use_stderr);
-    if (use_stderr) {
-      REprintf("\n");
-    } else {
+    clear_line(width);
+    cursor_to_start();
+
+    // RStudio appears to not implement \r quite right,
+    // so let's add a new line to be safe
+    if(is_r_studio()){
       Rprintf("\n");
     }
   }
@@ -204,7 +199,7 @@ private:
     return std::string(1, symbols[(count - 1) % 4]);
   }
 
-  void clear_line(bool use_stderr, int width) {
+  void clear_line(int width) {
 
     char *spaces = (char*) calloc(width + 2, sizeof(char));
     if (!spaces) Rf_error("Progress bar: out of memory");
@@ -212,36 +207,22 @@ private:
     spaces[0] = '\r';
     spaces[width + 1] = '\0';
 
-    if (use_stderr) {
-      REprintf(spaces);
-    } else {
-      Rprintf(spaces);
-    }
+    Rprintf(spaces);
     free(spaces);
   }
 
-  void cursor_to_start(bool use_stderr) {
-    if (use_stderr) {
-      REprintf("\r");
-    } else {
-      Rprintf("\r");
-    }
+  void cursor_to_start() {
+    Rprintf("\r");
   }
 
-  bool is_r_studio() {
-    char *v = std::getenv("RSTUDIO");
-    return v != 0 && v[0] == '1' && v[1] == '\0';
-  }
-
-  bool is_r_app() {
+  bool is_r_app() const {
     char *v = std::getenv("R_GUI_APP_VERSION");
     return v != 0;
   }
 
-  // In R Studio we should print to stdout, because priting a \r
-  // to stderr is buggy (reported)
-  bool default_stderr() {
-    return !is_r_studio();
+  bool is_r_studio() const {
+    char *v = std::getenv("RSTUDIO");
+    return v != 0 && v[0] == '1' && v[1] == '\0';
   }
 
   // If stdout is a terminal, or R Studio or macOS R.app
