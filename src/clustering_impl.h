@@ -66,6 +66,10 @@ public:
     return nzeros == num_edges;
   }
 
+  void full_admm_step(){
+    admm_step();
+  }
+
   void admm_step(){
     // U-update
     U = u_step_solver.solve(X + rho * D.transpose() * (V - Z));

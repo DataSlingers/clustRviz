@@ -31,11 +31,19 @@ public:
     while( (iter < max_iter) & (!problem.is_complete()) ){
       ClustRVizLogger::info("Starting ADMM with gamma = ") << problem.gamma;
 
+      int k = 0;
+
       do {
         problem.save_old_values();
-        problem.admm_step();
-        iter++;
+        problem.full_admm_step();
+        iter++; k++;
+
+        // problem.tick() will check for interrupts
         problem.tick(iter);
+
+        if(k > 150){
+          break; // Avoid infinite loops on a single gamma...
+        }
 
       } while (!problem.admm_converged());
 

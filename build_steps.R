@@ -18,6 +18,13 @@ before_install <- function(){
   devtools::install_deps(dependencies=c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances"),
                          quiet=FALSE, upgrade=FALSE, auth_token = Sys.getenv("GITHUB_PAT") %||% devtools::github_pat(FALSE))
 
+  cat("INSTALLING TEST DEPENDENCIES -------- \n\n")
+  for(pkg in c("cvxclustr", "cvxbiclustr")){
+    if(!require(pkg, character.only=TRUE)){
+      install.packages(pkg)
+    }
+  }
+
   cat("BUILDING NAMESPACE with roxygen2 -------- \n\n")
   roxygen2::roxygenize()
   cat("COMPILING RCPP ATTRIBUTES -------- \n\n")

@@ -9,7 +9,7 @@
 #' @param row_weights One of the following: \itemize{
 #'                    \item A function which, when called with argument \code{X},
 #'                          returns a n-by-n matrix of fusion weights.
-#'                    \item A matrix of size n-by-ncontaining fusion weights
+#'                    \item A matrix of size n-by-n containing fusion weights
 #'                    }
 #'                    Note that the weights will be renormalized to sum to
 #'                    \eqn{1/\sqrt{n}} internally.
@@ -135,10 +135,6 @@ CBASS <- function(X,
   }
 
   alg.type <- match.arg(alg.type)
-
-  if(alg.type == "admm"){
-    crv_warning("CBASS does not converge to global optimum, even when alg.type is ADMM. Use results with caution.")
-  }
 
   if (norm %not.in% c(1, 2)){
     crv_error(sQuote("norm"), " must be either 1 or 2.")
