@@ -24,6 +24,6 @@ test_that("CBASS [L1] works", {
   expect_no_error(print(cbass_fit))
 })
 
-test_that("CBASS runs with X.center.global = FALSE", {
-  expect_no_error(CBASS(presidential_speech, X.center.global = FALSE))
+test_that("CBASS runs with X.center.global = FALSE & progress printing", {
+  expect_no_error(CBASS(presidential_speech, X.center.global = FALSE, status = TRUE))
 })

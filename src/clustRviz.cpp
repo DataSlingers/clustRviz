@@ -13,9 +13,10 @@ Rcpp::List CARP_VIZcpp(const Eigen::MatrixXd& X,
                        int viz_max_inner_iter  = 15,
                        double viz_initial_step = 1.1,
                        double viz_small_step   = 1.01,
-                       bool l1                 = false){
+                       bool l1                 = false,
+                       bool show_progress      = true){
 
-  ConvexClustering problem(X, D, weights, rho, l1);
+  ConvexClustering problem(X, D, weights, rho, l1, show_progress);
   CARP_VIZ carp_viz(problem,
                     epsilon,
                     max_iter,
@@ -39,9 +40,10 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
                    int max_iter = 10000,
                    int burn_in  = 50,
                    int keep     = 10,
-                   bool l1      = false){
+                   bool l1      = false,
+                   bool show_progress = true){
 
-  ConvexClustering problem(X, D, weights, rho, l1);
+  ConvexClustering problem(X, D, weights, rho, l1, show_progress);
   CARP carp(problem, epsilon, t, max_iter, burn_in, keep);
 
   return carp.build_return_object();
@@ -62,9 +64,10 @@ Rcpp::List CBASS_VIZcpp(const Eigen::MatrixXd& X,
                         int viz_max_inner_iter  = 15,
                         double viz_initial_step = 1.1,
                         double viz_small_step   = 1.01,
-                        bool l1                 = false){
+                        bool l1                 = false,
+                        bool show_progress      = true){
 
-  ConvexBiClustering problem(X, D_row, D_col, weights_row, weights_col, rho, l1);
+  ConvexBiClustering problem(X, D_row, D_col, weights_row, weights_col, rho, l1, show_progress);
   CBASS_VIZ cbass_viz(problem,
                       epsilon,
                       max_iter,
@@ -90,9 +93,10 @@ Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
                     int max_iter = 1e4,
                     int burn_in  = 50,
                     int keep     = 10,
-                    bool l1      = false){
+                    bool l1      = false,
+                    bool show_progress = true){
 
-  ConvexBiClustering problem(X, D_row, D_col, weights_row, weights_col, rho, l1);
+  ConvexBiClustering problem(X, D_row, D_col, weights_row, weights_col, rho, l1, show_progress);
   CBASS cbass(problem, epsilon, t, max_iter, burn_in, keep);
 
   return cbass.build_return_object();

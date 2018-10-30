@@ -41,6 +41,7 @@
 #'                         provided, a data-driven heuristic choice is used.
 #' @param ... Unused arguements. An error will be thrown if any unrecognized
 #'            arguments as given.
+#' @param status Should a status message be printed to the console?
 #' @return An object of class \code{CBASS} containing the following elements (among others):
 #'         \itemize{
 #'         \item \code{X}: the original data matrix
@@ -77,7 +78,8 @@ CBASS <- function(X,
                   t = 1.01,
                   alg.type = c("cbassviz", "cbassvizl1", "cbass", "cbassl1"),
                   npcs = min(4L, NCOL(X), NROW(X)),
-                  dendrogram.scale = NULL) {
+                  dendrogram.scale = NULL,
+                  status = (interactive() && (clustRviz_logger_level() %in% c("MESSAGE", "WARNING", "ERROR")))) {
 
   tic <- Sys.time()
 
@@ -287,7 +289,8 @@ CBASS <- function(X,
                                    viz_initial_step = .clustRvizOptionsEnv[["viz_initial_step"]],
                                    viz_small_step = .clustRvizOptionsEnv[["viz_small_step"]],
                                    keep = .clustRvizOptionsEnv[["keep"]],
-                                   l1 = (alg.type == "cbassvizl1"))
+                                   l1 = (alg.type == "cbassvizl1"),
+                                   show_progress = status)
   } else {
     cbass.sol.path <- CBASScpp(X,
                                D_row,
@@ -300,7 +303,8 @@ CBASS <- function(X,
                                max_iter = .clustRvizOptionsEnv[["max_iter"]],
                                burn_in = .clustRvizOptionsEnv[["burn_in"]],
                                keep = .clustRvizOptionsEnv[["keep"]],
-                               l1 = (alg.type == "cbassl1"))
+                               l1 = (alg.type == "cbassl1"),
+                               show_progress = status)
   }
 
   ## FIXME - Convert gamma.path to a single column matrix instead of a vector

@@ -3,6 +3,7 @@
 
 #include "clustRviz_base.h"
 #include "clustRviz_logging.h"
+#include "status.h"
 
 class ConvexClustering {
 public:
@@ -12,7 +13,8 @@ public:
                    const Eigen::MatrixXd& D_,
                    const Eigen::VectorXd& weights_,
                    const double rho_,
-                   const bool  l1_):
+                   const bool l1_,
+                   const bool show_progress_):
   X(X_),
   D(D_),
   weights(weights_),
@@ -20,7 +22,8 @@ public:
   l1(l1_),
   n(X_.rows()),
   p(X_.cols()),
-  num_edges(D_.rows()){
+  num_edges(D_.rows()),
+  sp(show_progress_, D_.rows()) {
 
     // Set initial values for optimization variables
     U = X;
@@ -28,6 +31,8 @@ public:
     Z = V;
     v_zeros = Eigen::ArrayXi::Zero(num_edges);
     gamma = 0;
+
+    sp.set_v_norm_init(V.squaredNorm());
 
     // Initialize storage buffers
     buffer_size = 1.5 * n;
@@ -148,6 +153,10 @@ public:
                               Rcpp::Named("gamma_path")  = gamma_path);
   }
 
+  void tick(uint iter){
+    sp.update(nzeros, V.squaredNorm(), iter, gamma);
+  }
+
 private:
   // Fixed (non-data-dependent) problem details
   const Eigen::MatrixXd& X; // Data matrix (to be clustered)
@@ -161,6 +170,9 @@ private:
   const int p;
   const int num_edges;
   Eigen::LLT<Eigen::MatrixXd> u_step_solver; // Cached factorization for u-update
+
+  // Progress printer
+  StatusPrinter sp;
 
   // Current copies of ADMM variables
   Eigen::MatrixXd U; // Primal variable

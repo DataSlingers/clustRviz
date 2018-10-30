@@ -5,7 +5,8 @@
 #include <vector>
 #include <set>
 
-#define CLUSTRVIZ_CHECK_USER_INTERRUPT_RATE 50
+#define CLUSTRVIZ_STATUS_UPDATE_TIME_SECS 0.1 // Every 0.1s
+#define CLUSTRVIZ_STATUS_WIDTH_CHECK 20 // Every 20 status updates * 0.1s => every 2s
 
 // Helper to determine if STL set contains an element
 //
