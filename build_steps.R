@@ -47,7 +47,11 @@ before_install <- function(){
 after_success <- function(){
   devtools::install(reload = TRUE, quick = TRUE, quiet = FALSE, upgrade = FALSE, 
                     auth_token = Sys.getenv("GITHUB_TOKEN") %||% devtools::github_pat(FALSE))
-  rmarkdown::render("README.Rmd")
+  rmarkdown::render("README.Rmd", clean = FALSE)
+  unlink("README.knit.md", force = TRUE)
+  unlink("README.utf8.md", force = TRUE)
+
+  ## Build pkgdown site
   pkgdown::build_site()
 
   ## Copy GIF to a place where pkgdown site will find it
