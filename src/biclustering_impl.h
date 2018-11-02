@@ -83,6 +83,98 @@ public:
     return (nzeros_row == num_row_edges) & (nzeros_col == num_col_edges);
   }
 
+  void full_admm_step(){
+    Eigen::MatrixXd T = U + P;
+    Eigen::MatrixXd T_prev;
+    int k_row = 0;
+
+    do {
+      k_row ++;
+      T_prev = T;
+      /// Row-fusion iterations
+      // Primal Update
+      T = row_primal_solver.solve(U + P + rho * D_row.transpose() * (V_row - Z_row));
+
+      Eigen::MatrixXd DT = D_row * T;
+      ClustRVizLogger::debug("T = ") << T;
+
+      // Copy Update
+      Eigen::MatrixXd DTZ = DT + Z_row;
+      V_row = MatrixProx(DTZ, gamma / rho, weights_row, l1);
+      ClustRVizLogger::debug("V_row = ") << V_row;
+
+      // Dual Update
+      Z_row += DT - V_row;
+      ClustRVizLogger::debug("Z_row = ") << Z_row;
+      /// END Row-fusion iterations
+
+      if(k_row > 150) {
+        break; // Avoid infinite looping...
+      }
+    } while ( (T - T_prev).squaredNorm() > 1e-7);
+
+    // DLPA Updates
+    P += U - T;
+    Eigen::MatrixXd TQT = T + Q; TQT.transposeInPlace();
+
+    Eigen::MatrixXd S = TQT;
+    Eigen::MatrixXd S_prev;
+    int k_col = 0;
+
+    do {
+      S_prev = S;
+      k_col++;
+
+      /// Column-fusion iterations
+      // Primal Update
+      S = col_primal_solver.solve(TQT + rho * D_col * (V_col - Z_col));
+      Eigen::MatrixXd DTS = D_col.transpose() * S;
+      ClustRVizLogger::debug("S = ") << S;
+
+      // Copy Update
+      Eigen::MatrixXd DTSZ = DTS + Z_col;
+      V_col = MatrixProx(DTSZ, gamma / rho, weights_col, l1);
+      ClustRVizLogger::debug("V_col = ") << V_col;
+
+      // Dual Update
+      Z_col += DTS - V_col;
+      ClustRVizLogger::debug("Z_col = ") << Z_col;
+      /// END Column-fusion iterations
+
+      if(k_col > 150) {
+        break; // Avoid infinite looping...
+      }
+
+    } while ( (S - S_prev).squaredNorm() > 1e-7);
+
+    // DLPA Updates + New U
+    U = S.transpose();
+    Q += T - U;
+
+    // Identify row fusions (rows of V_row which have gone to zero)
+    Eigen::VectorXd v_row_norms = V_row.rowwise().squaredNorm();
+    v_row_zeros(num_row_edges);
+
+    for(Eigen::Index i = 0; i < num_row_edges; i++){
+      v_row_zeros(i) = v_row_norms(i) == 0;
+    }
+    nzeros_row = v_row_zeros.sum();
+
+    // Identify column fusions (rows of V_col which have gone to zero)
+    // Remember, V_col and Z_col are internal to the "transposed prox" sub-problem
+    // so everything is reversed of what we'd expect
+    Eigen::VectorXd v_col_norms = V_col.rowwise().squaredNorm();
+    v_col_zeros(num_col_edges);
+
+    for(Eigen::Index i = 0; i < num_col_edges; i++){
+      v_col_zeros(i) = v_col_norms(i) == 0;
+    }
+    nzeros_col = v_col_zeros.sum();
+
+    ClustRVizLogger::debug("Number of row fusions identified ") << nzeros_row;
+    ClustRVizLogger::debug("Number of column fusions identified ") << nzeros_col;
+  }
+
   void admm_step(){
     /// Row-fusion iterations
     // Primal Update
@@ -186,6 +278,18 @@ public:
 
   bool has_fusions(){
     return (nzeros_row > 0) | (nzeros_col > 0);
+  }
+
+  bool admm_converged(){
+    return (U - U_old).squaredNorm() < 1e-10;
+  }
+
+  void reset_aux(){
+    U = U_old = X;
+    P.setZero();
+    P_old.setZero();
+    Q.setZero();
+    Q_old.setZero();
   }
 
   void store_values(){

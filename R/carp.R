@@ -12,10 +12,12 @@
 #' @param X.center A logical: Should \code{X} be centered columnwise?
 #' @param X.scale A logical: Should \code{X} be scaled columnwise?
 #' @param alg.type Which \code{CARP} variant to use. Allowed values are \itemize{
-#'        \item \code{"carp"} - The standard \code{CARP} algorithm with \eqn{L2} penalty;
-#'        \item \code{"carpviz"} - The back-tracking \code{CARP} algorithm with \eqn{L2} penalty;
-#'        \item \code{"carpl1"} - The standard \code{CARP} algorithm with \eqn{L1} penalty; and
-#'        \item \code{"carpvizl1"} - The back-tracking \code{CARP} algorithm with \eqn{L1} penalty.}
+#'        \item \code{"carp"} - The standard \code{CARP} algorithm;
+#'        \item \code{"carpviz"} - The back-tracking \code{CARP} algorithm; or
+#'        \item \code{"admm"} - Fully solving the ADMM till convergence
+#' }
+#' @param norm Which norm to use in the fusion penalty? Currently only \code{1}
+#'             and \code{2} (default) are supported.
 #' @param t A number greater than 1: the size of the multiplicative update to
 #'          the cluster fusion regularization parameter (not used by
 #'          back-tracking variants). Typically on the scale of \code{1.005} to \code{1.1}.
@@ -65,7 +67,8 @@ CARP <- function(X,
                  labels = rownames(X),
                  X.center = TRUE,
                  X.scale = FALSE,
-                 alg.type = c("carpviz", "carpvizl1", "carp", "carpl1"),
+                 alg.type = c("carpviz", "carp", "admm"),
+                 norm = 2,
                  t = 1.05,
                  npcs = min(4L, NCOL(X), NROW(X)),
                  dendrogram.scale = NULL,
@@ -116,6 +119,12 @@ CARP <- function(X,
   }
 
   alg.type <- match.arg(alg.type)
+
+  if (norm %not.in% c(1, 2)){
+    crv_error(sQuote("norm"), " must be either 1 or 2.")
+  }
+
+  l1 <- (norm == 1)
 
   if ( (!is_numeric_scalar(t)) || (t <= 1) ) {
     crv_error(sQuote("t"), " must be a scalar greater than 1.")
@@ -205,7 +214,7 @@ CARP <- function(X,
 
   crv_message("Computing CARP Path")
 
-  if (alg.type %in% c("carpvizl1", "carpviz")) {
+  if (alg.type == "carpviz") {
       carp.sol.path <- CARP_VIZcpp(X,
                                    D,
                                    epsilon = .clustRvizOptionsEnv[["epsilon"]],
@@ -217,20 +226,30 @@ CARP <- function(X,
                                    viz_initial_step = .clustRvizOptionsEnv[["viz_initial_step"]],
                                    viz_small_step = .clustRvizOptionsEnv[["viz_small_step"]],
                                    keep = .clustRvizOptionsEnv[["keep"]],
-                                   l1 = (alg.type == "carpvizl1"),
+                                   l1 = l1,
                                    show_progress = status)
+  } else if (alg.type == "carp") {
+    carp.sol.path <- CARPcpp(X,
+                             D,
+                             epsilon = .clustRvizOptionsEnv[["epsilon"]],
+                             t = t,
+                             weights = weight_vec[weight_vec != 0],
+                             rho = .clustRvizOptionsEnv[["rho"]],
+                             max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                             burn_in = .clustRvizOptionsEnv[["burn_in"]],
+                             keep = .clustRvizOptionsEnv[["keep"]],
+                             l1 = l1,
+                             show_progress = status)
   } else {
-      carp.sol.path <- CARPcpp(X,
-                               D,
-                               epsilon = .clustRvizOptionsEnv[["epsilon"]],
-                               t = t,
-                               weights = weight_vec[weight_vec != 0],
-                               rho = .clustRvizOptionsEnv[["rho"]],
-                               max_iter = .clustRvizOptionsEnv[["max_iter"]],
-                               burn_in = .clustRvizOptionsEnv[["burn_in"]],
-                               keep = .clustRvizOptionsEnv[["keep"]],
-                               l1 = (alg.type == "carpl1"),
-                               show_progress = status)
+    carp.sol.path <- ConvexClusteringADMMcpp(X,
+                                             D,
+                                             epsilon = .clustRvizOptionsEnv[["epsilon"]],
+                                             t = t,
+                                             weights = weight_vec[weight_vec != 0],
+                                             rho = .clustRvizOptionsEnv[["rho"]],
+                                             max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                                             l1 = l1,
+                                             show_progress = status)
   }
 
   ## FIXME - Convert gamma.path to a single column matrix instead of a vector
@@ -261,8 +280,10 @@ CARP <- function(X,
     cluster_membership = post_processing_results$membership_info,
     n = n,
     p = p,
+    weights = weight_matrix,
     weight_type = weight_type,
     alg.type = alg.type,
+    norm = norm,
     t = t,
     X.center = X.center,
     center_vector = center_vector,
@@ -272,7 +293,8 @@ CARP <- function(X,
   )
 
   if (.clustRvizOptionsEnv[["keep_debug_info"]]) {
-    carp.fit[["debug"]] <- post_processing_results[["debug"]]
+    carp.fit[["debug"]] <- list(path = carp.sol.path,
+                                row  = post_processing_results$debug)
   }
 
   class(carp.fit) <- "CARP"
@@ -303,9 +325,12 @@ CARP <- function(X,
 print.CARP <- function(x, ...) {
   alg_string <- switch(x$alg.type,
                        carp      = paste0("CARP (t = ", round(x$t, 3), ")"),
-                       carpl1    = paste0("CARP (t = ", round(x$t, 3), ") [L1]"),
                        carpviz   = "CARP-VIZ",
-                       carpvizl1 = "CARP-VIZ [L1]")
+                       admm      = paste0("ADMM (t = ", round(x$t, 3), ")"))
+
+  if(x$norm == 1){
+    alg_string <- paste(alg_string, "[L1]")
+  }
 
   cat("CARP Fit Summary\n")
   cat("====================\n\n")

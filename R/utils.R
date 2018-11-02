@@ -422,6 +422,8 @@ unscale_matrix <- function(X,
   X * matrix(scale, n, p, byrow=TRUE) + matrix(center, n, p, byrow=TRUE)
 }
 
+`%not.in%` <- Negate(`%in%`)
+
 ## A very thin wrapper around RColorBrewer::brewer.pal that doesn't warn with
 ## a few colors
 #' @noRd

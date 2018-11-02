@@ -19,12 +19,12 @@ test_that("print.CARP works for other algorithms", {
   expect_str_contains(capture_print(CARP(presidential_speech, alg.type="carpviz")),
                       "Algorithm:[ ]+CARP-VIZ")
 
-  expect_str_contains(capture_print(CARP(presidential_speech, alg.type="carpvizl1")),
+  expect_str_contains(capture_print(CARP(presidential_speech, alg.type="carpviz", norm = 1)),
                       "Algorithm:[ ]+CARP-VIZ \\[L1\\]")
 
   expect_str_contains(capture_print(CARP(presidential_speech, alg.type="carp", t=1.5)),
                       "Algorithm:[ ]+CARP \\(t = 1.5\\)")
 
-  expect_str_contains(capture_print(CARP(presidential_speech, alg.type="carpl1", t=1.5)),
+  expect_str_contains(capture_print(CARP(presidential_speech, alg.type="carp", t=1.5, norm = 1)),
                       "Algorithm:[ ]+CARP \\(t = 1.5\\) \\[L1\\]")
 })

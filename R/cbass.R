@@ -9,7 +9,7 @@
 #' @param row_weights One of the following: \itemize{
 #'                    \item A function which, when called with argument \code{X},
 #'                          returns a n-by-n matrix of fusion weights.
-#'                    \item A matrix of size n-by-ncontaining fusion weights
+#'                    \item A matrix of size n-by-n containing fusion weights
 #'                    }
 #'                    Note that the weights will be renormalized to sum to
 #'                    \eqn{1/\sqrt{n}} internally.
@@ -26,10 +26,12 @@
 #' @param X.center.global A logical: Should \code{X} be centered globally?
 #'                        \emph{I.e.}, should the global mean of \code{X} be subtracted?
 #' @param alg.type Which \code{CBASS} variant to use. Allowed values are \itemize{
-#'        \item \code{"cbass"} - The standard \code{CBASS} algorithm with \eqn{L2} penalty;
-#'        \item \code{"cbassviz"} - The back-tracking \code{CBASS} algorithm with \eqn{L2} penalty;
-#'        \item \code{"cbassl1"} - The standard \code{CBASS} algorithm with \eqn{L1} penalty; and
-#'        \item \code{"cbassvizl1"} - The back-tracking \code{CBASS} algorithm with \eqn{L1} penalty.}
+#'        \item \code{"cbass"} - The standard \code{CBASS} algorithm;
+#'        \item \code{"cbassviz"} - The back-tracking \code{CBASS} algorithm; or
+#'        \item \code{"admm"} - Fully solving the ADMM till convergence
+#' }
+#' @param norm Which norm to use in the fusion penalty? Currently only \code{1}
+#'             and \code{2} (default) are supported.
 #' @param t A number greater than 1: the size of the multiplicative update to
 #'          the cluster fusion regularization parameter (not used by
 #'          back-tracking variants). Typically on the scale of \code{1.005} to \code{1.1}.
@@ -76,7 +78,8 @@ CBASS <- function(X,
                   col_labels = colnames(X),
                   X.center.global = TRUE,
                   t = 1.01,
-                  alg.type = c("cbassviz", "cbassvizl1", "cbass", "cbassl1"),
+                  alg.type = c("cbassviz", "cbass", "admm"),
+                  norm = 2,
                   npcs = min(4L, NCOL(X), NROW(X)),
                   dendrogram.scale = NULL,
                   status = (interactive() && (clustRviz_logger_level() %in% c("MESSAGE", "WARNING", "ERROR")))) {
@@ -132,6 +135,12 @@ CBASS <- function(X,
   }
 
   alg.type <- match.arg(alg.type)
+
+  if (norm %not.in% c(1, 2)){
+    crv_error(sQuote("norm"), " must be either 1 or 2.")
+  }
+
+  l1 <- (norm == 1)
 
   if ( (!is_numeric_scalar(t)) || (t <= 1) ) {
     crv_error(sQuote("t"), " must be a scalar greater than 1.")
@@ -275,7 +284,7 @@ CBASS <- function(X,
 
   crv_message("Computing CBASS Path")
 
-  if (alg.type %in% c("cbassviz", "cbassvizl1")) {
+  if (alg.type == "cbassviz") {
     cbass.sol.path <- CBASS_VIZcpp(X,
                                    D_row,
                                    D_col,
@@ -289,9 +298,9 @@ CBASS <- function(X,
                                    viz_initial_step = .clustRvizOptionsEnv[["viz_initial_step"]],
                                    viz_small_step = .clustRvizOptionsEnv[["viz_small_step"]],
                                    keep = .clustRvizOptionsEnv[["keep"]],
-                                   l1 = (alg.type == "cbassvizl1"),
+                                   l1 = l1,
                                    show_progress = status)
-  } else {
+  } else if(alg.type == "cbass") {
     cbass.sol.path <- CBASScpp(X,
                                D_row,
                                D_col,
@@ -303,8 +312,20 @@ CBASS <- function(X,
                                max_iter = .clustRvizOptionsEnv[["max_iter"]],
                                burn_in = .clustRvizOptionsEnv[["burn_in"]],
                                keep = .clustRvizOptionsEnv[["keep"]],
-                               l1 = (alg.type == "cbassl1"),
+                               l1 = l1,
                                show_progress = status)
+  } else {
+    cbass.sol.path <- ConvexBiClusteringADMMcpp(X,
+                                                D_row,
+                                                D_col,
+                                                epsilon = .clustRvizOptionsEnv[["epsilon"]],
+                                                t = t,
+                                                weights_row = row_weights[row_weights != 0],
+                                                weights_col = col_weights[col_weights != 0],
+                                                rho = .clustRvizOptionsEnv[["rho"]],
+                                                max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                                                l1 = l1,
+                                                show_progress = status)
   }
 
   ## FIXME - Convert gamma.path to a single column matrix instead of a vector
@@ -346,6 +367,7 @@ CBASS <- function(X,
     row_fusions = list(
       labels = row_labels,
       weight_type = row_weight_type,
+      weights = row_weight_matrix,
       U = post_processing_results_row$U,
       D = D_row,
       dendrogram = post_processing_results_row$dendrogram,
@@ -355,6 +377,7 @@ CBASS <- function(X,
     col_fusions = list(
       labels = col_labels,
       weight_type = col_weight_type,
+      weights = col_weight_matrix,
       U = post_processing_results_col$U,
       D = D_col,
       dendrogram = post_processing_results_col$dendrogram,
@@ -363,6 +386,7 @@ CBASS <- function(X,
     ),
     # General flags
     alg.type = alg.type,
+    norm = norm,
     t = t,
     X.center.global = X.center.global,
     mean_adjust = mean_adjust,
@@ -370,8 +394,9 @@ CBASS <- function(X,
   )
 
   if (.clustRvizOptionsEnv[["keep_debug_info"]]) {
-    cbass.fit[["debug"]] <- list(col = post_processing_results_col[["debug"]],
-                                 row = post_processing_results_row[["debug"]])
+    cbass.fit[["debug"]] <- list(path = cbass.sol.path,
+                                 col  = post_processing_results_col[["debug"]],
+                                 row  = post_processing_results_row[["debug"]])
   }
 
   class(cbass.fit) <- "CBASS"
@@ -397,10 +422,13 @@ CBASS <- function(X,
 #' print(cbass_fit)
 print.CBASS <- function(x, ...) {
   alg_string <- switch(x$alg.type,
-                       cbass      = paste0("CBASS (t = ", round(x$t, 3), ")"),
-                       cbassl1    = paste0("CBASS (t = ", round(x$t, 3), ") [L1]"),
-                       cbassviz   = "CBASS-VIZ",
-                       cbassvizl1 = "CBASS-VIZ [L1]")
+                       cbass    = paste0("CBASS (t = ", round(x$t, 3), ")"),
+                       cbassviz = "CBASS-VIZ",
+                       admm     = paste0("ADMM (t = ", round(x$t, 3), ")"))
+
+  if(x$norm == 1){
+    alg_string <- paste(alg_string, "[L1]")
+  }
 
   cat("CBASS Fit Summary\n")
   cat("====================\n\n")
