@@ -143,6 +143,21 @@ test_that("ensure_gif works", {
   expect_equal("/my/long/path/plot.gif", suppressWarnings(ensure_gif("/my/long/path/plot.jpg")))
 })
 
+test_that("ensure_html works", {
+  ensure_html <- clustRviz:::ensure_html
+
+  expect_equal("plot.html", ensure_html("plot.html"))
+  expect_equal("~/plot.html", ensure_html("~/plot.html"))
+  expect_equal("/my/long/path/plot.html", ensure_html("/my/long/path/plot.html"))
+
+  expect_warning(ensure_html("plot.jpg"))
+  expect_no_warning(ensure_html("plot.html"))
+
+  expect_equal("plot.html", suppressWarnings(ensure_html("plot.jpg")))
+  expect_equal("~/plot.html", suppressWarnings(ensure_html("~/plot.jpg")))
+  expect_equal("/my/long/path/plot.html", suppressWarnings(ensure_html("/my/long/path/plot.jpg")))
+})
+
 test_that("connectedness check works", {
   is_connected_adj_mat <- clustRviz:::is_connected_adj_mat
 

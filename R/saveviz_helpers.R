@@ -83,3 +83,17 @@ ensure_gif <- function(file_name){
     file_name
   }
 }
+
+ensure_html <- function(file_name){
+
+  current_extension <- file_ext(file_name)
+
+  if (current_extension != "html") {
+    new_file_name <- paste(file_path_sans_ext(file_name), ".html", sep = "")
+    crv_warning("File extension for dynamic visualization is not ", sQuote(".html"),
+                " -- changing from ", sQuote(file_name), " to ", sQuote(new_file_name))
+    new_file_name
+  } else {
+    file_name
+  }
+}
