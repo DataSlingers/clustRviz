@@ -8,7 +8,7 @@ output: github_document
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.path = "README-"
+  fig.path = "man/figures/README-"
 )
 ```
 
@@ -57,6 +57,8 @@ data(presidential_speech)
 presidential_speech[1:6, 1:6]
 ```
 
+### Clustering
+
 We begin by clustering this data set, grouping the rows (presidents) into clusters:
 
 ```{r carp_example}
@@ -90,10 +92,19 @@ if (!dir.exists("inst")) {
   dir.create("inst")
 }
 
-saveviz(carp_fit, file.name = "inst/path_dyn.gif", type = "path", dynamic = TRUE)
+saveviz(carp_fit, file.name = "man/figures/path_dyn.gif", type = "path", dynamic = TRUE)
 ```
 
-<img src="./inst/path_dyn.gif" width = "70%">
+<img src="./man/figures/path_dyn.gif" width = "70%">
+
+`clustRviz` also provides interactive dendrograms using the
+[`heatmaply`](https://cran.r-project.org/package=heatmaply) package: 
+
+```{r carp_js}
+plot(carp_fit, type = "js")
+```
+
+### BiClustering
 
 The use of `CBASS` for convex biclustering is similar, and we demonstrate it here
 with a cluster heatmap, with the regularization set to give 3 observation clusters:
@@ -101,6 +112,20 @@ with a cluster heatmap, with the regularization set to give 3 observation cluste
 ```{r cbass}
 cbass_fit <- CBASS(presidential_speech)
 plot(cbass_fit, k.row = 3)
+```
+
+Setting `type = "js"` gives the traditional cluster heatmap:
+
+```{r cbass_js}
+plot(cbass_fit, type = "js", k.row = 3)
+```
+
+By default, if a regularization level is specified, all plotting functions in `clustRviz`
+will plot the clustered data. If the regularization level is not specified, the
+raw data will be plotted instead:
+
+```{r cbass_js2}
+plot(cbass_fit, type = "js")
 ```
 
 More details about the use and mathematical formulation of `CARP` and `CBASS`
