@@ -27,10 +27,18 @@
 #'          in the static plots. If no \code{CARP} iteration with exactly this
 #'          many clusters is found, the first iterate with fewer than \code{k}
 #'          clusters is used.
-#' @param ... Additional arguments. Currently an error when \code{type != "dendrogram"}
-#'            and passed to \code{\link[stats]{plot.dendrogram}} when \code{type =
-#'            "dendrogram"}. \code{saveviz} passes arguments to the underlying
-#'            plot function.
+#' @param ... Additional arguments, which are handled differently for different
+#'            values of \code{type}.\itemize{
+#'            \item When \code{type} is \code{"path"}, \code{"dynamic_path"},
+#'                  or \code{"interactive"}, the presence of
+#'                  unknown arguments triggers an error;
+#'            \item when \code{type == "dendrogram"}
+#'                  \code{...} is forwarded to \code{\link[stats]{plot.dendrogram}}; and
+#'            \item when \code{type == "js"}, \code{...} is forwarded to
+#'                  \code{\link[heatmaply]{heatmaply}}.
+#'            } See the documentation of the linked functions for details about
+#'            additional supported arguments. \code{saveviz} passes arguments
+#'            to the corresponding plot \code{type}.
 #' @param max.nclust a positive integer. The maximum number of clusters
 #' to display in the interactive plot.
 #' @param min.nclust a positive value. The minimum number of clusters to
@@ -74,7 +82,7 @@
 #' }
 plot.CARP <- function(x,
                       ...,
-                      type = c("dendrogram", "path", "dynamic_path", "interactive"),
+                      type = c("dendrogram", "path", "dynamic_path", "js", "interactive"),
                       axis = c("PC1", "PC2"),
                       dend.branch.width = 2,
                       dend.labels.cex = .6,
@@ -108,6 +116,12 @@ plot.CARP <- function(x,
       carp_dynamic_path_plot(x,
                              axis = axis,
                              percent.seq = percent.seq)
+    },
+    js = {
+      carp_heatmaply(x,
+                     ...,
+                     percent = percent,
+                     k = k)
     },
     interactive = {
       dots <- list(...)
@@ -461,3 +475,41 @@ carp_dynamic_path_plot <- function(x, axis, percent.seq){
     xlab(axis[1]) + ylab(axis[2]) +
     transition_manual(.data$percent)
 }
+
+#' @noRd
+#' Render CBASS results via the heatmaply (interactive JS) package
+#' @importFrom heatmaply heatmaply
+carp_heatmaply <- function(x,
+                           ...,
+                           percent,
+                           k){
+
+  has_percent <- !missing(percent)
+  has_k       <- !missing(k)
+
+  n_args <- has_percent + has_k
+
+  if(n_args >= 2){
+    crv_error("At most one of ", sQuote("percent,"), " and ",
+              sQuote("k"), " may be supplied.")
+  }
+
+  if(n_args == 0){
+    U     <- get_clustered_data(x, percent = 0, refit = TRUE)
+
+    heatmaply(U,
+              Rowv = as.hclust(x),
+              dendrogram = "row",
+              ...)
+  } else {
+    U <- get_clustered_data(x, percent = percent, k = k, refit = TRUE)
+    k <- nlevels(get_cluster_labels(x, percent = percent, k = k))
+
+    heatmaply(U,
+              Rowv = as.hclust(x),
+              k_row = k,
+              dendrogram = "row",
+              ...)
+  }
+}
+

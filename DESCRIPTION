@@ -33,6 +33,7 @@ Imports:
     gtools,
     ggrepel,
     RColorBrewer,
+    heatmaply,
     gganimate (>= 0.1.1)
 RoxygenNote: 6.1.0
 LinkingTo: Rcpp, RcppEigen

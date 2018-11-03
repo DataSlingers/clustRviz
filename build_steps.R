@@ -15,8 +15,8 @@ before_install <- function(){
     }
   }
   cat("INSTALLING RUN DEPENDENCIES -------- \n\n")
-  devtools::install_deps(dependencies=c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances"),
-                         quiet=FALSE, upgrade=FALSE, auth_token = Sys.getenv("GITHUB_PAT") %||% devtools::github_pat(FALSE))
+  devtools::install_deps(dependencies=TRUE, quiet=FALSE, upgrade=FALSE,
+                         auth_token = Sys.getenv("GITHUB_PAT") %||% devtools::github_pat(FALSE))
 
   cat("INSTALLING TEST DEPENDENCIES -------- \n\n")
   for(pkg in c("cvxclustr", "cvxbiclustr")){
@@ -52,7 +52,7 @@ before_install <- function(){
 }
 
 after_success <- function(){
-  devtools::install(reload = TRUE, quick = TRUE, quiet = FALSE, upgrade = FALSE, 
+  devtools::install(reload = TRUE, quick = TRUE, quiet = FALSE, upgrade = FALSE,
                     auth_token = Sys.getenv("GITHUB_TOKEN") %||% devtools::github_pat(FALSE))
   rmarkdown::render("README.Rmd", clean = FALSE)
   unlink("README.knit.md", force = TRUE)

@@ -60,3 +60,27 @@ test_that("CARP dendrogram plot works", {
   expect_error(plot(carp_fit, type = "dendrogram", k = 3, dend.labels.cex   = 0))
   expect_error(plot(carp_fit, type = "dendrogram", k = 3, dend.labels.cex   = -2))
 })
+
+test_that("CARP heatmaply (javascript) plot works", {
+  carp_fit <- CARP(presidential_speech)
+
+  ## Main settings work
+  expect_no_error(plot(carp_fit, type = "js"))
+  expect_is(plot(carp_fit, type = "js"), "plotly")
+  expect_no_error(plot(carp_fit, type = "js", k = 3))
+  expect_no_error(plot(carp_fit, type = "js", percent = 0.5))
+
+  ## Must give at most one of `percent` or `k`
+  expect_error(plot(carp_fit, type = "js", percent = 0.5, k = 3))
+
+  ## Error checking on `percent` and `k`
+  expect_error(plot(carp_fit, type = "js", percent = 1.5))
+  expect_error(plot(carp_fit, type = "js", percent = -0.5))
+  expect_error(plot(carp_fit, type = "js", percent = NA))
+  expect_error(plot(carp_fit, type = "js", percent = c(0.25, 0.75)))
+
+  expect_error(plot(carp_fit, type = "js", k = 3.5))
+  expect_error(plot(carp_fit, type = "js", k = 0))
+  expect_error(plot(carp_fit, type = "js", k = -1))
+  expect_error(plot(carp_fit, type = "js", k = NROW(presidential_speech) + 1))
+})

@@ -11,7 +11,8 @@
 #'       and \code{type = "col.dendrogram"} for the row (observation) and column
 #'       (feature / variable) clusterings, respectively);
 #' \item A cluster heatmap, displaying row and column histograms, as well
-#'       as the clustered data matrix in a single graphic (\code{type = "heatmap"}); and
+#'       as the clustered data matrix in a single graphic (\code{type = "heatmap"});
+#' \item An interactive Javascript cluster heatmap (\code{type = "heatmap"}); and
 #' \item A \code{\link[shiny]{shiny}} app, which can display the clustering solutions
 #'       as a "movie" or allow for interactive exploration (\code{type = "interactive"}).
 #' }
@@ -32,11 +33,18 @@
 #' @param k.col An integer indicating the desired number of column clusters to be displayed
 #'              in the static plots. (If plotting rows, the regularization level
 #'              giving \code{k.col} column clusters is used.)
-#' @param ... Additional arguments. Currently an error when \code{type} is not
-#'            \code{"row.dendrogram"} or \code{"col.dendrogram"}; passed to
-#'            \code{\link[stats]{plot.dendrogram}} when \code{type == "row.dendrogram"}
-#'            or \code{type == "col.dendrogram"}. \code{saveviz} passes arguments
-#'            to the underlying plot function.
+#' @param ... Additional arguments, which are handled differently for different
+#'            values of \code{type}.\itemize{
+#'            \item When \code{type} is \code{"heatmap"}, \code{"row.path"},
+#'                  \code{"col.path"}, or \code{"interactive"}, the presence of
+#'                  unknown arguments triggers an error;
+#'            \item when \code{type == "row.dendrogram"} or \code{type == "col.dendrogram"},
+#'                  \code{...} is forwarded to \code{\link[stats]{plot.dendrogram}}; and
+#'            \item when \code{type == "js"}, \code{...} is forwarded to
+#'                  \code{\link[heatmaply]{heatmaply}}.
+#'            } See the documentation of the linked functions for details about
+#'            additional supported arguments. \code{saveviz} passes arguments
+#'            to the corresponding plot \code{type}.
 #' @param dend.branch.width Branch width for dendrogram plots (ignored for
 #'        other plot types) - must be positive.
 #' @param dend.labels.cex Label size for dendrogram plots (ignored for other plot
@@ -66,8 +74,10 @@
 #' @export
 #' @rdname plot_cbass
 #' @examples
-#' \dontrun{
 #' cbass_fit <- CBASS(presidential_speech)
+#' plot(cbass_fit)
+#' plot(cbass_fit, type = "heatmap")
+#' \dontrun{
 #' plot(cbass_fit, type='interactive')
 #' }
 plot.CBASS <- function(x,
@@ -77,6 +87,7 @@ plot.CBASS <- function(x,
                                 "col.dendrogram",
                                 "row.path",
                                 "col.path",
+                                "js",
                                 "interactive"),
                        percent,
                        k.row,
@@ -141,6 +152,13 @@ plot.CBASS <- function(x,
                          heatrow.label.cex = heatrow.label.cex,
                          heatcol.label.cex = heatcol.label.cex,
                          margins = margins)
+    },
+    js = {
+      cbass_heatmaply(x,
+                      ...,
+                      percent = percent,
+                      k.row = k.row,
+                      k.col = k.col)
     },
     interactive = {
       dots <- list(...)
@@ -407,7 +425,7 @@ cbass_heatmap_plot <- function(x,
     n.col <- NCOL(U)
   } else {
     U <- get_clustered_data(x, percent = percent, k.row = k.row, k.col = k.col, refit = TRUE)
-    # Note that we can't assign n.row / n.col here since we might confuse it with user-supplied arguments
+    # Note that we can't assign k.row / k.col here since we might confuse it with user-supplied arguments
     n.row <- nlevels(get_cluster_labels(x, percent = percent, k.row = k.row, k.col = k.col, type = "row"))
     n.col <- nlevels(get_cluster_labels(x, percent = percent, k.row = k.row, k.col = k.col, type = "col"))
   }
@@ -457,4 +475,46 @@ cbass_heatmap_plot <- function(x,
   )
 
   invisible(x)
+}
+
+#' @noRd
+#' Render CBASS results via the heatmaply (interactive JS) package
+#' @importFrom heatmaply heatmaply
+cbass_heatmaply <- function(x,
+                            ...,
+                            percent,
+                            k.row,
+                            k.col){
+
+  has_percent <- !missing(percent)
+  has_k.row   <- !missing(k.row)
+  has_k.col   <- !missing(k.col)
+
+  n_args <- has_percent + has_k.row + has_k.col
+
+  if(n_args >= 2){
+    crv_error("At most one of ", sQuote("percent,"), " ", sQuote("k.row"), " and ",
+              sQuote("k.col"), " may be supplied.")
+  }
+
+  if(n_args == 0){
+    U     <- get_clustered_data(x, percent = 0, refit = TRUE)
+
+    heatmaply(U,
+              Rowv = as.hclust(x, type = "row"),
+              Colv = as.hclust(x, type = "col"),
+              ...)
+  } else {
+    U <- get_clustered_data(x, percent = percent, k.row = k.row, k.col = k.col, refit = TRUE)
+    # Note that we can't assign k.row / k.col here since we might confuse it with user-supplied arguments
+    n.row <- nlevels(get_cluster_labels(x, percent = percent, k.row = k.row, k.col = k.col, type = "row"))
+    n.col <- nlevels(get_cluster_labels(x, percent = percent, k.row = k.row, k.col = k.col, type = "col"))
+
+    heatmaply(U,
+              Rowv = as.hclust(x, type = "row"),
+              Colv = as.hclust(x, type = "col"),
+              k_row = n.row,
+              k_col = n.col,
+              ...)
+  }
 }

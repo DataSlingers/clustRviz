@@ -5,13 +5,16 @@ saveviz <- function(x, ...) {
 }
 
 #' @param file.name The name of the output file. The type of resulting image
-#'                  is determined from the extension.
+#'                  is determined from the extension. If \code{dynamic = TRUE},
+#'                  the extension is changed to \code{.gif} internally. If \code{type = "js"},
+#'                  the extension is changed to \code{.html} internally.
 #' @param dynamic Should the resulting animation be dynamic (animated) or not?
 #'                If \code{TRUE}, a dynamic visualization which varies along the
 #'                \code{CARP} solution path at a grid given by \code{percent.seq}
 #'                is produced (as a \code{GIF}). If \code{FALSE}, a fixed visualization
 #'                at a single solution (determined by either \code{percent} or \code{k}
 #'                if supplied) is produced.
+#'                Currently ignored when \code{type = "js"}.
 #' @param percent.seq A grid of values of \code{percent} along which to generate
 #'                    dynamic visualizations (if \code{dynamic == TRUE})
 #' @param width The width of the output, given in \code{unit}s
@@ -31,7 +34,7 @@ saveviz <- function(x, ...) {
 #' @export
 saveviz.CARP <- function(x,
                          file.name,
-                         type = c("dendrogram", "path"),
+                         type = c("dendrogram", "path", "js"),
                          dynamic = TRUE,
                          axis = c("PC1", "PC2"),
                          dend.branch.width = 2,
@@ -54,6 +57,11 @@ saveviz.CARP <- function(x,
     crv_error("All elements of ", sQuote("percent.seq"), " must be between 0 and 1.")
   }
 
+  if ( (type == "js") && dynamic ){
+    crv_warning("dynamic = TRUE is not supported with type = js.")
+    dynamic <- FALSE
+  }
+
   if (!dynamic) {
     dev_cur <- dev.cur()
     on.exit(dev.set(dev_cur))
@@ -74,6 +82,10 @@ saveviz.CARP <- function(x,
                               dend.labels.cex = dend.labels.cex,
                               ...)
              dev.off()
+           },
+           js = {
+             file.name <- ensure_html(file.name)
+             carp_heatmaply(x, percent = percent, k = k, file = file.name, ...)
            })
     return(invisible(file.name))
   }
@@ -112,13 +124,16 @@ saveviz.CARP <- function(x,
 }
 
 #' @param file.name The name of the output file. The type of resulting image
-#'                  is determined from the extension.
+#'                  is determined from the extension.If \code{dynamic = TRUE},
+#'                  the extension is changed to \code{.gif} internally. If \code{type = "js"},
+#'                  the extension is changed to \code{.html} internally.
 #' @param dynamic Should the resulting animation be dynamic (animated) or not?
 #'                If \code{TRUE}, a dynamic visualization which varies along the
 #'                \code{CARP} solution path at a grid given by \code{percent.seq}
 #'                is produced (as a \code{GIF}). If \code{FALSE}, a fixed visualization
 #'                at a single solution (determined by \code{percent}, \code{k.row} or
 #'                \code{k.col} if supplied) is produced.
+#'                Currently ignored when \code{type = "js"}.
 #' @param percent.seq A grid of values of \code{percent} along which to generate
 #'                    dynamic visualizations (if \code{dynamic == TRUE})
 #' @param width The width of the output, given in \code{unit}s
@@ -133,7 +148,7 @@ saveviz.CARP <- function(x,
 #' @export
 saveviz.CBASS <- function(x,
                           file.name,
-                          type = c("heatmap", "row.dendrogram", "col.dendrogram"),
+                          type = c("heatmap", "row.dendrogram", "col.dendrogram", "js"),
                           dynamic = TRUE,
                           dend.branch.width = 2,
                           dend.labels.cex = .6,
@@ -157,6 +172,11 @@ saveviz.CBASS <- function(x,
 
   if (!all(vapply(percent.seq, is_percent_scalar, TRUE))) {
     crv_error("All elements of ", sQuote("percent.seq"), " must be between 0 and 1.")
+  }
+
+  if ( (type == "js") && dynamic ){
+    crv_warning("dynamic = TRUE is not supported with type = js.")
+    dynamic <- FALSE
   }
 
   if (!dynamic) {
@@ -198,6 +218,11 @@ saveviz.CBASS <- function(x,
                                type = "col",
                                ...)
              dev.off()
+           },
+           js = {
+             file.name <- ensure_html(file.name)
+             cbass_heatmaply(x, percent = percent, k.row = k.row, k.col = k.col,
+                             file = file.name, ...)
            })
     return(invisible(file.name))
   }
