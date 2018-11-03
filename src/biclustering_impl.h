@@ -153,22 +153,22 @@ public:
 
     // Identify row fusions (rows of V_row which have gone to zero)
     Eigen::VectorXd v_row_norms = V_row.rowwise().squaredNorm();
-    v_row_zeros(num_row_edges);
 
     for(Eigen::Index i = 0; i < num_row_edges; i++){
       v_row_zeros(i) = v_row_norms(i) == 0;
     }
+
     nzeros_row = v_row_zeros.sum();
 
     // Identify column fusions (rows of V_col which have gone to zero)
     // Remember, V_col and Z_col are internal to the "transposed prox" sub-problem
     // so everything is reversed of what we'd expect
     Eigen::VectorXd v_col_norms = V_col.rowwise().squaredNorm();
-    v_col_zeros(num_col_edges);
 
     for(Eigen::Index i = 0; i < num_col_edges; i++){
       v_col_zeros(i) = v_col_norms(i) == 0;
     }
+
     nzeros_col = v_col_zeros.sum();
 
     ClustRVizLogger::debug("Number of row fusions identified ") << nzeros_row;
@@ -219,22 +219,22 @@ public:
 
     // Identify row fusions (rows of V_row which have gone to zero)
     Eigen::VectorXd v_row_norms = V_row.rowwise().squaredNorm();
-    v_row_zeros(num_row_edges);
 
     for(Eigen::Index i = 0; i < num_row_edges; i++){
       v_row_zeros(i) = v_row_norms(i) == 0;
     }
+
     nzeros_row = v_row_zeros.sum();
 
     // Identify column fusions (rows of V_col which have gone to zero)
     // Remember, V_col and Z_col are internal to the "transposed prox" sub-problem
     // so everything is reversed of what we'd expect
     Eigen::VectorXd v_col_norms = V_col.rowwise().squaredNorm();
-    v_col_zeros(num_col_edges);
 
     for(Eigen::Index i = 0; i < num_col_edges; i++){
       v_col_zeros(i) = v_col_norms(i) == 0;
     }
+
     nzeros_col = v_col_zeros.sum();
 
     ClustRVizLogger::debug("Number of row fusions identified ") << nzeros_row;
