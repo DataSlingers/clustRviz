@@ -183,3 +183,35 @@ test_that("CBASS heatmap plot works", {
   expect_error(plot(cbass_fit, type = "heatmap", heatrow.label.cex = 0))
   expect_error(plot(cbass_fit, type = "heatmap", heatrow.label.cex = -2))
 })
+
+test_that("CBASS heatmaply (javascript) plot works", {
+  cbass_fit <- CBASS(presidential_speech)
+
+  ## Main settings work
+  expect_no_error(plot(cbass_fit, type = "js"))
+  expect_is(plot(cbass_fit, type = "js"), "plotly")
+  expect_no_error(plot(cbass_fit, type = "js", k.row = 3))
+  expect_no_error(plot(cbass_fit, type = "js", k.col = 3))
+  expect_no_error(plot(cbass_fit, type = "js", percent = 0.3))
+
+  ## Must give at most one of `percent`, `k.row`, `k.col`
+  expect_error(plot(cbass_fit, type = "js", percent = 0.5, k.row = 3))
+  expect_error(plot(cbass_fit, type = "js", percent = 0.5, k.col = 3))
+  expect_error(plot(cbass_fit, type = "js", k.row = 3, k.col = 3))
+
+  ## Error checking on `percent` and `k`
+  expect_error(plot(cbass_fit, type = "js", percent = 1.5))
+  expect_error(plot(cbass_fit, type = "js", percent = -0.5))
+  expect_error(plot(cbass_fit, type = "js", percent = NA))
+  expect_error(plot(cbass_fit, type = "js", percent = c(0.25, 0.75)))
+
+  expect_error(plot(cbass_fit, type = "js", k.row = 3.5))
+  expect_error(plot(cbass_fit, type = "js", k.row = 0))
+  expect_error(plot(cbass_fit, type = "js", k.row = -1))
+  expect_error(plot(cbass_fit, type = "js", k.row = NROW(presidential_speech) + 1))
+
+  expect_error(plot(cbass_fit, type = "js", k.col = 3.5))
+  expect_error(plot(cbass_fit, type = "js", k.col = 0))
+  expect_error(plot(cbass_fit, type = "js", k.col = -1))
+  expect_error(plot(cbass_fit, type = "js", k.col = NCOL(presidential_speech) + 1))
+})
