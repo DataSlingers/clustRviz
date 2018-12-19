@@ -172,3 +172,30 @@ test_that("connectedness check works", {
   A <- eye(3); A[1,2] <- A[2,1] <- 1
   expect_false(is_connected_adj_mat(A))
 })
+
+test_that("U smoothing for CARP works", {
+  set.seed(200)
+
+  N <- 50
+  P <- 30
+
+  U <- array(rnorm(N * P), c(N, P, 1))
+
+  # Fake cluster assignments
+  K <- 5
+  membership <- sample(K, N, replace = TRUE)
+  cluster_info <- list(membership = membership,
+                       csize      = table(membership),
+                       no         = length(unique(membership)))
+
+  U_smoothed <- smooth_u_clustering(U, list(cluster_info))
+
+  for(k in 1:K){
+    u_row_mean <- colMeans(U[membership == k,,1])
+    for(n in 1:N){
+      if(membership[n] == k){
+        expect_equal(U_smoothed[n,,1], u_row_mean)
+      }
+    }
+  }
+})

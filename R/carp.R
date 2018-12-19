@@ -259,7 +259,8 @@ CARP <- function(X,
                                                          v_zero_indices   = carp.sol.path$v_zero_inds,
                                                          labels           = labels,
                                                          dendrogram_scale = dendrogram.scale,
-                                                         npcs             = npcs)
+                                                         npcs             = npcs,
+                                                         smooth_U         = TRUE)
 
   carp.fit <- list(
     X = X.orig,

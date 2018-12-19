@@ -91,6 +91,69 @@ void check_weight_matrix(const Eigen::MatrixXd& weight_matrix){
   }
 }
 
+// U-smoothing for convex clustering
+//
+// Given cluster memberships, replace rows of U which belong to the same cluster
+// with their mutual mean....
+//
+// [[Rcpp::export]]
+Rcpp::NumericVector smooth_u_clustering(Rcpp::NumericVector U_old, Rcpp::List cluster_info_list){
+  // The first argument is really an array but we pass as a NumericVector
+  // The second argument is a list produced by get_cluster_assignments()
+  Rcpp::IntegerVector U_dims = U_old.attr("dim");
+  if(U_dims.size() != 3){
+    ClustRVizLogger::error("U must be a three rank tensor.");
+  }
+  int N = U_dims(0);
+  int P = U_dims(1);
+  int Q = U_dims(2);
+
+  // Check length of cluster_info
+  if(cluster_info_list.size() != Q){
+    ClustRVizLogger::error("Dimensions of U and cluster_info do not match");
+  }
+
+  Rcpp::NumericVector U(N * P * Q);
+  U.attr("dim") = U_dims;
+  Rcpp::rownames(U) = Rcpp::rownames(U_old);
+  Rcpp::colnames(U) = Rcpp::colnames(U_old);
+
+  for(Eigen::Index q = 0; q < Q; q++){
+    Rcpp::List cluster_info = cluster_info_list[q];
+    uint n_clusters = Rcpp::as<uint>(cluster_info[2]);
+
+    Rcpp::IntegerVector cluster_ids = cluster_info[0];
+    Rcpp::IntegerVector cluster_sizes = cluster_info[1];
+
+    Eigen::MatrixXd U_old_slice = Eigen::Map<Eigen::MatrixXd>(&U_old[N * P * q], N, P);
+    Eigen::MatrixXd U_new(N, P);
+
+    for(uint j = 1; j <= n_clusters; j++){ // Cluster IDs are 1-based (per R conventions)
+      Eigen::VectorXd vec = Eigen::VectorXd::Zero(P);
+
+      // Manually work out new mean
+      for(uint n = 0; n < N; n++){
+        if(cluster_ids[n] == j){
+          vec += U_old_slice.row(n);
+        }
+      }
+
+      vec /= cluster_sizes[j - 1]; // Subtract 1 to adjust to C++ indexing
+
+      // Assign new mean where needed...
+      for(uint n = 0; n < N; n++){
+        if(cluster_ids[n] == j){
+          U_new.row(n) = vec;
+        }
+      }
+    }
+
+    Eigen::Map<Eigen::MatrixXd>(&U[N * P * q], N, P) = U_new;
+  }
+
+  return U;
+}
+
 // Tensor projection along the second mode
 //
 // Given a 3D tensor X in R^{n-by-p-by-q} (observations by features by iterations)
