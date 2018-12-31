@@ -19,7 +19,7 @@ before_install <- function(){
                          auth_token = Sys.getenv("GITHUB_PAT") %||% devtools::github_pat(FALSE))
 
   cat("INSTALLING TEST DEPENDENCIES -------- \n\n")
-  for(pkg in c("cvxclustr", "cvxbiclustr")){
+  for(pkg in c("cvxclustr", "cvxbiclustr", "gifski", "png")){
     if(!require(pkg, character.only=TRUE)){
       install.packages(pkg)
     }
