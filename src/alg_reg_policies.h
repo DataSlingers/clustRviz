@@ -124,7 +124,7 @@ public:
       problem.save_old_values();
 
       bool rep_iter = true;
-      Eigen::Index try_iter = 0;
+      int try_iter = 0;
       double gamma_upper = gamma;
       double gamma_lower = gamma_old;
 

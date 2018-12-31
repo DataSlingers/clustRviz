@@ -23,7 +23,16 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
 
   if(exact){
     if(back_track){
-      ClustRVizLogger::error("Exact ADMM with back-tracking is not yet implemented.");
+      ConvexClusteringADMM_VIZ admm_viz(problem,
+                                        epsilon,
+                                        max_iter,
+                                        burn_in,
+                                        back,
+                                        viz_max_inner_iter,
+                                        viz_initial_step,
+                                        viz_small_step);
+
+      return admm_viz.build_return_object();
     } else {
       ConvexClusteringADMM admm(problem, epsilon, t, max_iter);
       return admm.build_return_object();
@@ -73,7 +82,16 @@ Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
 
   if(exact){
     if(back_track){
-      ClustRVizLogger::error("Exact DLPA with back-tracking is not yet implemented.");
+      ConvexBiClusteringADMM_VIZ admm_viz(problem,
+                                          epsilon,
+                                          max_iter,
+                                          burn_in,
+                                          back,
+                                          viz_max_inner_iter,
+                                          viz_initial_step,
+                                          viz_small_step);
+
+      return admm_viz.build_return_object();
     } else {
       ConvexBiClusteringADMM admm(problem, epsilon, t, max_iter);
       return admm.build_return_object();

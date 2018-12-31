@@ -26,6 +26,32 @@ test_that("Full ADMM converges for CARP", {
   }
 })
 
+test_that("Full Back-Tracking ADMM converges for CARP", {
+  skip_on_cran()
+  skip_if_not_installed("cvxclustr")
+  data(mammals, package = "cvxclustr")
+
+  ## Example modified from help pages of cvxclustr
+  X <- as.matrix(mammals[,-1])
+  carp_fit <- CARP(X, exact = TRUE, back_track = TRUE, X.center = FALSE, X.scale = FALSE)
+
+  ## Calculate matching `cvxclustr` solution
+  Xt <- t(X)
+
+  ## Match CARP() selected weights
+  w <- clustRviz:::weight_mat_to_vec(carp_fit$weights)
+  gamma <- unique(carp_fit$cluster_membership$Gamma)
+
+  ## Perform clustering
+  suppressWarnings(cvxclust_fit <- cvxclustr::cvxclust(Xt, w, gamma, tol = 1e-7))
+
+  ## cvxclustr seems to use a pretty loose stopping tolerance, so this is a loose check...
+  for(i in seq_along(gamma)){
+    expect_equal(carp_fit$U[,,i], t(cvxclust_fit$U[[i]]),
+                 check.attributes = FALSE, tolerance = 1e-4)
+  }
+})
+
 test_that("Full ADMM converges for CBASS", {
   skip_on_cran()
   skip_if_not_installed("cvxclustr")
