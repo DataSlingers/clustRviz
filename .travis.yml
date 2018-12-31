@@ -9,6 +9,7 @@ addons:
   apt:
     packages:
       - cargo
+      - libmagick++-dev
 
 before_install:
   - gcc --version
