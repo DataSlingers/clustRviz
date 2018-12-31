@@ -202,12 +202,12 @@ test_that("CARP cluster centroids are correctly calculated with refit = FALSE", 
     }
   }
 
-  ## Column-wise standard deviations are decreasing
+  ## Column-wise standard deviations are decreasing (or at least non-increasing)
   colSds <- function(x) apply(x, 2, sd)
   for(pct in seq(0.1, 1, length.out = 10)){
     for(carp_fit in carp_fits){
-      expect_gt(sum(colSds(get_clustered_data(carp_fit, percent = pct - 0.1, refit = FALSE))),
-                sum(colSds(get_clustered_data(carp_fit, percent = pct, refit = FALSE))))
+      expect_gte(sum(colSds(get_clustered_data(carp_fit, percent = pct - 0.1, refit = FALSE))),
+                 sum(colSds(get_clustered_data(carp_fit, percent = pct, refit = FALSE))))
     }
   }
 })
