@@ -1,7 +1,7 @@
 ## clustRviz options
 
 clustRviz_default_options <- list(rho                = 1.0,
-                                  max_iter           = 10000L,
+                                  max_iter           = as.integer(5e6),
                                   burn_in            = 50L,
                                   viz_initial_step   = 1.1,
                                   viz_small_step     = 1.01,
