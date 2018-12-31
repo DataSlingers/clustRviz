@@ -11,11 +11,12 @@
 #' @param labels A character vector of length \eqn{n}: observations (row) labels
 #' @param X.center A logical: Should \code{X} be centered columnwise?
 #' @param X.scale A logical: Should \code{X} be scaled columnwise?
-#' @param alg.type Which \code{CARP} variant to use. Allowed values are \itemize{
-#'        \item \code{"carp"} - The standard \code{CARP} algorithm;
-#'        \item \code{"carpviz"} - The back-tracking \code{CARP} algorithm; or
-#'        \item \code{"admm"} - Fully solving the ADMM till convergence
-#' }
+#' @param back_track A logical: Should back-tracking be used to exactly identify fusions?
+#'                   By default, back-tracking is not used.
+#' @param exact A logical: Should the exact solution be computed using an iterative algorithm?
+#'              By default, algorithmic regularization is applied and the exact solution
+#'              is not computed. Setting \code{exact = TRUE} often significantly increases
+#'              computation time.
 #' @param norm Which norm to use in the fusion penalty? Currently only \code{1}
 #'             and \code{2} (default) are supported.
 #' @param t A number greater than 1: the size of the multiplicative update to
@@ -67,7 +68,8 @@ CARP <- function(X,
                  labels = rownames(X),
                  X.center = TRUE,
                  X.scale = FALSE,
-                 alg.type = c("carpviz", "carp", "admm"),
+                 back_track = FALSE,
+                 exact = FALSE,
                  norm = 2,
                  t = 1.05,
                  npcs = min(4L, NCOL(X), NROW(X)),
@@ -118,7 +120,13 @@ CARP <- function(X,
     crv_error(sQuote("X.scale"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
   }
 
-  alg.type <- match.arg(alg.type)
+  if (!is_logical_scalar(back_track)) {
+    crv_error(sQuote("back_track"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
+  }
+
+  if (!is_logical_scalar(exact)) {
+    crv_error(sQuote("exact"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
+  }
 
   if (norm %not.in% c(1, 2)){
     crv_error(sQuote("norm"), " must be either 1 or 2.")
@@ -212,45 +220,24 @@ CARP <- function(X,
 
   weight_vec <- weight_mat_to_vec(weight_matrix)
 
-  crv_message("Computing CARP Path")
+  crv_message("Computing Convex Clustering [CARP] Path")
 
-  if (alg.type == "carpviz") {
-      carp.sol.path <- CARP_VIZcpp(X,
-                                   D,
-                                   epsilon = .clustRvizOptionsEnv[["epsilon"]],
-                                   weights = weight_vec[weight_vec != 0],
-                                   rho = .clustRvizOptionsEnv[["rho"]],
-                                   max_iter = .clustRvizOptionsEnv[["max_iter"]],
-                                   burn_in = .clustRvizOptionsEnv[["burn_in"]],
-                                   viz_max_inner_iter = .clustRvizOptionsEnv[["viz_max_inner_iter"]],
-                                   viz_initial_step = .clustRvizOptionsEnv[["viz_initial_step"]],
-                                   viz_small_step = .clustRvizOptionsEnv[["viz_small_step"]],
-                                   keep = .clustRvizOptionsEnv[["keep"]],
-                                   l1 = l1,
-                                   show_progress = status)
-  } else if (alg.type == "carp") {
-    carp.sol.path <- CARPcpp(X,
-                             D,
-                             epsilon = .clustRvizOptionsEnv[["epsilon"]],
-                             t = t,
-                             weights = weight_vec[weight_vec != 0],
-                             rho = .clustRvizOptionsEnv[["rho"]],
-                             max_iter = .clustRvizOptionsEnv[["max_iter"]],
-                             burn_in = .clustRvizOptionsEnv[["burn_in"]],
-                             keep = .clustRvizOptionsEnv[["keep"]],
-                             l1 = l1,
-                             show_progress = status)
-  } else {
-    carp.sol.path <- ConvexClusteringADMMcpp(X,
-                                             D,
-                                             epsilon = .clustRvizOptionsEnv[["epsilon"]],
-                                             t = t,
-                                             weights = weight_vec[weight_vec != 0],
-                                             rho = .clustRvizOptionsEnv[["rho"]],
-                                             max_iter = .clustRvizOptionsEnv[["max_iter"]],
-                                             l1 = l1,
-                                             show_progress = status)
-  }
+  carp.sol.path <- CARPcpp(X,
+                           D,
+                           t = t,
+                           epsilon = .clustRvizOptionsEnv[["epsilon"]],
+                           weights = weight_vec[weight_vec != 0],
+                           rho = .clustRvizOptionsEnv[["rho"]],
+                           max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                           burn_in = .clustRvizOptionsEnv[["burn_in"]],
+                           viz_max_inner_iter = .clustRvizOptionsEnv[["viz_max_inner_iter"]],
+                           viz_initial_step = .clustRvizOptionsEnv[["viz_initial_step"]],
+                           viz_small_step = .clustRvizOptionsEnv[["viz_small_step"]],
+                           keep = .clustRvizOptionsEnv[["keep"]],
+                           l1 = l1,
+                           show_progress = status,
+                           back_track = back_track,
+                           exact = exact)
 
   ## FIXME - Convert gamma.path to a single column matrix instead of a vector
   ##         RcppArmadillo returns a arma::vec as a n-by-1 matrix
@@ -282,7 +269,8 @@ CARP <- function(X,
     p = p,
     weights = weight_matrix,
     weight_type = weight_type,
-    alg.type = alg.type,
+    back_track = back_track,
+    exact = exact,
     norm = norm,
     t = t,
     X.center = X.center,
@@ -323,10 +311,19 @@ CARP <- function(X,
 #' carp_fit <- CARP(presidential_speech)
 #' print(carp_fit)
 print.CARP <- function(x, ...) {
-  alg_string <- switch(x$alg.type,
-                       carp      = paste0("CARP (t = ", round(x$t, 3), ")"),
-                       carpviz   = "CARP-VIZ",
-                       admm      = paste0("ADMM (t = ", round(x$t, 3), ")"))
+  if(x$exact){
+    if(x$back_track){
+      alg_string = "ADMM-VIZ [Exact Solver + Back-Tracking Fusion Search]"
+    } else {
+      alg_string = paste0("ADMM (t = ", round(x$t, 3), ") [Exact Solver]")
+    }
+  } else {
+    if(x$back_track){
+      alg_string = "CARP-VIZ [Back-Tracking Fusion Search]"
+    } else {
+      alg_string = paste0("CARP (t = ", round(x$t, 3), ")")
+    }
+  }
 
   if(x$norm == 1){
     alg_string <- paste(alg_string, "[L1]")

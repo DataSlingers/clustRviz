@@ -25,11 +25,12 @@
 #' @param col_labels A character vector of length \eqn{p}: column (variable) labels
 #' @param X.center.global A logical: Should \code{X} be centered globally?
 #'                        \emph{I.e.}, should the global mean of \code{X} be subtracted?
-#' @param alg.type Which \code{CBASS} variant to use. Allowed values are \itemize{
-#'        \item \code{"cbass"} - The standard \code{CBASS} algorithm;
-#'        \item \code{"cbassviz"} - The back-tracking \code{CBASS} algorithm; or
-#'        \item \code{"admm"} - Fully solving the ADMM till convergence
-#' }
+#' @param back_track A logical: Should back-tracking be used to exactly identify fusions?
+#'                   By default, back-tracking is not used.
+#' @param exact A logical: Should the exact solution be computed using an iterative algorithm?
+#'              By default, algorithmic regularization is applied and the exact solution
+#'              is not computed. Setting \code{exact = TRUE} often significantly increases
+#'              computation time.
 #' @param norm Which norm to use in the fusion penalty? Currently only \code{1}
 #'             and \code{2} (default) are supported.
 #' @param t A number greater than 1: the size of the multiplicative update to
@@ -78,7 +79,8 @@ CBASS <- function(X,
                   col_labels = colnames(X),
                   X.center.global = TRUE,
                   t = 1.01,
-                  alg.type = c("cbassviz", "cbass", "admm"),
+                  back_track = FALSE,
+                  exact = FALSE,
                   norm = 2,
                   npcs = min(4L, NCOL(X), NROW(X)),
                   dendrogram.scale = NULL,
@@ -134,7 +136,13 @@ CBASS <- function(X,
     crv_error(sQuote("npcs"), " must be an integer scalar between 2 and ", sQuote("min(dim(X))."))
   }
 
-  alg.type <- match.arg(alg.type)
+  if (!is_logical_scalar(back_track)) {
+    crv_error(sQuote("back_track"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
+  }
+
+  if (!is_logical_scalar(exact)) {
+    crv_error(sQuote("exact"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
+  }
 
   if (norm %not.in% c(1, 2)){
     crv_error(sQuote("norm"), " must be either 1 or 2.")
@@ -282,51 +290,26 @@ CBASS <- function(X,
   D_col[cbind(col_edge_list[,1], seq_len(num_edge_cols))] <-  1
   D_col[cbind(col_edge_list[,2], seq_len(num_edge_cols))] <- -1
 
-  crv_message("Computing CBASS Path")
+  crv_message("Computing Convex Bi-Clustering [CBASS] Path")
 
-  if (alg.type == "cbassviz") {
-    cbass.sol.path <- CBASS_VIZcpp(X,
-                                   D_row,
-                                   D_col,
-                                   epsilon = .clustRvizOptionsEnv[["epsilon"]],
-                                   weights_row = row_weights[row_weights != 0],
-                                   weights_col = col_weights[col_weights != 0],
-                                   rho = .clustRvizOptionsEnv[["rho"]],
-                                   max_iter = .clustRvizOptionsEnv[["max_iter"]],
-                                   burn_in = .clustRvizOptionsEnv[["burn_in"]],
-                                   viz_max_inner_iter = .clustRvizOptionsEnv[["viz_max_inner_iter"]],
-                                   viz_initial_step = .clustRvizOptionsEnv[["viz_initial_step"]],
-                                   viz_small_step = .clustRvizOptionsEnv[["viz_small_step"]],
-                                   keep = .clustRvizOptionsEnv[["keep"]],
-                                   l1 = l1,
-                                   show_progress = status)
-  } else if(alg.type == "cbass") {
-    cbass.sol.path <- CBASScpp(X,
-                               D_row,
-                               D_col,
-                               epsilon = .clustRvizOptionsEnv[["epsilon"]],
-                               t = t,
-                               weights_row = row_weights[row_weights != 0],
-                               weights_col = col_weights[col_weights != 0],
-                               rho = .clustRvizOptionsEnv[["rho"]],
-                               max_iter = .clustRvizOptionsEnv[["max_iter"]],
-                               burn_in = .clustRvizOptionsEnv[["burn_in"]],
-                               keep = .clustRvizOptionsEnv[["keep"]],
-                               l1 = l1,
-                               show_progress = status)
-  } else {
-    cbass.sol.path <- ConvexBiClusteringADMMcpp(X,
-                                                D_row,
-                                                D_col,
-                                                epsilon = .clustRvizOptionsEnv[["epsilon"]],
-                                                t = t,
-                                                weights_row = row_weights[row_weights != 0],
-                                                weights_col = col_weights[col_weights != 0],
-                                                rho = .clustRvizOptionsEnv[["rho"]],
-                                                max_iter = .clustRvizOptionsEnv[["max_iter"]],
-                                                l1 = l1,
-                                                show_progress = status)
-  }
+  cbass.sol.path <- CBASScpp(X,
+                             D_row,
+                             D_col,
+                             t = t,
+                             epsilon = .clustRvizOptionsEnv[["epsilon"]],
+                             weights_row = row_weights[row_weights != 0],
+                             weights_col = col_weights[col_weights != 0],
+                             rho = .clustRvizOptionsEnv[["rho"]],
+                             max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                             burn_in = .clustRvizOptionsEnv[["burn_in"]],
+                             viz_max_inner_iter = .clustRvizOptionsEnv[["viz_max_inner_iter"]],
+                             viz_initial_step = .clustRvizOptionsEnv[["viz_initial_step"]],
+                             viz_small_step = .clustRvizOptionsEnv[["viz_small_step"]],
+                             keep = .clustRvizOptionsEnv[["keep"]],
+                             l1 = l1,
+                             show_progress = status,
+                             back_track = back_track,
+                             exact = exact)
 
   ## FIXME - Convert gamma.path to a single column matrix instead of a vector
   ##         RcppArmadillo returns a arma::vec as a n-by-1 matrix
@@ -385,7 +368,8 @@ CBASS <- function(X,
       cluster_membership = post_processing_results_col$membership_info
     ),
     # General flags
-    alg.type = alg.type,
+    back_track = back_track,
+    exact = exact,
     norm = norm,
     t = t,
     X.center.global = X.center.global,
@@ -421,10 +405,23 @@ CBASS <- function(X,
 #' cbass_fit <- CBASS(X=presidential_speech)
 #' print(cbass_fit)
 print.CBASS <- function(x, ...) {
-  alg_string <- switch(x$alg.type,
-                       cbass    = paste0("CBASS (t = ", round(x$t, 3), ")"),
-                       cbassviz = "CBASS-VIZ",
-                       admm     = paste0("ADMM (t = ", round(x$t, 3), ")"))
+  if(x$exact){
+    if(x$back_track){
+      alg_string = "DLPA+ADMM-VIZ [Exact Solver + Back-Tracking Fusion Search]"
+    } else {
+      alg_string = paste0("DLPA+ADMM (t = ", round(x$t, 3), ") [Exact Solver]")
+    }
+  } else {
+    if(x$back_track){
+      alg_string = "CBASS-VIZ [Back-Tracking Fusion Search]"
+    } else {
+      alg_string = paste0("CBASS (t = ", round(x$t, 3), ")")
+    }
+  }
+
+  if(x$norm == 1){
+    alg_string <- paste(alg_string, "[L1]")
+  }
 
   if(x$norm == 1){
     alg_string <- paste(alg_string, "[L1]")

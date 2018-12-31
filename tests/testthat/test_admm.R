@@ -7,7 +7,7 @@ test_that("Full ADMM converges for CARP", {
 
   ## Example modified from help pages of cvxclustr
   X <- as.matrix(mammals[,-1])
-  carp_fit <- CARP(X, alg.type = "admm", X.center = FALSE, X.scale = FALSE)
+  carp_fit <- CARP(X, exact = TRUE, X.center = FALSE, X.scale = FALSE)
 
   ## Calculate matching `cvxclustr` solution
   Xt <- t(X)
@@ -39,7 +39,7 @@ test_that("Full ADMM converges for CBASS", {
 
   ## Example modified from help pages of cvxclustr
   X <- as.matrix(mammals[,-1])
-  cbass_fit <- CBASS(X, alg.type = "admm", X.center.global = FALSE, t = 1.05)
+  cbass_fit <- CBASS(X, exact = TRUE, X.center.global = FALSE, t = 1.05)
 
   cbass_gamma <- cbass_fit$debug$path$gamma_path
   cbass_U     <- array(cbass_fit$debug$path$u_path, c(NROW(X), NCOL(X), length(cbass_gamma)))
