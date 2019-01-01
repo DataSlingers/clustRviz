@@ -22,10 +22,17 @@ test_that("CARP() errors early with incorrect input", {
   expect_error(CARP(presidential_speech, ncores = 0L))
   expect_error(CARP(presidential_speech, ncores = -1L))
 
-  # Must use a known algorithm
-  expect_error(CARP(presidential_speech, alg.type = "unknown"))
-  expect_error(CARP(presidential_speech, alg.type = NA))
-  expect_error(CARP(presidential_speech, alg.type = "CARP"))
+  # Check `exact` argument
+  expect_error(CARP(presidential_speech, exact = "unknown"))
+  expect_error(CARP(presidential_speech, exact = NA))
+  expect_error(CARP(presidential_speech, exact = c(TRUE, FALSE)))
+  expect_error(CARP(presidential_speech, exact = 1L))
+
+  # Check `back_track` argument
+  expect_error(CARP(presidential_speech, back_track = "unknown"))
+  expect_error(CARP(presidential_speech, back_track = NA))
+  expect_error(CARP(presidential_speech, back_track = c(TRUE, FALSE)))
+  expect_error(CARP(presidential_speech, back_track = 1L))
 
   # Must use a t > 1
   expect_error(CARP(presidential_speech, t = 1))

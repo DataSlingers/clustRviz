@@ -4,7 +4,7 @@ test_that("print.CBASS works for default settings", {
   cbass_fit <- CBASS(presidential_speech)
   cbass_print <- capture_print(cbass_fit)
 
-  expect_str_contains(cbass_print, "Algorithm:[ ]+CBASS-VIZ")
+  expect_str_contains(cbass_print, "Algorithm:[ ]+CBASS")
   expect_str_contains(cbass_print, "Number of Rows:[ ]+44")
   expect_str_contains(cbass_print, "Number of Columns:[ ]+75")
   expect_str_contains(cbass_print, "Global centering:[ ]+TRUE")
@@ -15,15 +15,15 @@ test_that("print.CBASS works for default settings", {
 })
 
 test_that("print.CBASS works for other algorithms", {
-  expect_str_contains(capture_print(CBASS(presidential_speech, alg.type="cbassviz")),
+  expect_str_contains(capture_print(CBASS(presidential_speech, back_track = TRUE)),
                       "Algorithm:[ ]+CBASS-VIZ")
 
-  expect_str_contains(capture_print(CBASS(presidential_speech, alg.type="cbassviz", norm = 1)),
-                      "Algorithm:[ ]+CBASS-VIZ \\[L1\\]")
+  expect_str_contains(capture_print(CBASS(presidential_speech, back_track = TRUE, norm = 1)),
+                      "Algorithm:[ ]+CBASS-VIZ \\[Back-Tracking Fusion Search\\] \\[L1\\]")
 
-  expect_str_contains(capture_print(CBASS(presidential_speech, alg.type="cbass", t=1.5)),
+  expect_str_contains(capture_print(CBASS(presidential_speech, back_track = FALSE, t = 1.5)),
                       "Algorithm:[ ]+CBASS \\(t = 1.5\\)")
 
-  expect_str_contains(capture_print(CBASS(presidential_speech, alg.type="cbass", t=1.5, norm = 1)),
+  expect_str_contains(capture_print(CBASS(presidential_speech, back_track = FALSE, t = 1.5, norm = 1)),
                       "Algorithm:[ ]+CBASS \\(t = 1.5\\) \\[L1\\]")
 })

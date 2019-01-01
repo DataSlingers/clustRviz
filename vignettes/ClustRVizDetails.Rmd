@@ -181,13 +181,13 @@ In the case of CARP, for example, we may fit the compute the solution
 path for the presidents data via the `CARP` function:
 
 ```{r}
-carp.fit <- CARP(X=Xdat)
+carp_fit <- CARP(X=Xdat)
 ```
 
 Once completed, we can examine a brief summary of the fitted object:
 
 ```{r,message=TRUE}
-carp.fit
+carp_fit
 ```
 
 The output above displays characteristics of our data, such as sample size
@@ -221,42 +221,35 @@ accompaning [weights vignette](ClustRVizWeights.html) for details.
 `CBASS` solutions can be fit in a similar manner:
 
 ```{r}
-cbass.fit <- CBASS(X=Xdat)
+cbass_fit <- CBASS(X=Xdat)
 ```
 
 And display its output:
 ```{r,message=TRUE}
-cbass.fit
+cbass_fit
 ```
 
 ## Algorithm Types
 
 Another input into the fitting procedure is the
-algorithm type. By default both `CARP` and `CBASS` use `VIZ`-type
-extentions of Algorithmic Regularization to ensure dendrogram existence.
-However, for larger datasets ($n.obs > 300$) this default procedure can
-be computationally burdensome. To ameloriate this difficulty, traditional
-Algorithmic Regularization can be used, and it computation time controlled
-via the multiplicitive step-size parameter, $t > 1$.
+algorithm type. By default both `CARP` and `CBASS` a fixed step-size version
+of algorithmic regularization. If the exact dendrogram is of foremost importance, 
+the `VIZ`-type back-tracking extentions may be used by passing `back_track = TRUE`. We
+note, however, that back-tracking may be computationally burdensome, particularly
+for larger data sets. The dendrograms produced by `CARP` and `CBASS` (particularly
+with small step-sizes) are sufficient for the vast majority of applications. 
 
 In the example below we again fit the presidental speech dataset using the
-`carp` algorithim with step size $t=1.1$
+default `carp` algorithim with step size $t=1.1$
 
 ```{r}
-carp_fit_fixed_t <- CARP(Xdat, alg.type = "carp", t = 1.1)
+carp_fit_fixed_t <- CARP(Xdat, t = 1.1)
 carp_fit_fixed_t
 ```
 
-`CBASS` also allows for the use of pure Algorithmic Regularization
-based approaches in a similar manner. Passing `alg.type=cbass` along
-with an associated $t$ value, will produce much faster computations for
-larger datasets.
-
 By default both `CARP` and `CBASS` perform $\ell_2$ regularization between
 observation pairs to encourage fusions, and hence cluster formation. If $\ell_1$
-regularization is preferred for whatever reason, the `alg.type` argument to
-`CARP` can also be `carpvizl1`, for a back-tracking $\ell_1$ algorithm, or
-`carpl1` for a fixed-step-size $\ell_1$ algorithm.
+regularization is preferred for whatever reason, the `norm` argument may be set to `1`.
 
 # Solutions
 
@@ -274,11 +267,11 @@ objects, though the exact meaning of "centroids" varies between the problems
 a `refit` flag, which determines whether the convex clustering centroids or the naive
 centroids (based only on the convex clustering labels) are returned.
 
-For example, we can extract the clustering labels from our `carp.fit` corresponding
+For example, we can extract the clustering labels from our `carp_fit` corresponding
 to a $k = 2$ cluster solution:
 
 ```{r}
-cluster_labels <- get_cluster_labels(carp.fit, k = 2)
+cluster_labels <- get_cluster_labels(carp_fit, k = 2)
 head(cluster_labels)
 ```
 
@@ -291,7 +284,7 @@ table(cluster_labels)
 Similarly, to get the cluster means, we use the `get_cluster_centroids` function:
 
 ```{r}
-get_cluster_centroids(carp.fit, k = 2)
+get_cluster_centroids(carp_fit, k = 2)
 ```
 
 Since we performed convex clustering here, our centroids are $p$-vectors. By default,
@@ -299,7 +292,7 @@ the naive centroids are used; if we prefer the exact convex clustering solution,
 can pass the `refit = FALSE` flag:
 
 ```{r}
-get_cluster_centroids(carp.fit, k = 2, refit = FALSE)
+get_cluster_centroids(carp_fit, k = 2, refit = FALSE)
 ```
 
 We can instead supply the `percent` argument to specify $\lambda$ (or more precisely,
@@ -308,7 +301,7 @@ example, if we are interested at the clustering solution about $25\%$ of the way
 along the regularization path:
 
 ```{r}
-get_cluster_labels(carp.fit, percent = 0.25)
+get_cluster_labels(carp_fit, percent = 0.25)
 ```
 
 We see that our data is clearly falls into three clusters.
@@ -326,16 +319,16 @@ is roughly the same:
 
 ```{r}
 # CBASS Cluster Labels for rows (observations = default)
-get_cluster_labels(cbass.fit, percent = 0.85, type = "row")
+get_cluster_labels(cbass_fit, percent = 0.85, type = "row")
 
 # CBASS Cluster Labels for columns (features)
-get_cluster_labels(cbass.fit, percent = 0.85, type = "col")
+get_cluster_labels(cbass_fit, percent = 0.85, type = "col")
 
 # CBASS Solution - naive centroids
-get_clustered_data(cbass.fit, percent = 0.85)
+get_clustered_data(cbass_fit, percent = 0.85)
 
 # CBASS Solution - convex bi-clustering centroids
-get_clustered_data(cbass.fit, percent = 0.85, refit = FALSE)
+get_clustered_data(cbass_fit, percent = 0.85, refit = FALSE)
 ```
 
 The `get_cluster_centroids` function returns a $k_1$-by-$k_2$ matrix, giving
@@ -343,7 +336,7 @@ the (scalar) centroids at a solution with $k_1$ row clusters and $k_2$
 column clusters:
 
 ```{r}
-get_cluster_centroids(cbass.fit, percent = 0.85)
+get_cluster_centroids(cbass_fit, percent = 0.85)
 ```
 
 # Visualizations
@@ -367,15 +360,13 @@ the fusions between observations as regulaization increases.
 To obtain a snapshot we again specify the percent of regularization.
 
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
-plot(carp.fit, type = 'path', percent = .5)
+plot(carp_fit, type = 'path', percent = .5)
 ```
 
-Owing to the CARP-VIZ algorithm, we are also ensured a
-dendrogram representation for the resulting path. In the
-figure below we display the dendrogram of CARP-VIZ:
+The CARP solution path can be used to construct a dendrogram:
 
 ```{r,fig.width=5,fig.height=5,fig.align='center'}
-plot(carp.fit, type = 'dendrogram')
+plot(carp_fit, type = 'dendrogram')
 ```
 
 Additional static visualization are available for
@@ -383,7 +374,7 @@ CBASS objects, allowing both static heatmaps and
 dendrograms for observations and variables.
 
 ```{r,echo=TRUE,eval=FALSE}
-plot(cbass.fit, type = 'col.dendrogram')
+plot(cbass_fit, type = 'col.dendrogram')
 ```
 
 ## Dynamic
@@ -393,7 +384,7 @@ Via the use of Shiny applications, dynamic displays of dendrograms,
 clustering solution paths, and biclustering heatmaps may be easily obtained.
 
 ```{r,echo=TRUE,eval=FALSE}
-plot(carp.fit, type = 'interactive')
+plot(carp_fit, type = 'interactive')
 ```
 
 ```{r,echo=FALSE,eval=TRUE,out.width='100%'}
@@ -404,7 +395,7 @@ knitr::include_url(url = "https://clustrviz.shinyapps.io/PathShiny/",
 Also for CBASS:
 
 ```{r,echo=TRUE,eval=FALSE}
-plot(cbass.fit, type = 'interactive')
+plot(cbass_fit, type = 'interactive')
 ```
 
 ## Saving
@@ -417,7 +408,7 @@ is sufficient to obtain a visualization along the path:
 
 ```{r,echo=TRUE,eval=FALSE}
 saveviz(
-  carp.fit,
+  carp_fit,
   file.name = 'carp_path_static.png',
   plot.type = 'path',
   image.type = 'static',
@@ -432,7 +423,7 @@ is outputed. In a similar manner, dendrograms may also be easily saved:
 
 ```{r,echo=TRUE,eval=FALSE}
 saveviz(
-  carp.fit,
+  carp_fit,
   file.name = 'carp_dend_static.png',
   plot.type = 'dendrogram',
   image.type = 'static',
@@ -446,7 +437,7 @@ cluster formation.
 
 ```{r,echo=TRUE,eval=FALSE}
 saveviz(
-  carp.fit,
+  carp_fit,
   file.name = 'path_dyn.gif',
   plot.type = 'path',
   image.type = 'dynamic'
@@ -459,7 +450,7 @@ below we save a `.gif` biclustering heatmap.
 
 ```{r,echo=TRUE,eval=FALSE}
 saveviz(
-  cbass.fit,
+  cbass_fit,
   file.name = 'cbass_heat_dyn.gif',
   plot.type = 'heatmap',
   image.type = 'dynamic'
