@@ -221,6 +221,7 @@ CARP <- function(X,
   weight_vec <- weight_mat_to_vec(weight_matrix)
 
   crv_message("Computing Convex Clustering [CARP] Path")
+  tic_inner <- Sys.time()
 
   carp.sol.path <- CARPcpp(X,
                            D,
@@ -239,6 +240,8 @@ CARP <- function(X,
                            back_track = back_track,
                            exact = exact)
 
+  toc_inner <- Sys.time()
+
   ## FIXME - Convert gamma.path to a single column matrix instead of a vector
   ##         RcppArmadillo returns a arma::vec as a n-by-1 matrix
   ##         RcppEigen returns an Eigen::VectorXd as a n-length vector
@@ -256,7 +259,8 @@ CARP <- function(X,
                                                          v_zero_indices   = carp.sol.path$v_zero_inds,
                                                          labels           = labels,
                                                          dendrogram_scale = dendrogram.scale,
-                                                         npcs             = npcs)
+                                                         npcs             = npcs,
+                                                         smooth_U         = TRUE)
 
   carp.fit <- list(
     X = X.orig,
@@ -277,7 +281,8 @@ CARP <- function(X,
     center_vector = center_vector,
     X.scale = X.scale,
     scale_vector = scale_vector,
-    time = Sys.time() - tic
+    time = Sys.time() - tic,
+    fit_time = toc_inner - tic_inner
   )
 
   if (.clustRvizOptionsEnv[["keep_debug_info"]]) {
@@ -332,7 +337,8 @@ print.CARP <- function(x, ...) {
   cat("CARP Fit Summary\n")
   cat("====================\n\n")
   cat("Algorithm:", alg_string, "\n")
-  cat("Time:", sprintf("%2.3f %s", x$time, attr(x$time, "units")), "\n\n")
+  cat("Fit Time:", sprintf("%2.3f %s", x$fit_time, attr(x$fit_time, "units")), "\n")
+  cat("Total Time:", sprintf("%2.3f %s", x$time, attr(x$time, "units")), "\n\n")
 
   cat("Number of Observations:", x$n, "\n")
   cat("Number of Variables:   ", x$p, "\n\n")

@@ -395,10 +395,11 @@ carp_dendro_plot <- function(x,
   as.dendrogram(x) %>%
     set("branches_lwd", dend.branch.width) %>%
     set("labels_cex", dend.labels.cex) %>%
-    plot(ylab = "Amount of Regularization",
-         cex.lab = dend.ylab.cex,
+    plot(ylab = "Fraction of Regularization",
+         cex.lab = dend.ylab.cex, yaxt = "n",
          ...)
 
+  axis(2, at = c(0, 0.25, 0.5, 0.75, 1), labels = c("0%", "25%", "50%", "75%", "100%"), las=2)
   if(show_clusters){
 
     if(has_percent){

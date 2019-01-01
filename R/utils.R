@@ -330,7 +330,8 @@ ConvexClusteringPostProcess <- function(X,
                                         labels,
                                         dendrogram_scale,
                                         npcs,
-                                        internal_transpose = FALSE){
+                                        internal_transpose = FALSE,
+                                        smooth_U = FALSE){
 
   n         <- NROW(X)
   p         <- NCOL(X)
@@ -342,12 +343,17 @@ ConvexClusteringPostProcess <- function(X,
                       gamma.path  = gamma_path,
                       cardE       = num_edges)
 
-  cluster_path[["clust.path"]] <- get_cluster_assignments(edge_matrix, cluster_path$sp.path.inter, n)
-  cluster_path[["clust.path.dups"]] <- duplicated(cluster_path[["clust.path"]], fromList = FALSE)
+  cluster_fusion_info <- get_cluster_assignments(edge_matrix, cluster_path$sp.path.inter, n)
+  cluster_path[["clust.path"]] <- cluster_fusion_info
+  cluster_path[["clust.path.dups"]] <- duplicated(cluster_fusion_info, fromList = FALSE)
 
   U <- array(cluster_path$u.path.inter, dim = c(n, p, length(cluster_path[["clust.path.dups"]])))
   rownames(U) <- rownames(X)
   colnames(U) <- colnames(X)
+
+  if(smooth_U){
+    U <- smooth_u_clustering(U, cluster_fusion_info)
+  }
 
   if (internal_transpose) {
     ## When looking at the column fusions from CBASS, we want U to be
@@ -366,11 +372,11 @@ ConvexClusteringPostProcess <- function(X,
   X_pca <- stats::prcomp(X, scale. = FALSE, center = FALSE)
   rotation_matrix <- X_pca$rotation[, seq_len(npcs)]
 
-  membership_info <- tibble(Iter = rep(seq_along(cluster_path$clust.path), each = n),
-                            Obs  = rep(seq_len(n), times = length(cluster_path$clust.path)),
-                            Cluster = as.vector(vapply(cluster_path$clust.path, function(x) x$membership, double(n))),
+  membership_info <- tibble(Iter = rep(seq_along(cluster_fusion_info), each = n),
+                            Obs  = rep(seq_len(n), times = length(cluster_fusion_info)),
+                            Cluster = as.vector(vapply(cluster_fusion_info, function(x) x$membership, double(n))),
                             Gamma = rep(cluster_path$gamma.path.inter, each = n),
-                            ObsLabel = rep(labels, times = length(cluster_path$clust.path))) %>%
+                            ObsLabel = rep(labels, times = length(cluster_fusion_info))) %>%
                          group_by(.data$Iter) %>%
                          mutate(NCluster = n_distinct(.data$Cluster)) %>%
                          ungroup() %>%

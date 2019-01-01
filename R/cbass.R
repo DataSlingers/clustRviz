@@ -291,6 +291,7 @@ CBASS <- function(X,
   D_col[cbind(col_edge_list[,2], seq_len(num_edge_cols))] <- -1
 
   crv_message("Computing Convex Bi-Clustering [CBASS] Path")
+  tic_inner <- Sys.time()
 
   cbass.sol.path <- CBASScpp(X,
                              D_row,
@@ -310,6 +311,8 @@ CBASS <- function(X,
                              show_progress = status,
                              back_track = back_track,
                              exact = exact)
+
+  toc_inner <- Sys.time()
 
   ## FIXME - Convert gamma.path to a single column matrix instead of a vector
   ##         RcppArmadillo returns a arma::vec as a n-by-1 matrix
@@ -374,7 +377,8 @@ CBASS <- function(X,
     t = t,
     X.center.global = X.center.global,
     mean_adjust = mean_adjust,
-    time = Sys.time() - tic
+    time = Sys.time() - tic,
+    fit_time = toc_inner - tic_inner
   )
 
   if (.clustRvizOptionsEnv[["keep_debug_info"]]) {
@@ -430,7 +434,8 @@ print.CBASS <- function(x, ...) {
   cat("CBASS Fit Summary\n")
   cat("====================\n\n")
   cat("Algorithm:", alg_string, "\n")
-  cat("Time:", sprintf("%2.3f %s", x$time, attr(x$time, "units")), "\n\n")
+  cat("Fit Time:", sprintf("%2.3f %s", x$fit_time, attr(x$fit_time, "units")), "\n")
+  cat("Total Time:", sprintf("%2.3f %s", x$time, attr(x$time, "units")), "\n\n")
 
   cat("Number of Rows:", x$n, "\n")
   cat("Number of Columns:", x$p, "\n\n")
