@@ -7,11 +7,11 @@ author:
  - name: John Nagorski
    affiliation: Department of Statistics, Rice University
  - name: Genevera I. Allen
-   affiliation: | 
+   affiliation: |
      | Departments of Statistics, Computer Science, and Electical and Computer Engineering, Rice University
      | Jan and Dan Duncan Neurological Research Institute, Baylor College of Medicine
    email: gallen@rice.edu
-date: "Last Updated: September 29, 2018"
+date: "Last Updated: January 8, 2019"
 output:
   html_document:
     toc: true
@@ -23,6 +23,9 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+In this vignette, we give an overview of the `CARP` and `CBASS` algorithms. For more
+details, see Weylandt, Nagorski, and Allen [-@Weylandt:2019].
 
 ## Convex Clustering
 
