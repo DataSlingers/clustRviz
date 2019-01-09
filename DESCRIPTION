@@ -1,25 +1,32 @@
 Package: clustRviz
 Type: Package
-Title: Convex (Bi)Clustering via Algorithmic Regularization Paths
+Title: Convex Clustering and Bi-Clustering via Algorithmic Regularization
 Version: 0.1.0
 Authors@R: c(
-  person("John", "Nagorski", role = c("aut", "cre"), email = "jn13@rice.edu"),
-  person("Michael", "Weylandt", role = "aut", email = "Michael.Weylandt@rice.edu"),
+  person("Michael", "Weylandt", role = c("aut", "cre"), email = "michael.weylandt@rice.edu"),
+  person("John", "Nagorski", role = "aut", email = "jn13@rice.edu"),
   person("Genevera", "Allen", role = c("ths", "aut"), email = "gallen@rice.edu"),
   person("Warnes", "Gregory", role = "cph", comment = "R/util_myheatmap2.R"),
   person("Lewis", "Brian W.", role = "cph", comment = "R/util_hcs.R"),
   person("R Core Team", role = "cph", comment = "R/util_myrecthclust.R"))
-Description: Provides interactive graphics and fast computation for the Convex Clustering problem.
+Description: ClustRViz provides fast computation and interactive for the
+             convex clustering and bi-clustering problems. The CARP and
+             CBASS algorithms use an algorithmic regularization scheme to
+             obtain high-quality global approximations of the exact regularization
+             paths in a fraction of the time required for exact solutions. The
+             CARP-VIZ and CBASS-VIZ variants include a back-tracking scheme to
+             ensure exact dendrogram recovery. For more details, see "Dynamic Visualization
+             and Fast Computation for Convex Clustering and Bi-Clustering" by M. Weylandt,
+             J. Nagorski, and G.I. Allen, ArXiv 1901.01477 <https://arxiv.org/abs/1901.01477>.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 2.10)
-Remotes:
-    thomasp85/gganimate
 Imports:
     stats,
     graphics,
     dplyr,
+    tibble,
     ggplot2,
     rlang,
     tidyr,
@@ -34,7 +41,7 @@ Imports:
     ggrepel,
     RColorBrewer,
     heatmaply,
-    gganimate (>= 0.1.1)
+    gganimate
 RoxygenNote: 6.1.0
 LinkingTo: Rcpp, RcppEigen
 Suggests: testthat,

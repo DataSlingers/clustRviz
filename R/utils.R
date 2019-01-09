@@ -12,7 +12,8 @@ if (getRversion() >= "2.15.1") utils::globalVariables(c("."))
 #' @source \url{http://www.presidency.ucsb.edu}
 "presidential_speech"
 
-#' @importFrom dplyr tbl_df mutate select slice filter arrange left_join full_join
+#' @importFrom tibble as_tibble
+#' @importFrom dplyr mutate select slice filter arrange left_join full_join
 #' @importFrom dplyr group_by ungroup tibble bind_rows lead n
 #' @importFrom tidyr gather nest unnest
 #' @importFrom purrr map map2
@@ -38,8 +39,7 @@ ISP <- function(sp.path, v.path, u.path, gamma.path, cardE) {
   NewU <- NULL
   U <- NULL
 
-  sp.path %>%
-    dplyr::tbl_df() %>%
+  as_tibble(sp.path) %>%
     dplyr::mutate(Iter = 1:n()) %>%
     tidyr::gather(ColLab, SpValue, -Iter) %>%
     dplyr::mutate(
