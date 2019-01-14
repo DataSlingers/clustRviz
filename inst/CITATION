@@ -1,7 +1,7 @@
 citHeader("To cite clustRviz in publications, please use:")
 
 citEntry(entry = "MISC",
-  title        = "Dynamic Visualization and Fast Computation for Convex Clustering and Bi-Clustering",
+  title        = "Dynamic Visualization and Fast Computation for Convex Clustering via Algorithmic Regularization",
   author       = personList(as.person("Michael Weylandt"),
                             as.person("John Nagorski"),
                             as.person("Genevera I. Allen")),
@@ -11,7 +11,7 @@ citEntry(entry = "MISC",
 
   textVersion  =
       paste("Michael Weylandt, John Nagorski, and Genevera I. Allen.",
-            sQuote("Dynamic Visualization and Fast Computation for Convex Clustering and Bi-Clustering,"),
+            sQuote("Dynamic Visualization and Fast Computation for Convex Clustering via Algorithmic Regularization,"),
             "ArXiv Pre-Print 1901.01477 (https://arxiv.org/abs/1901.01477)")
 )
 
