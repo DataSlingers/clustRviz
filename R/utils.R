@@ -1,17 +1,5 @@
 if (getRversion() >= "2.15.1") utils::globalVariables(c("."))
 
-#' Log transformed word count of presidential speeches
-#'
-#' A dataset of the top 75 most variable log-transformed word counts for
-#' each US president aggregated over several speeches
-#' (Inaugural, State of the Union, etc.).
-#' Stop words have been removed and words have been stemmed.
-#'
-#' @format A data.frame with 44 rows (one for each president) and 75 columns (log transformed word counts)
-#' @details Grover Cleveland was elected president twice (1892 and 1884). For our purposes his speeches are combined.
-#' @source \url{http://www.presidency.ucsb.edu}
-"presidential_speech"
-
 #' @importFrom tibble as_tibble
 #' @importFrom dplyr mutate select slice filter arrange left_join full_join
 #' @importFrom dplyr group_by ungroup tibble bind_rows lead n

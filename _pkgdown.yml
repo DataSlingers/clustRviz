@@ -35,6 +35,8 @@ reference:
       by `clustRviz`
     contents:
       - presidential_speech
+      - authors
+      - tcga_breast
       - clustRviz_logging
       - clustRviz_options
 
