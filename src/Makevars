@@ -2,7 +2,7 @@ CXX_STD = CXX11
 PKG_LIBS = $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
 
 strip: $(SHLIB)
-	if test -e "/usr/bin/strip" & test -e "/bin/uname" & [[ `uname` == "Linux" ]] ; then /usr/bin/strip --strip-debug *.o *.so; fi
-	if test -e "/usr/bin/strip" & test -e "/usr/bin/uname" & [[ `uname` == "Darwin" ]] ; then /usr/bin/strip -S *.o *.so; fi
+	( [[ `uname` == "Darwin" ]] && test -e "/usr/bin/strip" && /usr/bin/strip -S *.o *.so ) || true
+	( [[ `uname` == "Linux" ]] && test -e "/usr/bin/strip" && /usr/bin/strip --strip-debug *.o *.so )  || true
 
 .phony: strip
