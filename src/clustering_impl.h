@@ -165,7 +165,7 @@ public:
                               Rcpp::Named("gamma_path")  = gamma_path);
   }
 
-  void tick(uint iter){
+  void tick(unsigned int iter){
     sp.update(nzeros, V.squaredNorm(), iter, gamma);
   }
 

@@ -31,7 +31,7 @@ class StatusPrinter {
 
 public:
   StatusPrinter(bool show_progress,
-                uint total_fusions,
+                unsigned int total_fusions,
                 std::string format = "",
                 int width = Rf_GetOptionWidth() - 2) :
 
@@ -60,7 +60,7 @@ public:
     this->v_norm_init = v_norm_init;
   }
 
-  void update(int fusions_, double v_norm_, uint iter_, double gamma_) {
+  void update(int fusions_, double v_norm_, unsigned int iter_, double gamma_) {
     double time_since_last_tick = (std::clock() - last_tick) / ((double) CLOCKS_PER_SEC);
 
     if(time_since_last_tick < CLUSTRVIZ_STATUS_UPDATE_TIME_SECS){
@@ -70,7 +70,7 @@ public:
     force_update(fusions_, v_norm_, iter_, gamma_);
   }
 
-  void force_update(int fusions_, double v_norm_, uint iter_, double gamma_){
+  void force_update(int fusions_, double v_norm_, unsigned int iter_, double gamma_){
     Rcpp::checkUserInterrupt(); // Check essentially every time we do the progress bar
 
     if(!show_progress){
@@ -99,7 +99,7 @@ public:
 
 private:
   const bool show_progress;    // Do we print output?
-  uint count;                  // Number of times we have updated the printer
+  unsigned int count;          // Number of times we have updated the printer
   const bool output_supported; // Do we support the desired print location?
   std::string format;          // Bar template -- hard coded above
   int width;                   // Width of progress bar (used to set template and control print length)
@@ -107,12 +107,12 @@ private:
   std::clock_t last_tick;      // Time of last PB tick
 
   // ClustRviz-specific measures of progress
-  const uint total_fusions; // Number of edges that need to be fused before termination
-  uint fusions;             // Number of edges fused so far
-  double v_norm_init;       // Initial squared Frobenius norm of V
-  double v_norm;           // Current squared Frobenius norm of V
-  uint iter;               // What iteration we are on
-  double gamma;            // Current regularization level
+  const unsigned int total_fusions; // Number of edges that need to be fused before termination
+  unsigned int fusions;             // Number of edges fused so far
+  double v_norm_init;               // Initial squared Frobenius norm of V
+  double v_norm;                    // Current squared Frobenius norm of V
+  unsigned int iter;                // What iteration we are on
+  double gamma;                     // Current regularization level
 
   void update_format(){
     if(this->width >= 120){

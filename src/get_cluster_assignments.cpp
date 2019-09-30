@@ -12,7 +12,7 @@ Rcpp::List get_cluster_assignments_impl(const Eigen::MatrixXi& E,
   std::set<int> all_vertices_seen;
 
   // Iterate over all possible edges - this big loop is a no-op where edge_ind == 0
-  for(uint i = 0; i < edge_ind.size(); i++){
+  for(unsigned int i = 0; i < edge_ind.size(); i++){
 
     if(edge_ind(i) != 0){ // If the edge is present
       int edge_begin = E(i, 0);
@@ -21,7 +21,7 @@ Rcpp::List get_cluster_assignments_impl(const Eigen::MatrixXi& E,
       // We begin by looking for the first vertex (here called "begin") in each component
       bool found_component_begin = false;
 
-      for(uint j = 0; j < components.size(); j++){
+      for(unsigned int j = 0; j < components.size(); j++){
         std::set<int>& component_j = components[j];
 
         if(contains(component_j, edge_begin)){
@@ -38,7 +38,7 @@ Rcpp::List get_cluster_assignments_impl(const Eigen::MatrixXi& E,
           }
 
           // Now check other components
-          for(uint k = 0; k < components.size(); k++){
+          for(unsigned int k = 0; k < components.size(); k++){
             if(k != j){ // We handled k == j above
 
               std::set<int>& component_k = components[k];
@@ -75,7 +75,7 @@ Rcpp::List get_cluster_assignments_impl(const Eigen::MatrixXi& E,
         // If it is, then we add edge_begin to the same component
         bool found_component_end_inner = false;
 
-        for(uint j = 0; j < components.size(); j++){
+        for(unsigned int j = 0; j < components.size(); j++){
           std::set<int>& component_j = components[j];
           if(contains(component_j, edge_end)){
             // We didn't find edge_begin, but we do have edge_end, so let's add
@@ -127,7 +127,7 @@ Rcpp::List get_cluster_assignments_impl(const Eigen::MatrixXi& E,
   // Assign labels - loop over components and then elements within components
   // Requires irregular access to component_indicators, but it's O(1) (=O(n) total) instead
   // of searching through all the sets repeatedly
-  for(uint i = 0; i < components.size(); i++){
+  for(unsigned int i = 0; i < components.size(); i++){
     std::set<int>& component_i = components[i];
     component_sizes[i] = component_i.size();
 

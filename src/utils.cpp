@@ -120,7 +120,7 @@ Rcpp::NumericVector smooth_u_clustering(Rcpp::NumericVector U_old, Rcpp::List cl
 
   for(Eigen::Index q = 0; q < Q; q++){
     Rcpp::List cluster_info = cluster_info_list[q];
-    uint n_clusters = Rcpp::as<uint>(cluster_info[2]);
+    unsigned int n_clusters = Rcpp::as<unsigned int>(cluster_info[2]);
 
     Rcpp::IntegerVector cluster_ids = cluster_info[0];
     Rcpp::IntegerVector cluster_sizes = cluster_info[1];
@@ -128,11 +128,11 @@ Rcpp::NumericVector smooth_u_clustering(Rcpp::NumericVector U_old, Rcpp::List cl
     Eigen::MatrixXd U_old_slice = Eigen::Map<Eigen::MatrixXd>(&U_old[N * P * q], N, P);
     Eigen::MatrixXd U_new(N, P);
 
-    for(uint j = 1; j <= n_clusters; j++){ // Cluster IDs are 1-based (per R conventions)
+    for(unsigned int j = 1; j <= n_clusters; j++){ // Cluster IDs are 1-based (per R conventions)
       Eigen::VectorXd vec = Eigen::VectorXd::Zero(P);
 
       // Manually work out new mean
-      for(uint n = 0; n < N; n++){
+      for(unsigned int n = 0; n < N; n++){
         if(cluster_ids[n] == j){
           vec += U_old_slice.row(n);
         }
@@ -141,7 +141,7 @@ Rcpp::NumericVector smooth_u_clustering(Rcpp::NumericVector U_old, Rcpp::List cl
       vec /= cluster_sizes[j - 1]; // Subtract 1 to adjust to C++ indexing
 
       // Assign new mean where needed...
-      for(uint n = 0; n < N; n++){
+      for(unsigned int n = 0; n < N; n++){
         if(cluster_ids[n] == j){
           U_new.row(n) = vec;
         }
