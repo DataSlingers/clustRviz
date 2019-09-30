@@ -6,7 +6,7 @@ output:
   rmarkdown::html_vignette:
     css: style.css
 vignette: >
-  %\VignetteIndexEntry{clustRviz Details}
+  %\VignetteIndexEntry{clustRviz Quick Start}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
