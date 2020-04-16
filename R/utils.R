@@ -27,6 +27,7 @@ ISP <- function(sp.path, v.path, u.path, gamma.path, cardE) {
   NewU <- NULL
   U <- NULL
 
+  colnames(sp.path) <- paste0("V", seq_len(NCOL(sp.path)))
   as_tibble(sp.path) %>%
     dplyr::mutate(Iter = 1:n()) %>%
     tidyr::gather(ColLab, SpValue, -Iter) %>%
