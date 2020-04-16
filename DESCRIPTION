@@ -42,7 +42,6 @@ Imports:
     RColorBrewer,
     heatmaply,
     gganimate
-RoxygenNote: 6.1.0
 LinkingTo: Rcpp, RcppEigen
 Suggests: testthat,
     knitr,
