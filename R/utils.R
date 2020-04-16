@@ -121,7 +121,7 @@ ISP <- function(sp.path, v.path, u.path, gamma.path, cardE) {
             })
           ) %>%
           dplyr::select(-data) %>%
-          tidyr::unnest() %>%
+          tidyr::unnest(cols = .data$tst) %>%
           dplyr::ungroup() %>%
           dplyr::arrange(Iter, Rank) %>%
           dplyr::select(-Rank),
@@ -192,7 +192,7 @@ ISP <- function(sp.path, v.path, u.path, gamma.path, cardE) {
             })
           ) %>%
           dplyr::select(-data) %>%
-          tidyr::unnest() %>%
+          tidyr::unnest(cols = .data$NewGamma) %>%
           dplyr::arrange(Iter),
         by = c("Iter")
       ) %>%
@@ -250,7 +250,7 @@ ISP <- function(sp.path, v.path, u.path, gamma.path, cardE) {
             })
           ) %>%
           dplyr::select(-data) %>%
-          tidyr::unnest(),
+          tidyr::unnest(cols = .data$NewU),
         by = c("Iter")
       ) %>%
       dplyr::mutate(
