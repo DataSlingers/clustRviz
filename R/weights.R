@@ -186,7 +186,7 @@ dense_rbf_kernel_weights <- function(phi = "auto",
                        sQuote("stats::dist"), " for supported distances.")
            })
 
-  if ((p <= 0) || !is_numeric_scalar(p)) {
+  if (!is_numeric_scalar(p) || (p <= 0)) {
     crv_error(sQuote("p"),
               " must be a positive scalar; see the ", sQuote("p"),
               " argument of ", sQuote("stats::dist"), " for details.")
