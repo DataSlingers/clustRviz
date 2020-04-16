@@ -122,7 +122,7 @@ CBASS <- function(X,
     crv_error("All elements of ", sQuote("X"), " must be finite.")
   }
 
-  if (!is.logical(X.center.global) || is.na(X.center.global) || (length(X.center.global) != 1L)) {
+  if (!is.logical(X.center.global) || anyNA(X.center.global) || (length(X.center.global) != 1L)) {
     crv_error(sQuote("X.center.global"), "must be either ", sQuote("TRUE"), " or ", sQuote("FALSE."))
   }
 

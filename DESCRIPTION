@@ -9,15 +9,15 @@ Authors@R: c(
   person("Warnes", "Gregory", role = "cph", comment = "R/util_myheatmap2.R"),
   person("Lewis", "Brian W.", role = "cph", comment = "R/util_hcs.R"),
   person("R Core Team", role = "cph", comment = "R/util_myrecthclust.R"))
-Description: ClustRViz provides fast computation and interactive for the
-             convex clustering and bi-clustering problems. The CARP and
-             CBASS algorithms use an algorithmic regularization scheme to
-             obtain high-quality global approximations of the exact regularization
-             paths in a fraction of the time required for exact solutions. The
-             CARP-VIZ and CBASS-VIZ variants include a back-tracking scheme to
-             ensure exact dendrogram recovery. For more details, see "Dynamic Visualization
-             and Fast Computation for Convex Clustering and Bi-Clustering" by M. Weylandt,
-             J. Nagorski, and G.I. Allen, ArXiv 1901.01477 <https://arxiv.org/abs/1901.01477>.
+Description: Fast computation and interactive for the convex clustering and 
+             bi-clustering problems. The CARP and CBASS algorithms use an 
+             algorithmic regularization scheme to obtain high-quality global 
+             approximations of the exact regularization paths in a fraction of
+             the time required for exact solutions. The CARP-VIZ and CBASS-VIZ
+             variants include a back-tracking scheme to ensure exact dendrogram
+             recovery. For more details, see "Dynamic Visualization and Fast Computation
+             for Convex Clustering and Bi-Clustering" by M. Weylandt, J. Nagorski, and G.I. Allen, 
+             ArXiv 1901.01477 <arXiv:1901.01477>.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
@@ -42,13 +42,14 @@ Imports:
     RColorBrewer,
     heatmaply,
     gganimate
-RoxygenNote: 6.1.0
 LinkingTo: Rcpp, RcppEigen
 Suggests: testthat,
     knitr,
     rmarkdown,
     MASS, 
-    covr
+    covr, 
+    cvxclustr,
+    cvxbiclustr
 VignetteBuilder: knitr
 BugReports: https://github.com/DataSlingers/clustRviz/issues
 URL: https://github.io/DataSlingers/clustRviz, https://github.com/DataSlingers/clustRviz

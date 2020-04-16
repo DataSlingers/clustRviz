@@ -58,12 +58,12 @@ my.heatmap.2 <- function(x, Rowv = TRUE,
       "Please consider using only one or the other."
     )
   }
-  if (is.null(Rowv) || is.na(Rowv)) {
+  if (is.null(Rowv) || anyNA(Rowv)) {
     Rowv <- FALSE
   }
-  if (is.null(Colv) || is.na(Colv)) {
+  if (is.null(Colv) || anyNA(Colv)) {
     Colv <- FALSE
-  } else if (Colv == "Rowv" && !isTRUE(Rowv)) {
+  } else if (identical(Colv, "Rowv") && !isTRUE(Rowv)) {
     Colv <- FALSE
   }
   if (length(di <- dim(x)) != 2 || !is.numeric(x)) {
@@ -236,7 +236,7 @@ my.heatmap.2 <- function(x, Rowv = TRUE,
   }
   nbr <- length(breaks)
   ncol <- length(breaks) - 1
-  if (class(col) == "function") {
+  if (inherits(col, "function")) {
     col <- col(ncol)
   }
   min.breaks <- min(breaks)
@@ -316,7 +316,7 @@ my.heatmap.2 <- function(x, Rowv = TRUE,
   }
   retval$breaks <- breaks
   retval$col <- col
-  if (!gtools::invalid(na.color) & any(is.na(x))) {
+  if (!gtools::invalid(na.color) & anyNA(x)) {
     mmat <- ifelse(is.na(x), 1, NA)
     graphics::image(1:nc, 1:nr, mmat,
                     axes = FALSE, xlab = "", ylab = "",
