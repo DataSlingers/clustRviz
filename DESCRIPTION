@@ -48,7 +48,9 @@ Suggests: testthat,
     knitr,
     rmarkdown,
     MASS, 
-    covr
+    covr, 
+    cvxclustr,
+    cvxbiclustr
 VignetteBuilder: knitr
 BugReports: https://github.com/DataSlingers/clustRviz/issues
 URL: https://github.io/DataSlingers/clustRviz, https://github.com/DataSlingers/clustRviz
