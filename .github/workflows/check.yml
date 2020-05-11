@@ -131,7 +131,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Deploy build package
-        if: success() && matrix.config.os == 'ubuntu-16.04' && github.ref == 'refs/heads/develop'
+        if: success() && matrix.config.os == 'ubuntu-16.04' && github.ref == 'refs/heads/develop' && github.repository_owner == 'DataSlingers'
         run: |
           git checkout master || git checkout -b master
           git add man/* || echo "No doc changes to commit" 
