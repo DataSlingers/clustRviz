@@ -67,7 +67,7 @@
 #' @importFrom shiny selectInput animationOptions renderPlot tabPanel
 #' @importFrom shiny br sidebarPanel mainPanel sidebarLayout
 #' @importFrom stats as.dendrogram median
-#' @importFrom ggplot2 ggplot aes_string geom_path geom_point geom_text guides theme
+#' @importFrom ggplot2 ggplot aes geom_path geom_point geom_text guides theme
 #' @importFrom ggplot2 element_text xlab ylab scale_color_manual
 #' @importFrom ggrepel geom_text_repel
 #' @importFrom dplyr filter select distinct rename mutate left_join select_ %>%
@@ -327,11 +327,11 @@ carp_path_plot <- function(x,
   ## FIXME -- It looks like we don't actually have full fusion in `plot_frame_final`
   ##          (even in points which should be in the same cluster...)
 
-  g <- ggplot(mapping = aes_string(x = "V1", y = "V2", group = "Obs"))
+  g <- ggplot(mapping = aes(x = .data$V1, y = .data$V2, group = .data$Obs))
 
   if (show_clusters) {
-    g <- g + geom_path(data = plot_frame_full, aes_string(color = "final_cluster"), linejoin="round", size=1) +
-             geom_point(data = plot_frame_final, aes_string(color = "final_cluster"), size = 4)
+    g <- g + geom_path(data = plot_frame_full, aes(color = .data$final_cluster), linejoin="round", size=1) +
+             geom_point(data = plot_frame_final, aes(color = .data$final_cluster), size = 4)
 
     if (!is.null(colors)) {
       g <- g + scale_color_manual(values = colors)
@@ -351,11 +351,11 @@ carp_path_plot <- function(x,
 
   if (repel_labels) {
     g + geom_text_repel(data = plot_frame_init,
-                        mapping = aes_string(label = "ObsLabel"),
+                        mapping = aes(label = .data$ObsLabel),
                         size = label_size)
   } else {
     g + geom_text(data = plot_frame_init,
-                  mapping = aes_string(label = "ObsLabel"),
+                  mapping = aes(label = .data$ObsLabel),
                   size = label_size)
   }
 }
@@ -438,7 +438,7 @@ carp_dendro_plot <- function(x,
 #' @noRd
 #' @importFrom rlang .data
 #' @importFrom dplyr select filter rename left_join mutate bind_rows
-#' @importFrom ggplot2 ggplot aes_string geom_path geom_point geom_text guides
+#' @importFrom ggplot2 ggplot aes geom_path geom_point geom_text guides
 #' @importFrom ggplot2 theme element_text xlab ylab
 #' @importFrom gganimate transition_manual
 carp_dynamic_path_plot <- function(x, axis, percent.seq){
@@ -458,17 +458,17 @@ carp_dynamic_path_plot <- function(x, axis, percent.seq){
   }))
 
   ggplot(plot_frame_animation,
-         aes_string(x = "V1", y = "V2", group = "Obs")) +
+         aes(x = .data$V1, y = .data$V2, group = .data$Obs)) +
     geom_path(linejoin = "round", color = "red", size = 1) +
     geom_point(data = plot_frame_first,
-               aes_string(x = "FirstV1",
-                          y = "FirstV2"),
+               aes(x = .data$FirstV1,
+                   y = .data$FirstV2),
                color = "black",
                size = I(4)) +
     geom_text(data = plot_frame_first,
-              aes_string(x = "FirstV1",
-                         y = "FirstV2",
-                         label = "FirstObsLabel"),
+              aes(x = .data$FirstV1,
+                  y = .data$FirstV2,
+                  label = .data$FirstObsLabel),
               size = I(6)) +
     guides(color = FALSE, size = FALSE) +
     theme(axis.title = element_text(size = 25),

@@ -317,17 +317,17 @@ cbass_path_plot <- function(x,
   ## FIXME -- It looks like we don't actually have full fusion in `plot_frame_final`
   ##          (even in points which should be in the same cluster...)
 
-  g <- ggplot(mapping = aes_string(x = "V1", y = "V2", group = "Obs"))
+  g <- ggplot(mapping = aes(x = .data$V1, y = .data$V2, group = .data$Obs))
 
   if (show_clusters) {
-    g <- g + geom_path(data = plot_frame_full, aes_string(color = "final_cluster"), linejoin="round", size=1) +
-             geom_point(data = plot_frame_final, aes_string(color = "final_cluster"), size = 4)
+    g <- g + geom_path(data = plot_frame_full, aes(color = .data$final_cluster), linejoin="round", size=1) +
+             geom_point(data = plot_frame_final, aes(color = .data$final_cluster), size = 4)
   } else {
     g <- g + geom_path(data = plot_frame_full, color = "red", linejoin="round", size=1)
   }
 
   g + geom_point(data = plot_frame_init, color="black", size = 2) +
-    geom_text_repel(data = plot_frame_init, mapping = aes_string(label = "ObsLabel"), size = 3) +
+    geom_text_repel(data = plot_frame_init, mapping = aes(label = .data$ObsLabel), size = 3) +
     guides(color = FALSE, size = FALSE) +
     theme(axis.title = element_text(size = 15),
           axis.text  = element_text(size = 10)) +
