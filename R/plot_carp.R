@@ -89,7 +89,7 @@ plot.CARP <- function(x,
                       dend.ylab.cex = 1.2,
                       percent,
                       k,
-                      percent.seq = seq(0, 1, length.out = 21),
+                      percent.seq = seq(0, 1, length.out = 100),
                       max.nclust = 9,
                       min.nclust = 1) {
 
