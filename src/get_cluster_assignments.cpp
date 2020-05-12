@@ -161,7 +161,7 @@ Rcpp::List get_cluster_assignments_impl(const Eigen::MatrixXi& E,
 //            - csize      - The number of elements in each cluster
 //            - no         - the number of clutsers
 // TODO: Do we need all three of these?
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 Rcpp::List get_cluster_assignments(const Eigen::MatrixXi& E,
                                    const Eigen::MatrixXi& edge_ind,
                                    int n){

@@ -1,6 +1,6 @@
 #include "clustRviz.h"
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
                    const Eigen::MatrixXd& D,
                    const Eigen::VectorXd& weights,
@@ -57,7 +57,7 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
   }
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
                     const Eigen::MatrixXd& D_row,
                     const Eigen::MatrixXd& D_col,
