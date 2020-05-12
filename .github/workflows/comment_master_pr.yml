@@ -1,0 +1,17 @@
+name: Tell Users to Re-Target PRs on Master
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  comment:
+    name: Leave Comments
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: harupy/comment-on-pr@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          filename: master_pr_msg.md

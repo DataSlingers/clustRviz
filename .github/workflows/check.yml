@@ -19,10 +19,10 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: windows-latest, r: '3.6'}
-          - {os: macOS-latest, r: '3.6'}
-          - {os: macOS-latest, r: 'devel'}
-          - {os: ubuntu-16.04, r: '3.6', rspm: "https://demo.rstudiopm.com/all/__linux__/xenial/latest"}
+          - {os: windows-latest, r: 'devel'}
+          - {os: windows-latest, r: '4.0'}
+          - {os: macOS-latest, r: '4.0'}
+          - {os: ubuntu-16.04, r: '4.0', rspm: "https://packagemanager.rstudio.com/cran/__linux__/xenial/latest"}
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
@@ -131,7 +131,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Deploy build package
-        if: success() && matrix.config.os == 'ubuntu-16.04' && github.ref == 'refs/heads/develop'
+        if: success() && matrix.config.os == 'ubuntu-16.04' && github.ref == 'refs/heads/develop' && github.repository_owner == 'DataSlingers'
         run: |
           git checkout master || git checkout -b master
           git add man/* || echo "No doc changes to commit" 
