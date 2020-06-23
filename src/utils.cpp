@@ -57,6 +57,11 @@ Eigen::MatrixXd MatrixProx(const Eigen::MatrixXd& X,
   return V;
 }
 
+double scaled_squared_norm(const Eigen::MatrixXd& mat) {
+  //Squared norm / number of cells gives average squared difference
+  return mat.squaredNorm() / (mat.rows() * mat.cols()); 
+}
+
 // Some basic cheap checks that a weight
 // matrix can lead to a connected graph
 //

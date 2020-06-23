@@ -140,6 +140,19 @@ public:
 
     nzeros_col = v_col_zeros.sum();
 
+    double loss;
+    if (l1) {
+      loss = 0.5 * (X - U).squaredNorm() + gamma * (
+        V_row.cwiseAbs().rowwise().sum().dot(weights_row) +
+        V_col.cwiseAbs().colwise().sum().dot(weights_col));
+    } else {
+      loss = 0.5 * (X - U).squaredNorm() + gamma * (
+        V_row.rowwise().norm().dot(weights_row) +
+        V_col.colwise().norm().dot(weights_col));
+    }
+    ClustRVizLogger::info("Objective function: ") <<  loss;  
+
+
     ClustRVizLogger::debug("Number of row fusions identified ") << nzeros_row;
     ClustRVizLogger::debug("Number of column fusions identified ") << nzeros_col;
   }
@@ -180,13 +193,6 @@ public:
     return (nzeros_row > 0) | (nzeros_col > 0);
   }
 
-  double scaled_squared_norm(const Eigen::MatrixXd& mat) {
-    //Squared norm / number of cells gives average squared difference
-    return mat.squaredNorm() / (mat.rows() * mat.cols()); 
-  }
-
-
-
   bool admm_converged(){
     return scaled_squared_norm(U - U_old) < 5e-14 && 
             scaled_squared_norm(Z_row - Z_row_old) +
@@ -197,7 +203,6 @@ public:
 
   void reset_aux(){
     U = U_old = X;
-    //TODO: this is now a no-op in both impls. Remove
   }
 
   void store_values(){
