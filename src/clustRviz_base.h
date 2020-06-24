@@ -24,4 +24,6 @@ Eigen::MatrixXd MatrixProx(const Eigen::MatrixXd&,
                            const Eigen::VectorXd&,
                            bool);
 
+double scaled_squared_norm(const Eigen::MatrixXd& mat);
+
 #endif
