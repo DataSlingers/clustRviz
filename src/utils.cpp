@@ -26,7 +26,7 @@ double soft_thresh(double x, double lambda){
 
 // Apply a row-wise prox operator (with weights) to a matrix
 // [[Rcpp::export(rng = false)]]
-Eigen::MatrixXd MatrixProx(const Eigen::MatrixXd& X,
+Eigen::MatrixXd MatrixRowProx(const Eigen::MatrixXd& X,
                            double lambda,
                            const Eigen::VectorXd& weights,
                            bool l1 = true){
@@ -50,6 +50,39 @@ Eigen::MatrixXd MatrixProx(const Eigen::MatrixXd& X,
         V.row(i) = X_i * scale_factor;
       } else {
         V.row(i).setZero();
+      }
+    }
+  }
+
+  return V;
+}
+
+// Apply a col-wise prox operator (with weights) to a matrix
+// [[Rcpp::export(rng = false)]]
+Eigen::MatrixXd MatrixColProx(const Eigen::MatrixXd& X,
+                              double lambda,
+                              const Eigen::VectorXd& weights,
+                              bool l1 = true){
+  Eigen::Index n = X.rows();
+  Eigen::Index p = X.cols();
+
+  Eigen::MatrixXd V(n, p);
+
+  if(l1){
+    for(Eigen::Index i = 0; i < n; i++){
+      for(Eigen::Index j = 0; j < p; j++){
+        V(i, j) = soft_thresh(X(i, j), lambda * weights(j));
+      }
+    }
+  } else {
+    for(Eigen::Index j = 0; j < p; j++){
+      Eigen::VectorXd X_j = X.col(j);
+      double scale_factor = 1 - lambda * weights(j) / X_j.norm();
+
+      if(scale_factor > 0){
+        V.col(j) = X_j * scale_factor;
+      } else {
+        V.col(j).setZero();
       }
     }
   }

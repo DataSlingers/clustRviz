@@ -99,13 +99,12 @@ public:
 
     // V-updates
     Eigen::MatrixXd DUZ = DrowU + Z_row; //DUZ = D_row * U + Z_row
-    V_row = MatrixProx(DUZ, gamma / rho, weights_row, l1);
+    V_row = MatrixRowProx(DUZ, gamma / rho, weights_row, l1);
     ClustRVizLogger::debug("V_row = ") << V_row;
 
 
-    //TODO: implement seperate column prox calculation to avoid double transpose
-    Eigen::MatrixXd UDZT = (UDcol + Z_col).transpose(); //UDZT = (U * D_col + Z_col)^T
-    V_col = MatrixProx(UDZT, gamma / rho, weights_col, l1).transpose();
+    Eigen::MatrixXd UDZ = UDcol + Z_col; //UDZ = (U * D_col + Z_col
+    V_col = MatrixRowProx(UDZ, gamma / rho, weights_col, l1);
     ClustRVizLogger::debug("V_col = ") << V_col;
 
 

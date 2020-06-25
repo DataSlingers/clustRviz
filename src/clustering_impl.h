@@ -74,7 +74,7 @@ public:
 
     // V-update
     Eigen::MatrixXd DUZ = DU + Z;
-    V = MatrixProx(DUZ, gamma / rho, weights, l1);
+    V = MatrixRowProx(DUZ, gamma / rho, weights, l1);
     ClustRVizLogger::debug("V = ") << V;
 
     // Z-update
