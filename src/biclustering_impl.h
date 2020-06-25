@@ -84,11 +84,6 @@ public:
     return (nzeros_row == num_row_edges) & (nzeros_col == num_col_edges);
   }
 
-  void full_admm_step(){
-    admm_step();
-  }
-
-
   void admm_step(){
     // U-update
     U = (X + alpha * U + rho * (
@@ -199,10 +194,6 @@ public:
             scaled_squared_norm(Z_col - Z_col_old) +
             scaled_squared_norm(V_row - V_row_old) +
             scaled_squared_norm(V_col - V_col_old) < 5e-14;
-  }
-
-  void reset_aux(){
-    U = U_old = X;
   }
 
   void store_values(){
