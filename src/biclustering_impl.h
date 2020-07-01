@@ -104,7 +104,7 @@ public:
 
 
     Eigen::MatrixXd UDZ = UDcol + Z_col; //UDZ = (U * D_col + Z_col
-    V_col = MatrixRowProx(UDZ, gamma / rho, weights_col, l1);
+    V_col = MatrixColProx(UDZ, gamma / rho, weights_col, l1);
     ClustRVizLogger::debug("V_col = ") << V_col;
 
 
