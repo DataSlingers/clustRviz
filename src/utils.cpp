@@ -25,7 +25,7 @@ double soft_thresh(double x, double lambda){
 }
 
 // Apply a row-wise prox operator (with weights) to a matrix
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 Eigen::MatrixXd MatrixProx(const Eigen::MatrixXd& X,
                            double lambda,
                            const Eigen::VectorXd& weights,
@@ -57,13 +57,18 @@ Eigen::MatrixXd MatrixProx(const Eigen::MatrixXd& X,
   return V;
 }
 
+double scaled_squared_norm(const Eigen::MatrixXd& mat) {
+  //Squared norm / number of cells gives average squared difference
+  return mat.squaredNorm() / (mat.rows() * mat.cols()); 
+}
+
 // Some basic cheap checks that a weight
 // matrix can lead to a connected graph
 //
 // Right now, the only check is that every observation
 // has a connection (at some weight) to another observation
 //
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 void check_weight_matrix(const Eigen::MatrixXd& weight_matrix){
   Eigen::Index n = weight_matrix.rows();
   Eigen::Index p = weight_matrix.cols();
@@ -96,7 +101,7 @@ void check_weight_matrix(const Eigen::MatrixXd& weight_matrix){
 // Given cluster memberships, replace rows of U which belong to the same cluster
 // with their mutual mean....
 //
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 Rcpp::NumericVector smooth_u_clustering(Rcpp::NumericVector U_old, Rcpp::List cluster_info_list){
   // The first argument is really an array but we pass as a NumericVector
   // The second argument is a list produced by get_cluster_assignments()
@@ -162,7 +167,7 @@ Rcpp::NumericVector smooth_u_clustering(Rcpp::NumericVector U_old, Rcpp::List cl
 // components
 //
 // This is straightforward, but "loopy" so we implement it in Rcpp / RcppEigen for speed
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 Rcpp::NumericVector tensor_projection(Rcpp::NumericVector X, const Eigen::MatrixXd& Y){
 
   // Validate X

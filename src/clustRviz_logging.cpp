@@ -1,18 +1,18 @@
 #include "clustRviz.h"
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 void clustRviz_set_logger_level_cpp(int level){
     auto logger_level = static_cast<ClustRVizLoggerLevel>(level);
     ClustRVizLogger::set_level(logger_level);
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 int clustRviz_get_logger_level_cpp(){
     auto logger_level = static_cast<int>(ClustRVizLogger::get_level());
     return logger_level;
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 void clustRviz_log_cpp(int level, Rcpp::StringVector x){
     auto msg_level = static_cast<ClustRVizLoggerLevel>(level);
     std::string msg = Rcpp::as<std::string>(x[0]);

@@ -41,7 +41,8 @@ public:
         // problem.tick() will check for interrupts
         problem.tick(iter);
 
-        if(k > 150){
+        if(k > 2500){
+          ClustRVizLogger::warning("ADMM Non-convergence Detected for gamma = ") << problem.gamma << " after " << k << " iterations.";
           break; // Avoid infinite loops on a single gamma...
         }
 
