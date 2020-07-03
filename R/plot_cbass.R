@@ -787,7 +787,7 @@ cbass_path_plotly <- function(x,
 #' @importFrom dplyr filter select summarize pull
 #' @importFrom stats as.dendrogram
 #' @importFrom dendextend get_nodes_xy
-#' @importFrom plotly add_segments add_maekers add_text
+#' @importFrom plotly add_segments add_markers add_text
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom tibble as_tibble
 cbass_dendro_plotly <- function(x,

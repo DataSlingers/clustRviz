@@ -39,10 +39,6 @@
 #'            } See the documentation of the linked functions for details about
 #'            additional supported arguments. \code{saveviz} passes arguments
 #'            to the corresponding plot \code{type}.
-#' @param max.nclust a positive integer. The maximum number of clusters
-#' to display in the interactive plot.
-#' @param min.nclust a positive value. The minimum number of clusters to
-#' display in the interactive plot.
 #' @param dend.branch.width Branch width for dendrogram plots (ignored for
 #'        other plot types) - must be positive.
 #' @param dend.labels.cex Label size for dendrogram plots (ignored for other plot
@@ -92,8 +88,6 @@ plot.CARP <- function(x,
                       percent,
                       k,
                       percent.seq = seq(0, 1, 0.01),
-                      max.nclust = 9,
-                      min.nclust = 1,
                       slider_y = -0.3) {
 
   type <- match.arg(type)
@@ -650,7 +644,7 @@ carp_path_plotly <- function(x,
 #' @importFrom dplyr filter select summarize pull
 #' @importFrom stats as.dendrogram
 #' @importFrom dendextend get_nodes_xy
-#' @importFrom plotly add_segments add_maekers add_text
+#' @importFrom plotly add_segments add_markers add_text
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom tibble as_tibble
 carp_dendro_plotly <- function(x,
