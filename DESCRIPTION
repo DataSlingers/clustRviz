@@ -41,7 +41,8 @@ Imports:
     ggrepel,
     RColorBrewer,
     heatmaply,
-    gganimate
+    gganimate,
+    ployly
 LinkingTo: Rcpp, RcppEigen
 Suggests: testthat,
     knitr,
@@ -53,3 +54,4 @@ Suggests: testthat,
 VignetteBuilder: knitr
 BugReports: https://github.com/DataSlingers/clustRviz/issues
 URL: https://github.io/DataSlingers/clustRviz, https://github.com/DataSlingers/clustRviz
+RoxygenNote: 6.1.1
