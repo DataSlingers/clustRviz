@@ -35,7 +35,7 @@ public:
 
       do {
         problem.save_old_values();
-        problem.full_admm_step();
+        problem.admm_step();
         iter++; k++;
 
         // problem.tick() will check for interrupts
@@ -51,7 +51,6 @@ public:
       ClustRVizLogger::info("ADMM converged with gamma = ") << problem.gamma << " after " << iter << " total iterations.";
 
       problem.store_values();
-      problem.reset_aux();
       problem.gamma *= t;
     }
 
@@ -129,10 +128,9 @@ public:
         // Run ADMM till convergence
         // Before running the ADMM, we need to reset the auxiliary variables each time.
         problem.gamma = gamma;
-        problem.reset_aux();
         do {
           problem.save_old_values();
-          problem.full_admm_step();
+          problem.admm_step();
           iter++; k++;
 
           // problem.tick() will check for interrupts

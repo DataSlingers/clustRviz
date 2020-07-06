@@ -84,11 +84,6 @@ public:
     return (nzeros_row == num_row_edges) & (nzeros_col == num_col_edges);
   }
 
-  void full_admm_step(){
-    admm_step();
-  }
-
-
   void admm_step(){
     // U-update
     U = (X + alpha * U + rho * (
@@ -104,13 +99,12 @@ public:
 
     // V-updates
     Eigen::MatrixXd DUZ = DrowU + Z_row; //DUZ = D_row * U + Z_row
-    V_row = MatrixProx(DUZ, gamma / rho, weights_row, l1);
+    V_row = MatrixRowProx(DUZ, gamma / rho, weights_row, l1);
     ClustRVizLogger::debug("V_row = ") << V_row;
 
 
-    //TODO: implement seperate column prox calculation to avoid double transpose
-    Eigen::MatrixXd UDZT = (UDcol + Z_col).transpose(); //UDZT = (U * D_col + Z_col)^T
-    V_col = MatrixProx(UDZT, gamma / rho, weights_col, l1).transpose();
+    Eigen::MatrixXd UDZ = UDcol + Z_col; //UDZ = (U * D_col + Z_col
+    V_col = MatrixColProx(UDZ, gamma / rho, weights_col, l1);
     ClustRVizLogger::debug("V_col = ") << V_col;
 
 
@@ -194,15 +188,11 @@ public:
   }
 
   bool admm_converged(){
-    return scaled_squared_norm(U - U_old) < 5e-14 && 
+    return scaled_squared_norm(U - U_old) < CLUSTRVIZ_EXACT_STOP_PRECISION && 
             scaled_squared_norm(Z_row - Z_row_old) +
             scaled_squared_norm(Z_col - Z_col_old) +
             scaled_squared_norm(V_row - V_row_old) +
-            scaled_squared_norm(V_col - V_col_old) < 5e-14;
-  }
-
-  void reset_aux(){
-    U = U_old = X;
+            scaled_squared_norm(V_col - V_col_old) < CLUSTRVIZ_EXACT_STOP_PRECISION;
   }
 
   void store_values(){

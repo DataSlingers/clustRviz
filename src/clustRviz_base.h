@@ -7,6 +7,7 @@
 
 #define CLUSTRVIZ_STATUS_UPDATE_TIME_SECS 0.1 // Every 0.1s
 #define CLUSTRVIZ_STATUS_WIDTH_CHECK 20 // Every 20 status updates * 0.1s => every 2s
+#define CLUSTRVIZ_EXACT_STOP_PRECISION 1e-10 //Stop when cellwise diff between iters < val
 
 // Helper to determine if STL set contains an element
 //
@@ -19,11 +20,16 @@ bool contains(const std::set<T>& container, T element){
 }
 
 // Prototypes - utils.cpp
-Eigen::MatrixXd MatrixProx(const Eigen::MatrixXd&,
+Eigen::MatrixXd MatrixRowProx(const Eigen::MatrixXd&,
                            double,
                            const Eigen::VectorXd&,
                            bool);
 
-double scaled_squared_norm(const Eigen::MatrixXd& mat);
+Eigen::MatrixXd MatrixColProx(const Eigen::MatrixXd&,
+                              double,
+                              const Eigen::VectorXd&,
+                              bool);
+
+double scaled_squared_norm(const Eigen::MatrixXd&);
 
 #endif
