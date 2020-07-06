@@ -117,7 +117,7 @@ public:
   }
 
   bool admm_converged(){
-    return ((V - V_old).squaredNorm() + (Z - Z_old).squaredNorm() < 1e-7);
+    return (scaled_squared_norm(V - V_old) + scaled_squared_norm(Z - Z_old) < EXACT_STOP_PRECISION);
   }
 
   void store_values(){

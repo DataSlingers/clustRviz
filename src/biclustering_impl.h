@@ -188,11 +188,11 @@ public:
   }
 
   bool admm_converged(){
-    return scaled_squared_norm(U - U_old) < 5e-14 && 
+    return scaled_squared_norm(U - U_old) < EXACT_STOP_PRECISION && 
             scaled_squared_norm(Z_row - Z_row_old) +
             scaled_squared_norm(Z_col - Z_col_old) +
             scaled_squared_norm(V_row - V_row_old) +
-            scaled_squared_norm(V_col - V_col_old) < 5e-14;
+            scaled_squared_norm(V_col - V_col_old) < EXACT_STOP_PRECISION;
   }
 
   void store_values(){
