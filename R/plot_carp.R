@@ -423,7 +423,7 @@ carp_heatmaply <- function(x,
 #' @noRd
 #' @importFrom rlang .data
 #' @importFrom dplyr filter select left_join pull rename
-#' @importFrom plotly add_markers add_paths add_text
+#' @importFrom plotly add_markers add_paths add_text plot_ly hide_legend highlight animation_slider style
 carp_path_plotly <- function(x,
                            ...,
                            dynamic = FALSE,
@@ -641,10 +641,10 @@ carp_path_plotly <- function(x,
 
 #' @noRd
 #' @importFrom rlang .data
-#' @importFrom dplyr filter select summarize pull
-#' @importFrom stats as.dendrogram
+#' @importFrom dplyr filter select summarize pull desc
+#' @importFrom stats as.dendrogram is.leaf
 #' @importFrom dendextend get_nodes_xy
-#' @importFrom plotly add_segments add_markers add_text
+#' @importFrom plotly add_segments add_markers add_text plot_ly hide_legend highlight animation_slider
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom tibble as_tibble
 carp_dendro_plotly <- function(x,
@@ -872,7 +872,7 @@ carp_dendro_plotly <- function(x,
       allTXT_dynamic <- rbind(allTXT_dynamic, allTXT_per)
     }
 
-    c <- dynamic_seg %>% group_by(x,xend) %>% summarise(count = n())
+    c <- dynamic_seg %>% group_by(x,xend) %>% summarize(count = n())
     dynamic_seg<-arrange(merge(dynamic_seg,c),Regularization,desc(count),x,y)
 
     # avoid the situation when very short lines cannot be shown in the plotly
