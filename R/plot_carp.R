@@ -15,6 +15,8 @@
 #'
 #' @param x An object of class \code{CARP} as returned by \code{\link{CARP}}
 #' @param type A string indicating the type of visualization to show (see details above).
+#' @param dynamic
+#' @param interactive
 #' @param axis A character vector of length two indicating which features or principal
 #'             components to use as the axes in the \code{type = "path"} visualization.
 #'             Currently only features like \code{"PC1"} or \code{"PC2"} (indicating
@@ -34,7 +36,7 @@
 #'                  unknown arguments triggers an error;
 #'            \item when \code{type == "dendrogram"}
 #'                  \code{...} is forwarded to \code{\link[stats]{plot.dendrogram}}; and
-#'            \item when \code{type == "js"}, \code{...} is forwarded to
+#'            \item when \code{type == "heatmap"}, \code{...} is forwarded to
 #'                  \code{\link[heatmaply]{heatmaply}}.
 #'            } See the documentation of the linked functions for details about
 #'            additional supported arguments. \code{saveviz} passes arguments
@@ -45,6 +47,7 @@
 #'        types) - must be positive.
 #' @param dend.ylab.cex Y-axis size for dendrogram plots (ignored for other plot
 #'        types) - must be positive.
+#' @param slider_y
 #' @return The value of the return type depends on the \code{type} argument:\itemize{
 #'   \item if \code{type = "dendrogram"}, \code{x} is returned invisibly;
 #'   \item if \code{type = "path"}, an object of class \code{\link[ggplot2]{ggplot}}
@@ -78,7 +81,7 @@
 #' }
 plot.CARP <- function(x,
                       ...,
-                      type = c("dendrogram", "path", "js"),
+                      type = c("dendrogram", "path", "heatmap"),
                       dynamic = FALSE,
                       interactive = FALSE,
                       axis = c("PC1", "PC2"),
@@ -103,6 +106,8 @@ plot.CARP <- function(x,
                            dend.labels.cex = dend.labels.cex,
                            dend.ylab.cex = dend.ylab.cex,
                            ...)
+        } else {
+          crv_error("Not implemented.")
         }
       } else {
         carp_dendro_plotly(x,
@@ -137,11 +142,15 @@ plot.CARP <- function(x,
                          ...)
       }
     },
-    js = {
-      carp_heatmaply(x,
-                     ...,
-                     percent = percent,
-                     k = k)
+    heatmap = {
+      if (interactive==TRUE & dynamic==FALSE){
+        carp_heatmaply(x,
+                       ...,
+                       percent = percent,
+                       k = k)
+      } else {
+        crv_error("Not implemented.")
+      }
     }
   )
 }
@@ -384,7 +393,7 @@ carp_dynamic_path_plot <- function(x, axis, percent.seq){
 }
 
 #' @noRd
-#' Render CBASS results via the heatmaply (interactive JS) package
+#' Render CBASS results via the heatmaply package
 #' @importFrom heatmaply heatmaply
 carp_heatmaply <- function(x,
                            ...,
@@ -529,7 +538,7 @@ carp_path_plotly <- function(x,
           color = I(~final_cluster),
           size = 3)
 
-      for (i in 1:length(plot_frame_init$ObsLabel)){
+      for (i in seq_along(plot_frame_init$ObsLabel)){
         path_static <- path_static %>%
           add_paths(
             data = plot_frame_interactive[plot_frame_interactive$Obs==i,],
@@ -566,7 +575,7 @@ carp_path_plotly <- function(x,
           color = I("red"),
           size = 3)
 
-      for (i in 1:length(plot_frame_init$ObsLabel)){
+      for (i in seq_along(plot_frame_init$ObsLabel)){
         path_static <- path_static %>%
           add_paths(
             data = plot_frame_interactive[plot_frame_interactive$Obs==i,],
@@ -598,7 +607,7 @@ carp_path_plotly <- function(x,
 
     path_dynamic<-plot_ly()
 
-    for (i in 1:length(plot_frame_init$ObsLabel)){
+    for (i in seq_along(plot_frame_init$ObsLabel)){
       path_dynamic <- path_dynamic %>%
         add_paths(
           data = plot_frame_animation[plot_frame_animation$Obs==i,],
@@ -643,7 +652,7 @@ carp_path_plotly <- function(x,
 #' @importFrom rlang .data
 #' @importFrom dplyr filter select summarize pull desc
 #' @importFrom stats as.dendrogram is.leaf
-#' @importFrom dendextend get_nodes_xy
+#' @importFrom dendextend get_nodes_xy as.ggdend
 #' @importFrom plotly add_segments add_markers add_text plot_ly hide_legend highlight animation_slider
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom tibble as_tibble
@@ -667,9 +676,9 @@ carp_dendro_plotly <- function(x,
 
   d <- as.dendrogram(x)
   # get x/y locations of every node in the tree
-  m <- dendextend::get_nodes_xy(d)
+  m <- get_nodes_xy(d)
   colnames(m) <- c("x", "y")
-  allXY <- tibble::as_tibble(m)
+  allXY <- as_tibble(m)
   # get non-zero heights so we can split on them and find the relevant labels
   non0 <- allXY[["y"]][allXY[["y"]] > 0]
   # label is a list-column since non-zero heights have multiple labels
@@ -691,7 +700,7 @@ carp_dendro_plotly <- function(x,
     }
   }
 
-  heights <- sapply(nodes, function(x) attr(x, "height"))
+  heights <- vapply(nodes, function(x) attr(x, "height"), numeric(1))
   labs <- lapply(nodes, labels)
 
   # NOTE: this won't support nodes that have the same height
@@ -700,17 +709,17 @@ carp_dendro_plotly <- function(x,
     allXY$label[[which(allXY$y == heights[i])]] <- labs[[i]]
   }
 
-  tidy_segments <- dendextend::as.ggdend(d)$segments
+  tidy_segments <- as.ggdend(d)$segments
 
   allTXT <- allXY[allXY$y == 0, ]
 
-  allXY$members <- sapply(allXY$label, length)
+  allXY$members <- vapply(allXY$label, length, integer(1))
   allTXT$label <- as.character(allTXT$label)
 
   axis_x <- list( showgrid = F,
                   zeroline = F,
                   tickmode = "array",
-                  tickvals = 1:length(allTXT$label),
+                  tickvals = seq_along(allTXT$label),
                   ticktext = allTXT$label,
                   title = F)
   axis_y <- list( showgrid = T,
@@ -765,6 +774,7 @@ carp_dendro_plotly <- function(x,
       seg_y <- c(rep(percent,k+1),0,percent)
       seg_xend <- c(m,m[k+1],m[k+1])
       seg_yend <- c(rep(0,k+1),0,percent)
+      x <- y <- xend <- yend <- NULL # for CMD check
       seg <- data.frame(percent=percent,x=seg_x,y=seg_y,xend=seg_xend,yend=seg_yend)
 
       dendro_static <- plot_ly(
@@ -776,7 +786,7 @@ carp_dendro_plotly <- function(x,
           color = I("black"),
           showlegend = FALSE)
 
-      for (i in 1:length(clustsum)){
+      for (i in seq_along(clustsum)){
         dendro_static <- dendro_static %>%
           add_markers(
             data = allXY[allXY$y > 0 & allXY$y <= percent & allXY$x < m[i+1] & allXY$x > m[i], ],
@@ -823,6 +833,7 @@ carp_dendro_plotly <- function(x,
     }
     # invisible(x)
   } else {
+    x <- y <- xend <- yend <- Regularization <- NULL # for CMD check
     dynamic_seg <- data.frame(percent = numeric(),
                               x = numeric(),
                               y = numeric(),
@@ -852,15 +863,16 @@ carp_dendro_plotly <- function(x,
       seg_y <- c(0,per,rep(per,k+1))
       seg_xend <- c(m[k+1],m[k+1],m)
       seg_yend <- c(0,per,rep(0,k+1))
+      x <- y <- xend <- yend <- NULL # for CMD check
       seg <- data.frame(Regularization=per,x=seg_x,y=seg_y,xend=seg_xend,yend=seg_yend)
       dynamic_seg <- rbind(dynamic_seg,seg)
 
       allXY_per <- allXY[allXY$y > 0,]
-      allXY_per$label <- 1:length(allXY_per$label)
+      allXY_per$label <- seq_along(allXY_per$label)
 
       allTXT_per <- allTXT
 
-      for (i in 1:length(clustsum)){
+      for (i in seq_along(clustsum)){
         allXY_per[allXY_per$y <= per & allXY_per$x < m[i+1] & allXY_per$x > m[i], "color"] <- colors[(i-1)%%8+1]
         allTXT_per[allTXT_per$x < m[i+1] & allTXT_per$x > m[i], "color"] <- colors[(i-1)%%8+1]
       }
@@ -872,10 +884,12 @@ carp_dendro_plotly <- function(x,
       allTXT_dynamic <- rbind(allTXT_dynamic, allTXT_per)
     }
 
+    count <- NULL # for CMD check
     c <- dynamic_seg %>% group_by(x,xend) %>% summarize(count = n())
     dynamic_seg<-arrange(merge(dynamic_seg,c),Regularization,desc(count),x,y)
 
     # avoid the situation when very short lines cannot be shown in the plotly
+    ylength <- NULL # for CMD check
     tidy_segments_dynamic <- tidy_segments[,1:4] %>%
       mutate(ylength = abs(y-yend))
     tidy_segments_dynamic$ylength[tidy_segments_dynamic$ylength==0] <- 1
