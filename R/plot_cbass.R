@@ -168,7 +168,7 @@ plot.CBASS <- function(x,
                           type = "row")
         }
       } else {
-        cbass_path_plotly(cbass_fit,
+        cbass_path_plotly(x,
                           axis = axis,
                           dynamic = dynamic,
                           percent = percent,
@@ -191,7 +191,7 @@ plot.CBASS <- function(x,
                           type = "col")
         }
       } else {
-        cbass_path_plotly(cbass_fit,
+        cbass_path_plotly(x,
                           axis = axis,
                           dynamic = dynamic,
                           percent = percent,
