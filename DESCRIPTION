@@ -42,7 +42,7 @@ Imports:
     RColorBrewer,
     heatmaply,
     gganimate,
-    ployly
+    plotly
 LinkingTo: Rcpp, RcppEigen
 Suggests: testthat,
     knitr,
