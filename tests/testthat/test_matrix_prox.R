@@ -24,6 +24,11 @@ test_that("L1 matrix prox works", {
   weights <- seq(0, 5)
   expect_equal(matrix(5 - weights, nrow = 6, ncol = 1),
                MatrixRowProx(X, lambda = 1, weights = weights, l1 = TRUE))
+  
+  #Now check matrix_col_prox against row prox
+  MatrixColProx <- clustRviz:::MatrixColProx
+  expect_equal(t(MatrixColProx(t(X), lambda = 1, weights = weights, l1 = TRUE)), 
+               MatrixRowProx(X, lambda = 1, weights = weights, l1 = TRUE))
 })
 
 test_that("L2 prox works", {
@@ -57,4 +62,11 @@ test_that("L2 prox works", {
   expect_equal(MatrixRowProx(y, 1, 3, l1 = FALSE), y * (1 - 3/5))
   expect_equal(MatrixRowProx(y, 2, 1, l1 = FALSE), y * (1 - 2/5))
   expect_equal(MatrixRowProx(y, 2, 3, l1 = FALSE), y * 0)
+
+  #Now check matrix_col_prox against row prox
+  MatrixColProx <- clustRviz:::MatrixColProx
+  expect_equal(t(MatrixColProx(t(X), lambda = 1, weights = weights, l1 = FALSE)), 
+               MatrixRowProx(X, lambda = 1, weights = weights, l1 = FALSE))
+  expect_equal(t(MatrixColProx(t(y), lambda = 1, weights = weights, l1 = TRUE)), 
+               MatrixRowProx(y, lambda = 1, weights = weights, l1 = TRUE))
 })
