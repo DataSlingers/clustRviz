@@ -137,6 +137,8 @@ jobs:
           git checkout master || git checkout -b master
           git add man/* || echo "No doc changes to commit"
           git add R/* || echo "No R code changes to commit"
+          git add tests/* || echo "No test files to commit"
+          git rm tests/test_stub.R || echo "No stub file to remove"
           git add src/* || echo "No C++ code changes to commit"
           git add README.md || echo "No README changes to commit"
           git add NAMESPACE || echo "No NAMESPACE changes to commit"
