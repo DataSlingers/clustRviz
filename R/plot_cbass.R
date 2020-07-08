@@ -13,8 +13,6 @@
 #' \item A cluster heatmap, displaying row and column histograms, as well
 #'       as the clustered data matrix in a single graphic (\code{type = "heatmap"});
 #' \item An interactive Javascript cluster heatmap (\code{type = "heatmap"}); and
-#' \item A \code{\link[shiny]{shiny}} app, which can display the clustering solutions
-#'       as a "movie" or allow for interactive exploration (\code{type = "interactive"}).
 #' }
 #'
 #' @param x An object of class \code{CBASS} as returned by \code{\link{CBASS}}
@@ -42,11 +40,11 @@
 #'              giving \code{k.col} column clusters is used.)
 #' @param ... Additional arguments, which are handled differently for different
 #'            values of \code{type}.\itemize{
-#'            \item When \code{type} is \code{"heatmap"}, \code{"row.path"},
-#'                  \code{"col.path"}, or \code{"interactive"}, the presence of
+#'            \item When \code{type} is \code{"heatmap"}, \code{"row.path"} or
+#'                  \code{"col.path"}, the presence of
 #'                  unknown arguments triggers an error;
 #'            \item when \code{type == "row.dendrogram"} or \code{type == "col.dendrogram"},
-#'                  \code{...} is forwarded to \code{\link[stats]{plot.dendrogram}}; and
+#'                  \code{...} is forwarded to \code{\link[stats]{dendrogram}};
 #'            \item when \code{type == "heatmap"}, \code{...} is forwarded to
 #'                  \code{\link[heatmaply]{heatmaply}}.
 #'            } See the documentation of the linked functions for details about
@@ -70,8 +68,6 @@
 #'  \item if \code{type \%in\% c("row.path", "col.path")}, an object of class
 #'        \code{\link[ggplot2]{ggplot}} which can be plotted directly (by invoking
 #'        its print method) or modified further by the user is returned;
-#'  \item if \code{type = "interactive"}, a \code{\link[shiny]{shiny}} app which can be activated
-#'        by invoking its print method.
 #' } \code{saveviz.CBASS} always returns \code{file.name} invisibly.
 #' @details The \code{\link{saveviz.CBASS}} function provides a unified interface
 #'          for exporting \code{CBASS} visualizations to files. For all plots,

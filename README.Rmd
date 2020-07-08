@@ -99,7 +99,7 @@ saveviz(carp_fit, file.name = "man/figures/path_dyn.gif", type = "path", dynamic
 [`heatmaply`](https://cran.r-project.org/package=heatmaply) package: 
 
 ```{r carp_js}
-plot(carp_fit, type = "js")
+plot(carp_fit, type = "heatmap", interactive = TRUE)
 ```
 
 ### BiClustering
@@ -112,10 +112,10 @@ cbass_fit <- CBASS(presidential_speech)
 plot(cbass_fit, k.row = 3)
 ```
 
-Setting `type = "js"` gives the traditional cluster heatmap:
+Setting `type = "heatmap"` gives the traditional cluster heatmap:
 
 ```{r cbass_js}
-plot(cbass_fit, type = "js", k.row = 3)
+plot(cbass_fit, type = "heatmap", k.row = 3)
 ```
 
 By default, if a regularization level is specified, all plotting functions in `clustRviz`
@@ -123,7 +123,7 @@ will plot the clustered data. If the regularization level is not specified, the
 raw data will be plotted instead:
 
 ```{r cbass_js2}
-plot(cbass_fit, type = "js")
+plot(cbass_fit, type = "heatmap")
 ```
 
 More details about the use and mathematical formulation of `CARP` and `CBASS`

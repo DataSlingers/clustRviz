@@ -9,8 +9,6 @@
 #' \item A \code{\link[gganimate]{gganimate}} plot, showing the coalescence of the
 #'       estimated cluster centroids as the regularization parameter is increased
 #'       (\code{type = "dynamic_path"}); and
-#' \item A \code{\link[shiny]{shiny}} app, which can display the clustering solutions
-#'       as a "movie" or allow for interactive exploration (\code{type = "interactive"}).
 #' }
 #'
 #' @param x An object of class \code{CARP} as returned by \code{\link{CARP}}
@@ -40,7 +38,7 @@
 #'                  or \code{"interactive"}, the presence of
 #'                  unknown arguments triggers an error;
 #'            \item when \code{type == "dendrogram"}
-#'                  \code{...} is forwarded to \code{\link[stats]{plot.dendrogram}}; and
+#'                  \code{...} is forwarded to \code{\link[stats]{dendrogram}}; and
 #'            \item when \code{type == "heatmap"}, \code{...} is forwarded to
 #'                  \code{\link[heatmaply]{heatmaply}}.
 #'            } See the documentation of the linked functions for details about
@@ -61,8 +59,6 @@
 #'         further by the user is returned;
 #'   \item if \code{type = "dynamic_path"}, an object of class \code{\link[gganimate:gganimate-package]{gganim}}
 #'         is returned, and many be further manipulated by the user or plotted directly;
-#'   \item if \code{type = "interactive"}, a \code{\link[shiny]{shiny}} app which can be activated
-#'         by invoking its print method.
 #' } \code{saveviz.CARP} always returns \code{file.name} invisibly.
 #' @details The \code{\link{saveviz.CARP}} function provides a unified interface
 #'          for exporting \code{CARP} visualizations to files. For all plots,
