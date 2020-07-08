@@ -774,7 +774,6 @@ carp_dendro_plotly <- function(x,
       seg_y <- c(rep(percent,k+1),0,percent)
       seg_xend <- c(m,m[k+1],m[k+1])
       seg_yend <- c(rep(0,k+1),0,percent)
-      x <- y <- xend <- yend <- NULL # for CMD check
       seg <- data.frame(percent=percent,x=seg_x,y=seg_y,xend=seg_xend,yend=seg_yend)
 
       dendro_static <- plot_ly(
@@ -833,7 +832,6 @@ carp_dendro_plotly <- function(x,
     }
     # invisible(x)
   } else {
-    x <- y <- xend <- yend <- Regularization <- NULL # for CMD check
     dynamic_seg <- data.frame(percent = numeric(),
                               x = numeric(),
                               y = numeric(),
@@ -863,7 +861,6 @@ carp_dendro_plotly <- function(x,
       seg_y <- c(0,per,rep(per,k+1))
       seg_xend <- c(m[k+1],m[k+1],m)
       seg_yend <- c(0,per,rep(0,k+1))
-      x <- y <- xend <- yend <- NULL # for CMD check
       seg <- data.frame(Regularization=per,x=seg_x,y=seg_y,xend=seg_xend,yend=seg_yend)
       dynamic_seg <- rbind(dynamic_seg,seg)
 
@@ -884,20 +881,18 @@ carp_dendro_plotly <- function(x,
       allTXT_dynamic <- rbind(allTXT_dynamic, allTXT_per)
     }
 
-    count <- NULL # for CMD check
-    c <- dynamic_seg %>% group_by(x,xend) %>% summarize(count = n())
-    dynamic_seg<-arrange(merge(dynamic_seg,c),Regularization,desc(count),x,y)
+    c <- dynamic_seg %>% group_by(.data$x, .data$xend) %>% summarize(count = n())
+    dynamic_sec <- arrange(merge(dynamic_seg, c), .data$Regularization, desc(.data$count), .data$x, .data$y)
 
     # avoid the situation when very short lines cannot be shown in the plotly
-    ylength <- NULL # for CMD check
     tidy_segments_dynamic <- tidy_segments[,1:4] %>%
-      mutate(ylength = abs(y-yend))
+      mutate(ylength = abs(.data$y-.data$yend))
     tidy_segments_dynamic$ylength[tidy_segments_dynamic$ylength==0] <- 1
 
     dendro_dynamic <- plot_ly(
       hoverinfo = "none") %>%
       add_segments(
-        data = tidy_segments_dynamic %>% arrange(desc(ylength)),
+        data = tidy_segments_dynamic %>% arrange(desc(.data$ylength)),
         x = ~x, y = ~y,
         xend = ~xend, yend = ~yend,
         color = I("black"),
