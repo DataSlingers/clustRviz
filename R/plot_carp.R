@@ -15,8 +15,13 @@
 #'
 #' @param x An object of class \code{CARP} as returned by \code{\link{CARP}}
 #' @param type A string indicating the type of visualization to show (see details above).
-#' @param dynamic
-#' @param interactive
+#' @param dynamic A logical character.Should the resulting animation be dynamic (animated) or not?
+#'                If TRUE, a dynamic visualization which varies along the CARP solution path at a
+#'                grid given by percent.seqis produced. If FALSE, a fixed visualization at a single
+#'                solution (determined by either percent or k if supplied) is produced.
+#' @param interactive A logical character. Should the resulting animation be interactive or not?
+#'                    If TRUE, an interactive visualization is produced by javascript(plotly).
+#'                    If FALSE, a non-interactive visualization is produced by ggplot.
 #' @param axis A character vector of length two indicating which features or principal
 #'             components to use as the axes in the \code{type = "path"} visualization.
 #'             Currently only features like \code{"PC1"} or \code{"PC2"} (indicating
@@ -47,7 +52,8 @@
 #'        types) - must be positive.
 #' @param dend.ylab.cex Y-axis size for dendrogram plots (ignored for other plot
 #'        types) - must be positive.
-#' @param slider_y
+#' @param slider_y A number to adjust the slider's vertical position for
+#'                 interactive dendrogram plots (ignored for other plot types).
 #' @return The value of the return type depends on the \code{type} argument:\itemize{
 #'   \item if \code{type = "dendrogram"}, \code{x} is returned invisibly;
 #'   \item if \code{type = "path"}, an object of class \code{\link[ggplot2]{ggplot}}
