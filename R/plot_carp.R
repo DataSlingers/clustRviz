@@ -149,7 +149,7 @@ plot.CARP <- function(x,
       }
     },
     heatmap = {
-      if (interatctive & !dynamic){
+      if (interactive & !dynamic){
         carp_heatmaply(x,
                        ...,
                        percent = percent,
