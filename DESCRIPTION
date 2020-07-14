@@ -31,7 +31,6 @@ Imports:
     rlang,
     tidyr,
     purrr,
-    shiny,
     Matrix,
     stringr,
     zoo,

@@ -17,13 +17,13 @@
 #'
 #' @param x An object of class \code{CBASS} as returned by \code{\link{CBASS}}
 #' @param type A string indicating the type of visualization to show (see details above).
-#' @param dynamic A logical character.Should the resulting animation be dynamic (animated) or not?
-#'                If TRUE, a dynamic visualization which varies along the CARP solution path at a
-#'                grid given by percent.seqis produced. If FALSE, a fixed visualization at a single
-#'                solution (determined by either percent or k if supplied) is produced.
-#' @param interactive A logical character. Should the resulting animation be interactive or not?
-#'                    If TRUE, an interactive visualization is produced by javascript(plotly).
-#'                    If FALSE, a non-interactive visualization is produced by ggplot.
+#' @param dynamic A logical scalar.Should the resulting animation be dynamic (animated) or not?
+#'                If \code{TRUE}, a dynamic visualization which varies along the CARP solution path at a
+#'                grid given by \code{percent.seq} is produced. If \code{FALSE}, a fixed visualization at a single
+#'                solution (determined by either \code{percent} or \code{k} if supplied) is produced.
+#' @param interactive A logical scalar. Should the resulting animation be interactive or not?
+#'                    If \code{TRUE}, an interactive visualization is produced by javascript(\code{\link{plotly}}).
+#'                    If \code{FALSE}, a non-interactive visualization is produced by \code{\link[ggplot2]{ggplot}}.
 #' @param axis A character vector of length two indicating which features or principal
 #'             components to use as the axes in the path visualizations.
 #'             Currently only features like \code{"PC1"} or \code{"PC2"} (indicating
@@ -72,8 +72,6 @@
 #' @details The \code{\link{saveviz.CBASS}} function provides a unified interface
 #'          for exporting \code{CBASS} visualizations to files. For all plots,
 #'          at most one of \code{percent}, \code{k.row}, and \code{k.col} must be supplied.
-#' @importFrom shiny shinyApp fluidPage titlePanel tabsetPanel fluidRow animationOptions
-#' @importFrom shiny tags column plotOutput renderPlot sliderInput
 #' @importFrom stats as.dendrogram as.hclust quantile
 #' @importFrom grDevices colorRampPalette adjustcolor
 #' @export
@@ -109,11 +107,18 @@ plot.CBASS <- function(x,
 
   type <- match.arg(type)
 
+  if (!is_logical_scalar(dynamic)) {
+    crv_error(sQuote("dynamic"), " must be a logical scalar.")
+  }
+  if (!is_logical_scalar(interactive)) {
+    crv_error(sQuote("interactive"), " must be a logical scalar.")
+  }
+
   switch(
     type,
     row.dendrogram = {
-      if (interactive == FALSE){
-        if (dynamic == FALSE){
+      if (!interactive){
+        if (!dynamic){
           cbass_dendro_plot(x,
                             percent = percent,
                             k.row = k.row,
@@ -123,7 +128,7 @@ plot.CBASS <- function(x,
                             type = "row",
                             ...)
         } else {
-          crv_error("Not implemented.")
+          crv_error("The non-interactively dynamic row.dendrogram is not implemented yet.")
         }
       } else {
         cbass_dendro_plotly(x,
@@ -138,8 +143,8 @@ plot.CBASS <- function(x,
       }
     },
     col.dendrogram = {
-      if (interactive == FALSE){
-        if (dynamic == FALSE){
+      if (!interactive){
+        if (!dynamic){
           cbass_dendro_plot(x,
                             percent = percent,
                             k.row = k.row,
@@ -150,7 +155,7 @@ plot.CBASS <- function(x,
                             type = "col",
                             ...)
         } else {
-          crv_error("Not implemented.")
+          crv_error("The non-interactively dynamic col.dendrogram is not implemented yet.")
         }
       } else {
         cbass_dendro_plotly(x,
@@ -165,8 +170,8 @@ plot.CBASS <- function(x,
       }
     },
     row.path = {
-      if (interactive == FALSE){
-        if (dynamic == FALSE){
+      if (!interactive){
+        if (!dynamic){
           cbass_path_plot(x,
                           axis = axis,
                           percent = percent,
@@ -175,7 +180,7 @@ plot.CBASS <- function(x,
                           ...,
                           type = "row")
         } else {
-          crv_error("Not implemented.")
+          crv_error("The non-interactively dynamic row.path is not implemented yet.")
         }
       } else {
         cbass_path_plotly(x,
@@ -190,8 +195,8 @@ plot.CBASS <- function(x,
       }
     },
     col.path = {
-      if (interactive == FALSE){
-        if (dynamic == FALSE){
+      if (!interactive){
+        if (!dynamic){
           cbass_path_plot(x,
                           axis = axis,
                           percent = percent,
@@ -200,7 +205,7 @@ plot.CBASS <- function(x,
                           ...,
                           type = "col")
         } else {
-          crv_error("Not implemented.")
+          crv_error("The non-interactively dynamic col.path is not implemented yet.")
         }
       } else {
         cbass_path_plotly(x,
@@ -215,8 +220,8 @@ plot.CBASS <- function(x,
       }
     },
     heatmap = {
-      if (dynamic == FALSE){
-        if (interactive == FALSE){
+      if (!dynamic){
+        if (!interactive){
           cbass_heatmap_plot(x,
                              ...,
                              percent = percent,
@@ -233,7 +238,7 @@ plot.CBASS <- function(x,
                           k.col = k.col)
         }
       } else {
-        crv_error("Not implemented.")
+        crv_error("The dynamic heatmaps are not implemented yet.")
       }
     }
   )
@@ -592,7 +597,7 @@ cbass_path_plotly <- function(x,
               sQuote("k.col"), " may be supplied.")
   }
 
-  if(n_args >= 1 & dynamic == TRUE){
+  if(n_args >= 1 & dynamic){
     crv_error("Can't set ", sQuote("percent"), " ", sQuote("k.row"), " and ", sQuote("k.col"), " for dynamic plots")
   }
 
@@ -670,7 +675,7 @@ cbass_path_plotly <- function(x,
 
   mytext <- paste(plot_frame_init$ObsLabel)
 
-  if (dynamic == FALSE){
+  if (!dynamic){
     if (show_clusters) {
       path_static <- plot_ly() %>%
         add_markers(
@@ -890,7 +895,7 @@ cbass_dendro_plotly <- function(x,
   # library(RColorBrewer)
   colors<-c(brewer.pal(8,"Set1"))
 
-  if (dynamic == FALSE){
+  if (!dynamic){
     if(show_clusters){
       labels <- get_cluster_labels(x, k.row = k.row, k.col = k.col, percent = percent, type = type)
       k <- nlevels(labels)

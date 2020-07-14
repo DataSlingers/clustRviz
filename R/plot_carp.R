@@ -13,13 +13,13 @@
 #'
 #' @param x An object of class \code{CARP} as returned by \code{\link{CARP}}
 #' @param type A string indicating the type of visualization to show (see details above).
-#' @param dynamic A logical character.Should the resulting animation be dynamic (animated) or not?
-#'                If TRUE, a dynamic visualization which varies along the CARP solution path at a
-#'                grid given by percent.seqis produced. If FALSE, a fixed visualization at a single
-#'                solution (determined by either percent or k if supplied) is produced.
-#' @param interactive A logical character. Should the resulting animation be interactive or not?
-#'                    If TRUE, an interactive visualization is produced by javascript(plotly).
-#'                    If FALSE, a non-interactive visualization is produced by ggplot.
+#' @param dynamic A logical scalar.Should the resulting animation be dynamic (animated) or not?
+#'                If \code{TRUE}, a dynamic visualization which varies along the CARP solution path at a
+#'                grid given by \code{percent.seq} is produced. If \code{FALSE}, a fixed visualization at a single
+#'                solution (determined by either \code{percent} or \code{k} if supplied) is produced.
+#' @param interactive A logical scalar. Should the resulting animation be interactive or not?
+#'                    If \code{TRUE}, an interactive visualization is produced by javascript(\code{\link{plotly}}).
+#'                    If \code{FALSE}, a non-interactive visualization is produced by \code{\link[ggplot2]{ggplot}}.
 #' @param axis A character vector of length two indicating which features or principal
 #'             components to use as the axes in the \code{type = "path"} visualization.
 #'             Currently only features like \code{"PC1"} or \code{"PC2"} (indicating
@@ -63,10 +63,6 @@
 #' @details The \code{\link{saveviz.CARP}} function provides a unified interface
 #'          for exporting \code{CARP} visualizations to files. For all plots,
 #'          at most one of \code{percent} and \code{k} may be supplied.
-#' @importFrom shiny shinyApp fluidPage titlePanel tabsetPanel fluidRow
-#' @importFrom shiny column plotOutput sliderInput uiOutput renderUI tags
-#' @importFrom shiny selectInput animationOptions renderPlot tabPanel
-#' @importFrom shiny br sidebarPanel mainPanel sidebarLayout
 #' @importFrom stats as.dendrogram median
 #' @importFrom ggplot2 ggplot aes geom_path geom_point geom_text guides theme
 #' @importFrom ggplot2 element_text xlab ylab scale_color_manual
@@ -96,11 +92,19 @@ plot.CARP <- function(x,
                       slider_y = -0.3) {
 
   type <- match.arg(type)
+
+  if (!is_logical_scalar(dynamic)) {
+    crv_error(sQuote("dynamic"), " must be a logical scalar.")
+  }
+  if (!is_logical_scalar(interactive)) {
+    crv_error(sQuote("interactive"), " must be a logical scalar.")
+  }
+
   switch(
     type,
     dendrogram = {
-      if (interactive == FALSE) {
-        if (dynamic == FALSE) {
+      if (!interactive) {
+        if (!dynamic) {
           carp_dendro_plot(x,
                            percent = percent,
                            k = k,
@@ -109,7 +113,7 @@ plot.CARP <- function(x,
                            dend.ylab.cex = dend.ylab.cex,
                            ...)
         } else {
-          crv_error("Not implemented.")
+          crv_error("The non-interactively dynamic dendrogram is not implemented yet.")
         }
       } else {
         carp_dendro_plotly(x,
@@ -122,8 +126,8 @@ plot.CARP <- function(x,
       }
     },
     path = {
-      if (interactive == FALSE) {
-        if (dynamic == FALSE) {
+      if (!interactive) {
+        if (!dynamic) {
           carp_path_plot(x,
                          axis = axis,
                          percent = percent,
@@ -145,13 +149,13 @@ plot.CARP <- function(x,
       }
     },
     heatmap = {
-      if (interactive==TRUE & dynamic==FALSE){
+      if (interatctive & !dynamic){
         carp_heatmaply(x,
                        ...,
                        percent = percent,
                        k = k)
       } else {
-        crv_error("Not implemented.")
+        crv_error("The interactively dynamic and non-interactive heatmaps are not implemented yet.")
       }
     }
   )
@@ -207,7 +211,7 @@ carp_path_plot <- function(x,
     }
 
     ## If percent == min(GammaPercent), keep some (unshrunken) data to plot
-    ## This comes up in the default settings for the Shiny app or static when
+    ## This comes up in the default settings for the static when
     ## percent = 0
     plot_frame_full <- plot_frame_full %>% filter(.data$GammaPercent <= max(percent, min(.data$GammaPercent)))
   } else {
@@ -464,7 +468,7 @@ carp_path_plotly <- function(x,
     crv_error("At most one of ", sQuote("percent"), " and ", sQuote("k"), " must be supplied.")
   }
 
-  if(n_args >= 1 & dynamic == TRUE){
+  if(n_args >= 1 & dynamic){
     crv_error("Can't set ", sQuote("percent"), " and ", sQuote("k"), " for dynamic plots")
   }
 
@@ -522,7 +526,7 @@ carp_path_plotly <- function(x,
 
   mytext <- paste(plot_frame_init$ObsLabel)
 
-  if (dynamic == FALSE){
+  if (!dynamic){
     if (show_clusters) {
       path_static <- plot_ly() %>%
         add_markers(
@@ -734,7 +738,7 @@ carp_dendro_plotly <- function(x,
 
   colors<-c(brewer.pal(8,"Set1"))
 
-  if (dynamic == FALSE){
+  if (!dynamic){
     if(show_clusters){
 
       if(has_percent){
