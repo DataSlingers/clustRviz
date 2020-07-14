@@ -32,7 +32,6 @@ Imports:
     rlang,
     tidyr,
     purrr,
-    shiny,
     Matrix,
     stringr,
     zoo,
@@ -42,7 +41,8 @@ Imports:
     ggrepel,
     RColorBrewer,
     heatmaply,
-    gganimate
+    gganimate,
+    plotly
 LinkingTo: Rcpp, RcppEigen
 Suggests: testthat,
     knitr,
