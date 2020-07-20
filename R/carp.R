@@ -36,6 +36,11 @@
 #'                      returns an b-by-n matrix of fusion weights.
 #'                \item A matrix of size n-by-n containing fusion weights
 #'                }
+#' @param impute_func A function used to impute missing data in \code{X}. By default,
+#'                    the \code{\link[missForest]{missForest}} function from the
+#'                    package of the same name is used. This provides a flexible
+#'                    potentially non-linear imputation function. This function
+#'                    has to return a data matrix with no \code{NA} values.
 #' @param status Should a status message be printed to the console?
 #' @return An object of class \code{CARP} containing the following elements (among others):
 #'         \itemize{
@@ -54,6 +59,7 @@
 #' @importFrom dplyr %>% mutate group_by ungroup as_tibble n_distinct
 #' @importFrom rlang %||%
 #' @importFrom stats var
+#' @importFrom missForest missForest
 #' @export
 #' @examples
 #' carp_fit <- CARP(presidential_speech[1:10,1:4])
@@ -74,6 +80,7 @@ CARP <- function(X,
                  t = 1.05,
                  npcs = min(4L, NCOL(X), NROW(X)),
                  dendrogram.scale = NULL,
+                 impute_func = function(X) {if(anyNA(X)) missForest(X)$ximp else X},
                  status = (interactive() && (clustRviz_logger_level() %in% c("MESSAGE", "WARNING", "ERROR")))) {
 
   tic <- Sys.time()
@@ -104,8 +111,17 @@ CARP <- function(X,
     crv_error(sQuote("X"), " must be numeric.")
   }
 
+  # Missing data mask: M_{ij} = 1 means we see X_{ij};
+  M <- 1 - is.na(X)
+
+  # Impute missing values in X
+  # By default, we use the "Missing Forest" function from the missForest package
+  # though other imputers can be supplied by the user.
+  X.orig <- X
+  X <- impute_func(X)
+
   if (anyNA(X)) {
-    crv_error(sQuote("CARP"), " cannot handle missing data.")
+    crv_error("Imputation failed. Missing values found in ", sQuote("X"), " even after imputation.")
   }
 
   if (!all(is.finite(X))) {
@@ -157,13 +173,12 @@ CARP <- function(X,
     crv_error(sQuote("labels"), " must be of length ", sQuote("NROW(X)."))
   }
 
-  rownames(X) <- labels <- make.unique(as.character(labels), sep="_")
+  rownames(X.orig) <- rownames(X) <- labels <- make.unique(as.character(labels), sep="_")
 
   n <- NROW(X)
   p <- NCOL(X)
 
   # Center and scale X
-  X.orig <- X
   if (X.center | X.scale) {
     X <- scale(X, center = X.center, scale = X.scale)
   }
@@ -224,6 +239,7 @@ CARP <- function(X,
   tic_inner <- Sys.time()
 
   carp.sol.path <- CARPcpp(X,
+                           M,
                            D,
                            t = t,
                            epsilon = .clustRvizOptionsEnv[["epsilon"]],
@@ -264,6 +280,7 @@ CARP <- function(X,
 
   carp.fit <- list(
     X = X.orig,
+    M = M,
     D = D,
     U = post_processing_results$U,
     dendrogram = post_processing_results$dendrogram,

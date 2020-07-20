@@ -2,6 +2,7 @@
 
 // [[Rcpp::export(rng = false)]]
 Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
+                   const Eigen::ArrayXXd& M,
                    const Eigen::MatrixXd& D,
                    const Eigen::VectorXd& weights,
                    double epsilon,
@@ -19,7 +20,7 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
                    bool back_track         = false,
                    bool exact              = false){
 
-  ConvexClustering problem(X, D, weights, rho, l1, show_progress);
+  ConvexClustering problem(X, M, D, weights, rho, l1, show_progress);
 
   if(exact){
     if(back_track){
@@ -59,6 +60,7 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
 
 // [[Rcpp::export(rng = false)]]
 Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
+                    const Eigen::ArrayXXd& M,
                     const Eigen::MatrixXd& D_row,
                     const Eigen::MatrixXd& D_col,
                     const Eigen::VectorXd& weights_col,
@@ -78,7 +80,7 @@ Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
                     bool back_track         = false,
                     bool exact              = false){
 
-  ConvexBiClustering problem(X, D_row, D_col, weights_row, weights_col, rho, l1, show_progress);
+  ConvexBiClustering problem(X, M, D_row, D_col, weights_row, weights_col, rho, l1, show_progress);
 
   if(exact){
     if(back_track){

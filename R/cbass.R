@@ -114,9 +114,12 @@ CBASS <- function(X,
     crv_error(sQuote("X"), " must be numeric.")
   }
 
-  if (anyNA(X)) {
-    crv_error(sQuote("CBASS"), " cannot handle missing data.")
-  }
+  # Missing data mask: M_{ij} = 1 means we see X_{ij};
+  M <- 1 - is.na(X)
+
+  # Impute missing values in X via the global mean
+  X.orig <- X
+  X[is.na(X)] <- mean(X, na.rm = TRUE)
 
   if (!all(is.finite(X))) {
     crv_error("All elements of ", sQuote("X"), " must be finite.")
@@ -163,7 +166,7 @@ CBASS <- function(X,
     crv_error(sQuote("row_labels"), " must be of length ", sQuote("NROW(X)."))
   }
 
-  rownames(X) <- row_labels <- make.unique(as.character(row_labels), sep = "_")
+  rownames(X.orig) <- rownames(X) <- row_labels <- make.unique(as.character(row_labels), sep = "_")
 
   ## Get column (variable) labels
   if (is.null(col_labels)) {
@@ -174,13 +177,12 @@ CBASS <- function(X,
     crv_error(sQuote("col_labels"), " must be of length ", sQuote("NCOL(X)."))
   }
 
-  colnames(X) <- col_labels <- make.unique(as.character(col_labels), sep = "_")
+  colnames(X.orig) <- colnames(X) <- col_labels <- make.unique(as.character(col_labels), sep = "_")
 
   n <- NROW(X)
   p <- NCOL(X)
 
   # Preprocess X
-  X.orig <- X
   if (X.center.global) {
     mean_adjust <- mean(X)
     X <- X - mean_adjust
@@ -294,6 +296,7 @@ CBASS <- function(X,
   tic_inner <- Sys.time()
 
   cbass.sol.path <- CBASScpp(X,
+                             M,
                              D_row,
                              D_col,
                              t = t,
@@ -348,6 +351,7 @@ CBASS <- function(X,
 
   cbass.fit <- list(
     X = X.orig,
+    M = M,
     n = n,
     p = p,
     row_fusions = list(
