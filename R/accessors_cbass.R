@@ -182,7 +182,7 @@ get_cluster_centroids.CBASS <- function(x, ..., percent, k.row, k.col, refit = T
 
   for(r in unique(row_labels)){
     for(c in unique(col_labels)){
-      centroids[r, c] <- mean(U[row_labels == r, col_labels == c])
+      centroids[r, c] <- mean(U[row_labels == r, col_labels == c], na.rm = TRUE)
     }
   }
 

@@ -1,13 +1,23 @@
 ---
-title: "clustRviz Details"
-author: "John Nagorski"
-date: "`r Sys.Date()`"
+title: "2. clustRviz Tutorial"
+author:
+ - name: Michael Weylandt
+   affiliation: Department of Statistics, Rice University
+   email: michael.weylandt@rice.edu
+ - name: John Nagorski
+   affiliation: Department of Statistics, Rice University
+ - name: Genevera I. Allen
+   affiliation: |
+     | Departments of Statistics, Computer Science, and Electical and Computer Engineering, Rice University
+     | Jan and Dan Duncan Neurological Research Institute, Baylor College of Medicine
+   email: gallen@rice.edu
+date: "Last Updated: July 25th, 2018"
 bibliography: vignettes.bib
 output: 
   rmarkdown::html_vignette:
     css: style.css
 vignette: >
-  %\VignetteIndexEntry{clustRviz Details}
+  %\VignetteIndexEntry{2. clustRviz Tutorial}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

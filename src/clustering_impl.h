@@ -10,12 +10,14 @@ public:
   double gamma; // Current regularization level - need to be able to manipulate this externally
 
   ConvexClustering(const Eigen::MatrixXd& X_,
+                   const Eigen::ArrayXXd& M_,
                    const Eigen::MatrixXd& D_,
                    const Eigen::VectorXd& weights_,
                    const double rho_,
                    const bool l1_,
                    const bool show_progress_):
   X(X_),
+  M(M_),
   D(D_),
   weights(weights_),
   rho(rho_),
@@ -68,7 +70,8 @@ public:
 
   void admm_step(){
     // U-update
-    U = u_step_solver.solve(X + rho * D.transpose() * (V - Z));
+    Eigen::MatrixXd X_imputed = M * X.array() + (1.0 - M) * U.array();
+    U = u_step_solver.solve(X_imputed + rho * D.transpose() * (V - Z));
     Eigen::MatrixXd DU = D * U;
     ClustRVizLogger::debug("U = ") << U;
 
@@ -164,6 +167,7 @@ public:
 private:
   // Fixed (non-data-dependent) problem details
   const Eigen::MatrixXd& X; // Data matrix (to be clustered)
+  const Eigen::ArrayXXd& M; // Missing data mask
   const Eigen::MatrixXd& D; // Edge (differencing) matrix
   const Eigen::VectorXd& weights; // Clustering weights
   const double rho; // ADMM relaxation parameter -- TODO: Factor this out?

@@ -10,6 +10,7 @@ public:
   double gamma; // Current regularization level - need to be able to manipulate this externally
 
   ConvexBiClustering(const Eigen::MatrixXd& X_,
+                     const Eigen::ArrayXXd& M_,
                      const Eigen::MatrixXd& D_row_,
                      const Eigen::MatrixXd& D_col_,
                      const Eigen::VectorXd& weights_row_,
@@ -18,6 +19,7 @@ public:
                      const bool l1_,
                      const bool show_progress_):
     X(X_),
+    M(M_),
     D_row(D_row_),
     D_col(D_col_),
     weights_row(weights_row_),
@@ -85,8 +87,9 @@ public:
   }
 
   void admm_step(){
+    Eigen::MatrixXd X_imputed = M * X.array() + (1.0 - M) * U.array();
     // U-update
-    U = (X + alpha * U + rho * (
+    U = (X_imputed + alpha * U + rho * (
         D_row.transpose() * (V_row - Z_row) +
         (V_col - Z_col) * D_col.transpose() -
         DTD_row * U -
@@ -144,7 +147,7 @@ public:
         V_row.rowwise().norm().dot(weights_row) +
         V_col.colwise().norm().dot(weights_col));
     }
-    ClustRVizLogger::info("Objective function: ") <<  loss;  
+    ClustRVizLogger::info("Objective function: ") <<  loss;
 
 
     ClustRVizLogger::debug("Number of row fusions identified ") << nzeros_row;
@@ -188,7 +191,7 @@ public:
   }
 
   bool admm_converged(){
-    return scaled_squared_norm(U - U_old) < CLUSTRVIZ_EXACT_STOP_PRECISION && 
+    return scaled_squared_norm(U - U_old) < CLUSTRVIZ_EXACT_STOP_PRECISION &&
             scaled_squared_norm(Z_row - Z_row_old) +
             scaled_squared_norm(Z_col - Z_col_old) +
             scaled_squared_norm(V_row - V_row_old) +
@@ -250,12 +253,13 @@ public:
 private:
   // Fixed (non-data-dependent) problem details
   const Eigen::MatrixXd& X; // Data matrix (to be clustered)
+  const Eigen::ArrayXXd& M; // Missing data mask
   const Eigen::MatrixXd& D_row; // Edge (differencing) matrix
   const Eigen::MatrixXd& D_col;
   const Eigen::VectorXd& weights_row; // Clustering weights
   const Eigen::VectorXd& weights_col;
   const double rho; // ADMM relaxation parameter -- TODO: Factor this out?
-  double alpha; 
+  double alpha;
   // Theoretically, it's part of the algorithm, not the problem
   // but we need it in the steps...
   bool  l1;         // Is the L1 (true) or L2 (false) norm being used?

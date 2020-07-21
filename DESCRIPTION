@@ -42,7 +42,8 @@ Imports:
     RColorBrewer,
     heatmaply,
     gganimate,
-    plotly
+    plotly,
+    missForest
 LinkingTo: Rcpp, RcppEigen
 Suggests: testthat,
     knitr,
