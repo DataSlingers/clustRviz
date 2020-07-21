@@ -1,5 +1,5 @@
 ---
-title: "Acknowledgements"
+title: "5. ClustRViz Acknowledgements"
 author:
  - name: Michael Weylandt
    affiliation: Department of Statistics, Rice University
@@ -19,7 +19,7 @@ output:
       collapsed: false
 bibliography: vignettes.bib
 vignette: >
-  %\VignetteIndexEntry{Acknowledgements}
+  %\VignetteIndexEntry{5. ClustRViz Acknowledgements}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
