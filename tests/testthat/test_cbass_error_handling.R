@@ -3,7 +3,6 @@ context("CBASS() Error Handling")
 test_that("CBASS() fails with non-finite numerical input", {
   ps <- presidential_speech
 
-  ps[1,1] <- NA; expect_error(CBASS(ps))
   ps[1,1] <- NaN; expect_error(CBASS(ps))
   ps[1,1] <- Inf; expect_error(CBASS(ps))
 })
