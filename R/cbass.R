@@ -5,7 +5,9 @@
 #' heatmaps. \code{CBASS} solves the Convex Biclustering problem using an efficient
 #' Algorithmic Regularization scheme.
 #'
-#' @param X The data matrix (\eqn{X \in R^{n \times p}}{X})
+#' @param X The data matrix (\eqn{X \in R^{n \times p}}{X}).
+#'          If \code{X} has missing values - \code{NA} or
+#'          \code{NaN} values - they will be automatically imputed.
 #' @param row_weights One of the following: \itemize{
 #'                    \item A function which, when called with argument \code{X},
 #'                          returns a n-by-n matrix of fusion weights.
@@ -119,7 +121,15 @@ CBASS <- function(X,
 
   # Impute missing values in X via the global mean
   X.orig <- X
-  X[is.na(X)] <- mean(X, na.rm = TRUE)
+
+  if(anyNA(X)) {
+    X[is.na(X)] <- mean(X, na.rm = TRUE)
+  }
+
+  ## Check that imputation was successful.
+  if (anyNA(X)) {
+    crv_error("Imputation failed. Missing values found in ", sQuote("X"), " even after imputation.")
+  }
 
   if (!all(is.finite(X))) {
     crv_error("All elements of ", sQuote("X"), " must be finite.")

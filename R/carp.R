@@ -7,7 +7,8 @@
 #'
 #' @param X The data matrix (\eqn{X \in R^{n \times p}}{X}): rows correspond to
 #'          the observations (to be clustered) and columns to the variables (which
-#'          will not be clustered).
+#'          will not be clustered). If \code{X} has missing values - \code{NA} or
+#'          \code{NaN} values - they will be automatically imputed.
 #' @param labels A character vector of length \eqn{n}: observations (row) labels
 #' @param X.center A logical: Should \code{X} be centered columnwise?
 #' @param X.scale A logical: Should \code{X} be scaled columnwise?
@@ -41,6 +42,8 @@
 #'                    package of the same name is used. This provides a flexible
 #'                    potentially non-linear imputation function. This function
 #'                    has to return a data matrix with no \code{NA} values.
+#'                    Note that, consistent with base \code{R}, both \code{NaN}
+#'                    and \code{NA} are treaded as "missing values" for imputation.
 #' @param status Should a status message be printed to the console?
 #' @return An object of class \code{CARP} containing the following elements (among others):
 #'         \itemize{
@@ -118,8 +121,12 @@ CARP <- function(X,
   # By default, we use the "Missing Forest" function from the missForest package
   # though other imputers can be supplied by the user.
   X.orig <- X
-  X <- impute_func(X)
 
+  if(anyNA(X)) {
+    X <- impute_func(X)
+  }
+
+  ## Check that imputation was successful.
   if (anyNA(X)) {
     crv_error("Imputation failed. Missing values found in ", sQuote("X"), " even after imputation.")
   }

@@ -15,4 +15,7 @@ test_that("CBASS Imputes Missing Data", {
   expect_true(is.nan(get_clustered_data(cbass_fit, k.row = 3, refit = TRUE)[2,2]))
   # But we can impute if we don't refit (note that it's a pretty bad imputation...)
   expect_false(is.nan(get_clustered_data(cbass_fit, k.row = 3, refit = FALSE)[2,2]))
+
+  # We should get an error when we can't succesfully impute
+  expect_error(CBASS(presidential_speech * NA))
 })

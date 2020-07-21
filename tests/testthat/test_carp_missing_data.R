@@ -26,4 +26,8 @@ test_that("CARP Imputes Missing Data", {
   # We should also get an error when imputation puts in non-finite or NaN values
   expect_error(CARP(test_dat, impute_func = function(X){X[is.na(X)] <- NaN}))
   expect_error(CARP(test_dat, impute_func = function(X){X[is.na(X)] <- Inf}))
+
+  # We should get an error when we can't impute (too many NAs)
+  test_dat[,1] <- NA
+  expect_error(CARP(test_dat, impute_func = function(X){X[,1] <- mean(X[,1], na.rm = TRUE); X}))
 })
