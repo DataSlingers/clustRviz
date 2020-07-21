@@ -305,10 +305,10 @@ CBASS <- function(X,
   crv_message("Computing Convex Bi-Clustering [CBASS] Path")
   tic_inner <- Sys.time()
 
-  cbass.sol.path <- CBASScpp(X,
-                             M,
-                             D_row,
-                             D_col,
+  cbass.sol.path <- CBASScpp(X = X,
+                             M = M,
+                             D_row = D_row,
+                             D_col = D_col,
                              t = t,
                              epsilon = .clustRvizOptionsEnv[["epsilon"]],
                              weights_row = row_weights[row_weights != 0],

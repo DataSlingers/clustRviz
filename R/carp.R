@@ -245,9 +245,9 @@ CARP <- function(X,
   crv_message("Computing Convex Clustering [CARP] Path")
   tic_inner <- Sys.time()
 
-  carp.sol.path <- CARPcpp(X,
-                           M,
-                           D,
+  carp.sol.path <- CARPcpp(X = X,
+                           M = M,
+                           D = D,
                            t = t,
                            epsilon = .clustRvizOptionsEnv[["epsilon"]],
                            weights = weight_vec[weight_vec != 0],

@@ -78,6 +78,75 @@ private:
 };
 
 template <class PROBLEM_TYPE>
+class UserGridADMMPolicy{
+  // This is the full-solution ADMM policy
+  //
+  // It is pretty straightforward: just the standard ADMM + a check
+  // (based on the norm of the difference in the V and Z variables) for convergence
+  //
+  // We store the result of each level of the regularization parameter
+public:
+  UserGridADMMPolicy(PROBLEM_TYPE problem_,
+                     std::vector<double> lambda_grid_,
+                     const int max_iter_):
+
+  problem(problem_),
+  lambda_grid(lambda_grid_),
+  max_iter(max_iter_){};
+
+  void solve(){
+    // The PROBLEM_TYPE constructor already stores the gamma = 0 solution,
+    // so just iterate over the values in lambda_grid.
+    for(double lambda : lambda_grid){
+      problem.gamma = lambda;
+
+      ClustRVizLogger::info("Starting ADMM with gamma = ") << problem.gamma;
+
+      int k = 0;
+
+      do {
+        problem.save_old_values();
+        problem.admm_step();
+        iter++; k++;
+
+        // problem.tick() will check for interrupts
+        problem.tick(iter);
+
+        if(k > 2500){
+          ClustRVizLogger::warning("ADMM Non-convergence Detected for gamma = ") << problem.gamma << " after " << k << " iterations.";
+          break; // Avoid infinite loops on a single lambda...
+        }
+
+      } while (!problem.admm_converged());
+
+      ClustRVizLogger::info("ADMM converged with gamma = ") << problem.gamma << " after " << iter << " total iterations.";
+
+      problem.store_values();
+
+      if(iter >= max_iter){
+        ClustRVizLogger::warning("Clustering ended early -- `max_iter` reached. Treat results with caution.");
+        break;
+      }
+    }
+      solved = true;
+  }
+
+  Rcpp::List build_return_object(){
+    if(!solved) solve();
+
+    return problem.build_return_object();
+  }
+private:
+  PROBLEM_TYPE problem;
+  const std::vector<double> lambda_grid;
+  const int max_iter = 10000;
+
+  // Algorithm state
+  int iter = 0;
+  bool solved = false;
+};
+
+template <class PROBLEM_TYPE>
 class BackTrackingADMMPolicy {
   // This is the full-solution ADMM policy combined with VIZ-style back-tracking
 public:

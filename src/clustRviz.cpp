@@ -63,8 +63,8 @@ Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
                     const Eigen::ArrayXXd& M,
                     const Eigen::MatrixXd& D_row,
                     const Eigen::MatrixXd& D_col,
-                    const Eigen::VectorXd& weights_col,
                     const Eigen::VectorXd& weights_row,
+                    const Eigen::VectorXd& weights_col,
                     double epsilon,
                     double t,
                     double rho              = 1,
@@ -116,4 +116,40 @@ Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
     CBASS cbass(problem, epsilon, t, max_iter, burn_in, keep);
     return cbass.build_return_object();
   }
+}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::List ConvexClusteringCPP(const Eigen::MatrixXd& X,
+                               const Eigen::ArrayXXd& M,
+                               const Eigen::MatrixXd& D,
+                               const Eigen::VectorXd& weights,
+                               const std::vector<double> lambda_grid,
+                               double rho         = 1,
+                               int max_iter       = 10000,
+                               bool l1            = false,
+                               bool show_progress = true){
+
+  ConvexClustering problem(X, M, D, weights, rho, l1, show_progress);
+  UserGridConvexClusteringADMM solver(problem, lambda_grid, max_iter);
+
+  return solver.build_return_object();
+}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::List ConvexBiClusteringCPP(const Eigen::MatrixXd& X,
+                                 const Eigen::ArrayXXd& M,
+                                 const Eigen::MatrixXd& D_row,
+                                 const Eigen::MatrixXd& D_col,
+                                 const Eigen::VectorXd& weights_row,
+                                 const Eigen::VectorXd& weights_col,
+                                 const std::vector<double> lambda_grid,
+                                 double rho         = 1,
+                                 int max_iter       = 10000,
+                                 bool l1            = false,
+                                 bool show_progress = true){
+
+  ConvexBiClustering problem(X, M, D_row, D_col, weights_row, weights_col, rho, l1, show_progress);
+  UserGridConvexBiClusteringADMM solver(problem, lambda_grid, max_iter);
+
+  return solver.build_return_object();
 }
