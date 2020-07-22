@@ -425,9 +425,9 @@ CBASS <- function(X,
 print.CBASS <- function(x, ...) {
   if(x$exact){
     if(x$back_track){
-      alg_string = "DLPA+ADMM-VIZ [Exact Solver + Back-Tracking Fusion Search]"
+      alg_string = "ADMM-VIZ [Exact Solver + Back-Tracking Fusion Search]"
     } else {
-      alg_string = paste0("DLPA+ADMM (t = ", round(x$t, 3), ") [Exact Solver]")
+      alg_string = paste0("ADMM (t = ", round(x$t, 3), ") [Exact Solver]")
     }
   } else {
     if(x$back_track){
