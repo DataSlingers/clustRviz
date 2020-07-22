@@ -1,6 +1,7 @@
 ## clustRviz options
 
 clustRviz_default_options <- list(rho                = 1.0,
+                                  stopping_threshold = 1e-10,
                                   max_iter           = as.integer(5e6),
                                   burn_in            = 50L,
                                   viz_initial_step   = 1.1,
@@ -22,6 +23,12 @@ clustRviz_default_options <- list(rho                = 1.0,
 #'
 #' @details The following options can be set by name:\itemize{
 #'   \item \code{epsilon} The initial step size (fixed during the "burn-in" period)
+#'   \item \code{stopping_threshold}: Stopping threshold to use for \code{convex_clustering},
+#'                                    \code{convex_biclustering}, \code{CARP(exact = TRUE)},
+#'                                    and \code{CBASS(exact = TRUE)}. By default,
+#'                                    this is set to \code{1e-10} - a very conservative
+#'                                    threshold: making it larger can significantly
+#'                                    improve performance
 #'   \item \code{max_iter} An integer: the maximum number of iterations to perform.
 #'   \item \code{burn_in} An integer: the number of initial iterations at a fixed
 #'                       (small) value of \eqn{\gamma}
@@ -72,7 +79,7 @@ clustRviz_options <- function(...){
     opt <- dots[[ix]]
 
     ## Validate
-    if (nm %in% c("rho", "epsilon")) {
+    if (nm %in% c("rho", "epsilon", "stopping_threshold")) {
       if (!is_positive_scalar(opt)) {
         crv_error(sQuote(nm), " must be a positive scalar.")
       }
