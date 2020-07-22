@@ -14,12 +14,6 @@ test_that("CARP() errors early with incorrect input", {
   expect_error(CARP(presidential_speech, X.scale = NA))
   expect_error(CARP(presidential_speech, X.scale = c(TRUE, FALSE)))
 
-  # Must use at least one core
-  expect_error(CARP(presidential_speech, ncores = NA))
-  expect_error(CARP(presidential_speech, ncores = c(1, 5)))
-  expect_error(CARP(presidential_speech, ncores = 0L))
-  expect_error(CARP(presidential_speech, ncores = -1L))
-
   # Check `exact` argument
   expect_error(CARP(presidential_speech, exact = "unknown"))
   expect_error(CARP(presidential_speech, exact = NA))
