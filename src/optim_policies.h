@@ -17,13 +17,15 @@ public:
             const double epsilon_,
             const double t_,
             const double thresh_,
-            const int max_iter_):
+            const int max_iter_,
+            const int max_inner_iter_):
 
   problem(problem_),
   epsilon(epsilon_),
   t(t_),
   thresh(thresh_),
-  max_iter(max_iter_){};
+  max_iter(max_iter_),
+  max_inner_iter(max_inner_iter_){};
 
   void solve(){
     // The PROBLEM_TYPE constructor already stores the gamma = 0 solution,
@@ -43,8 +45,9 @@ public:
         // problem.tick() will check for interrupts
         problem.tick(iter);
 
-        if(k > 2500){
-          ClustRVizLogger::warning("ADMM Non-convergence Detected for gamma = ") << problem.gamma << " after " << k << " iterations.";
+        if(k > max_inner_iter){
+          ClustRVizLogger::warning("ADMM Non-convergence Detected for gamma = ") <<
+            problem.gamma << " after " << k << " iterations. Consider increasing clustRviz_options(max_inner_iter).";
           break; // Avoid infinite loops on a single gamma...
         }
 
@@ -73,7 +76,8 @@ private:
   const double epsilon;
   const double t;
   const double thresh = CLUSTRVIZ_DEFAULT_STOP_PRECISION;
-  const int max_iter = 10000;
+  const int max_iter = 100000;
+  const int max_inner_iter = 2500;
 
   // Algorithm state
   int iter = 0;
@@ -92,12 +96,14 @@ public:
   UserGridADMMPolicy(PROBLEM_TYPE problem_,
                      std::vector<double> lambda_grid_,
                      const double thresh_,
-                     const int max_iter_):
+                     const int max_iter_,
+                     const int max_inner_iter_):
 
   problem(problem_),
   lambda_grid(lambda_grid_),
   thresh(thresh_),
-  max_iter(max_iter_){};
+  max_iter(max_iter_),
+  max_inner_iter(max_inner_iter_){};
 
   void solve(){
     // The PROBLEM_TYPE constructor already stores the gamma = 0 solution,
@@ -117,8 +123,9 @@ public:
         // problem.tick() will check for interrupts
         problem.tick(iter);
 
-        if(k > 2500){
-          ClustRVizLogger::warning("ADMM Non-convergence Detected for gamma = ") << problem.gamma << " after " << k << " iterations.";
+        if(k > max_inner_iter){
+          ClustRVizLogger::warning("ADMM Non-convergence Detected for gamma = ") <<
+            problem.gamma << " after " << k << " iterations. Consider increasing clustRviz_options(max_inner_iter).";
           break; // Avoid infinite loops on a single lambda...
         }
 
@@ -145,7 +152,8 @@ private:
   PROBLEM_TYPE problem;
   const std::vector<double> lambda_grid;
   const double thresh = CLUSTRVIZ_DEFAULT_STOP_PRECISION;
-  const int max_iter = 10000;
+  const int max_iter = 100000;
+  const int max_inner_iter = 2500;
 
   // Algorithm state
   int iter = 0;
@@ -160,6 +168,7 @@ public:
                          const double epsilon_,
                          const double thresh_,
                          const int max_iter_,
+                         const int max_inner_iter_,
                          const int burn_in_,
                          const double back_,
                          const int viz_max_inner_iter_,
@@ -170,6 +179,7 @@ public:
   epsilon(epsilon_),
   thresh(thresh_),
   max_iter(max_iter_),
+  max_inner_iter(max_inner_iter_),
   burn_in(burn_in_),
   back(back_),
   viz_max_inner_iter(viz_max_inner_iter_),
@@ -213,8 +223,10 @@ public:
           // problem.tick() will check for interrupts
           problem.tick(iter);
 
-          if(k > 150){
-            break; // Avoid infinite loops on a single gamma...
+          if(k > max_inner_iter){
+            ClustRVizLogger::warning("ADMM Non-convergence Detected for gamma = ") <<
+              problem.gamma << " after " << k << " iterations. Consider increasing clustRviz_options(max_inner_iter).";
+            break; // Avoid infinite loops on a single lambda...
           }
 
         } while (!problem.admm_converged(thresh));
@@ -293,7 +305,8 @@ private:
   PROBLEM_TYPE problem;
   const double epsilon;
   const double thresh = CLUSTRVIZ_DEFAULT_STOP_PRECISION;
-  const int max_iter = 10000;
+  const int max_iter = 100000;
+  const int max_inner_iter = 2500;
   const int burn_in  = 50;
   const double back  = 0.5;
   const int viz_max_inner_iter  = 15;

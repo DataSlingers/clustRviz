@@ -223,6 +223,7 @@ convex_clustering <- function(X,
                                         rho = .clustRvizOptionsEnv[["rho"]],
                                         thresh = .clustRvizOptionsEnv[["stopping_threshold"]],
                                         max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                                        max_inner_iter = .clustRvizOptionsEnv[["max_inner_iter"]],
                                         l1 = l1,
                                         show_progress = status)
 
@@ -568,6 +569,7 @@ convex_biclustering <- function(X,
                                             rho = .clustRvizOptionsEnv[["rho"]],
                                             thresh = .clustRvizOptionsEnv[["stopping_threshold"]],
                                             max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                                            max_inner_iter = .clustRvizOptionsEnv[["max_inner_iter"]],
                                             l1 = l1,
                                             show_progress = status)
 

@@ -67,7 +67,7 @@ private:
   PROBLEM_TYPE problem;
   const double epsilon;
   const double t;
-  const int max_iter = 10000;
+  const int max_iter = 100000;
   const int burn_in  = 50;
   const int keep     = 10;
 
@@ -219,7 +219,7 @@ public:
 private:
   PROBLEM_TYPE problem;
   const double epsilon;
-  const int max_iter = 10000;
+  const int max_iter = 100000;
   const int burn_in  = 50;
   const double back  = 0.5;
   const int keep     = 10;

@@ -104,6 +104,7 @@ test_that("Options warnings work", {
 
   expect_warning(clustRviz_options(max_iter = 100, burn_in = 100))
   expect_warning(clustRviz_options(max_iter = 100, burn_in = 150))
+  expect_warning(clustRviz_options(max_iter = 1000, max_inner_iter = 500))
 
   clustRviz_reset_options()
 })
