@@ -101,12 +101,14 @@ public:
   }
 
   void save_old_values(){
+    U_old = U;
     V_old = V;
     Z_old = Z;
     v_zeros_old = v_zeros;
   }
 
   void load_old_variables(){
+    U = U_old;
     V = V_old;
     Z = Z_old;
   }
@@ -119,8 +121,10 @@ public:
     return nzeros > 0;
   }
 
-  bool admm_converged(){
-    return (scaled_squared_norm(V - V_old) + scaled_squared_norm(Z - Z_old) < CLUSTRVIZ_EXACT_STOP_PRECISION);
+  bool admm_converged(double thresh = CLUSTRVIZ_DEFAULT_STOP_PRECISION){
+    return (scaled_squared_norm(U - U_old) < thresh) &&
+           (scaled_squared_norm(V - V_old) < thresh) &&
+           (scaled_squared_norm(Z - Z_old) < thresh);
   }
 
   void store_values(){
@@ -191,6 +195,7 @@ private:
 
   // Old versions (used for back-tracking and fusion counting)
   Eigen::Index nzeros_old;
+  Eigen::MatrixXd U_old;
   Eigen::MatrixXd V_old;
   Eigen::MatrixXd Z_old;
   Eigen::ArrayXi  v_zeros_old;

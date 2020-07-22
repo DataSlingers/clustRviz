@@ -305,16 +305,18 @@ CBASS <- function(X,
   crv_message("Computing Convex Bi-Clustering [CBASS] Path")
   tic_inner <- Sys.time()
 
-  cbass.sol.path <- CBASScpp(X,
-                             M,
-                             D_row,
-                             D_col,
+  cbass.sol.path <- CBASScpp(X = X,
+                             M = M,
+                             D_row = D_row,
+                             D_col = D_col,
                              t = t,
                              epsilon = .clustRvizOptionsEnv[["epsilon"]],
                              weights_row = row_weights[row_weights != 0],
                              weights_col = col_weights[col_weights != 0],
                              rho = .clustRvizOptionsEnv[["rho"]],
+                             thresh = .clustRvizOptionsEnv[["stopping_threshold"]],
                              max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                             max_inner_iter = .clustRvizOptionsEnv[["max_inner_iter"]],
                              burn_in = .clustRvizOptionsEnv[["burn_in"]],
                              viz_max_inner_iter = .clustRvizOptionsEnv[["viz_max_inner_iter"]],
                              viz_initial_step = .clustRvizOptionsEnv[["viz_initial_step"]],
@@ -425,9 +427,9 @@ CBASS <- function(X,
 print.CBASS <- function(x, ...) {
   if(x$exact){
     if(x$back_track){
-      alg_string = "DLPA+ADMM-VIZ [Exact Solver + Back-Tracking Fusion Search]"
+      alg_string = "ADMM-VIZ [Exact Solver + Back-Tracking Fusion Search]"
     } else {
-      alg_string = paste0("DLPA+ADMM (t = ", round(x$t, 3), ") [Exact Solver]")
+      alg_string = paste0("ADMM (t = ", round(x$t, 3), ") [Exact Solver]")
     }
   } else {
     if(x$back_track){

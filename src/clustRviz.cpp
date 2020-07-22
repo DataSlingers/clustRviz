@@ -8,7 +8,9 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
                    double epsilon,
                    double t,
                    double rho              = 1,
-                   int max_iter            = 10000,
+                   double thresh           = CLUSTRVIZ_DEFAULT_STOP_PRECISION,
+                   int max_iter            = 100000,
+                   int max_inner_iter      = 2500,
                    int burn_in             = 50,
                    double back             = 0.5,
                    int keep                = 10,
@@ -26,7 +28,9 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
     if(back_track){
       ConvexClusteringADMM_VIZ admm_viz(problem,
                                         epsilon,
+                                        thresh,
                                         max_iter,
+                                        max_inner_iter,
                                         burn_in,
                                         back,
                                         viz_max_inner_iter,
@@ -35,7 +39,7 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
 
       return admm_viz.build_return_object();
     } else {
-      ConvexClusteringADMM admm(problem, epsilon, t, max_iter);
+      ConvexClusteringADMM admm(problem, epsilon, t, thresh, max_iter, max_inner_iter);
       return admm.build_return_object();
     }
   } else {
@@ -63,12 +67,14 @@ Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
                     const Eigen::ArrayXXd& M,
                     const Eigen::MatrixXd& D_row,
                     const Eigen::MatrixXd& D_col,
-                    const Eigen::VectorXd& weights_col,
                     const Eigen::VectorXd& weights_row,
+                    const Eigen::VectorXd& weights_col,
                     double epsilon,
                     double t,
+                    double thresh           = CLUSTRVIZ_DEFAULT_STOP_PRECISION,
                     double rho              = 1,
-                    int max_iter            = 10000,
+                    int max_iter            = 100000,
+                    int max_inner_iter      = 2500,
                     int burn_in             = 50,
                     double back             = 0.5,
                     int keep                = 10,
@@ -86,7 +92,9 @@ Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
     if(back_track){
       ConvexBiClusteringADMM_VIZ admm_viz(problem,
                                           epsilon,
+                                          thresh,
                                           max_iter,
+                                          max_inner_iter,
                                           burn_in,
                                           back,
                                           viz_max_inner_iter,
@@ -95,7 +103,7 @@ Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
 
       return admm_viz.build_return_object();
     } else {
-      ConvexBiClusteringADMM admm(problem, epsilon, t, max_iter);
+      ConvexBiClusteringADMM admm(problem, epsilon, t, thresh, max_iter, max_inner_iter);
       return admm.build_return_object();
     }
   } else {
@@ -116,4 +124,44 @@ Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
     CBASS cbass(problem, epsilon, t, max_iter, burn_in, keep);
     return cbass.build_return_object();
   }
+}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::List ConvexClusteringCPP(const Eigen::MatrixXd& X,
+                               const Eigen::ArrayXXd& M,
+                               const Eigen::MatrixXd& D,
+                               const Eigen::VectorXd& weights,
+                               const std::vector<double> lambda_grid,
+                               double rho         = 1,
+                               double thresh      = CLUSTRVIZ_DEFAULT_STOP_PRECISION,
+                               int max_iter       = 100000,
+                               int max_inner_iter = 2500,
+                               bool l1            = false,
+                               bool show_progress = true){
+
+  ConvexClustering problem(X, M, D, weights, rho, l1, show_progress);
+  UserGridConvexClusteringADMM solver(problem, lambda_grid, thresh, max_iter, max_inner_iter);
+
+  return solver.build_return_object();
+}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::List ConvexBiClusteringCPP(const Eigen::MatrixXd& X,
+                                 const Eigen::ArrayXXd& M,
+                                 const Eigen::MatrixXd& D_row,
+                                 const Eigen::MatrixXd& D_col,
+                                 const Eigen::VectorXd& weights_row,
+                                 const Eigen::VectorXd& weights_col,
+                                 const std::vector<double> lambda_grid,
+                                 double rho         = 1,
+                                 double thresh      = CLUSTRVIZ_DEFAULT_STOP_PRECISION,
+                                 int max_iter       = 100000,
+                                 int max_inner_iter = 2500,
+                                 bool l1            = false,
+                                 bool show_progress = true){
+
+  ConvexBiClustering problem(X, M, D_row, D_col, weights_row, weights_col, rho, l1, show_progress);
+  UserGridConvexBiClusteringADMM solver(problem, lambda_grid, thresh, max_iter, max_inner_iter);
+
+  return solver.build_return_object();
 }

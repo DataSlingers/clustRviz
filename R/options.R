@@ -1,7 +1,9 @@
 ## clustRviz options
 
 clustRviz_default_options <- list(rho                = 1.0,
+                                  stopping_threshold = 1e-10,
                                   max_iter           = as.integer(5e6),
+                                  max_inner_iter     = 2500L,
                                   burn_in            = 50L,
                                   viz_initial_step   = 1.1,
                                   viz_small_step     = 1.01,
@@ -22,7 +24,16 @@ clustRviz_default_options <- list(rho                = 1.0,
 #'
 #' @details The following options can be set by name:\itemize{
 #'   \item \code{epsilon} The initial step size (fixed during the "burn-in" period)
-#'   \item \code{max_iter} An integer: the maximum number of iterations to perform.
+#'   \item \code{stopping_threshold}: Stopping threshold to use for \code{convex_clustering},
+#'                                    \code{convex_biclustering}, \code{CARP(exact = TRUE)},
+#'                                    and \code{CBASS(exact = TRUE)}. By default,
+#'                                    this is set to \code{1e-10} - a very conservative
+#'                                    threshold: making it larger can significantly
+#'                                    improve performance
+#'   \item \code{max_iter} An integer: the maximum number of iterations to perform
+#'   \item \code{max_inner_iter} An integer: the maximum number of iterations for
+#'                               the iterative solvers to perform at a single
+#'                               value of \eqn{\lambda}{\lambda}.
 #'   \item \code{burn_in} An integer: the number of initial iterations at a fixed
 #'                       (small) value of \eqn{\gamma}
 #'   \item \code{viz_initial_step} The initial (large) step size used in back-tracking
@@ -72,7 +83,7 @@ clustRviz_options <- function(...){
     opt <- dots[[ix]]
 
     ## Validate
-    if (nm %in% c("rho", "epsilon")) {
+    if (nm %in% c("rho", "epsilon", "stopping_threshold")) {
       if (!is_positive_scalar(opt)) {
         crv_error(sQuote(nm), " must be a positive scalar.")
       }
@@ -80,7 +91,7 @@ clustRviz_options <- function(...){
       if ( (!is_positive_scalar(opt)) || (opt <= 1) ){
         crv_error(sQuote(nm), " must be greater than one.")
       }
-    } else if (nm %in% c("burn_in", "max_iter", "viz_burn_in", "viz_max_inner_iter", "keep")) {
+    } else if (nm %in% c("burn_in", "max_iter", "max_inner_iter", "viz_burn_in", "viz_max_inner_iter", "keep")) {
       if (!is_positive_integer_scalar(opt) ){
         crv_error(sQuote(nm), " must be a positive integer.")
       }
@@ -101,6 +112,10 @@ clustRviz_options <- function(...){
 
   if (.clustRvizOptionsEnv[["viz_small_step"]] >= .clustRvizOptionsEnv[["viz_initial_step"]]) {
     crv_warning(sQuote("viz_small_step"), " should be less than ", sQuote("viz_initial_step."))
+  }
+
+  if(.clustRvizOptionsEnv[["max_inner_iter"]] >= 0.1 * .clustRvizOptionsEnv[["max_iter"]]) {
+    crv_warning(sQuote("max_inner_iter"), " should typically be at most a tenth of ", sQuote("max_iter."))
   }
 
   ##
