@@ -16,11 +16,13 @@ public:
   ADMMPolicy(PROBLEM_TYPE problem_,
             const double epsilon_,
             const double t_,
+            const double thresh_,
             const int max_iter_):
 
   problem(problem_),
   epsilon(epsilon_),
   t(t_),
+  thresh(thresh_),
   max_iter(max_iter_){};
 
   void solve(){
@@ -46,7 +48,7 @@ public:
           break; // Avoid infinite loops on a single gamma...
         }
 
-      } while (!problem.admm_converged());
+      } while (!problem.admm_converged(thresh));
 
       ClustRVizLogger::info("ADMM converged with gamma = ") << problem.gamma << " after " << iter << " total iterations.";
 
@@ -70,6 +72,7 @@ private:
   PROBLEM_TYPE problem;
   const double epsilon;
   const double t;
+  const double thresh = CLUSTRVIZ_DEFAULT_STOP_PRECISION;
   const int max_iter = 10000;
 
   // Algorithm state
@@ -88,10 +91,12 @@ class UserGridADMMPolicy{
 public:
   UserGridADMMPolicy(PROBLEM_TYPE problem_,
                      std::vector<double> lambda_grid_,
+                     const double thresh_,
                      const int max_iter_):
 
   problem(problem_),
   lambda_grid(lambda_grid_),
+  thresh(thresh_),
   max_iter(max_iter_){};
 
   void solve(){
@@ -117,7 +122,7 @@ public:
           break; // Avoid infinite loops on a single lambda...
         }
 
-      } while (!problem.admm_converged());
+      } while (!problem.admm_converged(thresh));
 
       ClustRVizLogger::info("ADMM converged with gamma = ") << problem.gamma << " after " << iter << " total iterations.";
 
@@ -139,6 +144,7 @@ public:
 private:
   PROBLEM_TYPE problem;
   const std::vector<double> lambda_grid;
+  const double thresh = CLUSTRVIZ_DEFAULT_STOP_PRECISION;
   const int max_iter = 10000;
 
   // Algorithm state
@@ -152,6 +158,7 @@ class BackTrackingADMMPolicy {
 public:
   BackTrackingADMMPolicy(PROBLEM_TYPE problem_,
                          const double epsilon_,
+                         const double thresh_,
                          const int max_iter_,
                          const int burn_in_,
                          const double back_,
@@ -161,6 +168,7 @@ public:
 
   problem(problem_),
   epsilon(epsilon_),
+  thresh(thresh_),
   max_iter(max_iter_),
   burn_in(burn_in_),
   back(back_),
@@ -209,7 +217,7 @@ public:
             break; // Avoid infinite loops on a single gamma...
           }
 
-        } while (!problem.admm_converged());
+        } while (!problem.admm_converged(thresh));
 
         ClustRVizLogger::info("ADMM converged with gamma = ") << problem.gamma << " after " << iter << " total iterations.";
 
@@ -284,6 +292,7 @@ public:
 private:
   PROBLEM_TYPE problem;
   const double epsilon;
+  const double thresh = CLUSTRVIZ_DEFAULT_STOP_PRECISION;
   const int max_iter = 10000;
   const int burn_in  = 50;
   const double back  = 0.5;

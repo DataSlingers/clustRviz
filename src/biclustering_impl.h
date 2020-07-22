@@ -190,12 +190,12 @@ public:
     return (nzeros_row > 0) | (nzeros_col > 0);
   }
 
-  bool admm_converged(){
-    return (scaled_squared_norm(U - U_old) < CLUSTRVIZ_EXACT_STOP_PRECISION) &&
-           (scaled_squared_norm(Z_row - Z_row_old) < CLUSTRVIZ_EXACT_STOP_PRECISION) &&
-           (scaled_squared_norm(Z_col - Z_col_old) < CLUSTRVIZ_EXACT_STOP_PRECISION) &&
-           (scaled_squared_norm(V_row - V_row_old) < CLUSTRVIZ_EXACT_STOP_PRECISION) &&
-           (scaled_squared_norm(V_col - V_col_old) < CLUSTRVIZ_EXACT_STOP_PRECISION);
+  bool admm_converged(double thresh = CLUSTRVIZ_DEFAULT_STOP_PRECISION){
+    return (scaled_squared_norm(U - U_old) < CLUSTRVIZ_DEFAULT_STOP_PRECISION) &&
+           (scaled_squared_norm(Z_row - Z_row_old) < CLUSTRVIZ_DEFAULT_STOP_PRECISION) &&
+           (scaled_squared_norm(Z_col - Z_col_old) < CLUSTRVIZ_DEFAULT_STOP_PRECISION) &&
+           (scaled_squared_norm(V_row - V_row_old) < CLUSTRVIZ_DEFAULT_STOP_PRECISION) &&
+           (scaled_squared_norm(V_col - V_col_old) < CLUSTRVIZ_DEFAULT_STOP_PRECISION);
   }
 
   void store_values(){

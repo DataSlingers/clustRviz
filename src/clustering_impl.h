@@ -121,10 +121,10 @@ public:
     return nzeros > 0;
   }
 
-  bool admm_converged(){
-    return (scaled_squared_norm(U - U_old) < CLUSTRVIZ_EXACT_STOP_PRECISION) &&
-           (scaled_squared_norm(V - V_old) < CLUSTRVIZ_EXACT_STOP_PRECISION) &&
-           (scaled_squared_norm(Z - Z_old) < CLUSTRVIZ_EXACT_STOP_PRECISION);
+  bool admm_converged(double thresh = CLUSTRVIZ_DEFAULT_STOP_PRECISION){
+    return (scaled_squared_norm(U - U_old) < thresh) &&
+           (scaled_squared_norm(V - V_old) < thresh) &&
+           (scaled_squared_norm(Z - Z_old) < thresh);
   }
 
   void store_values(){
