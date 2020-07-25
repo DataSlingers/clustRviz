@@ -1090,7 +1090,7 @@ cbass_dendro_plotly <- function(x,
 #' @noRd
 #' @importFrom heatmaply heatmapr
 #' @importFrom dendextend as.ggdend
-#' @importFrom plotly plot_ly add_heatmap add_segments layout animation_slider
+#' @importFrom plotly plot_ly add_heatmap add_segments animation_slider
 #' @importFrom tibble tibble
 cbass_heatmaply_dynamic <- function(x,
                                    ...,
