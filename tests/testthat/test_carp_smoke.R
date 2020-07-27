@@ -50,7 +50,7 @@ test_that("CARP interactive path plot works", {
 })
 
 test_that("CARP interactive heatmap works", {
-  carp_fit <- CARP(presidential_speech)
+  carp_fit <- CARP(presidential_speech[1:5,1:5])
 
   ## dynamic
   expect_no_error(plot(carp_fit, type = "heatmap", interactive = T, dynamic = T))

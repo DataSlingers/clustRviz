@@ -946,30 +946,7 @@ carp_heatmaply_dynamic <- function(x,
                                    ...,
                                    percent.seq = percent.seq,
                                    slider_y = slider_y){
-  # data for heatmap
-  data_mat_dynamic <- lapply(seq_along(percent.seq), function(i) {
-    per <- percent.seq[i]
-    U <- get_clustered_data(x, percent = per, refit = TRUE)
-    k <- nlevels(get_cluster_labels(x, percent = per))
-    h <- heatmapr(
-      U,
-      Rowv = as.hclust(x),
-      dendrogram = "row",
-      k_row = k
-    )
-
-    data_mat <- h$matrix$data
-
-    tibble(
-      value = as.vector(data_mat),
-      x = as.vector(col(data_mat)),
-      y = as.vector(row(data_mat)),
-      percent = as.vector(per)
-    )
-  })
-  data_mat_dynamic <- dplyr::bind_rows(data_mat_dynamic)
-
-  # data for dendrogram
+  data_mat_dynamic <- data.frame()
   seg_dynamic <- data.frame()
   for (per in percent.seq){
     U <- get_clustered_data(x, percent = per, refit = TRUE)
@@ -980,6 +957,14 @@ carp_heatmaply_dynamic <- function(x,
       dendrogram = "row",
       k_row = k
     )
+    # data for heatmap
+    data_mat <- h$matrix$data
+    data_mat_dynamic <- rbind(data_mat_dynamic,cbind(value = as.vector(data_mat),
+                                                     x = as.vector(col(data_mat)),
+                                                     y = as.vector(row(data_mat)),
+                                                     percent = as.vector(per)))
+
+    # data for dendrogram
     dend <- h$rows
     segs <- as.ggdend(dend)$segments
     segs$col[is.na(segs$col)] <- "black" # default value for NA is "black"

@@ -1096,33 +1096,7 @@ cbass_heatmaply_dynamic <- function(x,
                                    ...,
                                    percent.seq = percent.seq,
                                    slider_y = slider_y){
-  # data for heatmap
-  data_mat_dynamic <- lapply(seq_along(percent.seq), function(i) {
-    per <- percent.seq[i]
-    U <- get_clustered_data(x, percent = per, refit = TRUE)
-    k.row <- nlevels(get_cluster_labels(x, percent = per, type = "row"))
-    k.col <- nlevels(get_cluster_labels(x, percent = per, type = "col"))
-    h <- heatmapr(
-      U,
-      Rowv = as.hclust(x, type = "row"),
-      Colv = as.hclust(x, type = "col"),
-      dendrogram = "both",
-      k_row = k.row,
-      k_col = k.col
-    )
-
-    data_mat <- h$matrix$data
-
-    tibble(
-      value = as.vector(data_mat),
-      x = as.vector(col(data_mat)),
-      y = as.vector(row(data_mat)),
-      percent = as.vector(per)
-    )
-  })
-  data_mat_dynamic <- dplyr::bind_rows(data_mat_dynamic)
-
-  # data for dendrogram
+  data_mat_dynamic <- data.frame()
   seg_dynamic_row <- data.frame()
   seg_dynamic_col <- data.frame()
   for (per in percent.seq){
@@ -1137,6 +1111,14 @@ cbass_heatmaply_dynamic <- function(x,
       k_row = k.row,
       k_col = k.col
     )
+    # data for heatmap
+    data_mat <- h$matrix$data
+    data_mat_dynamic <- rbind(data_mat_dynamic,cbind(value = as.vector(data_mat),
+                                                     x = as.vector(col(data_mat)),
+                                                     y = as.vector(row(data_mat)),
+                                                     percent = as.vector(per)))
+
+    # data for dendrogram
     dend_row <- h$rows
     dend_col <- h$cols
     segs_row <- as.ggdend(dend_row)$segments
