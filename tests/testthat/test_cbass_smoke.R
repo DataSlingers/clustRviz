@@ -68,3 +68,10 @@ test_that("CBASS interactive path plot works", {
   expect_no_error(plot(cbass_fit, type = "col.path", interactive = T, dynamic = T))
 })
 
+test_that("CBASS interactive heatmap works", {
+  cbass_fit <- CBASS(presidential_speech[1:5,1:5])
+
+  ## dynamic
+  expect_no_error(plot(cbass_fit, type = "heatmap", interactive = T, dynamic = T))
+})
+

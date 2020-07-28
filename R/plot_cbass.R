@@ -238,7 +238,14 @@ plot.CBASS <- function(x,
                           k.col = k.col)
         }
       } else {
-        crv_error("The dynamic heatmaps are not implemented yet.")
+        if (dynamic){
+          cbass_heatmaply_dynamic(x,
+                                  ...,
+                                  percent.seq = percent.seq,
+                                  slider_y = slider_y)
+        } else {
+          crv_error("The non-interactive dynamic heatmap is not implemented yet.")
+        }
       }
     }
   )
@@ -1078,4 +1085,101 @@ cbass_dendro_plotly <- function(x,
       hide_legend() %>%
       animation_slider(y=slider_y,currentvalue = list(prefix = "Regularization: ", suffix = "%"))
   }
+}
+
+#' @noRd
+#' @importFrom heatmaply heatmapr
+#' @importFrom dendextend as.ggdend
+#' @importFrom plotly plot_ly add_heatmap add_segments animation_slider
+#' @importFrom tibble tibble
+cbass_heatmaply_dynamic <- function(x,
+                                   ...,
+                                   percent.seq = percent.seq,
+                                   slider_y = slider_y){
+  data_mat_dynamic <- data.frame()
+  seg_dynamic_row <- data.frame()
+  seg_dynamic_col <- data.frame()
+  for (per in percent.seq){
+    U <- get_clustered_data(x, percent = per, refit = TRUE)
+    k.row <- nlevels(get_cluster_labels(x, percent = per, type = "row"))
+    k.col <- nlevels(get_cluster_labels(x, percent = per, type = "col"))
+    h <- heatmapr(
+      U,
+      Rowv = as.hclust(x, type = "row"),
+      Colv = as.hclust(x, type = "col"),
+      dendrogram = "both",
+      k_row = k.row,
+      k_col = k.col
+    )
+    # data for heatmap
+    data_mat <- h$matrix$data
+    data_mat_dynamic <- rbind(data_mat_dynamic,cbind(value = as.vector(data_mat),
+                                                     x = as.vector(col(data_mat)),
+                                                     y = as.vector(row(data_mat)),
+                                                     percent = as.vector(per)))
+
+    # data for dendrogram
+    dend_row <- h$rows
+    dend_col <- h$cols
+    segs_row <- as.ggdend(dend_row)$segments
+    segs_col <- as.ggdend(dend_col)$segments
+    segs_row$col[is.na(segs_row$col)] <- "black" # default value for NA is "black"
+    segs_col$col[is.na(segs_col$col)] <- "black" # default value for NA is "black"
+    seg_dynamic_row <- rbind(seg_dynamic_row,cbind(seg = seq_along(segs_row$x), segs_row, percent = per))
+    seg_dynamic_col <- rbind(seg_dynamic_col,cbind(seg = seq_along(segs_col$x), segs_col, percent = per))
+
+    rn <- rownames(h$matrix$data)
+    cn <- colnames(h$matrix$data)
+  }
+
+  colors_row <- sort(unique(seg_dynamic_row$col))
+  colors_col <- sort(unique(seg_dynamic_col$col))
+
+  p <- plot_ly(colorbar = list(title = "")) %>%
+    add_heatmap(data = data_mat_dynamic,
+                z = ~value, x = ~x, y = ~y,
+                text = ~paste0("column: ", cn[x], "<br>", "row: ", rn[y], "<br>", "value: ", value),
+                showlegend = FALSE,
+                hoverinfo = "text",
+                frame = ~percent * 100) %>%
+    plotly::layout(
+      xaxis = list(
+        title = "",
+        tickvals = seq_along(cn), ticktext = cn,
+        range = c(0.5, 4/3 * length(cn) + 0.5),
+        showticklabels = TRUE,
+        showgrid = FALSE),
+      yaxis = list(
+        title = "",
+        tickvals = seq_along(rn), ticktext = rn,
+        range = c(0.5, 4/3 * length(rn) + 0.5),
+        showticklabels = TRUE,
+        showgrid = FALSE))
+
+  for (i in seq_along(levels(factor(seg_dynamic_row$seg)))){
+    p <- p %>%
+      add_segments(data = seg_dynamic_row[seg_dynamic_row$seg==i,],
+                   x = ~(y/3+1)*length(cn)+0.5, xend = ~(yend/3+1)*length(cn)+0.5,
+                   y = ~x, yend = ~xend,
+                   color = ~col,
+                   showlegend = FALSE,
+                   colors = colors_row,
+                   hoverinfo = "none",
+                   frame = ~percent*100)
+  }
+  for (i in seq_along(levels(factor(seg_dynamic_col$seg)))){
+    p <- p %>%
+      add_segments(data = seg_dynamic_col[seg_dynamic_col$seg==i,],
+                   x = ~x, xend = ~xend,
+                   y = ~(y/3+1)*length(rn)+0.5, yend = ~(yend/3+1)*length(rn)+0.5,
+                   color = ~col,
+                   showlegend = FALSE,
+                   colors = colors_col,
+                   hoverinfo = "none",
+                   frame = ~percent*100)
+  }
+
+  p %>%
+    animation_slider(y = slider_y,
+                     currentvalue = list(prefix = "Regularization: ", suffix = "%"))
 }

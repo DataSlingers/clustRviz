@@ -51,7 +51,8 @@
 #' @param dend.ylab.cex Y-axis size for dendrogram plots (ignored for other plot
 #'        types) - must be positive.
 #' @param slider_y A number to adjust the slider's vertical position for
-#'                 interactive dendrogram plots (ignored for other plot types).
+#'                 interactive dendrogram and interactive heatmap plots
+#'                 (ignored for other plot types).
 #' @return The value of the return type depends on the \code{type} argument:\itemize{
 #'   \item if \code{type = "dendrogram"}, \code{x} is returned invisibly;
 #'   \item if \code{type = "path"}, an object of class \code{\link[ggplot2]{ggplot}}
@@ -149,13 +150,20 @@ plot.CARP <- function(x,
       }
     },
     heatmap = {
-      if (interactive & !dynamic){
-        carp_heatmaply(x,
-                       ...,
-                       percent = percent,
-                       k = k)
+      if (interactive){
+        if (!dynamic){
+          carp_heatmaply(x,
+                         ...,
+                         percent = percent,
+                         k = k)
+        } else {
+          carp_heatmaply_dynamic(x,
+                                 ...,
+                                 percent.seq = percent.seq,
+                                 slider_y = slider_y)
+        }
       } else {
-        crv_error("The interactively dynamic and non-interactive heatmaps are not implemented yet.")
+        crv_error("The non-interactive heatmaps are not implemented yet.")
       }
     }
   )
@@ -927,5 +935,80 @@ carp_dendro_plotly <- function(x,
       hide_legend() %>%
       animation_slider(y=slider_y,currentvalue = list(prefix = "Regularization: ", suffix = "%"))
   }
+}
+
+#' @noRd
+#' @importFrom heatmaply heatmapr
+#' @importFrom dendextend as.ggdend
+#' @importFrom plotly plot_ly add_heatmap add_segments animation_slider
+#' @importFrom tibble tibble
+carp_heatmaply_dynamic <- function(x,
+                                   ...,
+                                   percent.seq = percent.seq,
+                                   slider_y = slider_y){
+  data_mat_dynamic <- data.frame()
+  seg_dynamic <- data.frame()
+  for (per in percent.seq){
+    U <- get_clustered_data(x, percent = per, refit = TRUE)
+    k <- nlevels(get_cluster_labels(x, percent = per))
+    h <- heatmapr(
+      U,
+      Rowv = as.hclust(x),
+      dendrogram = "row",
+      k_row = k
+    )
+    # data for heatmap
+    data_mat <- h$matrix$data
+    data_mat_dynamic <- rbind(data_mat_dynamic,cbind(value = as.vector(data_mat),
+                                                     x = as.vector(col(data_mat)),
+                                                     y = as.vector(row(data_mat)),
+                                                     percent = as.vector(per)))
+
+    # data for dendrogram
+    dend <- h$rows
+    segs <- as.ggdend(dend)$segments
+    segs$col[is.na(segs$col)] <- "black" # default value for NA is "black"
+    seg_dynamic <- rbind(seg_dynamic,cbind(seg = seq_along(segs$x), segs, percent = per))
+
+    rn <- rownames(h$matrix$data)
+    cn <- colnames(h$matrix$data)
+  }
+
+  colors <- sort(unique(seg_dynamic$col))
+
+  p <- plot_ly(colorbar = list(title = "")) %>%
+    add_heatmap(data = data_mat_dynamic,
+                z = ~value, x = ~x, y = ~y,
+                text = ~paste0("column: ", cn[x], "<br>", "row: ", rn[y], "<br>", "value: ", value),
+                showlegend = FALSE,
+                hoverinfo = "text",
+                frame = ~percent * 100) %>%
+    plotly::layout(
+      xaxis = list(
+        title = "",
+        tickvals = seq_along(cn), ticktext = cn,
+        range = c(0.5, 4/3 * length(cn) + 0.5),
+        showticklabels = TRUE,
+        showgrid = FALSE),
+      yaxis = list(
+        title = "",
+        tickvals = seq_along(rn), ticktext = rn,
+        range = c(0.5, length(rn) + 0.5),
+        showticklabels = TRUE,
+        showgrid = FALSE))
+
+  for (i in seq_along(levels(factor(seg_dynamic$seg)))){
+    p <- p %>%
+      add_segments(data = seg_dynamic[seg_dynamic$seg==i,],
+                   x = ~(y/3+1)*length(cn)+0.5, xend = ~(yend/3+1)*length(cn)+0.5, y = ~x, yend = ~xend, color = ~col,
+                   showlegend = FALSE,
+                   colors = colors,
+                   hoverinfo = "none",
+                   frame = ~percent*100)
+  }
+
+  p %>%
+    animation_slider(y = slider_y,
+                     currentvalue = list(prefix = "Regularization: ", suffix = "%"))
 }
 
