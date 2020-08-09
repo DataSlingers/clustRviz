@@ -34,11 +34,9 @@ saveviz <- function(x, ...) {
 #' @export
 saveviz.CARP <- function(x,
                          file.name,
-                         type = c("dendrogram", "path", "js"),
+                         type = c("dendrogram", "path", "heatmaply"),
                          dynamic = TRUE,
                          axis = c("PC1", "PC2"),
-                         dend.branch.width = 2,
-                         dend.labels.cex = .6,
                          percent,
                          k,
                          percent.seq = seq(from = 0, to = 1, by = .01),
@@ -78,12 +76,10 @@ saveviz.CARP <- function(x,
              carp_dendro_plot(x,
                               percent = percent,
                               k = k,
-                              dend.branch.width = dend.branch.width,
-                              dend.labels.cex = dend.labels.cex,
                               ...)
              dev.off()
            },
-           js = {
+           heatmaply = {
              file.name <- ensure_html(file.name)
              carp_heatmaply(x, percent = percent, k = k, file = file.name, ...)
            })
@@ -109,8 +105,6 @@ saveviz.CARP <- function(x,
         for (pct in percent.seq) {
           carp_dendro_plot(x,
                            percent = pct,
-                           dend.branch.width = dend.branch.width,
-                           dend.labels.cex = dend.labels.cex,
                            ...)
         }
       }, movie.name = file.name,
@@ -148,19 +142,14 @@ saveviz.CARP <- function(x,
 #' @export
 saveviz.CBASS <- function(x,
                           file.name,
-                          type = c("heatmap", "row.dendrogram", "col.dendrogram", "js"),
+                          type = c("heatmap", "row.dendrogram", "col.dendrogram", "heatmaply"),
                           dynamic = TRUE,
-                          dend.branch.width = 2,
-                          dend.labels.cex = .6,
-                          heatrow.label.cex = 1.5,
-                          heatcol.label.cex = 1.5,
                           percent,
                           k.row,
                           k.col,
                           percent.seq = seq(from = 0, to = 1, by = .01),
                           width = 8,
                           height = 5,
-                          margins = c(5, 5),
                           units = c("in", "cm", "mm", "px"),
                           ...) {
 
@@ -189,10 +178,7 @@ saveviz.CBASS <- function(x,
                                 ...,
                                 percent = percent,
                                 k.row = k.row,
-                                k.col = k.col,
-                                heatrow.label.cex = heatrow.label.cex,
-                                heatcol.label.cex = heatcol.label.cex,
-                                margins = margins)
+                                k.col = k.col)
              dev.off()
            },
            row.dendrogram = {
@@ -201,8 +187,6 @@ saveviz.CBASS <- function(x,
                                percent = percent,
                                k.row = k.row,
                                k.col = k.col,
-                               dend.branch.width = dend.branch.width,
-                               dend.labels.cex = dend.labels.cex,
                                type = "row",
                                ...)
              dev.off()
@@ -213,13 +197,11 @@ saveviz.CBASS <- function(x,
                                percent = percent,
                                k.row = k.row,
                                k.col = k.col,
-                               dend.branch.width = dend.branch.width,
-                               dend.labels.cex = dend.labels.cex,
                                type = "col",
                                ...)
              dev.off()
            },
-           js = {
+           heatmaply = {
              file.name <- ensure_html(file.name)
              cbass_heatmaply(x, percent = percent, k.row = k.row, k.col = k.col,
                              file = file.name, ...)
@@ -246,12 +228,9 @@ saveviz.CBASS <- function(x,
         for (pct in percent.seq) {
           cbass_heatmap_plot(x,
                              percent = pct,
-                             heatrow.label.cex = heatrow.label.cex,
-                             heatcol.label.cex = heatcol.label.cex,
                              ...,
                              breaks = breaks,
-                             heatmap_col = heatmap_col,
-                             margins = margins)
+                             heatmap_col = heatmap_col)
         }
       }, movie.name = file.name,
          img.name = "cbass_heatmap",
@@ -265,8 +244,6 @@ saveviz.CBASS <- function(x,
         for (pct in percent.seq) {
           cbass_dendro_plot(x,
                             percent = pct,
-                            dend.branch.width = dend.branch.width,
-                            dend.labels.cex = dend.labels.cex,
                             type = "row",
                             ...)
         }
@@ -282,8 +259,6 @@ saveviz.CBASS <- function(x,
         for (pct in percent.seq) {
           cbass_dendro_plot(x,
                             percent = pct,
-                            dend.branch.width = dend.branch.width,
-                            dend.labels.cex = dend.labels.cex,
                             type = "col",
                             ...)
         }
