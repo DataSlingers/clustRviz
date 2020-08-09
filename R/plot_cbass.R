@@ -502,8 +502,8 @@ cbass_dendro_plot <- function(x,percent,
     lines <- data.frame(x=line_x,y=line_y,xend=line_xend,yend=line_yend)
 
     p <- ggplot() +
-      geom_segment(data = segs, aes(x = x, y = y, xend = xend, yend = yend, color = col), show.legend = FALSE) +
-      geom_segment(data = lines, aes(x = x, y = y, xend = xend, yend = yend, color = NA), show.legend = FALSE) +
+      geom_segment(data = segs, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = .data$col), show.legend = FALSE) +
+      geom_segment(data = lines, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = NA), show.legend = FALSE) +
       labs(title = paste0('Fraction of Regularization: ', percent * 100, '%\nNumber of Clusters: ', k))
   } else {
     dend <- as.ggdend(d)
@@ -511,7 +511,7 @@ cbass_dendro_plot <- function(x,percent,
     segs$col <- "black"
 
     p <- ggplot() +
-      geom_segment(data = segs, aes(x = x, y = y, xend = xend, yend = yend), show.legend = FALSE)
+      geom_segment(data = segs, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend), show.legend = FALSE)
   }
 
   label <- dend$label$label
@@ -576,8 +576,8 @@ cbass_dynamic_dendro_plot <- function(x,
   }
 
   ggplot() +
-    geom_segment(data = segs_dynamic, aes(x = x, y = y, xend = xend, yend = yend, color = col), show.legend = FALSE) +
-    geom_segment(data = lines_dynamic, aes(x = x, y = y, xend = xend, yend = yend, color = NA), show.legend = FALSE) +
+    geom_segment(data = segs_dynamic, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = .data$col), show.legend = FALSE) +
+    geom_segment(data = lines_dynamic, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = NA), show.legend = FALSE) +
     labs(y='Fraction of Regularization') +
     scale_x_continuous(breaks=1:length(label),labels= levels(label)) +
     scale_y_continuous(limits = c(0,1), breaks=c(0,0.25,0.5,0.75,1),labels = c("0%", "25%", "50%", "75%", "100%")) +
@@ -586,7 +586,7 @@ cbass_dynamic_dendro_plot <- function(x,
           panel.background = element_blank(),
           panel.grid=element_blank(),
           panel.border=element_blank()) +
-    transition_manual(reg) +
+    transition_manual(.data$reg) +
     labs(title = paste0('Fraction of Regularization: ', '{current_frame}', '%'))
 }
 
@@ -654,10 +654,10 @@ cbass_heatmap_plot <- function(x,
     lines_col <- dendrogram_box(x, rev = FALSE, k = k.col, type = "col", percent = percent)
 
     p <- ggplot() +
-      geom_segment(data = segs_row, aes(x = (y/3+1)*length(cn)+0.5, xend = (yend/3+1)*length(cn)+0.5, y = x, yend = xend, color = col), show.legend = FALSE) +
-      geom_segment(data = segs_col, aes(y = (y/3+1)*length(rn)+0.5, yend = (yend/3+1)*length(rn)+0.5, x = x, xend = xend, color = col), show.legend = FALSE) +
-      geom_segment(data = lines_row, aes(x = (y/3+1)*length(cn)+0.5, xend = (yend/3+1)*length(cn)+0.5, y = x, yend = xend, color = NA), show.legend = FALSE) +
-      geom_segment(data = lines_col, aes(y = (y/3+1)*length(rn)+0.5, yend = (yend/3+1)*length(rn)+0.5, x = x, xend = xend, color = NA), show.legend = FALSE) +
+      geom_segment(data = segs_row, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = .data$col), show.legend = FALSE) +
+      geom_segment(data = segs_col, aes(y = (.data$y/3+1)*length(rn)+0.5, yend = (.data$yend/3+1)*length(rn)+0.5, x = .data$x, xend = .data$xend, color = .data$col), show.legend = FALSE) +
+      geom_segment(data = lines_row, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = NA), show.legend = FALSE) +
+      geom_segment(data = lines_col, aes(y = (.data$y/3+1)*length(rn)+0.5, yend = (.data$yend/3+1)*length(rn)+0.5, x = .data$x, xend = .data$xend, color = NA), show.legend = FALSE) +
       labs(title = paste0('Fraction of Regularization: ', percent * 100, '%'))
   } else {
     # heatmap
@@ -670,8 +670,8 @@ cbass_heatmap_plot <- function(x,
     segs_col <- adjusted_dendrogram(d_col, rev = FALSE, k = k.col, cluster = FALSE, adjust = adjust_col)
 
     p <- ggplot() +
-      geom_segment(data = segs_row, aes(x = (y/3+1)*length(cn)+0.5, xend = (yend/3+1)*length(cn)+0.5, y = x, yend = xend), show.legend = FALSE) +
-      geom_segment(data = segs_col, aes(y = (y/3+1)*length(rn)+0.5, yend = (yend/3+1)*length(rn)+0.5, x = x, xend = xend), show.legend = FALSE)
+      geom_segment(data = segs_row, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend), show.legend = FALSE) +
+      geom_segment(data = segs_col, aes(y = (.data$y/3+1)*length(rn)+0.5, yend = (.data$yend/3+1)*length(rn)+0.5, x = .data$x, xend = .data$xend), show.legend = FALSE)
   }
 
   # heatmap
@@ -692,7 +692,7 @@ cbass_heatmap_plot <- function(x,
   r <- range(dat$value)
 
   p +
-    geom_tile(data =  dat, aes(x = x, y = y,fill = value)) +
+    geom_tile(data =  dat, aes(x = .data$x, y = .data$y,fill = .data$value)) +
     scale_fill_gradient2(low = "#313695", mid = "#FFFFBF", high = "#A50026", midpoint = (floor(r[1])+ceiling(r[2]))/2, limits = c(floor(r[1]),ceiling(r[2]))) +
     scale_x_continuous(breaks=1:length(cn),labels= cn) +
     scale_y_continuous(breaks=1:length(rn),labels= rn) +
@@ -808,22 +808,22 @@ cbass_dynamic_heatmap_plot <- function(x,
 
   r <- range(data_mat_dynamic$value)
 
-  ggplot(data =  data_mat_dynamic, aes(x = x, y = y)) +
-    geom_tile(aes(fill = value)) +
+  ggplot(data =  data_mat_dynamic, aes(x = .data$x, y = .data$y)) +
+    geom_tile(aes(fill = .data$value)) +
     scale_fill_gradient2(low = "#313695", mid = "#FFFFBF", high = "#A50026", midpoint = (floor(r[1])+ceiling(r[2]))/2, limits = c(floor(r[1]),ceiling(r[2]))) +
     scale_x_continuous(breaks=1:length(cn),labels= cn) +
     scale_y_continuous(breaks=1:length(rn),labels= rn) +
-    geom_segment(data = segs_row_dynamic, aes(x = (y/3+1)*length(cn)+0.5, xend = (yend/3+1)*length(cn)+0.5, y = x, yend = xend, color = col), show.legend = FALSE) +
-    geom_segment(data = segs_col_dynamic, aes(y = (y/3+1)*length(rn)+0.5, yend = (yend/3+1)*length(rn)+0.5, x = x, xend = xend, color = col), show.legend = FALSE) +
-    geom_segment(data = lines_row_dynamic, aes(x = (y/3+1)*length(cn)+0.5, xend = (yend/3+1)*length(cn)+0.5, y = x, yend = xend, color = NA), show.legend = FALSE) +
-    geom_segment(data = lines_col_dynamic, aes(y = (y/3+1)*length(rn)+0.5, yend = (yend/3+1)*length(rn)+0.5, x = x, xend = xend, color = NA), show.legend = FALSE) +
+    geom_segment(data = segs_row_dynamic, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = .data$col), show.legend = FALSE) +
+    geom_segment(data = segs_col_dynamic, aes(y = (.data$y/3+1)*length(rn)+0.5, yend = (.data$yend/3+1)*length(rn)+0.5, x = .data$x, xend = .data$xend, color = .data$col), show.legend = FALSE) +
+    geom_segment(data = lines_row_dynamic, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = NA), show.legend = FALSE) +
+    geom_segment(data = lines_col_dynamic, aes(y = (.data$y/3+1)*length(rn)+0.5, yend = (.data$yend/3+1)*length(rn)+0.5, x = .data$x, xend = .data$xend, color = NA), show.legend = FALSE) +
     theme(axis.text.x=element_text(hjust=1,vjust=0.5,angle=90),
           axis.title.x=element_blank(),
           axis.title.y=element_blank(),
           panel.background = element_blank(),
           panel.grid=element_blank(),
           panel.border=element_blank()) +
-    transition_manual(reg) +
+    transition_manual(.data$reg) +
     labs(title = paste0('Fraction of Regularization: ', '{current_frame}', '%'))
 }
 

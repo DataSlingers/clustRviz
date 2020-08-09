@@ -373,8 +373,8 @@ carp_dendro_plot <- function(x,
     lines <- data.frame(x=line_x,y=line_y,xend=line_xend,yend=line_yend)
 
     p <- ggplot() +
-      geom_segment(data = segs, aes(x = x, y = y, xend = xend, yend = yend, color = col), show.legend = FALSE) +
-      geom_segment(data = lines, aes(x = x, y = y, xend = xend, yend = yend, color = NA), show.legend = FALSE) +
+      geom_segment(data = segs, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = .data$col), show.legend = FALSE) +
+      geom_segment(data = lines, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = NA), show.legend = FALSE) +
       labs(title = paste0('Fraction of Regularization: ', percent * 100, '%\nNumber of Clusters: ', k))
     } else {
     dend <- as.ggdend(d)
@@ -382,7 +382,7 @@ carp_dendro_plot <- function(x,
     segs$col <- "black"
 
     p <- ggplot() +
-      geom_segment(data = segs, aes(x = x, y = y, xend = xend, yend = yend), show.legend = FALSE)
+      geom_segment(data = segs, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend), show.legend = FALSE)
     }
 
   label <- dend$label$label
@@ -474,8 +474,8 @@ carp_heatmap_plot <- function(x,
     lines <- data.frame(x=line_x,y=line_y,xend=line_xend,yend=line_yend)
 
     p <- ggplot() +
-      geom_segment(data = segs, aes(x = (y/3+1)*length(cn)+0.5, xend = (yend/3+1)*length(cn)+0.5, y = x, yend = xend, color = col), show.legend = FALSE) +
-      geom_segment(data = lines, aes(x = (y/3+1)*length(cn)+0.5, xend = (yend/3+1)*length(cn)+0.5, y = x, yend = xend, color = NA), show.legend = FALSE) +
+      geom_segment(data = .data$segs, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = .data$col), show.legend = FALSE) +
+      geom_segment(data = .data$lines, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = NA), show.legend = FALSE) +
       labs(title = paste0('Fraction of Regularization: ', percent * 100, '%\nNumber of Clusters: ', k))
   } else {
     # heatmap
@@ -494,7 +494,7 @@ carp_heatmap_plot <- function(x,
     segs$yend <- segs$yend*adjust
 
     p <- ggplot() +
-      geom_segment(data = segs, aes(x = (y/3+1)*length(cn)+0.5, xend = (yend/3+1)*length(cn)+0.5, y = x, yend = xend), show.legend = FALSE)
+      geom_segment(data = segs, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y =.data$ x, yend = .data$xend), show.legend = FALSE)
   }
 
   # heatmap
@@ -514,7 +514,7 @@ carp_heatmap_plot <- function(x,
   r <- range(dat$value)
 
   p +
-    geom_tile(data =  dat, aes(x = x, y = y,fill = value)) +
+    geom_tile(data =  dat, aes(x = .data$x, y = .data$y,fill = .data$value)) +
     scale_fill_gradient2(low = "#313695", mid = "#FFFFBF", high = "#A50026", midpoint = (floor(r[1])+ceiling(r[2]))/2, limits = c(floor(r[1]),ceiling(r[2]))) +
     scale_x_continuous(breaks=1:length(cn),labels= cn) +
     scale_y_continuous(breaks=1:length(rn),labels= rn) +
@@ -618,8 +618,8 @@ carp_dynamic_dendro_plot <- function(x,
   }
 
 ggplot() +
-  geom_segment(data = segs_dynamic, aes(x = x, y = y, xend = xend, yend = yend, color = col), show.legend = FALSE) +
-  geom_segment(data = lines_dynamic, aes(x = x, y = y, xend = xend, yend = yend, color = NA), show.legend = FALSE) +
+  geom_segment(data = segs_dynamic, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = .data$col), show.legend = FALSE) +
+  geom_segment(data = lines_dynamic, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = NA), show.legend = FALSE) +
   labs(y='Fraction of Regularization') +
   scale_x_continuous(breaks=1:length(label),labels= levels(label)) +
   scale_y_continuous(limits = c(0,1), breaks=c(0,0.25,0.5,0.75,1),labels = c("0%", "25%", "50%", "75%", "100%")) +
@@ -628,7 +628,7 @@ ggplot() +
         panel.background = element_blank(),
         panel.grid=element_blank(),
         panel.border=element_blank()) +
-  transition_manual(reg) +
+  transition_manual(.data$reg) +
   labs(title = paste0('Fraction of Regularization: ', '{current_frame}', '%'))
 }
 
@@ -696,20 +696,20 @@ carp_dynamic_heatmap_plot <- function(x,
 
   r <- range(data_mat_dynamic$value)
 
-ggplot(data =  data_mat_dynamic, aes(x = x, y = y)) +
-    geom_tile(aes(fill = value)) +
+ggplot(data =  data_mat_dynamic, aes(x = .data$x, y = .data$y)) +
+    geom_tile(aes(fill = .data$value)) +
     scale_fill_gradient2(low = "#313695", mid = "#FFFFBF", high = "#A50026", midpoint = (floor(r[1])+ceiling(r[2]))/2, limits = c(floor(r[1]),ceiling(r[2]))) +
     scale_x_continuous(breaks=1:length(cn),labels= cn) +
     scale_y_continuous(breaks=1:length(rn),labels= rn) +
-    geom_segment(data = segs_dynamic, aes(x = (y/3+1)*length(cn)+0.5, xend = (yend/3+1)*length(cn)+0.5, y = x, yend = xend, color = col), show.legend = FALSE) +
-    geom_segment(data = lines_dynamic, aes(x = (y/3+1)*length(cn)+0.5, xend = (yend/3+1)*length(cn)+0.5, y = x, yend = xend, color = NA), show.legend = FALSE) +
+    geom_segment(data = segs_dynamic, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = .data$col), show.legend = FALSE) +
+    geom_segment(data = lines_dynamic, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = NA), show.legend = FALSE) +
     theme(axis.text.x=element_text(hjust=1,vjust=0.5,angle=90),
           axis.title.x=element_blank(),
           axis.title.y=element_blank(),
           panel.background = element_blank(),
           panel.grid=element_blank(),
           panel.border=element_blank()) +
-  transition_manual(reg) +
+  transition_manual(.data$reg) +
   labs(title = paste0('Fraction of Regularization: ', '{current_frame}', '%'))
 }
 
