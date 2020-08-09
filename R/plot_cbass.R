@@ -1190,25 +1190,7 @@ cbass_dendro_plotly <- function(x,
     if(show_clusters){
       labels <- get_cluster_labels(x, k.row = k.row, k.col = k.col, percent = percent, type = type)
       k <- nlevels(labels)
-      if(has_percent){
-        if (!is_percent_scalar(percent)) {
-          crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
-        }
-
-        # if(percent == 0){ ## Don't bother showing boxes if percent is 0 and bail early
-        #   return(invisible(x))
-        # }
-      } else {
-        if (!is_integer_scalar(k.row)|!is_integer_scalar(k.col)) {
-          crv_error(sQuote("k.row"), "and", sQuote("k.col"), " must be an integer scalar (vector of length 1).")
-        }
-        if ( k.row <= 0 | k.col <= 0 ) {
-          crv_error(sQuote("k.row"), "and", sQuote("k.col"), " must be positive.")
-        }
-        if ( k.row > NROW(x$X) | k.col > NCOL(x$X) ) {
-          crv_error(sQuote("k.row"), "and", sQuote("k.col"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
-        }
-
+      if(!has_percent){
         percent <- get_feature_paths(x, features = character(), type = type) %>% filter(.data$NCluster == k) %>%
           select(.data$GammaPercent) %>%
           summarize(NCluster = mean(.data$GammaPercent)) %>%
