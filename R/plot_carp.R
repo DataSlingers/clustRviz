@@ -375,7 +375,7 @@ carp_dendro_plot <- function(x,
     p <- ggplot() +
       geom_segment(data = segs, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = .data$col), show.legend = FALSE) +
       geom_segment(data = lines, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = NA), show.legend = FALSE) +
-      labs(title = paste0('Fraction of Regularization: ', percent * 100, '%\nNumber of Clusters: ', k))
+      labs(title = paste0('Fraction of Regularization: ', round(percent) * 100, '%\nNumber of Clusters: ', k))
     } else {
     dend <- as.ggdend(d)
     segs <- dend$segments
@@ -476,7 +476,7 @@ carp_heatmap_plot <- function(x,
     p <- ggplot() +
       geom_segment(data = .data$segs, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = .data$col), show.legend = FALSE) +
       geom_segment(data = .data$lines, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = NA), show.legend = FALSE) +
-      labs(title = paste0('Fraction of Regularization: ', percent * 100, '%\nNumber of Clusters: ', k))
+      labs(title = paste0('Fraction of Regularization: ', round(percent) * 100, '%\nNumber of Clusters: ', k))
   } else {
     # heatmap
     U <- get_clustered_data(x, percent = 0, refit = refit)

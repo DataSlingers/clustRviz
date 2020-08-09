@@ -448,30 +448,16 @@ cbass_dendro_plot <- function(x,percent,
 
   d <- as.dendrogram(x, type = type)
 
-  if(show_clusters){
-    if(has_percent){
-      if (!is_percent_scalar(percent)) {
-        crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
-      }
-    } else {
-      if (!is_integer_scalar(k.row)|!is_integer_scalar(k.col)) {
-        crv_error(sQuote("k.row"), "and", sQuote("k.col"), " must be an integer scalar (vector of length 1).")
-      }
-      if ( k.row <= 0 | k.col <= 0 ) {
-        crv_error(sQuote("k.row"), "and", sQuote("k.col"), " must be positive.")
-      }
-      if ( k.row > NROW(x$X) | k.col > NCOL(x$X) ) {
-        crv_error(sQuote("k.row"), "and", sQuote("k.col"), " cannot be more than the observations in the original data set (", NROW(x$X), ").")
-      }
+  labels <- get_cluster_labels(x, k.row = k.row, k.col = k.col, percent = percent, type = type)
+  k <- nlevels(labels)
 
+  if(show_clusters){
+    if(!has_percent){
       percent <- get_feature_paths(x, features = character(), type = type) %>% filter(.data$NCluster == k) %>%
         select(.data$GammaPercent) %>%
         summarize(NCluster = mean(.data$GammaPercent)) %>%
         pull
     }
-
-    labels <- get_cluster_labels(x, k.row = k.row, k.col = k.col, percent = percent, type = type)
-    k <- nlevels(labels)
 
     c <- color_branches(d, k = k)
     dend <- as.ggdend(c)
@@ -498,7 +484,7 @@ cbass_dendro_plot <- function(x,percent,
     p <- ggplot() +
       geom_segment(data = segs, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = .data$col), show.legend = FALSE) +
       geom_segment(data = lines, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = NA), show.legend = FALSE) +
-      labs(title = paste0('Fraction of Regularization: ', percent * 100, '%\nNumber of Clusters: ', k))
+      labs(title = paste0('Fraction of Regularization: ', round(percent) * 100, '%\nNumber of Clusters: ', k))
   } else {
     dend <- as.ggdend(d)
     segs <- dend$segments
@@ -652,7 +638,7 @@ cbass_heatmap_plot <- function(x,
       geom_segment(data = segs_col, aes(y = (.data$y/3+1)*length(rn)+0.5, yend = (.data$yend/3+1)*length(rn)+0.5, x = .data$x, xend = .data$xend, color = .data$col), show.legend = FALSE) +
       geom_segment(data = lines_row, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = NA), show.legend = FALSE) +
       geom_segment(data = lines_col, aes(y = (.data$y/3+1)*length(rn)+0.5, yend = (.data$yend/3+1)*length(rn)+0.5, x = .data$x, xend = .data$xend, color = NA), show.legend = FALSE) +
-      labs(title = paste0('Fraction of Regularization: ', percent * 100, '%'))
+      labs(title = paste0('Fraction of Regularization: ', round(percent) * 100, '%'))
   } else {
     # heatmap
     U     <- get_clustered_data(x, percent = 0, refit = refit)
