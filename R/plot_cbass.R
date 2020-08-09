@@ -50,16 +50,6 @@
 #'            } See the documentation of the linked functions for details about
 #'            additional supported arguments. \code{saveviz} passes arguments
 #'            to the corresponding plot \code{type}.
-#' @param dend.branch.width Branch width for dendrogram plots (ignored for
-#'        other plot types) - must be positive.
-#' @param dend.labels.cex Label size for dendrogram plots (ignored for other plot
-#'        types) - must be positive.
-#' @param dend.ylab.cex Y-axis size for dendrogram plots (ignored for other plot
-#'        types) - must be positive.
-#' @param heatrow.label.cex heatmap row label size
-#' @param heatcol.label.cex heatmap column label size
-#' @param margins A vector of length 2 specifying margin sizes. See the \code{margin}
-#'                argument to \code{\link[gplots]{heatmap.2}}.
 #' @param slider_y A number to adjust the slider's vertical position for
 #'                 interactive dendrogram plots (ignored for other plot types).
 #' @param refit A logical scalar. Should "naive" centroids (TRUE) or the

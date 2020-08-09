@@ -102,12 +102,6 @@ test_that("CBASS dendrogram plot works for rows", {
   expect_error(plot(cbass_fit, type = "row.dendrogram", k.col = 0))
   expect_error(plot(cbass_fit, type = "row.dendrogram", k.col = -1))
   expect_error(plot(cbass_fit, type = "row.dendrogram", k.col = NCOL(presidential_speech) + 1))
-
-  ## Error checking on two specially handled arguments
-  expect_error(plot(cbass_fit, type = "row.dendrogram", k.row = 3, dend.branch.width = 0))
-  expect_error(plot(cbass_fit, type = "row.dendrogram", k.row = 3, dend.branch.width = -2))
-  expect_error(plot(cbass_fit, type = "row.dendrogram", k.row = 3, dend.labels.cex   = 0))
-  expect_error(plot(cbass_fit, type = "row.dendrogram", k.row = 3, dend.labels.cex   = -2))
 })
 
 test_that("CBASS dendrogram plot works for columns", {
@@ -137,12 +131,6 @@ test_that("CBASS dendrogram plot works for columns", {
   expect_error(plot(cbass_fit, type = "col.dendrogram", k.col = 0))
   expect_error(plot(cbass_fit, type = "col.dendrogram", k.col = -1))
   expect_error(plot(cbass_fit, type = "col.dendrogram", k.col = NCOL(presidential_speech) + 1))
-
-  ## Error checking on two specially handled arguments
-  expect_error(plot(cbass_fit, type = "col.dendrogram", k.row = 3, dend.branch.width = 0))
-  expect_error(plot(cbass_fit, type = "col.dendrogram", k.row = 3, dend.branch.width = -2))
-  expect_error(plot(cbass_fit, type = "col.dendrogram", k.row = 3, dend.labels.cex   = 0))
-  expect_error(plot(cbass_fit, type = "col.dendrogram", k.row = 3, dend.labels.cex   = -2))
 })
 
 test_that("CBASS heatmap plot works", {
@@ -176,12 +164,6 @@ test_that("CBASS heatmap plot works", {
   expect_error(plot(cbass_fit, type = "heatmap", k.col = 0))
   expect_error(plot(cbass_fit, type = "heatmap", k.col = -1))
   expect_error(plot(cbass_fit, type = "heatmap", k.col = NCOL(presidential_speech) + 1))
-
-  ## Error checking on two specially handled arguments
-  expect_error(plot(cbass_fit, type = "heatmap", heatcol.label.cex = 0))
-  expect_error(plot(cbass_fit, type = "heatmap", heatcol.label.cex = -2))
-  expect_error(plot(cbass_fit, type = "heatmap", heatrow.label.cex = 0))
-  expect_error(plot(cbass_fit, type = "heatmap", heatrow.label.cex = -2))
 })
 
 test_that("CBASS heatmaply (javascript) plot works", {

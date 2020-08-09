@@ -53,12 +53,6 @@ test_that("CARP dendrogram plot works", {
   expect_error(plot(carp_fit, type = "dendrogram", k = 0))
   expect_error(plot(carp_fit, type = "dendrogram", k = -1))
   expect_error(plot(carp_fit, type = "dendrogram", k = NROW(presidential_speech) + 1))
-
-  ## Error checking on two specially handled arguments
-  expect_error(plot(carp_fit, type = "dendrogram", k = 3, dend.branch.width = 0))
-  expect_error(plot(carp_fit, type = "dendrogram", k = 3, dend.branch.width = -2))
-  expect_error(plot(carp_fit, type = "dendrogram", k = 3, dend.labels.cex   = 0))
-  expect_error(plot(carp_fit, type = "dendrogram", k = 3, dend.labels.cex   = -2))
 })
 
 test_that("CARP heatmaply (javascript) plot works", {
