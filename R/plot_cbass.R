@@ -1188,6 +1188,8 @@ cbass_dendro_plotly <- function(x,
 
   if (!dynamic){
     if(show_clusters){
+      labels <- get_cluster_labels(x, k.row = k.row, k.col = k.col, percent = percent, type = type)
+      k <- nlevels(labels)
       if(has_percent){
         if (!is_percent_scalar(percent)) {
           crv_error(sQuote("percent"), " must be a scalar between 0 and 1 (inclusive).")
@@ -1212,9 +1214,6 @@ cbass_dendro_plotly <- function(x,
           summarize(NCluster = mean(.data$GammaPercent)) %>%
           pull
       }
-
-      labels <- get_cluster_labels(x, k.row = k.row, k.col = k.col, percent = percent, type = type)
-      k <- nlevels(labels)
 
       cluster <- labels
       clustab <- table(cluster)[unique(cluster[labels(d)])]
