@@ -26,7 +26,7 @@ test_that("CARP [L1] works", {
 })
 
 test_that("CARP interactive dendrogram plot works", {
-  carp_fit <- CARP(presidential_speech)
+  carp_fit <- CARP(presidential_speech[1:5,1:5])
 
   ## static
   expect_no_error(plot(carp_fit, type = "dendrogram", interactive = T, dynamic = F))
@@ -38,7 +38,7 @@ test_that("CARP interactive dendrogram plot works", {
 })
 
 test_that("CARP interactive path plot works", {
-  carp_fit <- CARP(presidential_speech)
+  carp_fit <- CARP(presidential_speech[1:5,1:5])
 
   ## static
   expect_no_error(plot(carp_fit, type = "path", interactive = T, dynamic = F))
@@ -54,4 +54,22 @@ test_that("CARP interactive heatmap works", {
 
   ## dynamic
   expect_no_error(plot(carp_fit, type = "heatmap", interactive = T, dynamic = T))
+})
+
+test_that("CARP non-interactive dynamic dendrogram plot works", {
+  carp_fit <- CARP(presidential_speech)
+
+  expect_no_error(plot(carp_fit, type = "dendrogram", interactive = F, dynamic = T))
+})
+
+test_that("CARP non-interactive heatmap plot works", {
+  carp_fit <- CARP(presidential_speech)
+
+  ## static
+  expect_no_error(plot(carp_fit, type = "heatmap", interactive = F, dynamic = F))
+  expect_no_error(plot(carp_fit, type = "heatmap", interactive = F, dynamic = F, k = 3))
+  expect_no_error(plot(carp_fit, type = "heatmap", interactive = F, dynamic = F, percent = 0.25))
+
+  ## dynamic
+  expect_no_error(plot(carp_fit, type = "heatmap", interactive = F, dynamic = T))
 })
