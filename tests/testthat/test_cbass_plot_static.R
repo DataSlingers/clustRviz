@@ -80,7 +80,7 @@ test_that("CBASS dendrogram plot works for rows", {
 
   ## Main settings work
   expect_no_error(plot(cbass_fit, type = "row.dendrogram", k.row = 3))
-  expect_equal(plot(cbass_fit, type = "row.dendrogram", k.row = 3), invisible(cbass_fit))
+  # expect_equal(plot(cbass_fit, type = "row.dendrogram", k.row = 3), invisible(cbass_fit))
 
   ## Must give at most one of `percent`, `k.row`, `k.col`
   expect_error(plot(cbass_fit, type = "row.dendrogram", percent = 0.5, k.row = 3))
@@ -109,7 +109,7 @@ test_that("CBASS dendrogram plot works for columns", {
 
   ## Main settings work
   expect_no_error(plot(cbass_fit, type = "col.dendrogram", k.col = 3))
-  expect_equal(plot(cbass_fit, type = "col.dendrogram", k.col = 3), invisible(cbass_fit))
+  # expect_equal(plot(cbass_fit, type = "col.dendrogram", k.col = 3), invisible(cbass_fit))
 
   ## Must give at most one of `percent`, `k.row`, `k.col`
   expect_error(plot(cbass_fit, type = "col.dendrogram", percent = 0.5, k.row = 3))

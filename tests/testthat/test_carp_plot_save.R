@@ -46,7 +46,7 @@ test_that("saveviz.CARP can export heatmaply to a file", {
 
   carp_fit <- CARP(presidential_speech)
   temp_file <- file.path(tempdir(), "tester.html")
-  expect_warning(saveviz(carp_fit, file.name = temp_file, type = "heatmaplly"))
+  expect_warning(saveviz(carp_fit, file.name = temp_file, type = "heatmaply"))
   expect_no_warning(sv_res <- saveviz(carp_fit, file.name = temp_file, type = "heatmaply", dynamic = FALSE))
   expect_equal(sv_res, invisible(temp_file))
   expect_true(file.exists(temp_file))
