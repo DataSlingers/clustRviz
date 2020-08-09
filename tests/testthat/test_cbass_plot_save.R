@@ -80,13 +80,13 @@ test_that("saveviz.CBASS can save a dynamic heatmap as a GIF", {
   expect_true(file.exists(temp_file))
 })
 
-test_that("saveviz.CBASS can export JS to a file", {
+test_that("saveviz.CBASS can export heatmaply to a file", {
   skip_on_cran()
 
   cbass_fit <- CBASS(presidential_speech)
   temp_file <- file.path(tempdir(), "tester.html")
-  expect_warning(saveviz(cbass_fit, file.name = temp_file, type = "js"))
-  expect_no_warning(sv_res <- saveviz(cbass_fit, file.name = temp_file, type = "js", dynamic = FALSE))
+  expect_warning(saveviz(cbass_fit, file.name = temp_file, type = "heatmaply"))
+  expect_no_warning(sv_res <- saveviz(cbass_fit, file.name = temp_file, type = "heatmaply", dynamic = FALSE))
   expect_equal(sv_res, invisible(temp_file))
   expect_true(file.exists(temp_file))
 })

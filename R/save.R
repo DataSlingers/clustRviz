@@ -6,7 +6,7 @@ saveviz <- function(x, ...) {
 
 #' @param file.name The name of the output file. The type of resulting image
 #'                  is determined from the extension. If \code{dynamic = TRUE},
-#'                  the extension is changed to \code{.gif} internally. If \code{type = "js"},
+#'                  the extension is changed to \code{.gif} internally. If \code{type = "heatmaply"},
 #'                  the extension is changed to \code{.html} internally.
 #' @param dynamic Should the resulting animation be dynamic (animated) or not?
 #'                If \code{TRUE}, a dynamic visualization which varies along the
@@ -14,7 +14,7 @@ saveviz <- function(x, ...) {
 #'                is produced (as a \code{GIF}). If \code{FALSE}, a fixed visualization
 #'                at a single solution (determined by either \code{percent} or \code{k}
 #'                if supplied) is produced.
-#'                Currently ignored when \code{type = "js"}.
+#'                Currently ignored when \code{type = "heatmaply"}.
 #' @param percent.seq A grid of values of \code{percent} along which to generate
 #'                    dynamic visualizations (if \code{dynamic == TRUE})
 #' @param width The width of the output, given in \code{unit}s
@@ -55,8 +55,8 @@ saveviz.CARP <- function(x,
     crv_error("All elements of ", sQuote("percent.seq"), " must be between 0 and 1.")
   }
 
-  if ( (type == "js") && dynamic ){
-    crv_warning("dynamic = TRUE is not supported with type = js.")
+  if ( (type == "heatmaply") && dynamic ){
+    crv_warning("dynamic = TRUE is not supported with type = heatmaply.")
     dynamic <- FALSE
   }
 
@@ -119,7 +119,7 @@ saveviz.CARP <- function(x,
 
 #' @param file.name The name of the output file. The type of resulting image
 #'                  is determined from the extension.If \code{dynamic = TRUE},
-#'                  the extension is changed to \code{.gif} internally. If \code{type = "js"},
+#'                  the extension is changed to \code{.gif} internally. If \code{type = "heatmaply"},
 #'                  the extension is changed to \code{.html} internally.
 #' @param dynamic Should the resulting animation be dynamic (animated) or not?
 #'                If \code{TRUE}, a dynamic visualization which varies along the
@@ -127,7 +127,7 @@ saveviz.CARP <- function(x,
 #'                is produced (as a \code{GIF}). If \code{FALSE}, a fixed visualization
 #'                at a single solution (determined by \code{percent}, \code{k.row} or
 #'                \code{k.col} if supplied) is produced.
-#'                Currently ignored when \code{type = "js"}.
+#'                Currently ignored when \code{type = "heatmaply"}.
 #' @param percent.seq A grid of values of \code{percent} along which to generate
 #'                    dynamic visualizations (if \code{dynamic == TRUE})
 #' @param width The width of the output, given in \code{unit}s
@@ -163,8 +163,8 @@ saveviz.CBASS <- function(x,
     crv_error("All elements of ", sQuote("percent.seq"), " must be between 0 and 1.")
   }
 
-  if ( (type == "js") && dynamic ){
-    crv_warning("dynamic = TRUE is not supported with type = js.")
+  if ( (type == "heatmaply") && dynamic ){
+    crv_warning("dynamic = TRUE is not supported with type = heatmaply.")
     dynamic <- FALSE
   }
 

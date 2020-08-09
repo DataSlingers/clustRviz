@@ -41,13 +41,13 @@ test_that("saveviz.CARP can save a dynamic path as a GIF", {
   expect_true(file.exists(temp_file))
 })
 
-test_that("saveviz.CARP can export JS to a file", {
+test_that("saveviz.CARP can export heatmaply to a file", {
   skip_on_cran()
 
   carp_fit <- CARP(presidential_speech)
   temp_file <- file.path(tempdir(), "tester.html")
-  expect_warning(saveviz(carp_fit, file.name = temp_file, type = "js"))
-  expect_no_warning(sv_res <- saveviz(carp_fit, file.name = temp_file, type = "js", dynamic = FALSE))
+  expect_warning(saveviz(carp_fit, file.name = temp_file, type = "heatmaplly"))
+  expect_no_warning(sv_res <- saveviz(carp_fit, file.name = temp_file, type = "heatmaply", dynamic = FALSE))
   expect_equal(sv_res, invisible(temp_file))
   expect_true(file.exists(temp_file))
 })
