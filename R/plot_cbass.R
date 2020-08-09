@@ -448,10 +448,9 @@ cbass_dendro_plot <- function(x,percent,
 
   d <- as.dendrogram(x, type = type)
 
-  labels <- get_cluster_labels(x, k.row = k.row, k.col = k.col, percent = percent, type = type)
-  k <- nlevels(labels)
-
   if(show_clusters){
+    labels <- get_cluster_labels(x, k.row = k.row, k.col = k.col, percent = percent, type = type)
+    k <- nlevels(labels)
     if(!has_percent){
       percent <- get_feature_paths(x, features = character(), type = type) %>% filter(.data$NCluster == k) %>%
         select(.data$GammaPercent) %>%
