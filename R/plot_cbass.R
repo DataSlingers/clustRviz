@@ -47,9 +47,9 @@
 #'                  \code{...} is forwarded to \code{\link[stats]{dendrogram}};
 #'            \item when \code{type == "heatmap"}, \code{...} is forwarded to
 #'                  \code{\link[heatmaply]{heatmaply}}.
-#'            } See the documentation of the linked functions for details about
-#'            additional supported arguments. \code{saveviz} passes arguments
-#'            to the corresponding plot \code{type}.
+#'            } See the documentation of \code{\link[ggplot2]{ggplot}} (for \code{interactive == FALSE})
+#'            or \code{\link[plotly]{plotly}} (for \code{interactive == TRUE}) for details about additional
+#'            supported arguments to the corresponding plot \code{type}.
 #' @param slider_y A number to adjust the slider's vertical position for
 #'                 interactive dendrogram plots (ignored for other plot types).
 #' @param refit A logical scalar. Should "naive" centroids (TRUE) or the
@@ -66,10 +66,9 @@
 #'  \item if \code{type \%in\% c("row.path", "col.path")}, an object of class
 #'        \code{\link[ggplot2]{ggplot}} which can be plotted directly (by invoking
 #'        its print method) or modified further by the user is returned;
-#' } \code{saveviz.CBASS} always returns \code{file.name} invisibly.
-#' @details The \code{\link{saveviz.CBASS}} function provides a unified interface
-#'          for exporting \code{CBASS} visualizations to files. For all plots,
-#'          at most one of \code{percent}, \code{k.row}, and \code{k.col} must be supplied.
+#' }.
+#' @details For all plots, please refer \code{\link[ggplot]} (for \code{interactive == FALSE})
+#'          or \code{\link[plotly]{plotly}} (for \code{interactive == TRUE}) to adjust the theme and the style.
 #' @importFrom stats as.dendrogram as.hclust quantile
 #' @importFrom grDevices colorRampPalette adjustcolor
 #' @export
@@ -483,7 +482,7 @@ cbass_dendro_plot <- function(x,percent,
     p <- ggplot() +
       geom_segment(data = segs, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = .data$col), show.legend = FALSE) +
       geom_segment(data = lines, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = NA), show.legend = FALSE) +
-      labs(title = paste0('Fraction of Regularization: ', round(percent) * 100, '%\nNumber of Clusters: ', k))
+      labs(title = paste0('Fraction of Regularization: ', round(percent * 100), '%\nNumber of Clusters: ', k))
   } else {
     dend <- as.ggdend(d)
     segs <- dend$segments
@@ -637,7 +636,7 @@ cbass_heatmap_plot <- function(x,
       geom_segment(data = segs_col, aes(y = (.data$y/3+1)*length(rn)+0.5, yend = (.data$yend/3+1)*length(rn)+0.5, x = .data$x, xend = .data$xend, color = .data$col), show.legend = FALSE) +
       geom_segment(data = lines_row, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = NA), show.legend = FALSE) +
       geom_segment(data = lines_col, aes(y = (.data$y/3+1)*length(rn)+0.5, yend = (.data$yend/3+1)*length(rn)+0.5, x = .data$x, xend = .data$xend, color = NA), show.legend = FALSE) +
-      labs(title = paste0('Fraction of Regularization: ', round(percent) * 100, '%'))
+      labs(title = paste0('Fraction of Regularization: ', round(percent * 100), '%'))
   } else {
     # heatmap
     U     <- get_clustered_data(x, percent = 0, refit = refit)

@@ -41,9 +41,9 @@
 #'                  \code{...} is forwarded to \code{\link[stats]{dendrogram}}; and
 #'            \item when \code{type == "heatmap"}, \code{...} is forwarded to
 #'                  \code{\link[heatmaply]{heatmaply}}.
-#'            } See the documentation of the linked functions for details about
-#'            additional supported arguments. \code{saveviz} passes arguments
-#'            to the corresponding plot \code{type}.
+#'            } See the documentation of \code{\link[ggplot2]{ggplot}} (for \code{interactive == FALSE})
+#'            or \code{\link[plotly]{plotly}} (for \code{interactive == TRUE}) for details about additional
+#'            supported arguments to the corresponding plot \code{type}.
 #' @param slider_y A number to adjust the slider's vertical position for
 #'                 interactive dendrogram and interactive heatmap plots
 #'                 (ignored for other plot types).
@@ -62,10 +62,9 @@
 #'         further by the user is returned;
 #'   \item if \code{type = "dynamic_path"}, an object of class \code{\link[gganimate:gganimate-package]{gganim}}
 #'         is returned, and many be further manipulated by the user or plotted directly;
-#' } \code{saveviz.CARP} always returns \code{file.name} invisibly.
-#' @details The \code{\link{saveviz.CARP}} function provides a unified interface
-#'          for exporting \code{CARP} visualizations to files. For all plots,
-#'          at most one of \code{percent} and \code{k} may be supplied.
+#' }.
+#' @details For all plots, please refer \code{\link[ggplot]} (for \code{interactive == FALSE})
+#'          or \code{\link[plotly]{plotly}} (for \code{interactive == TRUE}) to adjust the theme and the style.
 #' @importFrom stats as.dendrogram median
 #' @importFrom ggplot2 ggplot aes geom_path geom_point geom_text guides theme
 #' @importFrom ggplot2 element_text xlab ylab scale_color_manual
@@ -375,7 +374,7 @@ carp_dendro_plot <- function(x,
     p <- ggplot() +
       geom_segment(data = segs, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = .data$col), show.legend = FALSE) +
       geom_segment(data = lines, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = NA), show.legend = FALSE) +
-      labs(title = paste0('Fraction of Regularization: ', round(percent) * 100, '%\nNumber of Clusters: ', k))
+      labs(title = paste0('Fraction of Regularization: ', round(percent * 100), '%\nNumber of Clusters: ', k))
     } else {
     dend <- as.ggdend(d)
     segs <- dend$segments
@@ -476,7 +475,7 @@ carp_heatmap_plot <- function(x,
     p <- ggplot() +
       geom_segment(data = .data$segs, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = .data$col), show.legend = FALSE) +
       geom_segment(data = .data$lines, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = NA), show.legend = FALSE) +
-      labs(title = paste0('Fraction of Regularization: ', round(percent) * 100, '%\nNumber of Clusters: ', k))
+      labs(title = paste0('Fraction of Regularization: ', round(percent * 100), '%\nNumber of Clusters: ', k))
   } else {
     # heatmap
     U <- get_clustered_data(x, percent = 0, refit = refit)
