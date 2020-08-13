@@ -8,7 +8,7 @@
 #'       at a fixed value of the regularization parameter is increased (\code{type = "path"});
 #' \item A \code{\link[gganimate]{gganimate}} plot, showing the coalescence of the
 #'       estimated cluster centroids as the regularization parameter is increased
-#'       (\code{type = "dynamic_path"}); and
+#'       (\code{dynamic = TRUE})
 #' }
 #'
 #' @param x An object of class \code{CARP} as returned by \code{\link{CARP}}
@@ -32,15 +32,16 @@
 #'          in the static plots. If no \code{CARP} iteration with exactly this
 #'          many clusters is found, the first iterate with fewer than \code{k}
 #'          clusters is used.
+#' @param percent.seq A grid of values of percent along which to generate dynamic
+#'                    visualizations (if dynamic == TRUE)
 #' @param ... Additional arguments, which are handled differently for different
 #'            values of \code{type}.\itemize{
-#'            \item When \code{type} is \code{"path"}, \code{"dynamic_path"},
-#'                  or \code{"interactive"}, the presence of
+#'            \item When \code{type} is \code{"path"}, the presence of
 #'                  unknown arguments triggers an error;
 #'            \item when \code{type == "dendrogram"}
 #'                  \code{...} is forwarded to \code{\link[stats]{dendrogram}}; and
-#'            \item when \code{type == "heatmap"}, \code{...} is forwarded to
-#'                  \code{\link[heatmaply]{heatmaply}}.
+#'            \item when \code{type == "heatmap"} and \code{interactive == TRUE},
+#'                  \code{...} is forwarded to \code{\link[heatmaply]{heatmaply}}.
 #'            } See the documentation of \code{\link[ggplot2]{ggplot}} (for \code{interactive == FALSE})
 #'            or \code{\link[plotly]{plotly}} (for \code{interactive == TRUE}) for details about additional
 #'            supported arguments to the corresponding plot \code{type}.
@@ -55,16 +56,15 @@
 #'              Due to the global shrinkage imposed, these clusters are
 #'              more "shrunk together" than the naive clusters. Only for the
 #'              heatmap plots. (ignored for other plot types).
-#' @return The value of the return type depends on the \code{type} argument:\itemize{
-#'   \item if \code{type = "dendrogram"}, \code{x} is returned invisibly;
-#'   \item if \code{type = "path"}, an object of class \code{\link[ggplot2]{ggplot}}
+#' @return The value of the return type depends on the \code{interactive} and \code{dynamic} arguments:\itemize{
+#'   \item if \code{interactive = FALSE} and \code{dynamic = FALSE}, an object of class \code{\link[ggplot2]{ggplot}}
 #'         which can be plotted directly (by invoking its print method) or modified
 #'         further by the user is returned;
-#'   \item if \code{type = "dynamic_path"}, an object of class \code{\link[gganimate:gganimate-package]{gganim}}
+#'   \item if \code{interactive = FALSE} and \code{dynamic = TRUE}, an object of class \code{\link[gganimate:gganimate-package]{gganim}}
 #'         is returned, and many be further manipulated by the user or plotted directly;
-#' }.
-#' @details For all plots, please refer \code{\link[ggplot]} (for \code{interactive == FALSE})
-#'          or \code{\link[plotly]{plotly}} (for \code{interactive == TRUE}) to adjust the theme and the style.
+#'   \item if \code{interactive = TRUE}, an object of class \code{\link[plotly]{plotly}}
+#'         is returned, and many be further manipulated by the user or plotted directly.
+#' }
 #' @importFrom stats as.dendrogram median
 #' @importFrom ggplot2 ggplot aes geom_path geom_point geom_text guides theme
 #' @importFrom ggplot2 element_text xlab ylab scale_color_manual
@@ -77,7 +77,7 @@
 #' @examples
 #' \dontrun{
 #' carp_fit <- CARP(presidential_speech)
-#' plot(carp_fit, type='interactive')
+#' plot(carp_fit, type='heatmap', interactive=TRUE)
 #' }
 plot.CARP <- function(x,
                       ...,

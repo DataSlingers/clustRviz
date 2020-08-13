@@ -12,7 +12,7 @@
 #'       (feature / variable) clusterings, respectively);
 #' \item A cluster heatmap, displaying row and column histograms, as well
 #'       as the clustered data matrix in a single graphic (\code{type = "heatmap"});
-#' \item An interactive Javascript cluster heatmap (\code{type = "heatmap"}); and
+#' \item An interactive Javascript cluster (\code{interactive = TRUE})
 #' }
 #'
 #' @param x An object of class \code{CBASS} as returned by \code{\link{CBASS}}
@@ -38,6 +38,8 @@
 #' @param k.col An integer indicating the desired number of column clusters to be displayed
 #'              in the static plots. (If plotting rows, the regularization level
 #'              giving \code{k.col} column clusters is used.)
+#' @param percent.seq A grid of values of percent along which to generate dynamic
+#'                    visualizations (if dynamic == TRUE)
 #' @param ... Additional arguments, which are handled differently for different
 #'            values of \code{type}.\itemize{
 #'            \item When \code{type} is \code{"heatmap"}, \code{"row.path"} or
@@ -45,7 +47,7 @@
 #'                  unknown arguments triggers an error;
 #'            \item when \code{type == "row.dendrogram"} or \code{type == "col.dendrogram"},
 #'                  \code{...} is forwarded to \code{\link[stats]{dendrogram}};
-#'            \item when \code{type == "heatmap"}, \code{...} is forwarded to
+#'            \item when \code{type == "heatmap"} and \code{interactive == TRUE}, \code{...} is forwarded to
 #'                  \code{\link[heatmaply]{heatmaply}}.
 #'            } See the documentation of \code{\link[ggplot2]{ggplot}} (for \code{interactive == FALSE})
 #'            or \code{\link[plotly]{plotly}} (for \code{interactive == TRUE}) for details about additional
@@ -60,15 +62,15 @@
 #'              Due to the global shrinkage imposed, these clusters are
 #'              more "shrunk together" than the naive clusters. Only for the
 #'              heatmap plots. (ignored for other plot types).
-#' @return The value of the return type depends on the \code{type} argument:\itemize{
-#'  \item if \code{type \%in\% c("row.dendrogram", "col.dendrogram", "heatmap")},
-#'         \code{x} is returned invisibly;
-#'  \item if \code{type \%in\% c("row.path", "col.path")}, an object of class
+#' @return The value of the return type depends on the \code{interactive} and \code{dynamic}:\itemize{
+#'  \item if \code{interactive = FALSE} and \code{dynamic = FALSE}, an object of class
 #'        \code{\link[ggplot2]{ggplot}} which can be plotted directly (by invoking
 #'        its print method) or modified further by the user is returned;
-#' }.
-#' @details For all plots, please refer \code{\link[ggplot]} (for \code{interactive == FALSE})
-#'          or \code{\link[plotly]{plotly}} (for \code{interactive == TRUE}) to adjust the theme and the style.
+#'   \item if \code{interactive = FALSE} and \code{dynamic = TRUE}, an object of class \code{\link[gganimate:gganimate-package]{gganim}}
+#'         is returned, and many be further manipulated by the user or plotted directly;
+#'   \item if \code{interactive = TRUE}, an object of class \code{\link[plotly]{plotly}}
+#'         is returned, and many be further manipulated by the user or plotted directly.
+#' }
 #' @importFrom stats as.dendrogram as.hclust quantile
 #' @importFrom grDevices colorRampPalette adjustcolor
 #' @export
@@ -78,7 +80,7 @@
 #' plot(cbass_fit)
 #' plot(cbass_fit, type = "heatmap")
 #' \dontrun{
-#' plot(cbass_fit, type='interactive')
+#' plot(cbass_fit, type='heatmap', interactive=TRUE)
 #' }
 plot.CBASS <- function(x,
                        ...,
