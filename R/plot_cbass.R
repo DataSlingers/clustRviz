@@ -64,13 +64,13 @@
 #'              heatmap plots. (ignored for other plot types).
 #' @return The value of the return type depends on the \code{interactive} and \code{dynamic}:\itemize{
 #'  \item if \code{interactive = FALSE} and \code{dynamic = FALSE}, an object of class
-#'        \code{\link[ggplot2]{ggplot}} which can be plotted directly (by invoking
-#'        its print method) or modified further by the user is returned;
+#'        \code{\link[ggplot2]{ggplot}} is returned;
 #'   \item if \code{interactive = FALSE} and \code{dynamic = TRUE}, an object of class \code{\link[gganimate:gganimate-package]{gganim}}
-#'         is returned, and many be further manipulated by the user or plotted directly;
+#'         is returned;
 #'   \item if \code{interactive = TRUE}, an object of class \code{\link[plotly]{plotly}}
-#'         is returned, and many be further manipulated by the user or plotted directly.
-#' }
+#'         is returned.
+#' } All the plots can be plotted directly (by invoking its print method) or further
+#'   manipulated by the user.
 #' @importFrom stats as.dendrogram as.hclust quantile
 #' @importFrom grDevices colorRampPalette adjustcolor
 #' @export
@@ -78,7 +78,10 @@
 #' @examples
 #' cbass_fit <- CBASS(presidential_speech)
 #' plot(cbass_fit)
+#' plot(cbass_fit, type = "col.path")
+#' plot(cbass_fit, type = "col.dendrogram")
 #' plot(cbass_fit, type = "heatmap")
+#' plot(cbass_fit, type = "heatmap", dynamic = TRUE)
 #' \dontrun{
 #' plot(cbass_fit, type='heatmap', interactive=TRUE)
 #' }
@@ -236,14 +239,16 @@ plot.CBASS <- function(x,
                           ...,
                           percent = percent,
                           k.row = k.row,
-                          k.col = k.col)
+                          k.col = k.col,
+                          refit = refit)
         }
       } else {
         if (interactive){
           cbass_heatmaply_dynamic(x,
                                   ...,
                                   percent.seq = percent.seq,
-                                  slider_y = slider_y)
+                                  slider_y = slider_y,
+                                  refit = refit)
         } else {
           cbass_dynamic_heatmap_plot(x,
                                      percent.seq = percent.seq,
@@ -425,7 +430,7 @@ cbass_dynamic_path_plot <- function(x, ..., axis, percent.seq, type = c("row", "
 
 #' @noRd
 #' @importFrom dplyr filter select summarize pull
-#' @importFrom stats as.dendrogram
+#' @importFrom stats as.dendrogram cutree
 #' @importFrom dendextend set color_branches as.ggdend
 #' @importFrom ggplot2 ggplot geom_segment scale_x_continuous scale_y_continuous theme
 cbass_dendro_plot <- function(x,percent,
@@ -449,56 +454,42 @@ cbass_dendro_plot <- function(x,percent,
 
   d <- as.dendrogram(x, type = type)
 
+  adjust <- get_feature_paths(x, features = character(), type = type) %>% filter(.data$NCluster > 1) %>%
+    select(.data$GammaPercent) %>%
+    summarize(GammaPercent = max(.data$GammaPercent)) %>%
+    pull
+
   if(show_clusters){
     labels <- get_cluster_labels(x, k.row = k.row, k.col = k.col, percent = percent, type = type)
     k <- nlevels(labels)
     if(!has_percent){
       percent <- get_feature_paths(x, features = character(), type = type) %>% filter(.data$NCluster == k) %>%
         select(.data$GammaPercent) %>%
-        summarize(NCluster = mean(.data$GammaPercent)) %>%
+        summarize(percent = mean(.data$GammaPercent)) %>%
         pull
     }
 
-    c <- color_branches(d, k = k)
-    dend <- as.ggdend(c)
-    segs <- dend$segments
+    segs <- adjusted_dendrogram(d, rev = FALSE, k = k, cluster = TRUE, adjust = adjust)
 
-    adjust <- get_feature_paths(x, features = character(), type = type) %>% filter(.data$NCluster == 1) %>%
-      select(.data$GammaPercent) %>%
-      summarize(GammaPercent = min(.data$GammaPercent)) %>%
-      pull
-    segs$y <- segs$y*adjust
-    segs$yend <- segs$yend*adjust
-
-    tree <- as.hclust(x, type = type)
-    cluster <- stats::cutree(tree, k = k)
-    clustab <- table(cluster)[unique(cluster[tree$order])]
-    clustsum <- cumsum(clustab)
-    m <- c(0, clustsum) + 0.5
-    line_x <- c(m[1],m[1],m)
-    line_y <- c(0,percent,rep(percent,k+1))
-    line_xend <- c(m[k+1],m[k+1],m)
-    line_yend <- c(0,percent,rep(0,k+1))
-    lines <- data.frame(x=line_x,y=line_y,xend=line_xend,yend=line_yend)
+    lines <- dendrogram_box(x, rev = FALSE, k = k, type = type, percent = percent)
 
     p <- ggplot() +
       geom_segment(data = segs, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = .data$col), show.legend = FALSE) +
       geom_segment(data = lines, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = NA), show.legend = FALSE) +
       labs(title = paste0('Fraction of Regularization: ', round(percent * 100), '%\nNumber of Clusters: ', k))
   } else {
-    dend <- as.ggdend(d)
-    segs <- dend$segments
-    segs$col <- "black"
+    segs <- adjusted_dendrogram(d, rev = FALSE, k = k, cluster = FALSE, adjust = adjust)
 
     p <- ggplot() +
       geom_segment(data = segs, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend), show.legend = FALSE)
   }
 
+  dend <- as.ggdend(d)
   label <- dend$label$label
 
   p +
     labs(y='Fraction of Regularization') +
-    scale_x_continuous(breaks=1:length(label),labels= levels(label)) +
+    scale_x_continuous(breaks=seq_along(label),labels= levels(label)) +
     scale_y_continuous(limits = c(0,1), breaks=c(0,0.25,0.5,0.75,1),labels = c("0%", "25%", "50%", "75%", "100%"))+
     theme(axis.text.x=element_text(hjust=1,vjust=0.5,angle=90),
           axis.title.x=element_blank(),
@@ -510,7 +501,7 @@ cbass_dendro_plot <- function(x,percent,
 #' @noRd
 #' @importFrom rlang .data
 #' @importFrom dplyr filter select summarize pull
-#' @importFrom stats as.dendrogram
+#' @importFrom stats as.dendrogram cutree
 #' @importFrom dendextend set color_branches as.ggdend
 #' @importFrom ggplot2 ggplot geom_segment scale_x_continuous scale_y_continuous theme labs
 #' @importFrom gganimate transition_time
@@ -518,9 +509,11 @@ cbass_dynamic_dendro_plot <- function(x,
                                      percent.seq,
                                      type = c("row", "col"),
                                      ...){
-  adjust <- get_feature_paths(x, features = character(), type = type) %>% filter(.data$NCluster == 1) %>%
+  d <- as.dendrogram(x, type = type)
+
+  adjust <- get_feature_paths(x, features = character(), type = type) %>% filter(.data$NCluster > 1) %>%
     select(.data$GammaPercent) %>%
-    summarize(GammaPercent = min(.data$GammaPercent)) %>%
+    summarize(GammaPercent = max(.data$GammaPercent)) %>%
     pull
 
   segs_dynamic <- data.frame()
@@ -530,36 +523,22 @@ cbass_dynamic_dendro_plot <- function(x,
     k <- nlevels(labels)
 
     # segments
-    d <- as.dendrogram(x, type = type)
-    c <- color_branches(d, k = k)
-    dend <- as.ggdend(c)
-    segs <- dend$segments
-    label <- dend$label$label
-
-    segs$y <- segs$y*adjust
-    segs$yend <- segs$yend*adjust
-
+    segs <- adjusted_dendrogram(d, rev = FALSE, k = k, cluster = TRUE, adjust = adjust)
     segs_dynamic <- rbind(segs_dynamic,cbind(segs, reg = per*100))
 
     # lines
-    tree <- as.hclust(x, type = type)
-    cluster <- stats::cutree(tree, k = k)
-    clustab <- table(cluster)[unique(cluster[tree$order])]
-    clustsum <- cumsum(clustab)
-    m <- c(0, clustsum) + 0.5
-    line_x <- c(m[1],m[1],m)
-    line_y <- c(0,per,rep(per,k+1))
-    line_xend <- c(m[k+1],m[k+1],m)
-    line_yend <- c(0,per,rep(0,k+1))
-    lines <- data.frame(reg=per*100,x=line_x,y=line_y,xend=line_xend,yend=line_yend)
-    lines_dynamic <- rbind(lines_dynamic,lines)
+    lines <- dendrogram_box(x, rev = FALSE, k = k, type = type, percent = per)
+    lines_dynamic <- rbind(lines_dynamic,cbind(lines, reg = per*100))
   }
+
+  dend <- as.ggdend(d)
+  label <- dend$label$label
 
   ggplot() +
     geom_segment(data = segs_dynamic, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = .data$col), show.legend = FALSE) +
     geom_segment(data = lines_dynamic, aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend, color = NA), show.legend = FALSE) +
     labs(y='Fraction of Regularization') +
-    scale_x_continuous(breaks=1:length(label),labels= levels(label)) +
+    scale_x_continuous(breaks=seq_along(label),labels= levels(label)) +
     scale_y_continuous(limits = c(0,1), breaks=c(0,0.25,0.5,0.75,1),labels = c("0%", "25%", "50%", "75%", "100%")) +
     theme(axis.text.x=element_text(hjust=1,vjust=0.5,angle=90),
           axis.title.x=element_blank(),
@@ -573,7 +552,7 @@ cbass_dynamic_dendro_plot <- function(x,
 #' @noRd
 #' @importFrom rlang .data
 #' @importFrom dplyr filter select summarize pull
-#' @importFrom stats as.dendrogram
+#' @importFrom stats as.dendrogram cutree
 #' @importFrom dendextend set color_branches as.ggdend
 #' @importFrom ggplot2 ggplot geom_segment scale_x_continuous scale_y_continuous theme geom_tile scale_fill_gradient2 labs
 cbass_heatmap_plot <- function(x,
@@ -603,25 +582,34 @@ cbass_heatmap_plot <- function(x,
   d_row <- as.dendrogram(x, type = "row")
   d_col <- as.dendrogram(x, type = "col")
 
-  adjust_row <- get_feature_paths(x, features = character(), "row") %>% filter(.data$NCluster == 1) %>%
+  adjust_row <- get_feature_paths(x, features = character(), "row") %>% filter(.data$NCluster > 1) %>%
     select(.data$GammaPercent) %>%
-    summarize(GammaPercent = min(.data$GammaPercent)) %>%
+    summarize(GammaPercent = max(.data$GammaPercent)) %>%
     pull
 
-  adjust_col <- get_feature_paths(x, features = character(), "col") %>% filter(.data$NCluster == 1) %>%
+  adjust_col <- get_feature_paths(x, features = character(), "col") %>% filter(.data$NCluster > 1) %>%
     select(.data$GammaPercent) %>%
-    summarize(GammaPercent = min(.data$GammaPercent)) %>%
+    summarize(GammaPercent = max(.data$GammaPercent)) %>%
     pull
 
   if(show_clusters){
     k.row <- nlevels(get_cluster_labels(x, k.row = k.row, k.col = k.col, percent = percent, type = "row"))
     if(!has_percent){
-      percent <- get_feature_paths(x, features = character(), type = "row") %>% filter(.data$NCluster == k.row) %>%
-        select(.data$GammaPercent) %>%
-        summarize(NCluster = mean(.data$GammaPercent)) %>%
-        pull
+      if(!has_k.col){
+        percent <- get_feature_paths(x, features = character(), type = "row") %>% filter(.data$NCluster == k.row) %>%
+          select(.data$GammaPercent) %>%
+          summarize(percent = mean(.data$GammaPercent)) %>%
+          pull
+      } else {
+        percent <- get_feature_paths(x, features = character(), type = "col") %>% filter(.data$NCluster == k.col) %>%
+          select(.data$GammaPercent) %>%
+          summarize(percent = mean(.data$GammaPercent)) %>%
+          pull
+      }
     }
-    k.col <- nlevels(get_cluster_labels(x, percent = percent, type = "col"))
+    if(!has_k.col){
+      k.col <- nlevels(get_cluster_labels(x, percent = percent, type = "col"))
+      }
 
     # heatmap
     U <- get_clustered_data(x, percent = percent, refit = refit)
@@ -674,56 +662,14 @@ cbass_heatmap_plot <- function(x,
   p +
     geom_tile(data =  dat, aes(x = .data$x, y = .data$y,fill = .data$value)) +
     scale_fill_gradient2(low = "#313695", mid = "#FFFFBF", high = "#A50026", midpoint = (floor(r[1])+ceiling(r[2]))/2, limits = c(floor(r[1]),ceiling(r[2]))) +
-    scale_x_continuous(breaks=1:length(cn),labels= cn) +
-    scale_y_continuous(breaks=1:length(rn),labels= rn) +
+    scale_x_continuous(breaks=seq_along(cn),labels= cn) +
+    scale_y_continuous(breaks=seq_along(rn),labels= rn) +
     theme(axis.text.x=element_text(hjust=1,vjust=0.5,angle=90),
           axis.title.x=element_blank(),
           axis.title.y=element_blank(),
           panel.background = element_blank(),
           panel.grid=element_blank(),
           panel.border=element_blank())
-}
-
-### utils for the heatmap
-
-adjusted_dendrogram <- function(d, rev = FALSE, k, cluster = FALSE, adjust){
-  if (cluster == TRUE){
-    c <- color_branches(d, k = k)
-  } else {
-    c <- d
-  }
-  if (rev == TRUE) {
-    c <- rev(c)
-  }
-  dend <- as.ggdend(c)
-  segs <- dend$segments
-
-  if (cluster == FALSE){
-    segs$col <- "black"
-  }
-
-  segs$y <- segs$y*adjust
-  segs$yend <- segs$yend*adjust
-
-  return(segs)
-}
-
-dendrogram_box <- function(x, rev = FALSE, k, type, percent){
-  tree <- as.hclust(x, type = type)
-  if (rev == TRUE) {
-    tree <- rev(tree)
-  }
-  cluster <- stats::cutree(tree, k = k)
-  clustab <- table(cluster)[unique(cluster[tree$order])]
-  clustsum <- cumsum(clustab)
-  m <- c(0, clustsum) + 0.5
-  line_x <- c(m[1],m[1],m)
-  line_y <- c(0,percent,rep(percent,k+1))
-  line_xend <- c(m[k+1],m[k+1],m)
-  line_yend <- c(0,percent,rep(0,k+1))
-  lines <- data.frame(x=line_x,y=line_y,xend=line_xend,yend=line_yend)
-
-  return(lines)
 }
 
 #' @noRd
@@ -737,14 +683,14 @@ cbass_dynamic_heatmap_plot <- function(x,
                                       percent.seq,
                                       refit = FALSE,
                                       ...){
-  adjust_row <- get_feature_paths(x, features = character(), "row") %>% filter(.data$NCluster == 1) %>%
+  adjust_row <- get_feature_paths(x, features = character(), "row") %>% filter(.data$NCluster > 1) %>%
     select(.data$GammaPercent) %>%
-    summarize(GammaPercent = min(.data$GammaPercent)) %>%
+    summarize(GammaPercent = max(.data$GammaPercent)) %>%
     pull
 
-  adjust_col <- get_feature_paths(x, features = character(), "col") %>% filter(.data$NCluster == 1) %>%
+  adjust_col <- get_feature_paths(x, features = character(), "col") %>% filter(.data$NCluster > 1) %>%
     select(.data$GammaPercent) %>%
-    summarize(GammaPercent = min(.data$GammaPercent)) %>%
+    summarize(GammaPercent = max(.data$GammaPercent)) %>%
     pull
 
   data_mat_dynamic <- data.frame()
@@ -791,8 +737,8 @@ cbass_dynamic_heatmap_plot <- function(x,
   ggplot(data =  data_mat_dynamic, aes(x = .data$x, y = .data$y)) +
     geom_tile(aes(fill = .data$value)) +
     scale_fill_gradient2(low = "#313695", mid = "#FFFFBF", high = "#A50026", midpoint = (floor(r[1])+ceiling(r[2]))/2, limits = c(floor(r[1]),ceiling(r[2]))) +
-    scale_x_continuous(breaks=1:length(cn),labels= cn) +
-    scale_y_continuous(breaks=1:length(rn),labels= rn) +
+    scale_x_continuous(breaks=seq_along(cn),labels= cn) +
+    scale_y_continuous(breaks=seq_along(rn),labels= rn) +
     geom_segment(data = segs_row_dynamic, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = .data$col), show.legend = FALSE) +
     geom_segment(data = segs_col_dynamic, aes(y = (.data$y/3+1)*length(rn)+0.5, yend = (.data$yend/3+1)*length(rn)+0.5, x = .data$x, xend = .data$xend, color = .data$col), show.legend = FALSE) +
     geom_segment(data = lines_row_dynamic, aes(x = (.data$y/3+1)*length(cn)+0.5, xend = (.data$yend/3+1)*length(cn)+0.5, y = .data$x, yend = .data$xend, color = NA), show.legend = FALSE) +
@@ -814,7 +760,8 @@ cbass_heatmaply <- function(x,
                             ...,
                             percent,
                             k.row,
-                            k.col){
+                            k.col,
+                            refit = FALSE){
 
   has_percent <- !missing(percent)
   has_k.row   <- !missing(k.row)
@@ -828,14 +775,14 @@ cbass_heatmaply <- function(x,
   }
 
   if(n_args == 0){
-    U     <- get_clustered_data(x, percent = 0, refit = TRUE)
+    U     <- get_clustered_data(x, percent = 0, refit = refit)
 
     heatmaply(U,
               Rowv = as.hclust(x, type = "row"),
               Colv = as.hclust(x, type = "col"),
               ...)
   } else {
-    U <- get_clustered_data(x, percent = percent, k.row = k.row, k.col = k.col, refit = TRUE)
+    U <- get_clustered_data(x, percent = percent, k.row = k.row, k.col = k.col, refit = refit)
     # Note that we can't assign k.row / k.col here since we might confuse it with user-supplied arguments
     n.row <- nlevels(get_cluster_labels(x, percent = percent, k.row = k.row, k.col = k.col, type = "row"))
     n.col <- nlevels(get_cluster_labels(x, percent = percent, k.row = k.row, k.col = k.col, type = "col"))
@@ -1128,6 +1075,11 @@ cbass_dendro_plotly <- function(x,
               sQuote("k.col"), " may be supplied.")
   }
 
+  adjust <- get_feature_paths(x, features = character(), type) %>% filter(.data$NCluster > 1) %>%
+    select(.data$GammaPercent) %>%
+    summarize(GammaPercent = max(.data$GammaPercent)) %>%
+    pull
+
   d <- as.dendrogram(x, type=type)
   # get x/y locations of every node in the tree
   m <- get_nodes_xy(d)
@@ -1163,7 +1115,7 @@ cbass_dendro_plotly <- function(x,
     allXY$label[[which(allXY$y == heights[i])]] <- labs[[i]]
   }
 
-  tidy_segments <- as.ggdend(d)$segments
+  tidy_segments <- adjusted_dendrogram (d, rev = FALSE, cluster = FALSE, adjust = adjust)
 
   allTXT <- allXY[allXY$y == 0, ]
 
@@ -1187,6 +1139,8 @@ cbass_dendro_plotly <- function(x,
   # library(RColorBrewer)
   colors<-c(brewer.pal(8,"Set1"))
 
+  allXY$y <- allXY$y*adjust
+
   if (!dynamic){
     if(show_clusters){
       labels <- get_cluster_labels(x, k.row = k.row, k.col = k.col, percent = percent, type = type)
@@ -1194,19 +1148,14 @@ cbass_dendro_plotly <- function(x,
       if(!has_percent){
         percent <- get_feature_paths(x, features = character(), type = type) %>% filter(.data$NCluster == k) %>%
           select(.data$GammaPercent) %>%
-          summarize(NCluster = mean(.data$GammaPercent)) %>%
+          summarize(percent = mean(.data$GammaPercent)) %>%
           pull
       }
 
-      cluster <- labels
-      clustab <- table(cluster)[unique(cluster[labels(d)])]
-      clustsum <- cumsum(clustab)
-      m <- c(0, clustsum) + 0.5
-      seg_x <- c(m,m[1],m[1])
-      seg_y <- c(rep(percent,k+1),0,percent)
-      seg_xend <- c(m,m[k+1],m[k+1])
-      seg_yend <- c(rep(0,k+1),0,percent)
-      seg <- data.frame(percent=percent,x=seg_x,y=seg_y,xend=seg_xend,yend=seg_yend)
+      segnm <- dendrogram_box(x, rev = FALSE, k = k, type = type, percent = percent, show_memnum = TRUE)
+      seg <- segnm[[1]]
+      m <- segnm[[2]]
+      seg <- cbind(seg, perent=percent)
 
       dendro_static <- plot_ly(
         hoverinfo = "none") %>%
@@ -1217,7 +1166,7 @@ cbass_dendro_plotly <- function(x,
           color = I("black"),
           showlegend = FALSE)
 
-      for (i in seq_along(clustsum)){
+      for (i in (1:k)){
         dendro_static <- dendro_static %>%
           add_markers(
             data = allXY[allXY$y > 0 & allXY$y <= percent & allXY$x < m[i+1] & allXY$x > m[i], ],
@@ -1282,23 +1231,17 @@ cbass_dendro_plotly <- function(x,
     for (per in percent.seq){
       labels <- get_cluster_labels(x, percent = per, type = type)
       k <- nlevels(labels)
-      cluster <- labels
-      clustab <- table(cluster)[unique(cluster[labels(d)])]#[unique(cluster[tree$order])]
-      clustsum <- cumsum(clustab)
-      m <- c(0, clustsum) + 0.5
-      seg_x <- c(m[1],m[1],m)
-      seg_y <- c(0,per,rep(per,k+1))
-      seg_xend <- c(m[k+1],m[k+1],m)
-      seg_yend <- c(0,per,rep(0,k+1))
-      seg <- data.frame(Regularization=per,x=seg_x,y=seg_y,xend=seg_xend,yend=seg_yend)
-      dynamic_seg <- rbind(dynamic_seg,seg)
+      segnm <- dendrogram_box(x, rev = FALSE, k = k, type = type, percent = per, show_memnum = TRUE)
+      seg <- segnm[[1]]
+      m <- segnm[[2]]
+      dynamic_seg <- rbind(dynamic_seg,cbind(seg, Regularization=per))
 
       allXY_per <- allXY[allXY$y > 0,]
       allXY_per$label <- seq_along(allXY_per$label)
 
       allTXT_per <- allTXT
 
-      for (i in seq_along(clustsum)){
+      for (i in (1:k)){
         allXY_per[allXY_per$y <= per & allXY_per$x < m[i+1] & allXY_per$x > m[i], "color"] <- colors[(i-1)%%8+1]
         allTXT_per[allTXT_per$x < m[i+1] & allTXT_per$x > m[i], "color"] <- colors[(i-1)%%8+1]
       }
@@ -1360,12 +1303,13 @@ cbass_dendro_plotly <- function(x,
 cbass_heatmaply_dynamic <- function(x,
                                    ...,
                                    percent.seq = percent.seq,
-                                   slider_y = slider_y){
+                                   slider_y = slider_y,
+                                   refit = FALSE){
   data_mat_dynamic <- data.frame()
   seg_dynamic_row <- data.frame()
   seg_dynamic_col <- data.frame()
   for (per in percent.seq){
-    U <- get_clustered_data(x, percent = per, refit = TRUE)
+    U <- get_clustered_data(x, percent = per, refit = refit)
     k.row <- nlevels(get_cluster_labels(x, percent = per, type = "row"))
     k.col <- nlevels(get_cluster_labels(x, percent = per, type = "col"))
     h <- heatmapr(

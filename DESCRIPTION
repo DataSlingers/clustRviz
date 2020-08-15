@@ -6,10 +6,9 @@ Authors@R: c(
   person("Michael", "Weylandt", role = c("aut", "cre"), email = "michael.weylandt@rice.edu"),
   person("John", "Nagorski", role = "aut", email = "jn13@rice.edu"),
   person("Genevera", "Allen", role = c("ths", "aut"), email = "gallen@rice.edu"),
-  person("Warnes", "Gregory", role = "cph", comment = "R/util_myheatmap2.R"),
   person("Lewis", "Brian W.", role = "cph", comment = "R/util_hcs.R"),
   person("Daniel", "Englund", role = "aut", email = "dse1@rice.edu"),
-  person("R Core Team", role = "cph", comment = "R/util_myrecthclust.R"))
+  person("Yue", "Zhuo", role = "aut", email = "yz154@rice.edu"))
 Description: Fast computation and interactive for the convex clustering and 
              bi-clustering problems. The CARP and CBASS algorithms use an 
              algorithmic regularization scheme to obtain high-quality global 
