@@ -82,18 +82,8 @@ A more interesting visualization is the dynamic path visualization, whereby we c
 watch the clusters fuse as the regularization level is increased:
 
 ```{r carp_dynamic, eval = FALSE}
-plot(carp_fit, type = "dynamic_path")
+plot(carp_fit, type = "path", dynamic = TRUE)
 ```
-
-```{r carp_dynamic_impl, echo = FALSE, results = "hide", message=FALSE}
-if (!dir.exists("inst")) {
-  dir.create("inst")
-}
-
-saveviz(carp_fit, file.name = "man/figures/path_dyn.gif", type = "path", dynamic = TRUE)
-```
-
-<img src="./man/figures/path_dyn.gif" width = "70%">
 
 `clustRviz` also provides interactive dendrograms using the
 [`heatmaply`](https://cran.r-project.org/package=heatmaply) package: 

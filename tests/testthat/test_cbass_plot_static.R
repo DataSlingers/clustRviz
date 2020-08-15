@@ -80,7 +80,7 @@ test_that("CBASS dendrogram plot works for rows", {
 
   ## Main settings work
   expect_no_error(plot(cbass_fit, type = "row.dendrogram", k.row = 3))
-  expect_equal(plot(cbass_fit, type = "row.dendrogram", k.row = 3), invisible(cbass_fit))
+  expect_s3_class(plot(cbass_fit, type = "row.dendrogram", k.row = 3), 'ggplot')
 
   ## Must give at most one of `percent`, `k.row`, `k.col`
   expect_error(plot(cbass_fit, type = "row.dendrogram", percent = 0.5, k.row = 3))
@@ -102,20 +102,14 @@ test_that("CBASS dendrogram plot works for rows", {
   expect_error(plot(cbass_fit, type = "row.dendrogram", k.col = 0))
   expect_error(plot(cbass_fit, type = "row.dendrogram", k.col = -1))
   expect_error(plot(cbass_fit, type = "row.dendrogram", k.col = NCOL(presidential_speech) + 1))
-
-  ## Error checking on two specially handled arguments
-  expect_error(plot(cbass_fit, type = "row.dendrogram", k.row = 3, dend.branch.width = 0))
-  expect_error(plot(cbass_fit, type = "row.dendrogram", k.row = 3, dend.branch.width = -2))
-  expect_error(plot(cbass_fit, type = "row.dendrogram", k.row = 3, dend.labels.cex   = 0))
-  expect_error(plot(cbass_fit, type = "row.dendrogram", k.row = 3, dend.labels.cex   = -2))
 })
 
 test_that("CBASS dendrogram plot works for columns", {
   cbass_fit <- CBASS(presidential_speech)
 
   ## Main settings work
-  expect_no_error(plot(cbass_fit, type = "col.dendrogram", k.row = 3))
-  expect_equal(plot(cbass_fit, type = "col.dendrogram", k.row = 3), invisible(cbass_fit))
+  expect_no_error(plot(cbass_fit, type = "col.dendrogram", k.col = 3))
+  expect_s3_class(plot(cbass_fit, type = "col.dendrogram", k.col = 3), 'ggplot')
 
   ## Must give at most one of `percent`, `k.row`, `k.col`
   expect_error(plot(cbass_fit, type = "col.dendrogram", percent = 0.5, k.row = 3))
@@ -137,12 +131,6 @@ test_that("CBASS dendrogram plot works for columns", {
   expect_error(plot(cbass_fit, type = "col.dendrogram", k.col = 0))
   expect_error(plot(cbass_fit, type = "col.dendrogram", k.col = -1))
   expect_error(plot(cbass_fit, type = "col.dendrogram", k.col = NCOL(presidential_speech) + 1))
-
-  ## Error checking on two specially handled arguments
-  expect_error(plot(cbass_fit, type = "col.dendrogram", k.row = 3, dend.branch.width = 0))
-  expect_error(plot(cbass_fit, type = "col.dendrogram", k.row = 3, dend.branch.width = -2))
-  expect_error(plot(cbass_fit, type = "col.dendrogram", k.row = 3, dend.labels.cex   = 0))
-  expect_error(plot(cbass_fit, type = "col.dendrogram", k.row = 3, dend.labels.cex   = -2))
 })
 
 test_that("CBASS heatmap plot works", {
@@ -150,10 +138,10 @@ test_that("CBASS heatmap plot works", {
 
   ## Main settings work
   expect_no_error(plot(cbass_fit, type = "heatmap"))
-  expect_equal(plot(cbass_fit, type = "heatmap"), invisible(cbass_fit))
-  expect_equal(plot(cbass_fit, type = "heatmap", percent = 0.5), invisible(cbass_fit))
-  expect_equal(plot(cbass_fit, type = "heatmap", k.row = 5), invisible(cbass_fit))
-  expect_equal(plot(cbass_fit, type = "heatmap", k.col = 5), invisible(cbass_fit))
+  expect_s3_class(plot(cbass_fit, type = "heatmap"), 'ggplot')
+  expect_s3_class(plot(cbass_fit, type = "heatmap", percent = 0.5), 'ggplot')
+  expect_s3_class(plot(cbass_fit, type = "heatmap", k.row = 5), 'ggplot')
+  expect_s3_class(plot(cbass_fit, type = "heatmap", k.col = 5), 'ggplot')
 
   ## Must give at most one of `percent`, `k.row`, `k.col`
   expect_error(plot(cbass_fit, type = "heatmap", percent = 0.5, k.row = 3))
@@ -176,12 +164,6 @@ test_that("CBASS heatmap plot works", {
   expect_error(plot(cbass_fit, type = "heatmap", k.col = 0))
   expect_error(plot(cbass_fit, type = "heatmap", k.col = -1))
   expect_error(plot(cbass_fit, type = "heatmap", k.col = NCOL(presidential_speech) + 1))
-
-  ## Error checking on two specially handled arguments
-  expect_error(plot(cbass_fit, type = "heatmap", heatcol.label.cex = 0))
-  expect_error(plot(cbass_fit, type = "heatmap", heatcol.label.cex = -2))
-  expect_error(plot(cbass_fit, type = "heatmap", heatrow.label.cex = 0))
-  expect_error(plot(cbass_fit, type = "heatmap", heatrow.label.cex = -2))
 })
 
 test_that("CBASS heatmaply (javascript) plot works", {

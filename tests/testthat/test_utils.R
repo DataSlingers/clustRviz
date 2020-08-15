@@ -108,56 +108,6 @@ test_that("Unscaling matrix works", {
   expect_equal(clustRviz:::unscale_matrix(X_std), X, check.attributes = FALSE)
 })
 
-test_that("Converting plot dimensions works", {
-  set.seed(254)
-  convert_units <- clustRviz:::convert_units
-  x <- rexp(25, 3)
-
-  for (from_unit in c("in", "cm", "mm", "px")) {
-    for (to_unit in c("in", "cm", "mm", "px")) {
-      round_trip <- convert_units(convert_units(x, from = from_unit, to = to_unit),
-                                  from = to_unit,
-                                  to = from_unit)
-      expect_equal(x, round_trip)
-    }
-  }
-
-  expect_equal(10,     convert_units(1, from = "cm", to = "mm"))
-  expect_equal(0.1,    convert_units(1, from = "mm", to = "cm"))
-  expect_equal(2.54,   convert_units(1, from = "in", to = "cm"))
-  expect_equal(1/2.54, convert_units(1, from = "cm", to = "in"))
-})
-
-test_that("ensure_gif works", {
-  ensure_gif <- clustRviz:::ensure_gif
-
-  expect_equal("plot.gif", ensure_gif("plot.gif"))
-  expect_equal("~/plot.gif", ensure_gif("~/plot.gif"))
-  expect_equal("/my/long/path/plot.gif", ensure_gif("/my/long/path/plot.gif"))
-
-  expect_warning(ensure_gif("plot.jpg"))
-  expect_no_warning(ensure_gif("plot.gif"))
-
-  expect_equal("plot.gif", suppressWarnings(ensure_gif("plot.jpg")))
-  expect_equal("~/plot.gif", suppressWarnings(ensure_gif("~/plot.jpg")))
-  expect_equal("/my/long/path/plot.gif", suppressWarnings(ensure_gif("/my/long/path/plot.jpg")))
-})
-
-test_that("ensure_html works", {
-  ensure_html <- clustRviz:::ensure_html
-
-  expect_equal("plot.html", ensure_html("plot.html"))
-  expect_equal("~/plot.html", ensure_html("~/plot.html"))
-  expect_equal("/my/long/path/plot.html", ensure_html("/my/long/path/plot.html"))
-
-  expect_warning(ensure_html("plot.jpg"))
-  expect_no_warning(ensure_html("plot.html"))
-
-  expect_equal("plot.html", suppressWarnings(ensure_html("plot.jpg")))
-  expect_equal("~/plot.html", suppressWarnings(ensure_html("~/plot.jpg")))
-  expect_equal("/my/long/path/plot.html", suppressWarnings(ensure_html("/my/long/path/plot.jpg")))
-})
-
 test_that("connectedness check works", {
   is_connected_adj_mat <- clustRviz:::is_connected_adj_mat
 

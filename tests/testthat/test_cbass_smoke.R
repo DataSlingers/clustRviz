@@ -29,49 +29,81 @@ test_that("CBASS runs with X.center.global = FALSE & progress printing", {
 })
 
 test_that("CBASS interactive dendrogram plot works", {
-  cbass_fit <- CBASS(presidential_speech)
+  cbass_fit <- CBASS(presidential_speech[1:5,1:5])
 
   ## static row
-  expect_no_error(plot(cbass_fit, type = "row.dendrogram", interactive = T, dynamic = F))
-  expect_no_error(plot(cbass_fit, type = "row.dendrogram", interactive = T, dynamic = F, k.row = 3))
-  expect_no_error(plot(cbass_fit, type = "row.dendrogram", interactive = T, dynamic = F, percent = 0.25))
+  expect_no_error(print(plot(cbass_fit, type = "row.dendrogram", interactive = T, dynamic = F)))
+  expect_no_error(print(plot(cbass_fit, type = "row.dendrogram", interactive = T, dynamic = F, k.row = 3)))
+  expect_no_error(print(plot(cbass_fit, type = "row.dendrogram", interactive = T, dynamic = F, percent = 0.25)))
 
   ## static col
-  expect_no_error(plot(cbass_fit, type = "col.dendrogram", interactive = T, dynamic = F))
-  expect_no_error(plot(cbass_fit, type = "col.dendrogram", interactive = T, dynamic = F, k.col = 3))
-  expect_no_error(plot(cbass_fit, type = "col.dendrogram", interactive = T, dynamic = F, percent = 0.25))
+  expect_no_error(print(plot(cbass_fit, type = "col.dendrogram", interactive = T, dynamic = F)))
+  expect_no_error(print(plot(cbass_fit, type = "col.dendrogram", interactive = T, dynamic = F, k.col = 3)))
+  expect_no_error(print(plot(cbass_fit, type = "col.dendrogram", interactive = T, dynamic = F, percent = 0.25)))
 
   ## dynamic row
-  expect_no_error(plot(cbass_fit, type = "row.dendrogram", interactive = T, dynamic = T))
+  expect_no_error(print(plot(cbass_fit, type = "row.dendrogram", interactive = T, dynamic = T)))
 
   ## dynamic col
-  expect_no_error(plot(cbass_fit, type = "col.dendrogram", interactive = T, dynamic = T))
+  expect_no_error(print(plot(cbass_fit, type = "col.dendrogram", interactive = T, dynamic = T)))
 })
 
 test_that("CBASS interactive path plot works", {
-  cbass_fit <- CBASS(presidential_speech)
+  cbass_fit <- CBASS(presidential_speech[1:5,1:5])
 
   ## static row
-  expect_no_error(plot(cbass_fit, type = "row.path", interactive = T, dynamic = F))
-  expect_no_error(plot(cbass_fit, type = "row.path", interactive = T, dynamic = F, k.row = 3))
-  expect_no_error(plot(cbass_fit, type = "row.path", interactive = T, dynamic = F, percent = 0.25))
+  expect_no_error(print(plot(cbass_fit, type = "row.path", interactive = T, dynamic = F)))
+  expect_no_error(print(plot(cbass_fit, type = "row.path", interactive = T, dynamic = F, k.row = 3)))
+  expect_no_error(print(plot(cbass_fit, type = "row.path", interactive = T, dynamic = F, percent = 0.25)))
 
   ## static col
-  expect_no_error(plot(cbass_fit, type = "col.path", interactive = T, dynamic = F))
-  expect_no_error(plot(cbass_fit, type = "col.path", interactive = T, dynamic = F, k.col = 3))
-  expect_no_error(plot(cbass_fit, type = "col.path", interactive = T, dynamic = F, percent = 0.25))
+  expect_no_error(print(plot(cbass_fit, type = "col.path", interactive = T, dynamic = F)))
+  expect_no_error(print(plot(cbass_fit, type = "col.path", interactive = T, dynamic = F, k.col = 3)))
+  expect_no_error(print(plot(cbass_fit, type = "col.path", interactive = T, dynamic = F, percent = 0.25)))
 
   ## dynamic row
-  expect_no_error(plot(cbass_fit, type = "row.path", interactive = T, dynamic = T))
+  expect_no_error(print(plot(cbass_fit, type = "row.path", interactive = T, dynamic = T)))
 
   ## dynamic col
-  expect_no_error(plot(cbass_fit, type = "col.path", interactive = T, dynamic = T))
+  expect_no_error(print(plot(cbass_fit, type = "col.path", interactive = T, dynamic = T)))
 })
 
-test_that("CBASS interactive heatmap works", {
+test_that("CBASS interactive dynamic heatmap works", {
   cbass_fit <- CBASS(presidential_speech[1:5,1:5])
 
   ## dynamic
-  expect_no_error(plot(cbass_fit, type = "heatmap", interactive = T, dynamic = T))
+  expect_no_error(print(plot(cbass_fit, type = "heatmap", interactive = T, dynamic = T)))
 })
 
+test_that("CBASS non-interactive dynamic dendrogram plot works", {
+  cbass_fit <- CBASS(presidential_speech)
+
+  ## row
+  expect_no_error(print(plot(cbass_fit, type = "row.dendrogram", interactive = F, dynamic = T)))
+
+  ## col
+  expect_no_error(print(plot(cbass_fit, type = "col.dendrogram", interactive = F, dynamic = T)))
+})
+
+test_that("CBASS non-interactive dynamic path plot works", {
+  cbass_fit <- CBASS(presidential_speech)
+
+  ## row
+  expect_no_error(print(plot(cbass_fit, type = "row.path", interactive = F, dynamic = T)))
+
+  ## col
+  expect_no_error(print(plot(cbass_fit, type = "col.path", interactive = F, dynamic = T)))
+})
+
+test_that("CBASS non-interactive heatmap plot works", {
+  cbass_fit <- CBASS(presidential_speech)
+
+  ## static
+  expect_no_error(print(plot(cbass_fit, type = "heatmap", interactive = F, dynamic = F)))
+  expect_no_error(print(plot(cbass_fit, type = "heatmap", interactive = F, dynamic = F, k.row = 3)))
+  expect_no_error(print(plot(cbass_fit, type = "heatmap", interactive = F, dynamic = F, k.col = 3)))
+  expect_no_error(print(plot(cbass_fit, type = "heatmap", interactive = F, dynamic = F, percent = 0.25)))
+
+  ## dynamic
+  expect_no_error(print(plot(cbass_fit, type = "heatmap", interactive = F, dynamic = T)))
+})
