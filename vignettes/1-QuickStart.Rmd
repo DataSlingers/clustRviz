@@ -11,10 +11,13 @@ author:
      | Departments of Statistics, Computer Science, and Electical and Computer Engineering, Rice University
      | Jan and Dan Duncan Neurological Research Institute, Baylor College of Medicine
    email: gallen@rice.edu
-date: "Last Updated: July 25th, 2018"
-output: 
-  rmarkdown::html_vignette:
-    css: style.css
+date: "Last Updated: August 19th, 2020"
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+bibliography: vignettes.bib
 vignette: >
   %\VignetteIndexEntry{clustRviz Quick Start}
   %\VignetteEngine{knitr::rmarkdown}
@@ -31,248 +34,122 @@ knitr::opts_chunk$set(
 ```
 \renewcommand{\vec}[1]{\boldsymbol{#1}}
 
-# Introduction
+## Introduction
 
-This vignette provides a quick usage guide to the `clustRviz` package,
-including fitting and visualization.
-In the sections below we work through a simple example dataset,
-illustrating both clustering and biclustering in `clustRviz`.
-While many details and customizations are discussed in the
-[clustRviz Details Vignette](clustRvizDetails.html),
-for now we show how to quickly fit, visualize, and
-save in `clustRviz`.
+This vignette provides a brief introduction to the `clustRviz` package, 
+describing how to use the main entry points `CARP` and `CBASS` and providing
+a quick overview of the rich built-in graphics functionality. For more details
+on graphics, weight selection, or the computational algorithms used, please
+see the other package vignettes. 
 
-# A Clustering Example
+## Clustering
 
-`clustRviz` may be used for clustering together observations based on
-similarities among their features.
-`clustRviz` accomplishes this by solving the Convex Clustering problem
-quickly using the technique of Algorithmic Regularization.
-The resulting algorithm, Convex Clustering via Algorithmic Regularization Paths
-(or CARP) provides a continuous path of clustering solutions which may
-be visualized and interactively explored.
+`clustRviz` implements the *convex* clustering formulation popularized by
+Hocking *et al.* [-@Hocking:2011] and uses the path-wise algorithms of
+Weylandt, Nagorski, and Allen [-@Weylandt:2019] to support full path
+computation and dendrogram construction. This allows convex clustering to 
+produce `hclust`-style dendrograms while maintaining its statistical and computational
+advantages. 
 
-For our first example we use the `petrol` data set from the `MASS` package.
-
-```{r, headdat}
-# optionally install MASS package
-# install.package('MASS')
-data('petrol',package='MASS')
-head(petrol)
-```
-
-The dataset contains the yield (`Y`) of a petroleum refining process and
-with measurements for specific gravity (`SG`), vapour pressure (`VP`),
-crude volatility (`V10`),
-desired gasoline volatility (`EP`), as well as sample
-identification labels (`No`); see `?petrol`for details.
-
-Before clustering our data, we extract the columns of interest
-(here `SG`, `VP`, `V10`, and `EP`), and create the input matrix:
-
-```{r}
-# create numeric input matrix
-Xdat <- as.matrix(petrol[,c('SG','VP','V10','EP')])
-head(Xdat)
-```
-
-### Fitting with CARP
-
-Clustering is done via a simple call to the `CARP` function below.
+The main entry point for clustering is the `CARP` function, which implements
+the **Clustering via Algorithmic Regularization Paths** proposed by 
+Weylandt, Nagorski, and Allen [-@Weylandt:2019]. We can use it on the built-in
+`presidential_speech` data set: 
 
 ```{r}
 library(clustRviz)
-carp.fit <- CARP(Xdat, labels = petrol$No, X.scale = TRUE)
+carp_fit <- CARP(presidential_speech)
+print(carp_fit)
 ```
 
-Here we specify the sample number (`No`) as the labels for our observations.
-This is done by providing the `labels`. If no `labels` were provided, `CARP` would
-attempt to use the rownames of the data matrix, and if no rownames were found, would
-automatically generate names.
-Additionally, since our variables are measured on different scales, we
-set the `X.scale` option to `TRUE` as well; see `?carp` for additional
-fitting options as well as examples in the
-[clustRviz Details Vignette](clustRvizDetails.html)
-
-Once fitted, a brief description of the fit and parameter choices may be shown:
-
-```{r,message=TRUE}
-carp.fit
-```
-
-Visualizing the solution path is readily done via the `plot` function.
-A traditional dendrogram is displayed by default:
-
-```{r,fig.width=5,fig.height=5,fig.align='center'}
-plot(carp.fit)
-```
-
-A more detailed visualization of the solution path can be obtained by
-plotting the principal components of the cluster means:
-
-```{r,fig.width=5,fig.height=5,fig.align='center'}
-plot(carp.fit,type = 'path',percent = .10)
-```
-
-The plot above displays the first two principal components of the
-data, with black points representing the original data, and red
-curves illustrating movement along the solution path. As curves
-join together, observations are fused, and clusters formed.
-The `percent` argument tells `plot` to display a snapshot of the
-clustering solution path at $10\%$ of total regularization.
-
-Both the dendrogram and the clustering solution path may be
-viewed together interactively via the use of `shiny` applications:
-
-```{r,eval=FALSE}
-plot(carp.fit,type = 'interactive')
-```
-
-These interactive visualizations allow one to view the cluster
-solution path and dendrogram as the Algorithmic Regularization
-iterates vary.
-
-In addition to visualizations, cluster solutions may be obtained
-via the `get_cluster_labels` and `get_cluster_centroids` functions:
+As can be seen, this provides a full path in only a few seconds. From this, 
+we can produce a variety of attractive plots, including dendrograms
 
 ```{r}
-# Analyze the 3 cluster solution
-get_cluster_labels(carp.fit, k = 3)
-
-get_cluster_centroids(carp.fit, k = 3)
+plot(carp_fit, type = "dendrogram")
 ```
 
-In the code above, we specify the number of clusters and `clustering`
-returns the both the cluster assignment as well as the cluster means
-for the $k=3$ solution along the path. As an example, we display the
-yield (`Y`) distribution for each of the clusters:
-
-```{r, fig.width=5, fig.height=5, fig.align='center'}
-library(ggplot2)
-ggplot(
-  aes(x=cl,y=yield),
-  data=data.frame(
-    yield = petrol$Y,
-    cl=get_cluster_labels(carp.fit, k = 3)
-  )
-) + geom_boxplot()
-```
-
-After exploring visualizations and cluster solutions interactively,
-the visualization results can easily be exported via the `saveviz`
-function. For example, saving the cluster solution path plotted
-above may be done as follows:
-
-```{r,eval=FALSE}
-saveviz(
-  x=carp.fit,
-  file.name="ClusterPathStatic.png",
-  plot.type='path',
-  image.type = 'static',
-  percent=.10)
-```
-
-The above saves a static snapshot of the cluster solution path 
-at $10\%$ regularization; the number of clusters `k` may
-also be specified instead of `percent`.
-Interactive visualization may be saved as `.gif` files by
-specifiying `image.type='dynamic'`; see `?saveviz.CARP` for
-details.
-
-# A Biclustering Example
-
-Clustering may also be done simultaneously on both observations and
-variables. `clustRviz` obtains such biclustering solutions by
-approximating the Convex Biclustering solution path, again via
-Algorithmic Regularization. The `CBASS` function is used to obtain
-biclustering solutions, and its usage is similar to `CARP`.
-
-We fit the biclustering solution path as follows:
+one-way heatmaps
 
 ```{r}
-cbass.fit <- CBASS(X=Xdat, row_labels = petrol$No)
+plot(carp_fit, type = "heatmap")
 ```
 
-Once fitted, vizualizations are displayed again via the `plot` function.
-For CBASS fits, the default visualization is again the cluster dendrogram
-of the observations induced by the CBASS solution path.
-
-```{r,fig.width=5,fig.height=5,fig.align='center'}
-plot(cbass.fit)
-```
-
-Since both rows (observations) and columns (variables) are clustered simultaneously,
-a cluster dendrogram for the columns may also be plotted:
-
-```{r, eval=FALSE}
-plot(cbass.fit, type='col.dendrogram')
-```
-
-Additionally both dendrograms and the associated cluster heatmap 
-can be viewed by passing the `heatmap` arguement.
-
-```{r,fig.width=10,fig.height=10,fig.align='center'}
-plot(cbass.fit, type='heatmap')
-```
-
-As was the case of `CARP`, interactive visualizations may also be displayed:
-
-```{r,eval=FALSE}
-plot(cbass.fit,type='interactive')
-```
-
-`CBASS`'s interactive visualizations allows one to view dynamic changes in the
-cluster heatmap and dendrogram solutions along the path.
-
-As was the case with `CARP`, clustering solutions are obtained via the
-`get_cluster_labels` function. The desired clustering solution is specified by:
-
-- the number of row clusters (`k.row`);
-- the number of col clusters (`k.col`); or
-- the percent of regularization (`percent`).
-
-In the example below we obtain the biclustering solution
-which obtains $3$ row clusters:
+and regularization paths
 
 ```{r}
-# How are the rows (observations) clustered at the 3 row cluster solution?
-table(get_cluster_labels(cbass.fit, k.row = 3))
-
-# How are the columns (features) clustered at the 3 row cluster solution?
-table(get_cluster_labels(cbass.fit, k.row = 3, type = "col"))
+plot(carp_fit, type = "path")
 ```
 
-We can also investigate the bi-clustered data matrix (with the raw data replaced
-by estimated centroids) with the `get_clustered_data` function:
+For each plot type, interactive and dynamic versions are also supported: for example,
 
 ```{r}
-get_clustered_data(cbass.fit, k.row = 3)
+plot(carp_fit, type = "dendrogram", dynamic = TRUE)
 ```
 
-Finally we demonstrate how to save the visualizations
-produced by `CBASS`. Similar to `CARP` visualizations
-can be saved via the `saveviz` function which allows for saving
-static and dynamic visuals. For example, a `.gif`
-of the variable dendrogram as it varies throughout the
-path may be saved via:
+By default, the entire path is shown, but it is possible to obtain specific solutions
+by specifying the `k` or `percent` arguments to plot. 
 
-```{r,eval=FALSE}
-saveviz(x=cbass.fit,
-        file.name = 'cbass_column_dendrogram_dynamic.gif',
-        plot.type = 'col.dendrogram',
-        image.type = 'dynamic'
-)
+```{r}
+plot(carp_fit, k = 3)
 ```
 
-Similarly, a static snapshot of the bicluster heatmap at the moment
-along the path when $4$ row clusters are formed may be
-saved also:
+To work with the clustering solutions directly, the `get_cluster_labels`, `get_clustered_data`, 
+or `get_cluster_centroids` functions may be useful. 
 
-```{r,eval=FALSE}
-saveviz(x=cbass.fit,
-        file.name = 'cbass_heatmap_static.png',
-        plot.type = 'heatmap',
-        image.type = 'static',
-        k.row = 4
-)
+## Bi-Clustering
+
+Chi *et al* [-@Chi:2017] proposed a convex formulation of *biclustering* for which
+Weylandt [-@Weylandt:2019b] later proposed an efficient ADMM algorithm. This ADMM
+was adapted into the **CBASS** - *Convex Biclustering via Algorithmic Regularization
+with Small Steps* algorithm. `clustRviz` exposes an implementation of this algorithm
+via the function of the same name. 
+
+```{r}
+library(clustRviz)
+cbass_fit <- CBASS(presidential_speech)
+print(cbass_fit)
 ```
+
+As can be seen, this provides a full path in only a few seconds. In general, the 
+bi-clustering problem is a bit slower than the standard clustering problem but still
+highly efficient. From this, we can produce a variety of attractive plots, 
+including row- and column-wise dendrograms
+
+```{r}
+plot(cbass_fit, type = "row.dendrogram")
+```
+
+```{r}
+plot(cbass_fit, type = "col.dendrogram")
+```
+
+row- and columnwise regularization paths
+
+```{r}
+plot(cbass_fit, type = "row.path")
+```
+
+and the traditional two-way cluster heatmap
+
+```{r}
+plot(cbass_fit, type = "heatmap")
+```
+
+As before, interactive and dynamic versions are also supported: for example,
+
+```{r}
+plot(cbass_fit, type = "heatmap", dynamic = TRUE)
+```
+
+Because `CBASS` clusters rows and columns simultaneously, when specifying 
+cluster numbers, it is necessary to distinguish between row and column clusters
+
+```{r}
+plot(cbass_fit, k.row = 3)
+```
+
+This is only a brief demonstration of the capabilities of the `clustRviz` package
+- see the other vignettes for more!
+
+## References

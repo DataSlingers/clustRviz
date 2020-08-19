@@ -29,7 +29,7 @@ details, see Weylandt, Nagorski, and Allen [-@Weylandt:2019] and Weylandt [-@Wey
 
 ## Convex Clustering
 
-`CARP` begins with the convex clustering problem originally posed by
+`CARP` begins with the convex clustering problem originally popularized by
 Hocking *et al.* [-@Hocking:2011]:^[Here, we consider the case of uniform weights
 to simplify some of the notation, but the general case is essentially the same.
 The general formulation of `CARP` is given below.]
