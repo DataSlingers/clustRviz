@@ -13,6 +13,7 @@ reference:
       - plot.CARP
       - get_cluster_labels
       - print.CARP
+      - convex_clustering
   - title: "CBASS - Convex BiClustering"
     desc: >
       CBASS (Convex BiClustering via algorithmic
@@ -23,6 +24,7 @@ reference:
       - plot.CBASS
       - get_cluster_labels.CBASS
       - print.CBASS
+      - convex_biclustering
   - title: "Weights"
     desc: >
       Functions to calculate fusion weights
