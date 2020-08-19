@@ -1,18 +1,44 @@
 citHeader("To cite clustRviz in publications, please use:")
 
-citEntry(entry = "MISC",
+citEntry(entry = "ARTICLE",
   title        = "Dynamic Visualization and Fast Computation for Convex Clustering via Algorithmic Regularization",
   author       = personList(as.person("Michael Weylandt"),
                             as.person("John Nagorski"),
                             as.person("Genevera I. Allen")),
-  journal      = "ArXiv Pre-Print 1901.01477",
+  journal      = "Journal of Computational and Graphical Statistics",
   url          = "https://arxiv.org/abs/1901.01477",
-  year         = 2019,
+  year         = 2020,
+  doi          = "10.1080/10618600.2019.1629943",
+  volume       = 29,
+  number       = 1,
+  pages        = "87-96",
 
   textVersion  =
       paste("Michael Weylandt, John Nagorski, and Genevera I. Allen.",
             sQuote("Dynamic Visualization and Fast Computation for Convex Clustering via Algorithmic Regularization,"),
+            " Journal of Computational and Graphical Statistics 29(1), pp. 87-96. 2020. DOI: 10.1080/10618600.2019.1629943.",
             "ArXiv Pre-Print 1901.01477 (https://arxiv.org/abs/1901.01477)")
 )
 
-citFooter("For more details and additional references, see the paper and the package vignettes. Thank you for using clustRviz!")
+citEntry(entry = "INPROCEEDINGS",
+  title        = "Splitting Methods for Convex Bi-Clustering and Co-Clustering",
+  author       = personList(as.person("Michael Weylandt")),
+  booktitle    = "{DSW} 2019: Proceedings of the {IEEE} 2019 Data Science Workshop",
+  url          = "https://arxiv.org/abs/1901.06075",
+  year         = 2019,
+  doi          = "10.1109/DSW.2019.8755599",
+  pages        = "237-242",
+  publisher    = "IEEE",
+  editor       = "George Karypis and George Michailidis and Rebecca Willett",
+
+  textVersion  =
+      paste("Michael Weylandt.",
+            sQuote("Splitting Methods for Convex Bi-Clustering and Co-Clustering,"),
+            " DSW 2019: Proceedings of the IEEE 2019 Data Science Workshop, pp. 237-242. 2019. DOI: 10.1109/DSW.2019.8755599.",
+            "ArXiv Pre-Print 1901.06075 (https://arxiv.org/abs/1901.06075)"), 
+
+  header       = 
+    "If you use the CBASS() or convex_biclustering() functions, please also cite:"
+)
+
+citFooter("For more details and additional references, see the papers and the package vignettes. Thank you for using clustRviz!")
