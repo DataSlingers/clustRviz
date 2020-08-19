@@ -36,10 +36,10 @@ Note that `RcppEigen` (which `clustRviz` internally) triggers many compiler warn
 (which cannot be suppressed per
 [CRAN policies](http://cran.r-project.org/web/packages/policies.html#Source-packages)).
 Many of these warnings can be locally suppressed by adding the line `CXX11FLAGS+=-Wno-ignored-attributes`
-to your `~/.R/Makevars` file.
-
-`clustRviz` also depends on the development version of the `gganimate` package,
-which is not yet on CRAN, but may be found [here](https://github.com/thomasp85/gganimate).
+to your `~/.R/Makevars` file. To install an `R` package from source, you will need
+suitable development tools installed including a `C++` compiler and potentially
+a Fortran runtime. Details about these toolchains are available on CRAN for
+[Windows](https://cran.r-project.org/bin/windows/Rtools/) and [macOS](https://mac.r-project.org/tools/).
 
 ## Quick-Start
 
@@ -83,13 +83,6 @@ watch the clusters fuse as the regularization level is increased:
 
 ```{r carp_dynamic, eval = FALSE}
 plot(carp_fit, type = "path", dynamic = TRUE)
-```
-
-`clustRviz` also provides interactive dendrograms using the
-[`heatmaply`](https://cran.r-project.org/package=heatmaply) package: 
-
-```{r carp_heatmap}
-plot(carp_fit, type = "heatmap", interactive = TRUE)
 ```
 
 ### BiClustering
