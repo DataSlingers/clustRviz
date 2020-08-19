@@ -1,5 +1,5 @@
 ---
-title: "1. clustRviz Quick Start"
+title: "clustRviz Quick Start"
 author:
  - name: Michael Weylandt
    affiliation: Department of Statistics, Rice University
@@ -16,7 +16,7 @@ output:
   rmarkdown::html_vignette:
     css: style.css
 vignette: >
-  %\VignetteIndexEntry{1. clustRviz Quick Start}
+  %\VignetteIndexEntry{clustRviz Quick Start}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

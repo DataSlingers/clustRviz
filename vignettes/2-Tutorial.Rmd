@@ -1,5 +1,5 @@
 ---
-title: "2. clustRviz Tutorial"
+title: "clustRviz Tutorial"
 author:
  - name: Michael Weylandt
    affiliation: Department of Statistics, Rice University
@@ -17,7 +17,7 @@ output:
   rmarkdown::html_vignette:
     css: style.css
 vignette: >
-  %\VignetteIndexEntry{2. clustRviz Tutorial}
+  %\VignetteIndexEntry{clustRviz Tutorial}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

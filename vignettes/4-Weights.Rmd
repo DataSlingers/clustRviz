@@ -1,5 +1,5 @@
 ---
-title: "4. Weight Selection for Convex Clustering and BiClustering"
+title: "Weight Selection for Convex Clustering and BiClustering"
 author: 
  - name: John Nagorski
    affiliation: Department of Statistics, Rice University
@@ -19,7 +19,7 @@ output:
       collapsed: false
 bibliography: vignettes.bib
 vignette: >
-  %\VignetteIndexEntry{4. Weight Selection for Convex Clustering and BiClustering}
+  %\VignetteIndexEntry{Weight Selection for Convex Clustering and BiClustering}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

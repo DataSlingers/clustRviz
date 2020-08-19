@@ -1,5 +1,5 @@
 ---
-title: "3. Computational Details of the CARP and CBASS Algorithms"
+title: "Computational Details of the CARP and CBASS Algorithms"
 author:
  - name: Michael Weylandt
    affiliation: Department of Statistics, Rice University
@@ -19,7 +19,7 @@ output:
       collapsed: false
 bibliography: vignettes.bib
 vignette: >
-  %\VignetteIndexEntry{3. Computational Details of the CARP and CBASS Algorithms}
+  %\VignetteIndexEntry{Computational Details of the CARP and CBASS Algorithms}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
