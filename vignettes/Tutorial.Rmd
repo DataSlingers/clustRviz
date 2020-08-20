@@ -1,5 +1,5 @@
 ---
-title: "clustRviz Tutorial"
+title: "10-Minute Introduction to ClustRviz"
 author:
  - name: Michael Weylandt
    affiliation: Department of Statistics, Rice University
@@ -19,7 +19,7 @@ output:
       collapsed: false
 bibliography: vignettes.bib
 vignette: >
-  %\VignetteIndexEntry{clustRviz Tutorial}
+  %\VignetteIndexEntry{10-Minute Introduction to clustRviz}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -38,7 +38,7 @@ knitr::opts_chunk$set(
 # Introduction
 
 The `clustRviz` package intends to make fitting and visualizing CARP and CBASS
-solution paths an easy process. In the [QuickStart](1-QuickStart.html)
+solution paths an easy process. In the [QuickStart](clustRviz.html)
 vignette we provide a quick start guide for basic usage, fitting,
 and plotting. In this vignette, we build on the basics and provide a more
 detailed explanation for the variety of options available in `clustRviz`.
@@ -140,7 +140,7 @@ clustering performance. `CARP` uses a reasonably robust heuristic that
 balances statistical and computational performance, but great improvements
 can be obtained by using bespoke weighting schemes. `CARP` allows weights to be
 specified as either a function which returns a weight matrix or a matrix of
-weights. More details are available in the [Weights vignette](4-Weights.html)
+weights. More details are available in the [Weights vignette](Weights.html)
 
 ### Dimension Reduction and Feature Selection
 

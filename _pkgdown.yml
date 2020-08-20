@@ -42,6 +42,15 @@ reference:
       - clustRviz_logging
       - clustRviz_options
 
+articles:
+- title: Vignettes
+  navbar: ~
+  contents:
+    - Tutorial
+    - Weights
+    - Algorithms
+    - Acknowledgements
+
 nabvar:
   right:
     - icon: fa-github fa-lg
