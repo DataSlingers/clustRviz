@@ -95,10 +95,11 @@ cbass_fit <- CBASS(presidential_speech)
 plot(cbass_fit, k.row = 3)
 ```
 
-Setting `type = "heatmap"` gives the traditional cluster heatmap:
+By default, plotting the result of CBASS gives the traditional cluster heatmap,
+but we can also get the row or column dendrograms as well:
 
-```{r cbass_heatmap}
-plot(cbass_fit, type = "heatmap", k.row = 3)
+```{r cbass_rowdendro}
+plot(cbass_fit, type = "row.dendrogram", k.row = 3)
 ```
 
 By default, if a regularization level is specified, all plotting functions in `clustRviz`
