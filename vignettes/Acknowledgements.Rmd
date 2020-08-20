@@ -1,5 +1,5 @@
 ---
-title: "5. ClustRViz Acknowledgements"
+title: "Acknowledgements"
 author:
  - name: Michael Weylandt
    affiliation: Department of Statistics, Rice University
@@ -11,7 +11,7 @@ author:
      | Departments of Statistics, Computer Science, and Electical and Computer Engineering, Rice University
      | Jan and Dan Duncan Neurological Research Institute, Baylor College of Medicine
    email: gallen@rice.edu
-date: "Last Updated: January 4th, 2019"
+date: "Last Updated: August 19th, 2020"
 output:
   html_document:
     toc: true
@@ -19,7 +19,7 @@ output:
       collapsed: false
 bibliography: vignettes.bib
 vignette: >
-  %\VignetteIndexEntry{5. ClustRViz Acknowledgements}
+  %\VignetteIndexEntry{Acknowledgements}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -31,9 +31,8 @@ and `RcppEigen` [@Bates:2013] libraries to interface with `R` [@R].
 The graphical components of `clustRviz` depend on several publicly available `R` packages, including:
 
 - the `dendextend` package [@Galili:2015] which is used for dendrogram construction and manipulation;
-- the `animation` package [@Xie:2013] which is used for for `gif` export of dynamic dendrograms and heatmaps
-- the `ggplot2` [@Wickham:2016] and `gganimate` [@Pedersen:2019] packages which are used for path visualizations
-- the `shiny` [@Chang:2018] package which powers the web-based interface
+- the `ggplot2` [@Wickham:2016] and `gganimate` [@Pedersen:2019] packages which are used for path visualizations;
+- the `plotly` [@Sievert:2020] package which is used for interactive dendrograms and path plots; and 
 - the `heatmaply` [@Galili:2018] package which is used for export of interactive cluster heatmaps based on `CARP` and `CBASS` results
 
 We are grateful to the authors of each of these packages for making their software freely available.
