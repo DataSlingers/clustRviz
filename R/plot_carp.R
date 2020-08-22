@@ -257,6 +257,10 @@ carp_path_plot <- function(x,
                                         pull
 
     plot_frame_full <- plot_frame_full %>% filter(.data$Iter <= iter_first_k)
+    percent <- get_feature_paths(x, features = character()) %>% filter(.data$NCluster == k) %>%
+      select(.data$GammaPercent) %>%
+      summarize(percent = mean(.data$GammaPercent)) %>%
+      pull
   }
 
 
