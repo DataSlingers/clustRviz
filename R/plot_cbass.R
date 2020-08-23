@@ -371,8 +371,11 @@ cbass_path_plot <- function(x,
   g <- ggplot(mapping = aes(x = .data$V1, y = .data$V2, group = .data$Obs))
 
   if (show_clusters) {
+    labels <- get_cluster_labels(x, percent = percent, type = type)
+    k <- nlevels(labels)
     g <- g + geom_path(data = plot_frame_full, aes(color = .data$final_cluster), linejoin="round", size=1) +
-             geom_point(data = plot_frame_final, aes(color = .data$final_cluster), size = 4)
+             geom_point(data = plot_frame_final, aes(color = .data$final_cluster), size = 4) +
+             labs(title = paste0('Fraction of Regularization: ', round(percent * 100), '%\nNumber of Clusters: ', k))
   } else {
     g <- g + geom_path(data = plot_frame_full, color = "red", linejoin="round", size=1)
   }
@@ -392,6 +395,7 @@ cbass_path_plot <- function(x,
 #' @importFrom ggplot2 ggplot aes geom_path geom_point geom_text guides
 #' @importFrom ggplot2 theme element_text xlab ylab
 #' @importFrom gganimate transition_manual
+#' @importFrom ggrepel geom_text_repel
 cbass_dynamic_path_plot <- function(x, ..., axis, percent.seq, type = c("row", "col")){
   ## TODO - Combine this and cbass_path_plot as much as possible
   plot_frame_full <- get_feature_paths(x, axis, type = type) %>% rename(V1 = axis[1], V2 = axis[2])
@@ -405,7 +409,7 @@ cbass_dynamic_path_plot <- function(x, ..., axis, percent.seq, type = c("row", "
   plot_frame_animation <- bind_rows(lapply(percent.seq, function(pct){
     ## Make a list of things to plot at each "percent" and then combine
     plot_frame_full %>% filter(.data$GammaPercent <= pct) %>%
-      mutate(percent = pct)
+      mutate(percent = pct*100)
   }))
 
   ggplot(plot_frame_animation,
@@ -415,17 +419,18 @@ cbass_dynamic_path_plot <- function(x, ..., axis, percent.seq, type = c("row", "
                aes(x = .data$FirstV1,
                    y = .data$FirstV2),
                color = "black",
-               size = I(4)) +
-    geom_text(data = plot_frame_first,
+               size = I(2)) +
+    geom_text_repel(data = plot_frame_first,
               aes(x = .data$FirstV1,
                   y = .data$FirstV2,
                   label = .data$FirstObsLabel),
-              size = I(6)) +
+              seed = 0) +
     guides(color = FALSE, size = FALSE) +
     theme(axis.title = element_text(size = 25),
           axis.text = element_text(size = 20)) +
     xlab(axis[1]) + ylab(axis[2]) +
-    transition_manual(.data$percent)
+    transition_manual(.data$percent) +
+    labs(title = paste0('Fraction of Regularization: ', '{current_frame}', '%'))
 }
 
 #' @noRd
