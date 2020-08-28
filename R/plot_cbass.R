@@ -904,6 +904,9 @@ cbass_path_plotly <- function(x,
   plot_frame_full <- plot_frame_full %>% filter(.data$GammaPercent <= max(percent, min(.data$GammaPercent)))
 
   plot_frame_init  <- plot_frame_full %>% filter(.data$Iter == min(.data$Iter))
+  plot_frame_init_adj <- get_ggrepel_coordinates(plot_frame_init$V1, plot_frame_init$V2, plot_frame_init$ObsLabel)
+  plot_frame_init_dist <- plot_frame_init_adj %>% mutate(dist = sqrt((x-x_adj)^2+(y-y_adj)^2))
+
   plot_frame_final <- plot_frame_full %>% filter(.data$Iter == max(.data$Iter)) %>%
     mutate(final_cluster = factor(.data$Cluster))
 
@@ -922,20 +925,10 @@ cbass_path_plotly <- function(x,
   if (!dynamic){
     if (show_clusters) {
       path_static <- plot_ly() %>%
-        add_markers(
-          data = plot_frame_init,
-          ids = ~Obs,
-          x = ~V1,
-          y = ~V2,
-          color = I("black"),
-          size = 2) %>%
-        add_markers(
-          data = plot_frame_final,
-          ids = ~Obs,
-          x = ~V1,
-          y = ~V2,
-          color = I(~final_cluster),
-          size = 3)
+        add_segments(data = plot_frame_init_dist[plot_frame_init_dist$dist>1,],
+                     x = ~x, xend = ~x_adj,
+                     y = ~y, yend = ~y_adj,
+                     color = I("grey"))
 
       for (i in seq_along(plot_frame_init$ObsLabel)){
         path_static <- path_static %>%
@@ -948,17 +941,6 @@ cbass_path_plotly <- function(x,
       }
 
       path_static %>%
-        add_text(data = plot_frame_init,
-                 x = ~V1,
-                 y = ~V2,
-                 text = ~ObsLabel,
-                 #size = label_size,
-                 inherit = FALSE) %>%
-        hide_legend() %>%
-        style(text=mytext, hoverinfo = "text", traces = 1) %>%
-        style(hoverinfo = "none", traces = c(2:(length(mytext)+2)))
-    } else{
-      path_static <- plot_ly() %>%
         add_markers(
           data = plot_frame_init,
           ids = ~Obs,
@@ -972,7 +954,23 @@ cbass_path_plotly <- function(x,
           x = ~V1,
           y = ~V2,
           color = I("red"),
-          size = 3)
+          size = 3) %>%
+        add_text(data = plot_frame_init_adj,
+                 x = ~x_adj,
+                 y = ~y_adj,
+                 text = ~label,
+                 #size = label_size,
+                 inherit = FALSE) %>%
+        plotly::layout(xaxis = list(title = "V1"), yaxis = list(title = "V2")) %>%
+        hide_legend() %>%
+        style(text=mytext, hoverinfo = "text", traces = length(mytext)+2) %>%
+        style(hoverinfo = "none", traces = c(1:(length(mytext)+1),(length(mytext)+3)))
+    } else{
+      path_static <- plot_ly() %>%
+        add_segments(data = plot_frame_init_dist[plot_frame_init_dist$dist>1,],
+                     x = ~x, xend = ~x_adj,
+                     y = ~y, yend = ~y_adj,
+                     color = I("grey"))
 
       for (i in seq_along(plot_frame_init$ObsLabel)){
         path_static <- path_static %>%
@@ -985,15 +983,30 @@ cbass_path_plotly <- function(x,
       }
 
       path_static %>%
-        add_text(data = plot_frame_init,
-                 x = ~V1,
-                 y = ~V2,
-                 text = ~ObsLabel,
+        add_markers(
+          data = plot_frame_init,
+          ids = ~Obs,
+          x = ~V1,
+          y = ~V2,
+          color = I("black"),
+          size = 2) %>%
+        add_markers(
+          data = plot_frame_final,
+          ids = ~Obs,
+          x = ~V1,
+          y = ~V2,
+          color = I("red"),
+          size = 3) %>%
+        add_text(data = plot_frame_init_adj,
+                 x = ~x_adj,
+                 y = ~y_adj,
+                 text = ~label,
                  #size = label_size,
                  inherit = FALSE) %>%
+        plotly::layout(xaxis = list(title = "V1"), yaxis = list(title = "V2")) %>%
         hide_legend() %>%
-        style(text=mytext, hoverinfo = "text", traces = 1) %>%
-        style(hoverinfo = "none", traces = c(2:(length(mytext)+2)))
+        style(text=mytext, hoverinfo = "text", traces = length(mytext)+2) %>%
+        style(hoverinfo = "none", traces = c(1:(length(mytext)+1),(length(mytext)+3)))
     }
 
   }
@@ -1004,7 +1017,11 @@ cbass_path_plotly <- function(x,
         mutate(Regularization = pct)
     }))
 
-    path_dynamic<-plot_ly()
+    path_dynamic<-plot_ly() %>%
+      add_segments(data = plot_frame_init_dist[plot_frame_init_dist$dist>1,],
+                   x = ~x, xend = ~x_adj,
+                   y = ~y, yend = ~y_adj,
+                   color = I("grey"))
 
     for (i in seq_along(plot_frame_init$ObsLabel)){
       path_dynamic <- path_dynamic %>%
@@ -1035,16 +1052,17 @@ cbass_path_plotly <- function(x,
         color = I("black"),
         size = 0.5,
         inherit = FALSE) %>%
-      add_text(data = plot_frame_init,
-               x = ~V1,
-               y = ~V2,
-               text = ~ObsLabel,
+      add_text(data = plot_frame_init_adj,
+               x = ~x_adj,
+               y = ~y_adj,
+               text = ~label,
                #size = label_size,
                inherit = FALSE) %>%
+      plotly::layout(xaxis = list(title = "V1"), yaxis = list(title = "V2")) %>%
       hide_legend() %>%
-      style(text=mytext, hoverinfo = "text", traces = c(length(mytext)+2)) %>%
-      style(hoverinfo = "none", traces = c(1:(length(mytext)+1))) %>%
-      animation_slider(currentvalue = list(prefix = "Regularization: ",suffix = "%")) #%>%
+      style(text=mytext, hoverinfo = "text", traces = c(length(mytext)+3)) %>%
+      style(hoverinfo = "none", traces = c(1:(length(mytext)+2))) %>%
+      animation_slider(currentvalue = list(prefix = "Regularization: ",suffix = "%"))
   }
 }
 

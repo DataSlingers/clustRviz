@@ -40,7 +40,8 @@ Imports:
     RColorBrewer,
     heatmaply,
     gganimate,
-    plotly
+    plotly,
+    grid
 LinkingTo: Rcpp, RcppEigen
 Suggests: testthat,
     knitr,
