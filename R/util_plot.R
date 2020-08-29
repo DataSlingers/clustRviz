@@ -48,6 +48,7 @@ dendrogram_box <- function(x, rev = FALSE, k, type, percent, show_memnum = FALSE
 
 
 # Manually "dodge" the labels for path plots
+# from https://stackoverflow.com/questions/45065567/getting-coordinates-for-the-label-locations-from-ggrepel
 #' @importFrom ggplot2 ggplot geom_point ggplot_build
 #' @importFrom ggrepel geom_text_repel
 #' @importFrom grid grid.force grid.get childNames forceGrob

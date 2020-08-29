@@ -795,11 +795,7 @@ carp_path_plotly <- function(x,
 
   if (!dynamic){
     if (show_clusters) {
-      path_static <- plot_ly() %>%
-        add_segments(data = plot_frame_init_dist[plot_frame_init_dist$dist>1,],
-                     x = ~x, xend = ~x_adj,
-                     y = ~y, yend = ~y_adj,
-                     color = I("grey"))
+      path_static <- plot_ly()
 
       for (i in seq_along(plot_frame_init$ObsLabel)){
         path_static <- path_static %>%
@@ -812,6 +808,10 @@ carp_path_plotly <- function(x,
       }
 
       path_static %>%
+        add_segments(data = plot_frame_init_dist[plot_frame_init_dist$dist>1,],
+                     x = ~x, xend = ~x_adj,
+                     y = ~y, yend = ~y_adj,
+                     color = I("grey")) %>%
         add_markers(
           data = plot_frame_init,
           ids = ~Obs,
@@ -832,16 +832,11 @@ carp_path_plotly <- function(x,
                  text = ~label,
                  #size = label_size,
                  inherit = FALSE) %>%
-        plotly::layout(xaxis = list(title = "V1"), yaxis = list(title = "V2")) %>%
         hide_legend() %>%
         style(text=mytext, hoverinfo = "text", traces = length(mytext)+2) %>%
         style(hoverinfo = "none", traces = c(1:(length(mytext)+1),(length(mytext)+3)))
     } else{
-      path_static <- plot_ly() %>%
-        add_segments(data = plot_frame_init_dist[plot_frame_init_dist$dist>1,],
-                     x = ~x, xend = ~x_adj,
-                     y = ~y, yend = ~y_adj,
-                     color = I("grey"))
+      path_static <- plot_ly()
 
       for (i in seq_along(plot_frame_init$ObsLabel)){
         path_static <- path_static %>%
@@ -854,6 +849,10 @@ carp_path_plotly <- function(x,
       }
 
       path_static %>%
+        add_segments(data = plot_frame_init_dist[plot_frame_init_dist$dist>1,],
+                     x = ~x, xend = ~x_adj,
+                     y = ~y, yend = ~y_adj,
+                     color = I("grey")) %>%
         add_markers(
           data = plot_frame_init,
           ids = ~Obs,
@@ -874,7 +873,6 @@ carp_path_plotly <- function(x,
                  text = ~label,
                  #size = label_size,
                  inherit = FALSE) %>%
-        plotly::layout(xaxis = list(title = "V1"), yaxis = list(title = "V2")) %>%
         hide_legend() %>%
         style(text=mytext, hoverinfo = "text", traces = length(mytext)+2) %>%
         style(hoverinfo = "none", traces = c(1:(length(mytext)+1),(length(mytext)+3)))
@@ -888,11 +886,7 @@ carp_path_plotly <- function(x,
         mutate(Regularization = pct)
     }))
 
-    path_dynamic<-plot_ly() %>%
-      add_segments(data = plot_frame_init_dist[plot_frame_init_dist$dist>1,],
-                   x = ~x, xend = ~x_adj,
-                   y = ~y, yend = ~y_adj,
-                   color = I("grey"))
+    path_dynamic<-plot_ly()
 
     for (i in seq_along(plot_frame_init$ObsLabel)){
       path_dynamic <- path_dynamic %>%
@@ -906,6 +900,10 @@ carp_path_plotly <- function(x,
     }
 
     path_dynamic %>%
+      add_segments(data = plot_frame_init_dist[plot_frame_init_dist$dist>1,],
+                   x = ~x, xend = ~x_adj,
+                   y = ~y, yend = ~y_adj,
+                   color = I("grey")) %>%
       add_markers(
         data = plot_frame_interactive,
         ids = ~Obs,
@@ -928,7 +926,6 @@ carp_path_plotly <- function(x,
                text = ~label,
                #size = label_size,
                inherit = FALSE) %>%
-      plotly::layout(xaxis = list(title = "V1"), yaxis = list(title = "V2")) %>%
       hide_legend() %>%
       style(text=mytext, hoverinfo = "text", traces = c(length(mytext)+3)) %>%
       style(hoverinfo = "none", traces = c(1:(length(mytext)+2))) %>%
