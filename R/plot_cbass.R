@@ -905,7 +905,7 @@ cbass_path_plotly <- function(x,
 
   plot_frame_init  <- plot_frame_full %>% filter(.data$Iter == min(.data$Iter))
   plot_frame_init_adj <- get_ggrepel_coordinates(plot_frame_init$V1, plot_frame_init$V2, plot_frame_init$ObsLabel)
-  plot_frame_init_dist <- plot_frame_init_adj %>% mutate(dist = sqrt((x-x_adj)^2+(y-y_adj)^2))
+  plot_frame_init_dist <- plot_frame_init_adj %>% mutate(dist = sqrt((.data$x-.data$x_adj)^2+(.data$y-.data$y_adj)^2))
 
   plot_frame_final <- plot_frame_full %>% filter(.data$Iter == max(.data$Iter)) %>%
     mutate(final_cluster = factor(.data$Cluster))
