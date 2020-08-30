@@ -1,0 +1,155 @@
+---
+title: "clustRviz Quick Start"
+author:
+ - name: Michael Weylandt
+   affiliation: Department of Statistics, Rice University
+   email: michael.weylandt@rice.edu
+ - name: John Nagorski
+   affiliation: Department of Statistics, Rice University
+ - name: Genevera I. Allen
+   affiliation: |
+     | Departments of Statistics, Computer Science, and Electical and Computer Engineering, Rice University
+     | Jan and Dan Duncan Neurological Research Institute, Baylor College of Medicine
+   email: gallen@rice.edu
+date: "Last Updated: August 19th, 2020"
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+bibliography: vignettes.bib
+vignette: >
+  %\VignetteIndexEntry{clustRviz Quick Start}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval=TRUE,
+  message = FALSE
+)
+```
+\renewcommand{\vec}[1]{\boldsymbol{#1}}
+
+## Introduction
+
+This vignette provides a brief introduction to the `clustRviz` package, 
+describing how to use the main entry points `CARP` and `CBASS` and providing
+a quick overview of the rich built-in graphics functionality. For more details
+on graphics, weight selection, or the computational algorithms used, please
+see the other package vignettes. 
+
+## Clustering
+
+`clustRviz` implements the *convex* clustering formulation popularized by
+Hocking *et al.* [-@Hocking:2011] and uses the path-wise algorithms of
+Weylandt, Nagorski, and Allen [-@Weylandt:2019] to support full path
+computation and dendrogram construction. This allows convex clustering to 
+produce `hclust`-style dendrograms while maintaining its statistical and computational
+advantages. 
+
+The main entry point for clustering is the `CARP` function, which implements
+the **Clustering via Algorithmic Regularization Paths** proposed by 
+Weylandt, Nagorski, and Allen [-@Weylandt:2019]. We can use it on the built-in
+`presidential_speech` data set: 
+
+```{r}
+library(clustRviz)
+carp_fit <- CARP(presidential_speech)
+print(carp_fit)
+```
+
+As can be seen, this provides a full path in only a few seconds. From this, 
+we can produce a variety of attractive plots, including dendrograms
+
+```{r}
+plot(carp_fit, type = "dendrogram")
+```
+
+one-way heatmaps
+
+```{r}
+plot(carp_fit, type = "heatmap")
+```
+
+and regularization paths
+
+```{r}
+plot(carp_fit, type = "path")
+```
+
+For each plot type, interactive and dynamic versions are also supported: for example,
+
+```{r}
+plot(carp_fit, type = "dendrogram", dynamic = TRUE)
+```
+
+By default, the entire path is shown, but it is possible to obtain specific solutions
+by specifying the `k` or `percent` arguments to plot. 
+
+```{r}
+plot(carp_fit, k = 3)
+```
+
+To work with the clustering solutions directly, the `get_cluster_labels`, `get_clustered_data`, 
+or `get_cluster_centroids` functions may be useful. 
+
+## Bi-Clustering
+
+Chi *et al* [-@Chi:2017] proposed a convex formulation of *biclustering* for which
+Weylandt [-@Weylandt:2019b] later proposed an efficient ADMM algorithm. This ADMM
+was adapted into the **CBASS** - *Convex Biclustering via Algorithmic Regularization
+with Small Steps* algorithm. `clustRviz` exposes an implementation of this algorithm
+via the function of the same name. 
+
+```{r}
+library(clustRviz)
+cbass_fit <- CBASS(presidential_speech)
+print(cbass_fit)
+```
+
+As can be seen, this provides a full path in only a few seconds. In general, the 
+bi-clustering problem is a bit slower than the standard clustering problem but still
+highly efficient. From this, we can produce a variety of attractive plots, 
+including row- and column-wise dendrograms
+
+```{r}
+plot(cbass_fit, type = "row.dendrogram")
+```
+
+```{r}
+plot(cbass_fit, type = "col.dendrogram")
+```
+
+row- and columnwise regularization paths
+
+```{r}
+plot(cbass_fit, type = "row.path")
+```
+
+and the traditional two-way cluster heatmap
+
+```{r}
+plot(cbass_fit, type = "heatmap")
+```
+
+As before, interactive and dynamic versions are also supported: for example,
+
+```{r}
+plot(cbass_fit, type = "heatmap", dynamic = TRUE)
+```
+
+Because `CBASS` clusters rows and columns simultaneously, when specifying 
+cluster numbers, it is necessary to distinguish between row and column clusters
+
+```{r}
+plot(cbass_fit, k.row = 3)
+```
+
+This is only a brief demonstration of the capabilities of the `clustRviz` package
+- see the other vignettes for more!
+
+## References

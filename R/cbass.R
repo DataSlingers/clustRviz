@@ -5,7 +5,9 @@
 #' heatmaps. \code{CBASS} solves the Convex Biclustering problem using an efficient
 #' Algorithmic Regularization scheme.
 #'
-#' @param X The data matrix (\eqn{X \in R^{n \times p}}{X})
+#' @param X The data matrix (\eqn{X \in R^{n \times p}}{X}).
+#'          If \code{X} has missing values - \code{NA} or
+#'          \code{NaN} values - they will be automatically imputed.
 #' @param row_weights One of the following: \itemize{
 #'                    \item A function which, when called with argument \code{X},
 #'                          returns a n-by-n matrix of fusion weights.
@@ -114,8 +116,19 @@ CBASS <- function(X,
     crv_error(sQuote("X"), " must be numeric.")
   }
 
+  # Missing data mask: M_{ij} = 1 means we see X_{ij};
+  M <- 1 - is.na(X)
+
+  # Impute missing values in X via the global mean
+  X.orig <- X
+
+  if(anyNA(X)) {
+    X[is.na(X)] <- mean(X, na.rm = TRUE)
+  }
+
+  ## Check that imputation was successful.
   if (anyNA(X)) {
-    crv_error(sQuote("CBASS"), " cannot handle missing data.")
+    crv_error("Imputation failed. Missing values found in ", sQuote("X"), " even after imputation.")
   }
 
   if (!all(is.finite(X))) {
@@ -163,7 +176,7 @@ CBASS <- function(X,
     crv_error(sQuote("row_labels"), " must be of length ", sQuote("NROW(X)."))
   }
 
-  rownames(X) <- row_labels <- make.unique(as.character(row_labels), sep = "_")
+  rownames(X.orig) <- rownames(X) <- row_labels <- make.unique(as.character(row_labels), sep = "_")
 
   ## Get column (variable) labels
   if (is.null(col_labels)) {
@@ -174,13 +187,12 @@ CBASS <- function(X,
     crv_error(sQuote("col_labels"), " must be of length ", sQuote("NCOL(X)."))
   }
 
-  colnames(X) <- col_labels <- make.unique(as.character(col_labels), sep = "_")
+  colnames(X.orig) <- colnames(X) <- col_labels <- make.unique(as.character(col_labels), sep = "_")
 
   n <- NROW(X)
   p <- NCOL(X)
 
   # Preprocess X
-  X.orig <- X
   if (X.center.global) {
     mean_adjust <- mean(X)
     X <- X - mean_adjust
@@ -293,15 +305,18 @@ CBASS <- function(X,
   crv_message("Computing Convex Bi-Clustering [CBASS] Path")
   tic_inner <- Sys.time()
 
-  cbass.sol.path <- CBASScpp(X,
-                             D_row,
-                             D_col,
+  cbass.sol.path <- CBASScpp(X = X,
+                             M = M,
+                             D_row = D_row,
+                             D_col = D_col,
                              t = t,
                              epsilon = .clustRvizOptionsEnv[["epsilon"]],
                              weights_row = row_weights[row_weights != 0],
                              weights_col = col_weights[col_weights != 0],
                              rho = .clustRvizOptionsEnv[["rho"]],
+                             thresh = .clustRvizOptionsEnv[["stopping_threshold"]],
                              max_iter = .clustRvizOptionsEnv[["max_iter"]],
+                             max_inner_iter = .clustRvizOptionsEnv[["max_inner_iter"]],
                              burn_in = .clustRvizOptionsEnv[["burn_in"]],
                              viz_max_inner_iter = .clustRvizOptionsEnv[["viz_max_inner_iter"]],
                              viz_initial_step = .clustRvizOptionsEnv[["viz_initial_step"]],
@@ -348,6 +363,7 @@ CBASS <- function(X,
 
   cbass.fit <- list(
     X = X.orig,
+    M = M,
     n = n,
     p = p,
     row_fusions = list(
@@ -411,9 +427,9 @@ CBASS <- function(X,
 print.CBASS <- function(x, ...) {
   if(x$exact){
     if(x$back_track){
-      alg_string = "DLPA+ADMM-VIZ [Exact Solver + Back-Tracking Fusion Search]"
+      alg_string = "ADMM-VIZ [Exact Solver + Back-Tracking Fusion Search]"
     } else {
-      alg_string = paste0("DLPA+ADMM (t = ", round(x$t, 3), ") [Exact Solver]")
+      alg_string = paste0("ADMM (t = ", round(x$t, 3), ") [Exact Solver]")
     }
   } else {
     if(x$back_track){

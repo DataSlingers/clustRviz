@@ -144,7 +144,7 @@ get_cluster_centroids.CARP <- function(x, ..., percent, k, refit = TRUE){
   colnames(centroids) <- colnames(U)
 
   for(k in seq_len(K)){
-    centroids[k, ] <- colMeans(U[labels == k, , drop = FALSE])
+    centroids[k, ] <- colMeans(U[labels == k, , drop = FALSE], na.rm = TRUE)
   }
 
   centroids

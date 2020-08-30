@@ -49,7 +49,7 @@ public:
   gamma(0){}
 
   ~StatusPrinter() {
-    this->update_format();
+    this->terminate();
   }
 
   void set_width(int width){

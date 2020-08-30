@@ -1,0 +1,428 @@
+---
+title: "10-Minute Introduction to ClustRviz"
+author:
+ - name: Michael Weylandt
+   affiliation: Department of Statistics, Rice University
+   email: michael.weylandt@rice.edu
+ - name: John Nagorski
+   affiliation: Department of Statistics, Rice University
+ - name: Genevera I. Allen
+   affiliation: |
+     | Departments of Statistics, Computer Science, and Electical and Computer Engineering, Rice University
+     | Jan and Dan Duncan Neurological Research Institute, Baylor College of Medicine
+   email: gallen@rice.edu
+date: "Last Updated: August 19th, 2020"
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+bibliography: vignettes.bib
+vignette: >
+  %\VignetteIndexEntry{10-Minute Introduction to clustRviz}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval=TRUE,
+  message = FALSE
+)
+```
+
+\renewcommand{\vec}[1]{\boldsymbol{#1}}
+
+# Introduction
+
+The `clustRviz` package intends to make fitting and visualizing CARP and CBASS
+solution paths an easy process. In the [QuickStart](clustRviz.html)
+vignette we provide a quick start guide for basic usage, fitting,
+and plotting. In this vignette, we build on the basics and provide a more
+detailed explanation for the variety of options available in `clustRviz`.
+
+# Background
+
+The starting point for CARP is the Convex Clustering
+[@Hocking:2011; @Chi:2015; @Tan:2015] problem:
+
+\[\text{arg min}_{U} \frac{1}{2}\|U - X\|_F^2 + \lambda\sum_{(i, j) \in \mathcal{E}} w_{ij} \|U_{i\cdot} - U_{j\cdot}\|_q\]
+
+where $X$ is an $n \times p$ data matrix, consisting of $p$ measurements on $n$ subjects,
+$\lambda \in \mathbb{R}_{> 0}$ a regularization parameter determining the degree of clustering, and
+$w_{ij}>0$ a weight for each pair of observations; here $\| . \|_F$ and $\| . \|_2$ denote
+the Frobenius norm and $\ell_q$ norm, respectively. (Typically, we take $q = 2$.)
+
+Briefly, Convex Clustering seeks to find and estimate a matrix $\hat{U} \in \mathbb{R}^{n\times p}$
+which is both faithful to the original data (Frobenius norm loss term) and has columns
+"shrunk" together by the fusion penalty term. The penalty term induces "clusters"
+of equal columns in $U$ - if the difference is zero, then the columns must be equal -
+while still maintaining closeness to the original data. The equal columns of $U$
+can then be used to assign clusters among the columns of $X$.
+
+Unlike other clustering parameters, $\lambda$ can be varied smoothly. At one end,
+for zero or very small $\lambda$, the fusion penalty has minimal effect and all
+the columns of $\hat{U}$ are distinct, implying $n$ different (trivial) clusters.
+At the other end, for large $\lambda$, all columns of $U$ are fused together into
+a single "mono-cluster." Between these extremes, every other degree of clustering
+can be found as $\lambda$ varies. Considered as a function of $\lambda$,
+the columns of $\hat{U}_{\lambda}$ form continuous paths, which we will visualize
+below.
+
+To solve the Convex Clustering problem, Chi and Lange [-@Chi:2015] proposed
+to use the Alternating Direction Method of Multipliers (ADMM) [@Boyd:2011], an
+iterative optimization scheme. This performs well for a single value of $\lambda$,
+but can become very expensive if we wish to investigate enough values of $\lambda$
+to form a (near-continuous) solution path. To address this, we adapt the Algorithmic
+Regularization framework proposed by Hu *et al.* [-@Hu:2016]: this framework takes
+a single ADMM step, followed by a small increase in $\lambda$. Remarkably, if the increases
+in $\lambda$ are sufficiently small, it turns out that we can approximate the
+*true* solution path in a fraction of the time needed for full optimization. Additionally,
+because we consider a fine grid of $\lambda$ values, we are able to get a much more
+accurate sense of the structure of the solution paths. This approach is called
+**Clustering via Algorithmic Regularization Paths** or **CARP** and is implemented
+in the function of the same name.
+
+This tutorial will focus on convex *clustering* though the `clustRviz` package also
+provides functionality for convex *biclustering* via the **Convex Biclustering via
+Algorithmic Regularization with Small Steps** or **CBASS** algorithm, which combines
+algorithmic regularization with the Generalized ADMM proposed by Weylandt [-@Weylandt:2019].
+All of the graphics and data manipulation functionality demonstrated below for
+the `CARP` function work equally well for the `CBASS` function.
+
+
+## Data Preparation and Weight Calculation
+
+While the `CARP` and `CBASS` functions provides several reasonable default choices
+for weights, algorithms, etc, it is important to know their details if one wishes
+to compute more customized clustering choices. Here we examine several of the
+inputs to `CARP` in more detail.
+
+Here we use a dataset of presidential speechs obtained from
+[The American Presidency Project](http://www.presidency.ucsb.edu/index_docs.php)
+to illustrate the use of `clustRviz`.
+The presidential speech data set contains the top 75 most variable
+log-transformed word counts of each US president, aggregated over several
+speeches. Additional text processing such as removing stop words and
+stemming have been done via the `tm` package.
+
+Let's begin by loading our package and the dataset:
+
+```{r}
+library(clustRviz)
+data("presidential_speech")
+presidential_speech[1:5, 1:5]
+```
+
+As can be seen above, this data already comes to us as a *data matrix* with
+row and column labels. This is the best format to provide data to `CARP`, though
+if labels are missing, default labels will be automatically created.
+
+## Pre-Processing
+
+An important first choice before clustering is whether to center and scale our observations.
+Column-wise centering is typically appropriate and is done by default, though this can be changed
+with the `X.center` argument. The matter of scaling is a bit more delicate and depends
+on whether the features are in some way directly comparable, in which case the raw
+scale may be meaningful, or are fundamentally incompatible, in which case it may
+make sense to remove scale effects. Scaling is controlled by the `X.scale` argument
+to `CARP` and is not implemented for `CBASS`. If scaling is requested, it is performed
+by the `scale` function from base `R` which performs unbiased ($n-1$) scaling.
+In the case of the presidental speech dataset, all variables are of the same type and
+so we will not scale our data matrix.
+
+### Clustering Weights
+
+The choice of clustering weights $w_{ij}$ is essential to getting reasonable
+clustering performance. `CARP` uses a reasonably robust heuristic that
+balances statistical and computational performance, but great improvements
+can be obtained by using bespoke weighting schemes. `CARP` allows weights to be
+specified as either a function which returns a weight matrix or a matrix of
+weights. More details are available in the [Weights vignette](Weights.html)
+
+### Dimension Reduction and Feature Selection
+
+Convex clustering, as implemented in `clustRviz`, relies on the Euclidean distance
+(Frobenius norm) between points. As such, it is rather sensitive to "noisy" features.
+To achieve good performance in high-dimensional (big $p$) problems, it is often necessary
+to aggressively filter features or perform some sort of dimension reduction before
+clustering. Future versions of `clustRviz` will implement the sparse convex
+clustering method of Wang *et al* [-@Wang:2018] and the `GeCCO+` scheme
+of Wang and Allen [-@Wang:2019], both of which allow for automatic feature weighting
+and selection.
+
+`clustRviz` plots leading principal components by default in visualizations, though
+this is configurable. Note that the principal components projection is performed
+at fit time, not at plot time, so if higher principal components are desired, it
+may be necessary to increase the `npcs` argument to `CARP.`
+
+## Fitting
+
+`clustRviz` aims to make it easy to compute the *CARP* and *CBASS* solution paths, and
+to quickly begin exploring the results. For now, we will use the defaults described
+above to cluster the presidential speech data via the `CARP` function:
+
+```{r, message = FALSE}
+carp_fit <- CARP(presidential_speech)
+```
+
+Once completed, we can examine a brief summary of the fitted object:
+
+```{r}
+carp_fit
+```
+
+The default output gives several useful pieces of information, including:
+
+- the sample size ($n = 44$) and number of features in our data ($p = 75$);
+- the amount of time necessary to fit the cluster path (approximately 4 seconds);
+- the preprocessing performed (centering, but not scaling); and
+- the weighting scheme used: 
+    - Radial Basis Function Kernel Weights based on the Euclidean Distance
+    - A scale parameter $\phi = 0.01$ selected to maximize weight informativeness
+    - A high degree of sparsification (four nearest neighbors) to improve computation.
+
+Each of these can be changed using parameters already discussed. Additionally, the
+printed output shows the step-size parameter $t$ (default, used here, of 1.05). This
+means that at each iteration, $\lambda$ is increased by 5%. For finer path approximations,
+the user can use a smaller value of $t$, though be warned that this increases both
+computation time and memory usage.
+
+`CARP` has three additional flags that control optimizer behavior:
+
+- `norm` (default `2`): should an $\ell_2$ or $\ell_1$ fusion penalty be used?
+  The $\ell_2$ penalty is rotationally symmetric and plays well with downstream
+  principal components visualization, so it is used by default.
+- `exact` (default `FALSE`): if this is set, the algorithmic regularization scheme
+  is replaced with an exact optimization approach. This is often much more expensive,
+  but guarantees exact solutions when they matter.
+- `back_track` (default `FALSE`): in almost all settings, the monotonic increase
+  of $\lambda$ is sufficient to recover the structure of the convex clustering
+  dendrogram. For pathological cases where the dendrogram is not easily recovered,
+  enabling back-tracking will cause `CARP` to use a back-tracking bisection search
+  to precisely identify when observations are fused together.
+
+More advanced optimizer controls can be set using the `clustRviz_options` function.
+
+## Accessing Clustering Solutions
+
+Once fit, the clustering solution may be examined via
+three related "accessor" functions:
+
+- `get_cluster_labels`: to get a named factor vector of cluster labels
+- `get_cluster_centroids`: to get a matrix of cluster centroids
+- `get_clustered_data`: to get the clustered data matrix
+  (data replaced by estimated centroids)
+
+The interface for these functions is essentially the same for `CARP` and `CBASS`
+objects, though the exact meaning of "centroids" varies between the problems
+(vectors for `CARP` and scalars for `CBASS`). The latter two functions also support
+a `refit` flag, which determines whether the convex clustering centroids or the naive
+centroids (based only on the convex clustering labels) are returned.
+
+For example, we can extract the clustering labels from our `carp_fit` corresponding
+to a $k = 2$ cluster solution:
+
+```{r}
+cluster_labels <- get_cluster_labels(carp_fit, k = 2)
+head(cluster_labels)
+```
+
+We see a rather inbalanced data set (the "pre-WWII" cluster is much larger):
+
+```{r}
+table(cluster_labels)
+```
+
+Similarly, to get the cluster means, we use the `get_cluster_centroids` function:
+
+```{r}
+get_cluster_centroids(carp_fit, k = 2)
+```
+
+Since we performed convex clustering here, our centroids are $p$-vectors. By default,
+the naive centroids are used; if we prefer the exact convex clustering solution, we
+can pass the `refit = FALSE` flag:
+
+```{r}
+get_cluster_centroids(carp_fit, k = 2, refit = FALSE)
+```
+
+We can instead supply the `percent` argument to specify $\lambda$ (or more precisely,
+$\lambda / \lambda_{\text{max}}$) rather than the numer of clusters explicitly. For
+example, if we are interested at the clustering solution about $25\%$ of the way
+along the regularization path:
+
+```{r}
+get_cluster_labels(carp_fit, percent = 0.25)
+```
+
+We see that our data is clearly falls into three clusters.
+
+Simiarly to `CARP` objects, `CBASS` clustering solutions may also be extracted via the
+three accessor functions. The `CBASS` methods allow one of three parameters to be
+used to specify the solution:
+
+- `k.row`: the number of row clusters
+- `k.col`: the number of column clusters
+- `percent`: the percent of total regularization
+
+Other than this, the behavior of `get_cluster_labels`, and `get_clustered_data`
+is roughly the same:
+
+```{r, eval = FALSE}
+# CBASS Cluster Labels for rows (observations = default)
+get_cluster_labels(cbass_fit, percent = 0.85, type = "row")
+
+# CBASS Cluster Labels for columns (features)
+get_cluster_labels(cbass_fit, percent = 0.85, type = "col")
+
+# CBASS Solution - naive centroids
+get_clustered_data(cbass_fit, percent = 0.85)
+
+# CBASS Solution - convex bi-clustering centroids
+get_clustered_data(cbass_fit, percent = 0.85, refit = FALSE)
+```
+
+The `get_cluster_centroids` function returns a $k_1$-by-$k_2$ matrix, giving
+the (scalar) centroids at a solution with $k_1$ row clusters and $k_2$
+column clusters:
+
+```{r, eval = FALSE}
+get_cluster_centroids(cbass_fit, percent = 0.85)
+```
+
+## Visualizations
+
+`clustRviz` provides a rich set of visualization tools based on the `ggplot2`
+and `plotly` libraries. Because `clustRviz` integrates with these libraries,
+it is easy to develop custom visualizations based on `clustRviz` defaults.
+
+### Path Plots
+
+The first type of path supported by `clustRviz` is one obtained by plotting values
+of $\hat{U}_{\lambda}$ for various values of $\lambda$. Because $\hat{U}$ is a continuous
+function of $\lambda$, these paths are continuous and make for attractive visualizations.
+As mentioned above, `clustRviz` defaults to plotting the first two principal components
+of the data: 
+
+```{r}
+plot(carp_fit, type = "path")
+```
+
+By default, the entire path is shown, but we can specify a number of clusters directly: 
+
+```{r}
+plot(carp_fit, type = "path", k = 3)
+```
+
+These plots are standard `ggplot` objects and can be customized in the usual manner: 
+
+```{r}
+plot(carp_fit, type = "path", k = 3) + ggplot2::theme_bw() + 
+  ggplot2::ggtitle("My Title", subtitle = "Very custom!")
+```
+
+We can also plot the raw features directly: 
+
+```{r}
+plot(carp_fit, type = "path", axis = c("british", "soviet"))
+```
+
+In this space, clear differences in pre-Cold War and post-Cold War topics of presidential
+speeches are evident. This sort of customized plot can be saved to a file using
+the standard `ggplot2::ggsave` functionality. 
+
+Because paths are continuous, it is also possible to set the `dynamic = TRUE` flag
+to produce a GIF via the `gganimate` package: 
+
+```{r}
+plot(carp_fit, type = "path", dynamic = TRUE)
+```
+
+Finally, interactive path plots can be produced using the `plotly` library
+by setting `interactive = TRUE`: 
+
+```{r}
+plot(carp_fit, type = "path", dynamic = TRUE, interactive = TRUE)
+```
+
+These are currently rather slow to render; we hope
+to improve rendering performance in future versions of `clustRviz`.
+
+### Dendrograms
+
+No discussion of clustering visualization would be complete without dendrograms!
+`clustRviz` computes a dendrogram based on the order that observations are fused,
+with the height of the tree corresponding to the value of $\lambda$ at which the
+fusion was first detected. As before, both static and dynamic dendrograms are supported
+
+```{r}
+plot(carp_fit, type = "dendrogram")
+```
+
+```{r}
+plot(carp_fit, type = "dendrogram", dynamic = TRUE)
+```
+
+If we specify the number of clusters, a "cut line" is added and the dendrogram
+is colored according to cluster identity:
+
+```{r}
+plot(carp_fit, type = "dendrogram", k = 3)
+```
+
+As before, this is a `ggplot` object and can be manipulated as such. If the underlying
+dendrogram object is needed, it can be accessed directly with the `as.dendrogram`
+or `as.hclust` functions, allowing for tight integration with other clustering
+functionality:
+
+```{r}
+as.dendrogram(carp_fit)
+as.hclust(carp_fit)
+```
+
+As before, an interactive version is also supported
+
+```{r}
+plot(carp_fit, type = "dendrogram", interactive = TRUE)
+```
+
+### Heatmaps
+
+Finally, a convex clustering-based cluster heatmap is also supported. Cluster heatmaps
+are more common for biclustering and we show that here:
+
+```{r}
+cbass_fit <- CBASS(presidential_speech)
+plot(cbass_fit, type = "heatmap")
+```
+
+Unlike the classical cluster heatmap, the convex bi-clustering heatmap is formed
+by simultaneously clustering rows and columns, rather than clustering them independently.
+This allows us to "cut" the row and column heatmaps at a directly comparable value
+of $\lambda$:
+
+```{r}
+plot(cbass_fit, type = "heatmap", percent = 0.25)
+```
+
+The dynamic plot is particularly compelling:
+
+```{r}
+plot(cbass_fit, type = "heatmap", dynamic = TRUE)
+```
+
+An interactive heatmap is provided, with help from the excellent `heatmaply` package,
+though performance is somewhat limited on larger data sets, so we omit it here.
+
+## Discussion
+
+`clustRviz` provides a integrated framework for fitting and visualizing the *CARP*
+and *CBASS* solution paths. `clustRviz` delivers fast computation relative
+traditional Convex Clustering solution techniques, and brings traditional and
+modern clustering visualization techniques together in a unified framework.
+
+## References

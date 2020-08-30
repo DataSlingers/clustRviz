@@ -10,12 +10,14 @@ public:
   double gamma; // Current regularization level - need to be able to manipulate this externally
 
   ConvexClustering(const Eigen::MatrixXd& X_,
+                   const Eigen::ArrayXXd& M_,
                    const Eigen::MatrixXd& D_,
                    const Eigen::VectorXd& weights_,
                    const double rho_,
                    const bool l1_,
                    const bool show_progress_):
   X(X_),
+  M(M_),
   D(D_),
   weights(weights_),
   rho(rho_),
@@ -68,7 +70,8 @@ public:
 
   void admm_step(){
     // U-update
-    U = u_step_solver.solve(X + rho * D.transpose() * (V - Z));
+    Eigen::MatrixXd X_imputed = M * X.array() + (1.0 - M) * U.array();
+    U = u_step_solver.solve(X_imputed + rho * D.transpose() * (V - Z));
     Eigen::MatrixXd DU = D * U;
     ClustRVizLogger::debug("U = ") << U;
 
@@ -98,12 +101,14 @@ public:
   }
 
   void save_old_values(){
+    U_old = U;
     V_old = V;
     Z_old = Z;
     v_zeros_old = v_zeros;
   }
 
   void load_old_variables(){
+    U = U_old;
     V = V_old;
     Z = Z_old;
   }
@@ -116,8 +121,10 @@ public:
     return nzeros > 0;
   }
 
-  bool admm_converged(){
-    return (scaled_squared_norm(V - V_old) + scaled_squared_norm(Z - Z_old) < CLUSTRVIZ_EXACT_STOP_PRECISION);
+  bool admm_converged(double thresh = CLUSTRVIZ_DEFAULT_STOP_PRECISION){
+    return (scaled_squared_norm(U - U_old) < thresh) &&
+           (scaled_squared_norm(V - V_old) < thresh) &&
+           (scaled_squared_norm(Z - Z_old) < thresh);
   }
 
   void store_values(){
@@ -164,6 +171,7 @@ public:
 private:
   // Fixed (non-data-dependent) problem details
   const Eigen::MatrixXd& X; // Data matrix (to be clustered)
+  const Eigen::ArrayXXd& M; // Missing data mask
   const Eigen::MatrixXd& D; // Edge (differencing) matrix
   const Eigen::VectorXd& weights; // Clustering weights
   const double rho; // ADMM relaxation parameter -- TODO: Factor this out?
@@ -187,6 +195,7 @@ private:
 
   // Old versions (used for back-tracking and fusion counting)
   Eigen::Index nzeros_old;
+  Eigen::MatrixXd U_old;
   Eigen::MatrixXd V_old;
   Eigen::MatrixXd Z_old;
   Eigen::ArrayXi  v_zeros_old;
