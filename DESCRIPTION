@@ -41,7 +41,8 @@ Imports:
     heatmaply,
     gganimate,
     plotly,
-    missForest
+    missForest,
+    grid
 LinkingTo: Rcpp, RcppEigen
 Suggests: testthat,
     knitr,
