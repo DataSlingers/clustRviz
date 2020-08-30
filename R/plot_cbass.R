@@ -961,6 +961,7 @@ cbass_path_plotly <- function(x,
                  text = ~label,
                  #size = label_size,
                  inherit = FALSE) %>%
+        plotly::layout(xaxis = list(title = axis[1]), yaxis = list(title=axis[2])) %>%
         hide_legend() %>%
         style(text=mytext, hoverinfo = "text", traces = length(mytext)+2) %>%
         style(hoverinfo = "none", traces = c(1:(length(mytext)+1),(length(mytext)+3)))
@@ -1002,6 +1003,7 @@ cbass_path_plotly <- function(x,
                  text = ~label,
                  #size = label_size,
                  inherit = FALSE) %>%
+        plotly::layout(xaxis = list(title = axis[1]), yaxis = list(title=axis[2])) %>%
         hide_legend() %>%
         style(text=mytext, hoverinfo = "text", traces = length(mytext)+2) %>%
         style(hoverinfo = "none", traces = c(1:(length(mytext)+1),(length(mytext)+3)))
@@ -1056,6 +1058,7 @@ cbass_path_plotly <- function(x,
                text = ~label,
                #size = label_size,
                inherit = FALSE) %>%
+      plotly::layout(xaxis = list(title = axis[1]), yaxis = list(title=axis[2])) %>%
       hide_legend() %>%
       style(text=mytext, hoverinfo = "text", traces = c(length(mytext)+3)) %>%
       style(hoverinfo = "none", traces = c(1:(length(mytext)+2))) %>%
