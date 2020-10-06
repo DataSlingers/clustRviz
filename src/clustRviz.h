@@ -5,6 +5,7 @@
 #include "alg_reg_policies.h"
 #include "optim_policies.h"
 
+typedef ConvexClusteringSkeleton<double> ConvexClustering;
 typedef AlgorithmicRegularizationFixedStepSizePolicy<ConvexClustering> CARP;
 typedef AlgorithmicRegularizationBacktrackingPolicy<ConvexClustering> CARP_VIZ;
 typedef AlgorithmicRegularizationFixedStepSizePolicy<ConvexBiClustering> CBASS;

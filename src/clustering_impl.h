@@ -5,17 +5,18 @@
 #include "clustRviz_logging.h"
 #include "status.h"
 
-class ConvexClustering {
+template <class DataType>
+class ConvexClusteringSkeleton {
 public:
   double gamma; // Current regularization level - need to be able to manipulate this externally
 
-  ConvexClustering(const Eigen::MatrixXd& X_,
-                   const Eigen::ArrayXXd& M_,
-                   const Eigen::MatrixXd& D_,
-                   const Eigen::VectorXd& weights_,
-                   const double rho_,
-                   const bool l1_,
-                   const bool show_progress_):
+  ConvexClusteringSkeleton(const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic>& X_,
+                           const Eigen::ArrayXXd& M_,
+                           const Eigen::MatrixXd& D_,
+                           const Eigen::VectorXd& weights_,
+                           const double rho_,
+                           const bool l1_,
+                           const bool show_progress_):
   X(X_),
   M(M_),
   D(D_),
@@ -49,7 +50,7 @@ public:
     store_values();
 
     // PreCompute chol(I + rho D^TD) for easy inversions in the U update step
-    Eigen::MatrixXd IDTD = rho * D.transpose() * D + Eigen::MatrixXd::Identity(n, n);
+    Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> IDTD = rho * D.transpose() * D + Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic>::Identity(n, n);
     u_step_solver.compute(IDTD);
   };
 
@@ -68,20 +69,23 @@ public:
     return nzeros == num_edges;
   }
 
-  void admm_step(){
-    // U-update
-    Eigen::MatrixXd X_imputed = M * X.array() + (1.0 - M) * U.array();
+  inline void u_step(){
+    // U-update -- Make this a method so time series clustering can replace
+    Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> X_imputed = M * X.array() + (1.0 - M) * U.array();
     U = u_step_solver.solve(X_imputed + rho * D.transpose() * (V - Z));
-    Eigen::MatrixXd DU = D * U;
-    ClustRVizLogger::debug("U = ") << U;
 
+    ClustRVizLogger::debug("U = ") << U;
+  }
+
+  void admm_step(){
+    u_step();
     // V-update
-    Eigen::MatrixXd DUZ = DU + Z;
+    const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> DUZ = D * U + Z;
     V = MatrixRowProx(DUZ, gamma / rho, weights, l1);
     ClustRVizLogger::debug("V = ") << V;
 
     // Z-update
-    Z += DU - V;
+    Z = DUZ - V;
     ClustRVizLogger::debug("Z = ") << Z;
 
     // Identify cluster fusions (rows of V which have gone to zero)
@@ -138,8 +142,8 @@ public:
     }
 
     // Store values
-    UPath.col(storage_index)        = Eigen::Map<Eigen::VectorXd>(U.data(), n * p);
-    VPath.col(storage_index)        = Eigen::Map<Eigen::VectorXd>(V.data(), p * num_edges);
+    UPath.col(storage_index)        = Eigen::Map<Eigen::Matrix<DataType, Eigen::Dynamic, 1>>(U.data(), n * p);
+    VPath.col(storage_index)        = Eigen::Map<Eigen::Matrix<DataType, Eigen::Dynamic, 1>>(V.data(), p * num_edges);
     gamma_path(storage_index)       = gamma;
     v_zeros_path.col(storage_index) = v_zeros;
 
@@ -168,9 +172,9 @@ public:
     sp.update(nzeros, V.squaredNorm(), iter, gamma);
   }
 
-private:
+protected:
   // Fixed (non-data-dependent) problem details
-  const Eigen::MatrixXd& X; // Data matrix (to be clustered)
+  const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic>& X; // Data matrix (to be clustered)
   const Eigen::ArrayXXd& M; // Missing data mask
   const Eigen::MatrixXd& D; // Edge (differencing) matrix
   const Eigen::VectorXd& weights; // Clustering weights
@@ -181,30 +185,30 @@ private:
   const int n;      // Problem dimensions
   const int p;
   const int num_edges;
-  Eigen::LLT<Eigen::MatrixXd> u_step_solver; // Cached factorization for u-update
+  Eigen::LLT<Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic>> u_step_solver; // Cached factorization for u-update
 
   // Progress printer
   StatusPrinter sp;
 
   // Current copies of ADMM variables
-  Eigen::MatrixXd U; // Primal variable
-  Eigen::MatrixXd V; // Split variable
-  Eigen::MatrixXd Z; // Dual variable
+  Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> U; // Primal variable
+  Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> V; // Split variable
+  Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> Z; // Dual variable
   Eigen::ArrayXi v_zeros; // Fusion indicators
   Eigen::Index nzeros; // Number of fusions
 
   // Old versions (used for back-tracking and fusion counting)
   Eigen::Index nzeros_old;
-  Eigen::MatrixXd U_old;
-  Eigen::MatrixXd V_old;
-  Eigen::MatrixXd Z_old;
+  Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> U_old;
+  Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> V_old;
+  Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> Z_old;
   Eigen::ArrayXi  v_zeros_old;
 
   // Internal storage buffers
   Eigen::Index buffer_size;
   Eigen::Index storage_index;
-  Eigen::MatrixXd UPath;
-  Eigen::MatrixXd VPath;
+  Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> UPath;
+  Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> VPath;
   Eigen::VectorXd gamma_path;
   Eigen::MatrixXi v_zeros_path;
 };
