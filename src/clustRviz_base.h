@@ -17,7 +17,13 @@ template <typename T>
 bool contains(const std::set<T>& container, T element){
   typename std::set<T>::const_iterator it = container.find(element);
   return it != container.end();
+};
+
+template <typename DataType>
+double scaled_squared_norm(const Eigen::MatrixBase<DataType>& X){
+  return X.squaredNorm() / X.size();
 }
+
 
 // Prototypes - utils.cpp
 Eigen::MatrixXd MatrixRowProx(const Eigen::MatrixXd&,
@@ -29,7 +35,4 @@ Eigen::MatrixXd MatrixColProx(const Eigen::MatrixXd&,
                               double,
                               const Eigen::VectorXd&,
                               bool);
-
-double scaled_squared_norm(const Eigen::MatrixXd&);
-
 #endif
