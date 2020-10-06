@@ -22,6 +22,10 @@ Rcpp::List CARPcpp(const Eigen::MatrixXd& X,
                    bool back_track         = false,
                    bool exact              = false){
 
+  if((M != 1).any()){
+    ClustRVizLogger::error("Time Series (TROUT) Clustering does not yet support missing data.");
+  }
+
   ConvexClustering problem(X, M, D, weights, rho, l1, show_progress);
 
   if(exact){
@@ -127,6 +131,68 @@ Rcpp::List CBASScpp(const Eigen::MatrixXd& X,
 }
 
 // [[Rcpp::export(rng = false)]]
+Rcpp::List TROUTcpp(const Eigen::MatrixXcd& X,
+                    const Eigen::ArrayXXd& M,
+                    const Eigen::MatrixXd& D,
+                    const Eigen::VectorXd& weights,
+                    double epsilon,
+                    double t,
+                    double rho              = 1,
+                    double thresh           = CLUSTRVIZ_DEFAULT_STOP_PRECISION,
+                    int max_iter            = 100000,
+                    int max_inner_iter      = 2500,
+                    int burn_in             = 50,
+                    double back             = 0.5,
+                    int keep                = 10,
+                    int viz_max_inner_iter  = 15,
+                    double viz_initial_step = 1.1,
+                    double viz_small_step   = 1.01,
+                    bool l1                 = false,
+                    bool show_progress      = true,
+                    bool back_track         = false,
+                    bool exact              = false){
+
+  TroutClustering problem(X, M, D, weights, rho, l1, show_progress);
+
+  if(exact){
+    if(back_track){
+      TroutClusteringADMM_VIZ admm_viz(problem,
+                                       epsilon,
+                                       thresh,
+                                       max_iter,
+                                       max_inner_iter,
+                                       burn_in,
+                                       back,
+                                       viz_max_inner_iter,
+                                       viz_initial_step,
+                                       viz_small_step);
+
+      return admm_viz.build_return_object();
+    } else {
+      TroutClusteringADMM admm(problem, epsilon, t, thresh, max_iter, max_inner_iter);
+      return admm.build_return_object();
+    }
+  } else {
+    if(back_track){
+      TROUT_VIZ trout_viz(problem,
+                          epsilon,
+                          max_iter,
+                          burn_in,
+                          back,
+                          keep,
+                          viz_max_inner_iter,
+                          viz_initial_step,
+                          viz_small_step);
+
+      return trout_viz.build_return_object();
+    }
+
+    TROUT trout(problem, epsilon, t, max_iter, burn_in, keep);
+    return trout.build_return_object();
+  }
+}
+
+// [[Rcpp::export(rng = false)]]
 Rcpp::List ConvexClusteringCPP(const Eigen::MatrixXd& X,
                                const Eigen::ArrayXXd& M,
                                const Eigen::MatrixXd& D,
@@ -162,6 +228,29 @@ Rcpp::List ConvexBiClusteringCPP(const Eigen::MatrixXd& X,
 
   ConvexBiClustering problem(X, M, D_row, D_col, weights_row, weights_col, rho, l1, show_progress);
   UserGridConvexBiClusteringADMM solver(problem, lambda_grid, thresh, max_iter, max_inner_iter);
+
+  return solver.build_return_object();
+}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::List TroutClusteringCPP(const Eigen::MatrixXcd& X,
+                              const Eigen::ArrayXXd& M,
+                              const Eigen::MatrixXd& D,
+                              const Eigen::VectorXd& weights,
+                              const std::vector<double> lambda_grid,
+                              double rho         = 1,
+                              double thresh      = CLUSTRVIZ_DEFAULT_STOP_PRECISION,
+                              int max_iter       = 100000,
+                              int max_inner_iter = 2500,
+                              bool l1            = false,
+                              bool show_progress = true){
+
+  if((M != 1).any()){
+    ClustRVizLogger::error("Time Series (TROUT) Clustering does not yet support missing data.");
+  }
+
+  UnivariateTroutClusteringSkeleton<std::complex<double> > problem(X, M, D, weights, rho, l1, show_progress);
+  UserGridTroutClusteringADMM solver(problem, lambda_grid, thresh, max_iter, max_inner_iter);
 
   return solver.build_return_object();
 }
