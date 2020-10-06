@@ -31,6 +31,11 @@ Eigen::MatrixXd MatrixRowProx(const Eigen::MatrixXd&,
                               const Eigen::VectorXd&,
                               bool);
 
+Eigen::MatrixXcd MatrixRowProx(const Eigen::MatrixXcd&,
+                               double,
+                               const Eigen::VectorXd&,
+                               bool);
+
 Eigen::MatrixXd MatrixColProx(const Eigen::MatrixXd&,
                               double,
                               const Eigen::VectorXd&,

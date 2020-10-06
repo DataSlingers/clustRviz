@@ -24,12 +24,21 @@ double soft_thresh(double x, double lambda){
   }
 }
 
+std::complex<double> soft_thresh(const std::complex<double> x, double lambda){
+  const double r = std::abs(x);
+  if(r > lambda){
+    return (r - lambda) * x / r;
+  } else {
+    return std::complex<double>(0.0, 0.0);
+  }
+}
+
 // Apply a row-wise prox operator (with weights) to a matrix
 // [[Rcpp::export(rng = false)]]
 Eigen::MatrixXd MatrixRowProx(const Eigen::MatrixXd& X,
-                           double lambda,
-                           const Eigen::VectorXd& weights,
-                           bool l1 = true){
+                              double lambda,
+                              const Eigen::VectorXd& weights,
+                              bool l1 = true){
   Eigen::Index n = X.rows();
   Eigen::Index p = X.cols();
 
@@ -44,6 +53,40 @@ Eigen::MatrixXd MatrixRowProx(const Eigen::MatrixXd& X,
   } else {
     for(Eigen::Index i = 0; i < n; i++){
       Eigen::VectorXd X_i = X.row(i);
+      double scale_factor = 1 - lambda * weights(i) / X_i.norm();
+
+      if(scale_factor > 0){
+        V.row(i) = X_i * scale_factor;
+      } else {
+        V.row(i).setZero();
+      }
+    }
+  }
+
+  return V;
+}
+
+// This is the same as the real case - is there a way to do this with overloading / templates
+// while also allowing Rcpp::export?
+Eigen::MatrixXcd MatrixRowProx(const Eigen::MatrixXcd& X,
+                               double lambda,
+                               const Eigen::VectorXd& weights,
+                               bool l1 = true){
+
+  Eigen::Index n = X.rows();
+  Eigen::Index p = X.cols();
+
+  Eigen::MatrixXcd V(n, p);
+
+  if(l1){
+    for(Eigen::Index i = 0; i < n; i++){
+      for(Eigen::Index j = 0; j < p; j++){
+        V(i, j) = soft_thresh(X(i, j), lambda * weights(i));
+      }
+    }
+  } else {
+    for(Eigen::Index i = 0; i < n; i++){
+      Eigen::VectorXcd X_i = X.row(i);
       double scale_factor = 1 - lambda * weights(i) / X_i.norm();
 
       if(scale_factor > 0){
@@ -225,4 +268,34 @@ Rcpp::NumericVector tensor_projection(Rcpp::NumericVector X, const Eigen::Matrix
   }
 
   return result;
+}
+
+// TROUT Alignment
+// FIXME - Why doesn't this play nice with overloading? Prototype missing somewhwere?
+Eigen::VectorXcd align_phase_v(const Eigen::VectorXcd& u,
+                               const Eigen::VectorXcd& x){
+
+  // TODO - Triple check this analytical result!
+  std::complex<double> z_hat = u.conjugate().cwiseProduct(x).sum();
+  if(std::abs(z_hat) > 0){
+    z_hat /= std::abs(z_hat);
+  }
+
+  return u * z_hat;
+}
+
+// [[Rcpp::export(rng = false)]]
+Eigen::MatrixXcd align_phase(const Eigen::MatrixXcd& U,
+                             const Eigen::MatrixXcd& X){
+
+  Eigen::Index n = X.rows();
+  Eigen::Index p = X.cols();
+
+  Eigen::MatrixXcd V(n, p);
+
+  for(Eigen::Index i = 0; i < n; i++){
+    V.row(i) = align_phase_v(U.row(i), X.row(i));
+  }
+
+  return V;
 }
