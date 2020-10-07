@@ -1,5 +1,6 @@
 #include "clustRviz_base.h"
 #include "clustRviz_logging.h"
+#include "clustRviz_utils.h"
 #include "clustering_impl.h"
 #include "biclustering_impl.h"
 #include "trout_impl.h"

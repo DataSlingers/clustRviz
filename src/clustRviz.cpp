@@ -287,3 +287,31 @@ SEXP matrix_col_prox(SEXP Xsexp,
   return R_NilValue;
 };
 
+// [[Rcpp::export(rng = false)]]
+SEXP smooth_u_clustering(SEXP U_oldSEXP, Rcpp::List cluster_info_list){
+  switch(TYPEOF(U_oldSEXP)){
+  case REALSXP: return Rcpp::wrap(smooth_u_clustering_impl<Rcpp::NumericVector, double>(Rcpp::as<Rcpp::NumericVector>(U_oldSEXP), cluster_info_list));
+  case CPLXSXP: return Rcpp::wrap(smooth_u_clustering_impl<Rcpp::ComplexVector, std::complex<double> >(Rcpp::as<Rcpp::ComplexVector>(U_oldSEXP), cluster_info_list));
+  default: Rcpp::stop("Unsupported type of X.");
+  }
+
+  // Should not trigger but appease compiler...
+  return R_NilValue;
+}
+
+// [[Rcpp::export(rng = false)]]
+SEXP tensor_projection(SEXP Xsexp, SEXP Ysexp){
+  if(TYPEOF(Xsexp) != TYPEOF(Ysexp)){
+    Rcpp::stop("Type of X and Y must match.");
+  }
+
+  switch(TYPEOF(Xsexp)){
+  case REALSXP: return Rcpp::wrap(tensor_projection_impl<Rcpp::NumericVector, double>(Rcpp::as<Rcpp::NumericVector>(Xsexp), Rcpp::as<Eigen::MatrixXd>(Ysexp)));
+  case CPLXSXP: return Rcpp::wrap(tensor_projection_impl<Rcpp::ComplexVector, std::complex<double> >(Rcpp::as<Rcpp::ComplexVector>(Xsexp), Rcpp::as<Eigen::MatrixXcd>(Ysexp)));
+  default: Rcpp::stop("Unsupported type of X.");
+  }
+
+  // Should not trigger but appease compiler...
+  return R_NilValue;
+}
+
