@@ -330,7 +330,7 @@ CARP <- function(X,
 #' and the variant of \code{CARP} used.
 #'
 #' @details The \code{as.dendrogram} and \code{as.hclust} methods convert the
-#'          \code{CBASS} output to an object of class \code{dendrogram} or \code{hclust}
+#'          \code{CARP} output to an object of class \code{dendrogram} or \code{hclust}
 #'          respectively.
 #'
 #' @param x an object of class \code{CARP} as returned by \code{\link{CARP}}
