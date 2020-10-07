@@ -299,3 +299,40 @@ Eigen::MatrixXcd align_phase(const Eigen::MatrixXcd& U,
 
   return V;
 }
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::NumericMatrix trout_dist_impl(const Eigen::MatrixXcd& X){
+  Eigen::Index n = X.rows();
+  Rcpp::NumericMatrix distances(n, n);
+
+  for(Eigen::Index i = 0; i < n; i++){
+    for(Eigen::Index j = 0; j < n; j++){
+      // FIXME - this calculates all distances twice - can simplify...
+
+      // IMPORTANT: We have to transpose the result of align_phase_v to a _row vector_
+      // or else it doesn't align with X.row() and silently discards all but the first
+      // element
+      distances(i, j) = std::sqrt((X.row(i) - align_phase_v(X.row(j), X.row(i)).transpose()).squaredNorm());
+    }
+  }
+
+  return distances;
+}
+
+// TODO - Non-euclidean distances!
+// [[Rcpp::export(rng = false)]]
+Rcpp::NumericMatrix cdist_impl(const Eigen::MatrixXcd& X){
+  Eigen::Index n = X.rows();
+  Rcpp::NumericMatrix distances(n, n);
+
+  for(Eigen::Index i = 0; i < n; i++){
+    for(Eigen::Index j = 0; j < n; j++){
+      // FIXME - this calculates all distances twice - can simplify...
+
+      // IMPORTANT: We have to transpose the result of align_phase_v to a _row vector_
+      // or else it doesnt align with X.row() and silently discards all but the first
+      // element
+      distances(i, j) = (X.row(i) - X.row(j)).norm();
+    }
+  }
+  return distances;

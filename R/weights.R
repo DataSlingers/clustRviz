@@ -176,12 +176,13 @@ dense_rbf_kernel_weights <- function(phi = "auto",
                                                      "manhattan",
                                                      "canberra",
                                                      "binary",
-                                                     "minkowski"),
+                                                     "minkowski",
+                                                     "trout"),
                                      p = 2){
 
   tryCatch(dist.method <- match.arg(dist.method),
            error = function(e){
-             crv_error("Unsupported choice of ", sQuote("weight.dist;"),
+             crv_error("Unsupported choice of ", sQuote("dist.method;"),
                        " see the ", sQuote("method"), " argument of ",
                        sQuote("stats::dist"), " for supported distances.")
            })
@@ -192,6 +193,12 @@ dense_rbf_kernel_weights <- function(phi = "auto",
               " argument of ", sQuote("stats::dist"), " for details.")
   }
 
+  if(dist.method == "trout"){
+    dist_f <- trout_dist
+  } else {
+    dist_f <- function(X) dist(X, method = dist.method, p = p)
+  }
+
   function(X){
     user_phi <- (phi != "auto")
 
@@ -200,7 +207,7 @@ dense_rbf_kernel_weights <- function(phi = "auto",
       ##         necessary...
       phi_range <- 10^(seq(-10, 10, length.out = 21))
       weight_vars <- vapply(phi_range,
-                            function(phi) var(exp((-1) * phi * (dist(X, method = dist.method, p = p)[TRUE])^2)),
+                            function(phi) var(exp((-1) * phi * (dist_f(X)[TRUE])^2)),
                             numeric(1))
 
       phi <- phi_range[which.max(weight_vars)]
@@ -214,7 +221,7 @@ dense_rbf_kernel_weights <- function(phi = "auto",
       crv_error(sQuote("phi"), " must be positive.")
     }
 
-    dist_mat <- as.matrix(dist(X, method = dist.method, p = p))
+    dist_mat <- as.matrix(dist_f(X))
     dist_mat <- exp(-1 * phi * dist_mat^2)
 
     check_weight_matrix(dist_mat)

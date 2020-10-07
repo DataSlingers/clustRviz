@@ -430,3 +430,32 @@ my_palette <- function(n){
 
   brewer.pal(9, "Set1")[seq_len(n)]
 }
+
+
+#' Distances for Complex Data
+#'
+#' \code{cdist} implements the standard complex distance. (\code{stats::dist}
+#' simply discards imaginary components when applied to complex \code{x}).
+#' \code{trout_dist} implements the phase-adjusted (TROUT) distance
+#' @export
+#' @importFrom stats as.dist
+trout_dist <- function(x, diag = FALSE, upper = FALSE){
+  m <- trout_dist_impl(x)
+  rownames(m) <- colnames(m) <- rownames(x)
+  d <- as.dist(m, diag = diag, upper = upper)
+  attr(d, "call") <- match.call()
+  d
+}
+
+#' @rdname trout_dist
+#' @export
+cdist <- function(X, method = "euclidean", diag = FALSE, upper = FALSE){
+  if(method != "euclidean"){
+    stop("cdist only supports Euclidean distance presently.")
+  }
+  m <- cdist_impl(X)
+  rownames(m) <- colnames(m) <- rownames(X)
+  d <- as.dist(m, diag = diag, upper = upper)
+  attr(d, "call") <- match.call()
+  d
+}
