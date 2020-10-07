@@ -33,106 +33,6 @@ std::complex<double> soft_thresh(const std::complex<double> x, double lambda){
   }
 }
 
-// Apply a row-wise prox operator (with weights) to a matrix
-// [[Rcpp::export(rng = false)]]
-Eigen::MatrixXd MatrixRowProx(const Eigen::MatrixXd& X,
-                              double lambda,
-                              const Eigen::VectorXd& weights,
-                              bool l1 = true){
-  Eigen::Index n = X.rows();
-  Eigen::Index p = X.cols();
-
-  Eigen::MatrixXd V(n, p);
-
-  if(l1){
-    for(Eigen::Index i = 0; i < n; i++){
-      for(Eigen::Index j = 0; j < p; j++){
-        V(i, j) = soft_thresh(X(i, j), lambda * weights(i));
-      }
-    }
-  } else {
-    for(Eigen::Index i = 0; i < n; i++){
-      Eigen::VectorXd X_i = X.row(i);
-      double scale_factor = 1 - lambda * weights(i) / X_i.norm();
-
-      if(scale_factor > 0){
-        V.row(i) = X_i * scale_factor;
-      } else {
-        V.row(i).setZero();
-      }
-    }
-  }
-
-  return V;
-}
-
-// This is the same as the real case - is there a way to do this with overloading / templates
-// while also allowing Rcpp::export?
-Eigen::MatrixXcd MatrixRowProx(const Eigen::MatrixXcd& X,
-                               double lambda,
-                               const Eigen::VectorXd& weights,
-                               bool l1 = true){
-
-  Eigen::Index n = X.rows();
-  Eigen::Index p = X.cols();
-
-  Eigen::MatrixXcd V(n, p);
-
-  if(l1){
-    for(Eigen::Index i = 0; i < n; i++){
-      for(Eigen::Index j = 0; j < p; j++){
-        V(i, j) = soft_thresh(X(i, j), lambda * weights(i));
-      }
-    }
-  } else {
-    for(Eigen::Index i = 0; i < n; i++){
-      Eigen::VectorXcd X_i = X.row(i);
-      double scale_factor = 1 - lambda * weights(i) / X_i.norm();
-
-      if(scale_factor > 0){
-        V.row(i) = X_i * scale_factor;
-      } else {
-        V.row(i).setZero();
-      }
-    }
-  }
-
-  return V;
-}
-
-// Apply a col-wise prox operator (with weights) to a matrix
-// [[Rcpp::export(rng = false)]]
-Eigen::MatrixXd MatrixColProx(const Eigen::MatrixXd& X,
-                              double lambda,
-                              const Eigen::VectorXd& weights,
-                              bool l1 = true){
-  Eigen::Index n = X.rows();
-  Eigen::Index p = X.cols();
-
-  Eigen::MatrixXd V(n, p);
-
-  if(l1){
-    for(Eigen::Index i = 0; i < n; i++){
-      for(Eigen::Index j = 0; j < p; j++){
-        V(i, j) = soft_thresh(X(i, j), lambda * weights(j));
-      }
-    }
-  } else {
-    for(Eigen::Index j = 0; j < p; j++){
-      Eigen::VectorXd X_j = X.col(j);
-      double scale_factor = 1 - lambda * weights(j) / X_j.norm();
-
-      if(scale_factor > 0){
-        V.col(j) = X_j * scale_factor;
-      } else {
-        V.col(j).setZero();
-      }
-    }
-  }
-
-  return V;
-}
-
 // Some basic cheap checks that a weight
 // matrix can lead to a connected graph
 //
@@ -336,3 +236,4 @@ Rcpp::NumericMatrix cdist_impl(const Eigen::MatrixXcd& X){
     }
   }
   return distances;
+}

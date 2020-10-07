@@ -254,3 +254,36 @@ Rcpp::List TroutClusteringCPP(const Eigen::MatrixXcd& X,
 
   return solver.build_return_object();
 }
+
+// [[Rcpp::export(rng = false)]]
+SEXP matrix_row_prox(SEXP Xsexp,
+                     double lambda,
+                     const Eigen::VectorXd& weights,
+                     bool l1 = true){
+
+  switch(TYPEOF(Xsexp)){
+  case REALSXP: return Rcpp::wrap(MatrixRowProx<double>(Rcpp::as<Eigen::MatrixXd>(Xsexp), lambda, weights, l1));
+  case CPLXSXP: return Rcpp::wrap(MatrixRowProx<std::complex<double> >(Rcpp::as<Eigen::MatrixXcd>(Xsexp), lambda, weights, l1));
+  default: Rcpp::stop("Unsupported type of X.");
+  }
+
+  // Should not trigger but appease compiler...
+  return R_NilValue;
+};
+
+// [[Rcpp::export(rng = false)]]
+SEXP matrix_col_prox(SEXP Xsexp,
+                     double lambda,
+                     const Eigen::VectorXd& weights,
+                     bool l1 = true){
+
+  switch(TYPEOF(Xsexp)){
+  case REALSXP: return Rcpp::wrap(MatrixColProx<double>(Rcpp::as<Eigen::MatrixXd>(Xsexp), lambda, weights, l1));
+  case CPLXSXP: return Rcpp::wrap(MatrixColProx<std::complex<double> >(Rcpp::as<Eigen::MatrixXcd>(Xsexp), lambda, weights, l1));
+  default: Rcpp::stop("Unsupported type of X.");
+  }
+
+  // Should not trigger but appease compiler...
+  return R_NilValue;
+};
+
