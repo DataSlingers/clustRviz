@@ -7,6 +7,9 @@
 
 template <class DataType>
 class UnivariateTroutClusteringSkeleton : public ConvexClusteringSkeleton<DataType> {
+  using MatrixXt = Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic>;
+  using VectorXt = Eigen::Matrix<DataType, Eigen::Dynamic, 1>;
+
   // We need to inherit the constructor explicitly for reasons I don't entirely understand
   // or else this fails with a confusing error message which essentially says the
   // constructor call (with 7 arguments) doesn't match the default constructor
@@ -20,13 +23,13 @@ class UnivariateTroutClusteringSkeleton : public ConvexClusteringSkeleton<DataTy
     // Note that "this->" is required for member access since we're inheriting from a
     // templated base class -- https://stackoverflow.com/a/1121016
     Eigen::Index k_inner = 0;
-    Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> U_old_inner = this->U;
-    const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> A = this->rho * this->D.transpose() * (this->V - this->Z);
+    MatrixXt U_old_inner = this->U;
+    const MatrixXt A = this->rho * this->D.transpose() * (this->V - this->Z);
 
     do{
       k_inner += 1;
       U_old_inner = this->U;
-      Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> X_aligned = align_phase(this->X, this->U);
+      MatrixXt X_aligned = align_phase(this->X, this->U);
 
       this->U = this->u_step_solver.solve(X_aligned + A);
 

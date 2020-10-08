@@ -33,10 +33,14 @@ Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> MatrixRowProx(const Eige
                                                                       double lambda,
                                                                       const Eigen::VectorXd& weights,
                                                                       bool l1 = true){
+
+  using MatrixXt = Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic>;
+  using VectorXt = Eigen::Matrix<DataType, Eigen::Dynamic, 1>;
+
   Eigen::Index n = X.rows();
   Eigen::Index p = X.cols();
 
-  Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> V(n, p);
+  MatrixXt V(n, p);
 
   if(l1){
     for(Eigen::Index i = 0; i < n; i++){
@@ -46,7 +50,7 @@ Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> MatrixRowProx(const Eige
     }
   } else {
     for(Eigen::Index i = 0; i < n; i++){
-      Eigen::Matrix<DataType, Eigen::Dynamic, 1> X_i = X.row(i);
+      VectorXt X_i = X.row(i);
       double scale_factor = 1 - lambda * weights(i) / X_i.norm();
 
       if(scale_factor > 0){
@@ -65,10 +69,14 @@ Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> MatrixColProx(const Eige
                                                                       double lambda,
                                                                       const Eigen::VectorXd& weights,
                                                                       bool l1 = true){
+
+  using MatrixXt = Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic>;
+  using VectorXt = Eigen::Matrix<DataType, Eigen::Dynamic, 1>;
+
   Eigen::Index n = X.rows();
   Eigen::Index p = X.cols();
 
-  Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> V(n, p);
+  MatrixXt V(n, p);
 
   if(l1){
     for(Eigen::Index i = 0; i < n; i++){
@@ -78,7 +86,7 @@ Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> MatrixColProx(const Eige
     }
   } else {
     for(Eigen::Index j = 0; j < p; j++){
-      Eigen::Matrix<DataType, Eigen::Dynamic, 1> X_j = X.col(j);
+      VectorXt X_j = X.col(j);
       double scale_factor = 1 - lambda * weights(j) / X_j.norm();
 
       if(scale_factor > 0){

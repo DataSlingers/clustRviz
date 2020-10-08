@@ -13,6 +13,10 @@
 // with their mutual mean....
 template <typename RcppVector, typename DataType>
 RcppVector smooth_u_clustering_impl(RcppVector U_old, Rcpp::List cluster_info_list){
+
+  using MatrixXt = Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic>;
+  using VectorXt = Eigen::Matrix<DataType, Eigen::Dynamic, 1>;
+
   // The first argument is really an array but we pass as a NumericVector
   // The second argument is a list produced by get_cluster_assignments()
   Rcpp::IntegerVector U_dims = U_old.attr("dim");
@@ -51,11 +55,11 @@ RcppVector smooth_u_clustering_impl(RcppVector U_old, Rcpp::List cluster_info_li
     // We then use Eigen::Map<Eigen::Matrix<DataType>> to get an Eigen::Matrix<DataType> backed
     //   by R's memory in a read only fashion.
     // The same construct is used below to load the smoothed data into U
-    Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> U_old_slice = Eigen::Map<Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> >(reinterpret_cast<DataType*>(&U_old[N * P * q]), N, P);
-    Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> U_new(N, P);
+    MatrixXt U_old_slice = Eigen::Map<MatrixXt>(reinterpret_cast<DataType*>(&U_old[N * P * q]), N, P);
+    MatrixXt U_new(N, P);
 
     for(int j = 1; j <= n_clusters; j++){ // Cluster IDs are 1-based (per R conventions)
-      Eigen::Matrix<DataType, Eigen::Dynamic, 1> vec(P); vec.setZero();
+      VectorXt vec(P); vec.setZero();
 
       // Manually work out new mean
       for(int n = 0; n < N; n++){
@@ -74,7 +78,7 @@ RcppVector smooth_u_clustering_impl(RcppVector U_old, Rcpp::List cluster_info_li
       }
     }
 
-    Eigen::Map<Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> >(reinterpret_cast<DataType*>(&U[N * P * q]), N, P) = U_new;
+    Eigen::Map<MatrixXt>(reinterpret_cast<DataType*>(&U[N * P * q]), N, P) = U_new;
   }
 
   return U;
@@ -91,6 +95,8 @@ RcppVector smooth_u_clustering_impl(RcppVector U_old, Rcpp::List cluster_info_li
 // We use some template magic to support F = R (real) and F = C (complex) data
 template <typename RcppVector, typename DataType>
 RcppVector tensor_projection_impl(RcppVector X, const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic>& Y){
+
+  using MatrixXt = Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic>;
 
   // Validate X
   Rcpp::IntegerVector X_dims = X.attr("dim");
@@ -124,9 +130,9 @@ RcppVector tensor_projection_impl(RcppVector X, const Eigen::Matrix<DataType, Ei
     // We then use Eigen::Map<Eigen::Matrix<DataType>> to get an Eigen::Matrix<DataType> backed
     //   by R's memory in a read only fashion.
     // The same construct is used below to load the smoothed data into result
-    Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> X_slice = Eigen::Map<Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> >(reinterpret_cast<DataType*>(&X[n * p * i]), n, p);
-    Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> X_slice_projected = X_slice * Y;
-    Eigen::Map<Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> >(reinterpret_cast<DataType*>(&result[n * k * i]), n, k) = X_slice_projected;
+    MatrixXt X_slice = Eigen::Map<MatrixXt>(reinterpret_cast<DataType*>(&X[n * p * i]), n, p);
+    MatrixXt X_slice_projected = X_slice * Y;
+    Eigen::Map<MatrixXt>(reinterpret_cast<DataType*>(&result[n * k * i]), n, k) = X_slice_projected;
   }
 
   return result;
